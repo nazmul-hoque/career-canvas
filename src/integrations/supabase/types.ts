@@ -14,7 +14,236 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      community_posts: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          likes: number
+          title: string
+          topic: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          likes?: number
+          title: string
+          topic?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          likes?: number
+          title?: string
+          topic?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      daily_activity: {
+        Row: {
+          day: string
+          id: string
+          user_id: string
+          xp: number
+        }
+        Insert: {
+          day?: string
+          id?: string
+          user_id: string
+          xp?: number
+        }
+        Update: {
+          day?: string
+          id?: string
+          user_id?: string
+          xp?: number
+        }
+        Relationships: []
+      }
+      lesson_progress: {
+        Row: {
+          completed_at: string
+          course_id: string
+          id: string
+          lesson_id: string
+          status: string
+          user_id: string
+          xp_earned: number
+        }
+        Insert: {
+          completed_at?: string
+          course_id: string
+          id?: string
+          lesson_id: string
+          status?: string
+          user_id: string
+          xp_earned?: number
+        }
+        Update: {
+          completed_at?: string
+          course_id?: string
+          id?: string
+          lesson_id?: string
+          status?: string
+          user_id?: string
+          xp_earned?: number
+        }
+        Relationships: []
+      }
+      post_comments: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          career_path: string | null
+          created_at: string
+          display_name: string
+          experience: string | null
+          goal: string | null
+          hours_per_week: number | null
+          id: string
+          last_active_day: string | null
+          level: number
+          onboarded: boolean
+          plan: string
+          streak_best: number
+          streak_current: number
+          updated_at: string
+          xp: number
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          career_path?: string | null
+          created_at?: string
+          display_name?: string
+          experience?: string | null
+          goal?: string | null
+          hours_per_week?: number | null
+          id: string
+          last_active_day?: string | null
+          level?: number
+          onboarded?: boolean
+          plan?: string
+          streak_best?: number
+          streak_current?: number
+          updated_at?: string
+          xp?: number
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          career_path?: string | null
+          created_at?: string
+          display_name?: string
+          experience?: string | null
+          goal?: string | null
+          hours_per_week?: number | null
+          id?: string
+          last_active_day?: string | null
+          level?: number
+          onboarded?: boolean
+          plan?: string
+          streak_best?: number
+          streak_current?: number
+          updated_at?: string
+          xp?: number
+        }
+        Relationships: []
+      }
+      project_submissions: {
+        Row: {
+          created_at: string
+          feedback: string | null
+          id: string
+          live_url: string | null
+          notes: string | null
+          project_id: string
+          repo_url: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          live_url?: string | null
+          notes?: string | null
+          project_id: string
+          repo_url?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          live_url?: string | null
+          notes?: string | null
+          project_id?: string
+          repo_url?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_achievements: {
+        Row: {
+          achievement_key: string
+          earned_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          achievement_key: string
+          earned_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          achievement_key?: string
+          earned_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
