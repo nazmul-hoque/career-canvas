@@ -173,9 +173,7 @@ export function AppHeader() {
                 <Link to="/auth">Log in</Link>
               </Button>
               <Button asChild size="sm">
-                <Link to="/auth" search={{ mode: "signup" }}>
-                  Start free
-                </Link>
+                <Link to="/auth">Start free</Link>
               </Button>
             </div>
           )}
