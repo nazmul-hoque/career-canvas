@@ -92,7 +92,7 @@ function Dashboard() {
   }
 
   const xp = profile?.xp ?? 0;
-  const { level, into, span } = levelFromXp(xp);
+  const { level, intoLevel: into, needed: span } = levelFromXp(xp);
   const path = pathById(profile?.career_path ?? "frontend") ?? careerPaths[0]!;
   const pathCourseList = path.courseIds.map(courseById).filter(Boolean) as ReturnType<typeof courseById>[];
   const totalLessons = pathCourseList.reduce((n, c) => n + (c ? courseLessons(c).length : 0), 0);
