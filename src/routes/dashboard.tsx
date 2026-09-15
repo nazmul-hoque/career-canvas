@@ -306,7 +306,9 @@ function Dashboard() {
             <ul className="mt-4 space-y-3">
               {recentAchievements.map((a) => (
                 <li key={a!.key} className="flex items-center gap-3">
-                  <span className="grid size-9 place-items-center rounded-xl bg-ember/10 text-base">{a!.emoji}</span>
+                  <span className="grid size-9 place-items-center rounded-xl bg-ember/10 text-ember">
+                    <AchievementIcon icon={a!.icon} />
+                  </span>
                   <span>
                     <span className="block text-sm font-semibold">{a!.name}</span>
                     <span className="block text-xs text-chalk">{a!.description}</span>
