@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { ProgressRing } from "@/components/common/ProgressRing";
+import { AchievementIcon } from "@/components/common/AchievementIcon";
 import { EmptyState } from "@/components/common/StatPill";
 import { useSession } from "@/hooks/useAuth";
 import { useAchievements, useActivity, useProfile, useProgress, useLeaderboard } from "@/hooks/useLearner";
