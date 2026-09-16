@@ -1,0 +1,397 @@
+import { useMemo, useState } from "react";
+import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
+import {
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  Circle,
+  Lightbulb,
+  Sparkles,
+  MessageSquare,
+  X,
+} from "lucide-react";
+import { toast } from "sonner";
+import { AppShell } from "@/components/layout/AppShell";
+import { MentorPanel } from "@/components/learn/MentorPanel";
+import { CodeChallenge } from "@/components/learn/CodeChallenge";
+import { courseById, courseLessons } from "@/content/curriculum";
+import { getLessonBody, type LessonBlock } from "@/content/lessons";
+import { useProgress, useCompleteLesson } from "@/hooks/useLearner";
+import { useSession } from "@/hooks/useAuth";
+import type { RunResult } from "@/lib/code-runner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+
+export const Route = createFileRoute("/learn/$courseId/$lessonId")({
+  loader: ({ params }) => {
+    const course = courseById(params.courseId);
+    const body = getLessonBody(params.courseId, params.lessonId);
+    const lesson = course ? courseLessons(course).find((l) => l.id === params.lessonId) : undefined;
+    if (!course || !lesson || !body) throw notFound();
+    return { course, lesson, body };
+  },
+  head: ({ loaderData }) => {
+    if (!loaderData) {
+      return { meta: [{ title: "Lesson unavailable — Ascent" }, { name: "robots", content: "noindex" }] };
+    }
+    return {
+      meta: [
+        { title: `${loaderData.lesson.title} — ${loaderData.course.title} — Ascent` },
+        { name: "description", content: loaderData.body.summary },
+        { property: "og:title", content: `${loaderData.lesson.title} — Ascent` },
+        { property: "og:description", content: loaderData.body.summary },
+      ],
+    };
+  },
+  notFoundComponent: LessonMissing,
+  errorComponent: LessonMissing,
+  component: LessonWorkspace,
+});
+
+function LessonMissing() {
+  return (
+    <AppShell>
+      <div className="card-surface p-10 text-center">
+        <h1 className="font-display text-2xl font-bold">That lesson isn't available</h1>
+        <p className="mt-2 text-sm text-chalk">Pick it back up from the catalog.</p>
+        <Button asChild className="mt-6">
+          <Link to="/learn">Back to catalog</Link>
+        </Button>
+      </div>
+    </AppShell>
+  );
+}
+
+function LessonWorkspace() {
+  const { course, lesson, body } = Route.useLoaderData();
+  const navigate = useNavigate();
+  const { user } = useSession();
+  const { data: progress = [] } = useProgress();
+  const complete = useCompleteLesson();
+
+  const lessons = courseLessons(course);
+  const index = lessons.findIndex((l) => l.id === lesson.id);
+  const next = lessons[index + 1];
+  const done = new Set(progress.map((p) => p.lesson_id));
+  const isDone = done.has(lesson.id);
+
+  const challenge = body.blocks.find((b) => b.kind === "challenge");
+  const [code, setCode] = useState(challenge?.kind === "challenge" ? challenge.starter : "");
+  const [lastRun, setLastRun] = useState<RunResult | null>(null);
+  const [solved, setSolved] = useState(false);
+  const [answers, setAnswers] = useState<Record<string, number | string>>({});
+  const [checked, setChecked] = useState<Record<string, boolean>>({});
+  const [mentorOpen, setMentorOpen] = useState(false);
+
+  const quizBlocks = body.blocks.filter((b) => b.kind === "mcq" || b.kind === "fill");
+  const quizDone = quizBlocks.every((b) => {
+    const id = "id" in b ? b.id : "";
+    if (!checked[id]) return false;
+    if (b.kind === "mcq") return answers[id] === b.answer;
+    return String(answers[id] ?? "").trim().toLowerCase() === b.answer.toLowerCase();
+  });
+  const canFinish = quizDone && (!challenge || solved);
+
+  const mentorContext = useMemo(
+    () => ({
+      lessonTitle: lesson.title,
+      courseTitle: course.title,
+      code: challenge ? code : undefined,
+      language: challenge?.kind === "challenge" ? challenge.language : undefined,
+      lastError: lastRun?.error ?? null,
+      failingTests: lastRun?.tests.filter((t) => !t.passed).map((t) => t.name) ?? [],
+    }),
+    [lesson.title, course.title, code, challenge, lastRun],
+  );
+
+  async function finish() {
+    if (!user) {
+      toast.error("Sign in to save your progress");
+      navigate({ to: "/auth" });
+      return;
+    }
+    const res = await complete.mutateAsync({
+      courseId: course.id,
+      lessonId: lesson.id,
+      xp: body.xp,
+      isChallenge: Boolean(challenge),
+    });
+    if (res.firstTime) {
+      toast.success(`+${res.gained} XP`, {
+        description: res.leveledUp ? `Level up! You're now level ${res.level}.` : `${res.streak} day streak going.`,
+      });
+    }
+    if (next) {
+      navigate({ to: "/learn/$courseId/$lessonId", params: { courseId: course.id, lessonId: next.id } });
+    } else {
+      navigate({ to: "/courses/$courseId", params: { courseId: course.id } });
+    }
+  }
+
+  return (
+    <AppShell>
+      <div className="grid gap-6 xl:grid-cols-[250px_1fr_340px]">
+        {/* Roadmap */}
+        <aside className="card-surface hidden max-h-[calc(100vh-7rem)] overflow-y-auto p-5 xl:sticky xl:top-24 xl:block">
+          <Link to="/courses/$courseId" params={{ courseId: course.id }} className="eyebrow flex items-center gap-1.5">
+            <ArrowLeft className="size-3" /> {course.title}
+          </Link>
+          <div className="mt-5 space-y-5">
+            {course.modules.map((mod) => (
+              <div key={mod.id}>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-chalk">{mod.title}</p>
+                <ul className="mt-2 space-y-0.5">
+                  {mod.lessons.map((l) => {
+                    const active = l.id === lesson.id;
+                    return (
+                      <li key={l.id}>
+                        <Link
+                          to="/learn/$courseId/$lessonId"
+                          params={{ courseId: course.id, lessonId: l.id }}
+                          className={cn(
+                            "flex items-start gap-2 rounded-lg px-2.5 py-2 text-sm transition-colors",
+                            active ? "bg-brand/10 font-semibold text-brand" : "text-chalk hover:bg-secondary",
+                          )}
+                        >
+                          {done.has(l.id) ? (
+                            <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-brand" />
+                          ) : (
+                            <Circle className="mt-0.5 size-4 shrink-0 opacity-40" />
+                          )}
+                          <span className="leading-snug">{l.title}</span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </aside>
+
+        {/* Lesson */}
+        <article className="min-w-0 space-y-6">
+          <header className="card-surface p-6 sm:p-8">
+            <p className="eyebrow">
+              Lesson {index + 1} of {lessons.length} · {lesson.minutes} min · {body.xp} XP
+            </p>
+            <h1 className="mt-2 font-display text-2xl font-bold tracking-tight sm:text-4xl">{lesson.title}</h1>
+            <p className="mt-2 text-chalk">{body.summary}</p>
+          </header>
+
+          <div className="card-surface space-y-6 p-6 sm:p-8">
+            {body.blocks.map((block, i) => (
+              <Block
+                key={i}
+                block={block}
+                answers={answers}
+                checked={checked}
+                setAnswers={setAnswers}
+                setChecked={setChecked}
+                code={code}
+                setCode={setCode}
+                solved={solved}
+                onSolved={() => {
+                  setSolved(true);
+                  toast.success("Challenge solved");
+                }}
+                onResult={setLastRun}
+              />
+            ))}
+          </div>
+
+          <div className="card-surface flex flex-wrap items-center justify-between gap-3 p-5">
+            <p className="text-sm text-chalk">
+              {isDone
+                ? "You've already completed this lesson — revisit it any time."
+                : canFinish
+                  ? "Everything checks out. Bank the XP."
+                  : "Finish the questions and challenge to unlock completion."}
+            </p>
+            <Button onClick={finish} disabled={!canFinish || complete.isPending} size="lg">
+              {isDone ? "Next lesson" : `Complete · +${body.xp} XP`}
+              <ArrowRight className="size-4" />
+            </Button>
+          </div>
+        </article>
+
+        {/* Mentor */}
+        <div className="hidden xl:sticky xl:top-24 xl:block xl:h-[calc(100vh-7rem)]">
+          <MentorPanel context={mentorContext} />
+        </div>
+      </div>
+
+      {/* Mobile mentor */}
+      <button
+        onClick={() => setMentorOpen(true)}
+        className="fixed bottom-24 right-4 z-40 flex items-center gap-2 rounded-full bg-ink px-4 py-3 text-sm font-semibold text-white shadow-lg xl:hidden"
+      >
+        <Sparkles className="size-4" /> Mentor
+      </button>
+      {mentorOpen ? (
+        <div className="fixed inset-0 z-50 flex flex-col bg-background p-3 xl:hidden">
+          <button
+            onClick={() => setMentorOpen(false)}
+            className="mb-2 self-end rounded-full bg-secondary p-2"
+            aria-label="Close mentor"
+          >
+            <X className="size-4" />
+          </button>
+          <MentorPanel context={mentorContext} className="flex-1" />
+        </div>
+      ) : null}
+    </AppShell>
+  );
+}
+
+interface BlockProps {
+  block: LessonBlock;
+  answers: Record<string, number | string>;
+  checked: Record<string, boolean>;
+  setAnswers: (fn: (a: Record<string, number | string>) => Record<string, number | string>) => void;
+  setChecked: (fn: (c: Record<string, boolean>) => Record<string, boolean>) => void;
+  code: string;
+  setCode: (c: string) => void;
+  solved: boolean;
+  onSolved: () => void;
+  onResult: (r: RunResult) => void;
+}
+
+function Block({
+  block,
+  answers,
+  checked,
+  setAnswers,
+  setChecked,
+  code,
+  setCode,
+  solved,
+  onSolved,
+  onResult,
+}: BlockProps) {
+  if (block.kind === "text") {
+    return <p className="text-[15px] leading-7 text-foreground">{block.body}</p>;
+  }
+
+  if (block.kind === "callout") {
+    return (
+      <div className="flex gap-3 rounded-[14px] border border-ember/25 bg-ember/5 p-4">
+        <Lightbulb className="mt-0.5 size-4 shrink-0 text-ember" />
+        <p className="text-sm leading-6">{block.body}</p>
+      </div>
+    );
+  }
+
+  if (block.kind === "code") {
+    return (
+      <div className="overflow-hidden rounded-[14px] bg-ink">
+        <div className="border-b border-white/10 px-4 py-2 font-mono text-[11px] uppercase tracking-wider text-white/50">
+          {block.caption ?? block.language}
+        </div>
+        <pre className="overflow-x-auto p-4 font-mono text-[13px] leading-6 text-white/90">{block.code}</pre>
+      </div>
+    );
+  }
+
+  if (block.kind === "mcq") {
+    const picked = answers[block.id];
+    const isChecked = checked[block.id];
+    const correct = picked === block.answer;
+    return (
+      <div className="rounded-[14px] border border-border p-5">
+        <p className="eyebrow">Check yourself</p>
+        <p className="mt-2 font-semibold">{block.question}</p>
+        <div className="mt-4 space-y-2">
+          {block.options.map((opt, i) => (
+            <button
+              key={opt}
+              onClick={() => !isChecked && setAnswers((a) => ({ ...a, [block.id]: i }))}
+              className={cn(
+                "flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm transition-colors",
+                picked === i ? "border-brand bg-brand/5 font-semibold" : "border-border hover:bg-secondary",
+                isChecked && i === block.answer && "border-brand bg-brand/10",
+                isChecked && picked === i && !correct && "border-destructive bg-destructive/5",
+              )}
+            >
+              <span className="grid size-6 shrink-0 place-items-center rounded-full border border-current text-[11px] font-bold">
+                {String.fromCharCode(65 + i)}
+              </span>
+              {opt}
+            </button>
+          ))}
+        </div>
+        {isChecked ? (
+          <p className={cn("mt-3 text-sm", correct ? "text-brand" : "text-destructive")}>
+            {correct ? "Correct. " : "Not quite. "}
+            <span className="text-foreground">{block.explanation}</span>
+          </p>
+        ) : (
+          <Button
+            variant="outline"
+            className="mt-4"
+            disabled={picked === undefined}
+            onClick={() => setChecked((c) => ({ ...c, [block.id]: true }))}
+          >
+            Check answer
+          </Button>
+        )}
+      </div>
+    );
+  }
+
+  if (block.kind === "fill") {
+    const value = String(answers[block.id] ?? "");
+    const isChecked = checked[block.id];
+    const correct = value.trim().toLowerCase() === block.answer.toLowerCase();
+    return (
+      <div className="rounded-[14px] border border-border p-5">
+        <p className="eyebrow">Fill the gap</p>
+        <p className="mt-2 font-semibold">{block.prompt}</p>
+        <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl bg-ink px-4 py-3 font-mono text-[13px] text-white/90">
+          <span>{block.before}</span>
+          <Input
+            value={value}
+            onChange={(e) => setAnswers((a) => ({ ...a, [block.id]: e.target.value }))}
+            disabled={isChecked && correct}
+            aria-label="Your answer"
+            className="h-8 w-40 border-white/20 bg-white/10 font-mono text-white placeholder:text-white/40"
+          />
+          <span>{block.after}</span>
+        </div>
+        {isChecked ? (
+          <p className={cn("mt-3 text-sm", correct ? "text-brand" : "text-destructive")}>
+            {correct ? "That's it. " : "Try again. "}
+            <span className="text-foreground">{correct ? block.explanation : ""}</span>
+          </p>
+        ) : null}
+        <Button
+          variant="outline"
+          className="mt-4"
+          disabled={!value.trim() || (isChecked && correct)}
+          onClick={() => setChecked((c) => ({ ...c, [block.id]: true }))}
+        >
+          Check answer
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <CodeChallenge
+      title={block.title}
+      prompt={block.prompt}
+      language={block.language}
+      starter={block.starter}
+      hint={block.hint}
+      tests={block.tests}
+      code={code}
+      onCodeChange={setCode}
+      onResult={onResult}
+      onSolved={onSolved}
+      solved={solved}
+    />
+  );
+}
+
+void MessageSquare;
