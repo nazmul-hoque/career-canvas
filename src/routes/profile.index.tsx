@@ -1,0 +1,496 @@
+import { useEffect, useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import {
+  Award,
+  BookCheck,
+  Check,
+  Flame,
+  FolderGit2,
+  Pencil,
+  Share2,
+  Sparkles,
+  Zap,
+} from "lucide-react";
+import { toast } from "sonner";
+import { AppShell } from "@/components/layout/AppShell";
+import { StatPill, EmptyState } from "@/components/common/StatPill";
+import { AchievementIcon } from "@/components/common/AchievementIcon";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useSession } from "@/hooks/useAuth";
+import {
+  useAchievements,
+  useProfile,
+  useProgress,
+  useSubmissions,
+  useUpdateProfile,
+} from "@/hooks/useLearner";
+import { achievements, levelFromXp, levelTitle } from "@/content/gamification";
+import { courses, courseLessons, pathById } from "@/content/curriculum";
+import { projectById } from "@/content/projects";
+import { allPathCompletions } from "@/lib/certificates";
+import { cn } from "@/lib/utils";
+
+export const Route = createFileRoute("/profile/")({
+  head: () => ({
+    meta: [
+      { title: "Your profile — Ascent" },
+      {
+        name: "description",
+        content:
+          "Your XP, level, streak, completed courses, achievements, certificates and portfolio.",
+      },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
+  component: ProfilePage,
+});
+
+function initialsOf(name?: string | null) {
+  if (!name) return "AS";
+  return name
+    .split(" ")
+    .map((p) => p[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+}
+
+function ProfilePage() {
+  const { user, isLoading: sessionLoading } = useSession();
+  const { data: profile, isLoading } = useProfile();
+  const { data: progress = [] } = useProgress();
+  const { data: earned = [] } = useAchievements();
+  const { data: submissions = [] } = useSubmissions();
+  const updateProfile = useUpdateProfile();
+
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState("");
+  const [bio, setBio] = useState("");
+
+  useEffect(() => {
+    if (!profile) return;
+    setName(profile.display_name);
+    setBio(profile.bio ?? "");
+  }, [profile]);
+
+  if (sessionLoading || isLoading) {
+    return (
+      <AppShell>
+        <Skeleton className="h-48 w-full rounded-[22px]" />
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          {[0, 1, 2].map((i) => (
+            <Skeleton key={i} className="h-40 w-full rounded-2xl" />
+          ))}
+        </div>
+      </AppShell>
+    );
+  }
+
+  if (!user || !profile) {
+    return (
+      <AppShell>
+        <EmptyState
+          icon={<Sparkles className="size-5" />}
+          title="Sign in to see your profile"
+          description="Your XP, streak, certificates and portfolio all live here once you have an account."
+          action={
+            <Button asChild className="mt-2">
+              <Link to="/auth">Sign in or start free</Link>
+            </Button>
+          }
+        />
+      </AppShell>
+    );
+  }
+
+  const done = new Set(progress.map((p) => p.lesson_id));
+  const earnedKeys = new Set(earned.map((e) => e.achievement_key));
+  const level = levelFromXp(profile.xp);
+  const path = profile.career_path ? pathById(profile.career_path) : null;
+
+  const completedCourses = courses.filter((c) => {
+    const lessons = courseLessons(c);
+    return lessons.length > 0 && lessons.every((l) => done.has(l.id));
+  });
+
+  const certificates = allPathCompletions(done).filter((c) => c.eligible);
+
+  const skills = [...new Set(completedCourses.flatMap((c) => c.skills))];
+
+  const myProjects = (
+    submissions as { project_id: string; status: string; live_url: string | null }[]
+  )
+    .map((s) => ({ ...s, project: projectById(s.project_id) }))
+    .filter((s) => s.project);
+
+  function save() {
+    updateProfile.mutate(
+      { display_name: name.trim() || "Learner", bio: bio.trim() || null },
+      {
+        onSuccess: () => {
+          toast.success("Profile updated");
+          setEditing(false);
+        },
+        onError: () => toast.error("We could not save that. Try again in a moment."),
+      },
+    );
+  }
+
+  function share() {
+    const url = `${window.location.origin}/profile/${user!.id}`;
+    navigator.clipboard
+      ?.writeText(url)
+      .then(() => toast.success("Public profile link copied"))
+      .catch(() => toast.error("Could not copy the link"));
+  }
+
+  return (
+    <AppShell>
+      {/* Header */}
+      <section className="ink-surface diagonals overflow-hidden rounded-[22px] px-6 py-8 sm:px-10">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+            <Avatar className="size-20 border-2 border-white/20">
+              <AvatarFallback className="bg-white/10 text-xl font-bold text-white">
+                {initialsOf(profile.display_name)}
+              </AvatarFallback>
+            </Avatar>
+
+            {editing ? (
+              <div className="w-full max-w-md space-y-3">
+                <div>
+                  <Label htmlFor="name" className="text-white/70">
+                    Display name
+                  </Label>
+                  <Input
+                    id="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="mt-1.5 border-white/20 bg-white/10 text-white placeholder:text-white/40"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="bio" className="text-white/70">
+                    Bio
+                  </Label>
+                  <Textarea
+                    id="bio"
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                    rows={3}
+                    placeholder="What you're working toward, in one or two lines."
+                    className="mt-1.5 border-white/20 bg-white/10 text-white placeholder:text-white/40"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={save} disabled={updateProfile.isPending}>
+                    <Check className="mr-1.5 size-4" />
+                    {updateProfile.isPending ? "Saving…" : "Save"}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setEditing(false)}
+                    className="border-white/25 bg-transparent text-white hover:bg-white/10 hover:text-white"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <h1 className="font-display text-3xl font-bold tracking-tight text-white">
+                  {profile.display_name}
+                </h1>
+                <p className="mt-1 text-sm font-semibold text-brand">
+                  Level {level.level} · {levelTitle(level.level)}
+                  {path ? ` · ${path.name}` : ""}
+                </p>
+                <p className="mt-3 max-w-xl leading-relaxed text-white/70">
+                  {profile.bio ?? "No bio yet. Add a line about what you're working toward."}
+                </p>
+                <div className="mt-4 flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setEditing(true)}
+                    className="border-white/25 bg-transparent text-white hover:bg-white/10 hover:text-white"
+                  >
+                    <Pencil className="mr-1.5 size-3.5" /> Edit
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={share}
+                    className="border-white/25 bg-transparent text-white hover:bg-white/10 hover:text-white"
+                  >
+                    <Share2 className="mr-1.5 size-3.5" /> Share
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-3 gap-6 lg:text-right">
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-white/50">
+                XP
+              </div>
+              <div className="font-display text-2xl font-bold text-brand">
+                {profile.xp.toLocaleString()}
+              </div>
+            </div>
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-white/50">
+                Streak
+              </div>
+              <div className="font-display text-2xl font-bold text-ember">
+                {profile.streak_current}
+              </div>
+              <div className="text-[11px] text-white/40">best {profile.streak_best}</div>
+            </div>
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-white/50">
+                Lessons
+              </div>
+              <div className="font-display text-2xl font-bold text-white">{progress.length}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Level bar */}
+        <div className="mt-7">
+          <div className="flex items-center justify-between text-xs font-semibold text-white/60">
+            <span>Level {level.level}</span>
+            <span>
+              {level.intoLevel} / {level.needed} XP to level {level.level + 1}
+            </span>
+          </div>
+          <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
+            <div
+              className="h-full rounded-full bg-brand transition-all duration-700"
+              style={{ width: `${level.percent}%` }}
+            />
+          </div>
+        </div>
+      </section>
+
+      <div className="mt-8 grid gap-6 lg:grid-cols-[1.5fr_1fr]">
+        <div className="space-y-6">
+          {/* Portfolio */}
+          <section>
+            <div className="flex items-center justify-between">
+              <h2 className="flex items-center gap-2 font-display text-xl font-bold">
+                <FolderGit2 className="size-4 text-brand" /> Portfolio
+              </h2>
+              <Link to="/projects" className="text-sm font-semibold text-brand hover:underline">
+                Browse briefs
+              </Link>
+            </div>
+
+            {myProjects.length === 0 ? (
+              <div className="mt-4">
+                <EmptyState
+                  icon={<FolderGit2 className="size-5" />}
+                  title="Nothing shipped yet"
+                  description="Projects you submit show up here, and on the public version of this page."
+                  action={
+                    <Button asChild size="sm" className="mt-2">
+                      <Link to="/projects">Pick a project</Link>
+                    </Button>
+                  }
+                />
+              </div>
+            ) : (
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                {myProjects.map((s) => (
+                  <Link
+                    key={s.project_id}
+                    to="/projects/$projectId"
+                    params={{ projectId: s.project_id }}
+                    className="card-surface overflow-hidden transition-all hover:-translate-y-0.5 hover:shadow-lift"
+                  >
+                    <div
+                      className={cn(
+                        "holdmark h-20",
+                        s.project!.accent === "brand" && "bg-brand",
+                        s.project!.accent === "ember" && "bg-ember",
+                        s.project!.accent === "ink" && "bg-ink",
+                      )}
+                    />
+                    <div className="p-4">
+                      <div className="font-display font-bold leading-snug">{s.project!.title}</div>
+                      <div className="mt-2 flex items-center justify-between">
+                        <StatPill tone={s.status === "approved" ? "brand" : "neutral"}>
+                          {s.status}
+                        </StatPill>
+                        <span className="text-xs text-chalk">{s.project!.difficulty}</span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Completed courses */}
+          <section>
+            <h2 className="flex items-center gap-2 font-display text-xl font-bold">
+              <BookCheck className="size-4 text-brand" /> Completed courses
+            </h2>
+            {completedCourses.length === 0 ? (
+              <p className="mt-3 text-sm text-chalk">
+                Finish every lesson in a course and it lands here. You're {progress.length} lessons
+                in.
+              </p>
+            ) : (
+              <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+                {completedCourses.map((c) => (
+                  <li key={c.id}>
+                    <Link
+                      to="/courses/$courseId"
+                      params={{ courseId: c.id }}
+                      className="flex items-center gap-3 rounded-xl bg-card p-3.5 ring-1 ring-border transition-colors hover:ring-brand/40"
+                    >
+                      <Check className="size-4 shrink-0 text-brand" />
+                      <span className="text-sm font-semibold">{c.title}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          {/* Skills */}
+          {skills.length > 0 ? (
+            <section>
+              <h2 className="font-display text-xl font-bold">Skills evidenced</h2>
+              <p className="mt-1 text-sm text-chalk">Drawn from courses you actually finished.</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {skills.map((s) => (
+                  <span
+                    key={s}
+                    className="rounded-full bg-card px-3.5 py-1.5 text-sm font-semibold ring-1 ring-border"
+                  >
+                    {s}
+                  </span>
+                ))}
+              </div>
+            </section>
+          ) : null}
+        </div>
+
+        <aside className="space-y-5">
+          {/* Certificates */}
+          <section className="card-surface p-5">
+            <h2 className="flex items-center gap-2 font-display text-lg font-bold">
+              <Award className="size-4 text-ember" /> Certificates
+            </h2>
+            {certificates.length === 0 ? (
+              <p className="mt-2 text-sm text-chalk">
+                Complete every lesson on a career path to earn one.{" "}
+                <Link to="/paths" className="font-semibold text-brand hover:underline">
+                  See paths
+                </Link>
+              </p>
+            ) : (
+              <ul className="mt-3 space-y-2">
+                {certificates.map((c) => (
+                  <li key={c.path.id}>
+                    <Link
+                      to="/certificates/$pathId"
+                      params={{ pathId: c.path.id }}
+                      className="flex items-center justify-between rounded-xl bg-ember/10 px-3.5 py-3 text-sm font-semibold ring-1 ring-ember/20 transition-colors hover:ring-ember/50"
+                    >
+                      {c.path.name}
+                      <Award className="size-4 text-ember" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          {/* Achievements */}
+          <section className="card-surface p-5">
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-lg font-bold">Achievements</h2>
+              <span className="text-xs font-semibold text-chalk">
+                {earnedKeys.size} / {achievements.length}
+              </span>
+            </div>
+            <ul className="mt-4 space-y-2.5">
+              {achievements.map((a) => {
+                const has = earnedKeys.has(a.key);
+                return (
+                  <li key={a.key} className={cn("flex items-start gap-3", !has && "opacity-45")}>
+                    <span
+                      className={cn(
+                        "grid size-8 shrink-0 place-items-center rounded-xl",
+                        has ? "bg-brand/12 text-brand" : "bg-secondary text-chalk",
+                      )}
+                    >
+                      <AchievementIcon icon={a.icon} />
+                    </span>
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold">{a.name}</div>
+                      <div className="text-xs text-chalk">{a.description}</div>
+                    </div>
+                    <span className="ml-auto shrink-0 text-xs font-bold text-chalk">+{a.xp}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+
+          {/* Stats */}
+          <section className="card-surface p-5">
+            <h2 className="font-display text-lg font-bold">Learning statistics</h2>
+            <dl className="mt-3 space-y-2.5 text-sm">
+              <div className="flex items-center justify-between">
+                <dt className="text-chalk">Lessons completed</dt>
+                <dd className="font-bold">{progress.length}</dd>
+              </div>
+              <div className="flex items-center justify-between">
+                <dt className="text-chalk">Courses finished</dt>
+                <dd className="font-bold">{completedCourses.length}</dd>
+              </div>
+              <div className="flex items-center justify-between">
+                <dt className="text-chalk">Projects submitted</dt>
+                <dd className="font-bold">{myProjects.length}</dd>
+              </div>
+              <div className="flex items-center justify-between">
+                <dt className="inline-flex items-center gap-1.5 text-chalk">
+                  <Zap className="size-3.5" /> Total XP
+                </dt>
+                <dd className="font-bold text-brand">{profile.xp.toLocaleString()}</dd>
+              </div>
+              <div className="flex items-center justify-between">
+                <dt className="inline-flex items-center gap-1.5 text-chalk">
+                  <Flame className="size-3.5" /> Best streak
+                </dt>
+                <dd className="font-bold text-ember">{profile.streak_best} days</dd>
+              </div>
+              <div className="flex items-center justify-between">
+                <dt className="text-chalk">Plan</dt>
+                <dd>
+                  <Link to="/pricing">
+                    <StatPill tone={profile.plan === "free" ? "neutral" : "brand"}>
+                      {profile.plan}
+                    </StatPill>
+                  </Link>
+                </dd>
+              </div>
+            </dl>
+          </section>
+        </aside>
+      </div>
+    </AppShell>
+  );
+}

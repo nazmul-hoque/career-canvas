@@ -7,12 +7,12 @@
  */
 
 export interface MentorContext {
-  lessonTitle?: string;
-  courseTitle?: string;
-  code?: string;
-  language?: string;
-  lastError?: string | null;
-  failingTests?: string[];
+  lessonTitle?: string | undefined;
+  courseTitle?: string | undefined;
+  code?: string | undefined;
+  language?: string | undefined;
+  lastError?: string | null | undefined;
+  failingTests?: string[] | undefined;
 }
 
 export interface MentorMessage {

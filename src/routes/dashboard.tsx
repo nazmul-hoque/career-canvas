@@ -210,7 +210,7 @@ function Dashboard() {
                 Every lesson in {path.name} is done. Claim your certificate or start a second path.
               </p>
               <Button asChild size="lg" variant="secondary" className="mt-6">
-                <Link to="/certificate/$pathId" params={{ pathId: path.id }}>
+                <Link to="/certificates/$pathId" params={{ pathId: path.id }}>
                   View certificate
                 </Link>
               </Button>

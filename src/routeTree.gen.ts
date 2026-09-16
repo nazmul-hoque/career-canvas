@@ -11,11 +11,21 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as CommunityRouteImport } from './routes/community'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as CertificatesPathIdRouteImport } from './routes/certificates.$pathId'
 import { Route as CoursesCourseIdRouteImport } from './routes/courses.$courseId'
 import { Route as LearnIndexRouteImport } from './routes/learn.index'
+import { Route as PathsIndexRouteImport } from './routes/paths.index'
+import { Route as PathsPathIdRouteImport } from './routes/paths.$pathId'
+import { Route as ProfileIndexRouteImport } from './routes/profile.index'
+import { Route as ProfileUserIdRouteImport } from './routes/profile.$userId'
+import { Route as ProjectsIndexRouteImport } from './routes/projects.index'
+import { Route as ProjectsProjectIdRouteImport } from './routes/projects.$projectId'
 import { Route as LearnCourseIdLessonIdRouteImport } from './routes/learn.$courseId.$lessonId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -28,9 +38,19 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CommunityRoute = CommunityRouteImport.update({
+  id: '/community',
+  path: '/community',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeaderboardRoute = LeaderboardRouteImport.update({
+  id: '/leaderboard',
+  path: '/leaderboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -38,9 +58,19 @@ const OnboardingRoute = OnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CertificatesPathIdRoute = CertificatesPathIdRouteImport.update({
+  id: '/certificates/$pathId',
+  path: '/certificates/$pathId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CoursesCourseIdRoute = CoursesCourseIdRouteImport.update({
@@ -53,6 +83,36 @@ const LearnIndexRoute = LearnIndexRouteImport.update({
   path: '/learn/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PathsIndexRoute = PathsIndexRouteImport.update({
+  id: '/paths/',
+  path: '/paths/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PathsPathIdRoute = PathsPathIdRouteImport.update({
+  id: '/paths/$pathId',
+  path: '/paths/$pathId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileIndexRoute = ProfileIndexRouteImport.update({
+  id: '/profile/',
+  path: '/profile/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileUserIdRoute = ProfileUserIdRouteImport.update({
+  id: '/profile/$userId',
+  path: '/profile/$userId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProjectsIndexRoute = ProjectsIndexRouteImport.update({
+  id: '/projects/',
+  path: '/projects/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProjectsProjectIdRoute = ProjectsProjectIdRouteImport.update({
+  id: '/projects/$projectId',
+  path: '/projects/$projectId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LearnCourseIdLessonIdRoute = LearnCourseIdLessonIdRouteImport.update({
   id: '/learn/$courseId/$lessonId',
   path: '/learn/$courseId/$lessonId',
@@ -62,32 +122,62 @@ const LearnCourseIdLessonIdRoute = LearnCourseIdLessonIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/community': typeof CommunityRoute
   '/dashboard': typeof DashboardRoute
+  '/leaderboard': typeof LeaderboardRoute
   '/onboarding': typeof OnboardingRoute
+  '/pricing': typeof PricingRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/certificates/$pathId': typeof CertificatesPathIdRoute
   '/courses/$courseId': typeof CoursesCourseIdRoute
+  '/paths/$pathId': typeof PathsPathIdRoute
+  '/profile/$userId': typeof ProfileUserIdRoute
+  '/projects/$projectId': typeof ProjectsProjectIdRoute
   '/learn/': typeof LearnIndexRoute
+  '/paths/': typeof PathsIndexRoute
+  '/profile/': typeof ProfileIndexRoute
+  '/projects/': typeof ProjectsIndexRoute
   '/learn/$courseId/$lessonId': typeof LearnCourseIdLessonIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/community': typeof CommunityRoute
   '/dashboard': typeof DashboardRoute
+  '/leaderboard': typeof LeaderboardRoute
   '/onboarding': typeof OnboardingRoute
+  '/pricing': typeof PricingRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/certificates/$pathId': typeof CertificatesPathIdRoute
   '/courses/$courseId': typeof CoursesCourseIdRoute
+  '/paths/$pathId': typeof PathsPathIdRoute
+  '/profile/$userId': typeof ProfileUserIdRoute
+  '/projects/$projectId': typeof ProjectsProjectIdRoute
   '/learn': typeof LearnIndexRoute
+  '/paths': typeof PathsIndexRoute
+  '/profile': typeof ProfileIndexRoute
+  '/projects': typeof ProjectsIndexRoute
   '/learn/$courseId/$lessonId': typeof LearnCourseIdLessonIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/community': typeof CommunityRoute
   '/dashboard': typeof DashboardRoute
+  '/leaderboard': typeof LeaderboardRoute
   '/onboarding': typeof OnboardingRoute
+  '/pricing': typeof PricingRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/certificates/$pathId': typeof CertificatesPathIdRoute
   '/courses/$courseId': typeof CoursesCourseIdRoute
+  '/paths/$pathId': typeof PathsPathIdRoute
+  '/profile/$userId': typeof ProfileUserIdRoute
+  '/projects/$projectId': typeof ProjectsProjectIdRoute
   '/learn/': typeof LearnIndexRoute
+  '/paths/': typeof PathsIndexRoute
+  '/profile/': typeof ProfileIndexRoute
+  '/projects/': typeof ProjectsIndexRoute
   '/learn/$courseId/$lessonId': typeof LearnCourseIdLessonIdRoute
 }
 export interface FileRouteTypes {
@@ -95,42 +185,82 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/community'
     | '/dashboard'
+    | '/leaderboard'
     | '/onboarding'
+    | '/pricing'
     | '/reset-password'
+    | '/certificates/$pathId'
     | '/courses/$courseId'
+    | '/paths/$pathId'
+    | '/profile/$userId'
+    | '/projects/$projectId'
     | '/learn/'
+    | '/paths/'
+    | '/profile/'
+    | '/projects/'
     | '/learn/$courseId/$lessonId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
+    | '/community'
     | '/dashboard'
+    | '/leaderboard'
     | '/onboarding'
+    | '/pricing'
     | '/reset-password'
+    | '/certificates/$pathId'
     | '/courses/$courseId'
+    | '/paths/$pathId'
+    | '/profile/$userId'
+    | '/projects/$projectId'
     | '/learn'
+    | '/paths'
+    | '/profile'
+    | '/projects'
     | '/learn/$courseId/$lessonId'
   id:
     | '__root__'
     | '/'
     | '/auth'
+    | '/community'
     | '/dashboard'
+    | '/leaderboard'
     | '/onboarding'
+    | '/pricing'
     | '/reset-password'
+    | '/certificates/$pathId'
     | '/courses/$courseId'
+    | '/paths/$pathId'
+    | '/profile/$userId'
+    | '/projects/$projectId'
     | '/learn/'
+    | '/paths/'
+    | '/profile/'
+    | '/projects/'
     | '/learn/$courseId/$lessonId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  CommunityRoute: typeof CommunityRoute
   DashboardRoute: typeof DashboardRoute
+  LeaderboardRoute: typeof LeaderboardRoute
   OnboardingRoute: typeof OnboardingRoute
+  PricingRoute: typeof PricingRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  CertificatesPathIdRoute: typeof CertificatesPathIdRoute
   CoursesCourseIdRoute: typeof CoursesCourseIdRoute
+  PathsPathIdRoute: typeof PathsPathIdRoute
+  ProfileUserIdRoute: typeof ProfileUserIdRoute
+  ProjectsProjectIdRoute: typeof ProjectsProjectIdRoute
   LearnIndexRoute: typeof LearnIndexRoute
+  PathsIndexRoute: typeof PathsIndexRoute
+  ProfileIndexRoute: typeof ProfileIndexRoute
+  ProjectsIndexRoute: typeof ProjectsIndexRoute
   LearnCourseIdLessonIdRoute: typeof LearnCourseIdLessonIdRoute
 }
 
@@ -150,11 +280,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/community': {
+      id: '/community'
+      path: '/community'
+      fullPath: '/community'
+      preLoaderRoute: typeof CommunityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/leaderboard': {
+      id: '/leaderboard'
+      path: '/leaderboard'
+      fullPath: '/leaderboard'
+      preLoaderRoute: typeof LeaderboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onboarding': {
@@ -164,11 +308,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reset-password': {
       id: '/reset-password'
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/certificates/$pathId': {
+      id: '/certificates/$pathId'
+      path: '/certificates/$pathId'
+      fullPath: '/certificates/$pathId'
+      preLoaderRoute: typeof CertificatesPathIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/courses/$courseId': {
@@ -185,6 +343,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LearnIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/paths/': {
+      id: '/paths/'
+      path: '/paths'
+      fullPath: '/paths/'
+      preLoaderRoute: typeof PathsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/paths/$pathId': {
+      id: '/paths/$pathId'
+      path: '/paths/$pathId'
+      fullPath: '/paths/$pathId'
+      preLoaderRoute: typeof PathsPathIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile/': {
+      id: '/profile/'
+      path: '/profile'
+      fullPath: '/profile/'
+      preLoaderRoute: typeof ProfileIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile/$userId': {
+      id: '/profile/$userId'
+      path: '/profile/$userId'
+      fullPath: '/profile/$userId'
+      preLoaderRoute: typeof ProfileUserIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/projects/': {
+      id: '/projects/'
+      path: '/projects'
+      fullPath: '/projects/'
+      preLoaderRoute: typeof ProjectsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/projects/$projectId': {
+      id: '/projects/$projectId'
+      path: '/projects/$projectId'
+      fullPath: '/projects/$projectId'
+      preLoaderRoute: typeof ProjectsProjectIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/learn/$courseId/$lessonId': {
       id: '/learn/$courseId/$lessonId'
       path: '/learn/$courseId/$lessonId'
@@ -198,11 +398,21 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  CommunityRoute: CommunityRoute,
   DashboardRoute: DashboardRoute,
+  LeaderboardRoute: LeaderboardRoute,
   OnboardingRoute: OnboardingRoute,
+  PricingRoute: PricingRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  CertificatesPathIdRoute: CertificatesPathIdRoute,
   CoursesCourseIdRoute: CoursesCourseIdRoute,
+  PathsPathIdRoute: PathsPathIdRoute,
+  ProfileUserIdRoute: ProfileUserIdRoute,
+  ProjectsProjectIdRoute: ProjectsProjectIdRoute,
   LearnIndexRoute: LearnIndexRoute,
+  PathsIndexRoute: PathsIndexRoute,
+  ProfileIndexRoute: ProfileIndexRoute,
+  ProjectsIndexRoute: ProjectsIndexRoute,
   LearnCourseIdLessonIdRoute: LearnCourseIdLessonIdRoute,
 }
 export const routeTree = rootRouteImport
