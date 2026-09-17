@@ -4,13 +4,8 @@ import { ArrowRight, Clock, Layers, Sparkles } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { StatPill } from "@/components/common/StatPill";
 import { useProfile, useProgress } from "@/hooks/useLearner";
-import {
-  careerPaths,
-  pathCourses,
-  pathLessonCount,
-  courseLessons,
-  type SkillLevel,
-} from "@/content/curriculum";
+import { careerPaths, pathCourses, pathLessonCount, type SkillLevel } from "@/content/curriculum";
+import { liveLessons, pathLiveLessonCount } from "@/content/lessons";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/paths/")({
@@ -75,9 +70,12 @@ function Paths() {
       <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {list.map((path) => {
           const pCourses = pathCourses(path);
-          const total = pathLessonCount(path);
+          // `total` counts written lessons; `planned` is the whole roadmap. Progress
+          // is always measured against what a learner can actually do today.
+          const total = pathLiveLessonCount(path);
+          const planned = pathLessonCount(path);
           const completed = pCourses.reduce(
-            (sum, c) => sum + courseLessons(c).filter((l) => done.has(l.id)).length,
+            (sum, c) => sum + liveLessons(c).filter((l) => done.has(l.id)).length,
             0,
           );
           const percent = total ? Math.round((completed / total) * 100) : 0;
@@ -147,6 +145,9 @@ function Paths() {
                   </span>
                   <span className="inline-flex items-center gap-1">
                     <Clock className="size-3.5" /> {path.weeks}w
+                  </span>
+                  <span className={cn(total < planned && "text-ember")}>
+                    {total} / {planned} lessons live
                   </span>
                 </span>
                 <ArrowRight className="size-4 text-brand transition-transform group-hover:translate-x-1" />

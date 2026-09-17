@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Flame, Heart, MessageSquare, PenLine, TrendingUp, Users } from "lucide-react";
+import { toast } from "sonner";
 import { AppShell } from "@/components/layout/AppShell";
 import { StatPill } from "@/components/common/StatPill";
 import { Button } from "@/components/ui/button";
@@ -25,8 +26,8 @@ import {
   useComments,
   useCreatePost,
   usePosts,
-  readLikes,
-  writeLikes,
+  useMyLikes,
+  useToggleLike,
 } from "@/hooks/useCommunity";
 import { seedPosts, topics, type SeedPost } from "@/content/community";
 import { cn } from "@/lib/utils";
@@ -91,20 +92,21 @@ function Community() {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [postTopic, setPostTopic] = useState("general");
-  const [likes, setLikes] = useState<Record<string, boolean>>({});
 
   const { data: livePosts = [], isLoading } = usePosts(topic);
+  const { data: likedPostIds = [] } = useMyLikes();
+  const toggleLikeMutation = useToggleLike();
   const { data: board = [] } = useLeaderboard();
   const createPost = useCreatePost();
 
-  useEffect(() => setLikes(readLikes()), []);
+  const liked = new Set(likedPostIds);
 
   function toggleLike(id: string) {
-    setLikes((prev) => {
-      const next = { ...prev, [id]: !prev[id] };
-      writeLikes(next);
-      return next;
-    });
+    if (!user) {
+      toast.error("Sign in to like posts");
+      return;
+    }
+    toggleLikeMutation.mutate({ postId: id, liked: liked.has(id) });
   }
 
   const feed = useMemo<FeedItem[]>(() => {
@@ -297,7 +299,7 @@ function Community() {
                   <PostCard
                     key={item.id}
                     item={item}
-                    liked={Boolean(likes[item.id])}
+                    liked={liked.has(item.id)}
                     onLike={() => toggleLike(item.id)}
                     canComment={Boolean(user)}
                   />
@@ -419,17 +421,29 @@ function PostCard({
           <p className="mt-1.5 text-sm leading-relaxed text-chalk">{item.body}</p>
 
           <div className="mt-4 flex items-center gap-4">
-            <button
-              onClick={onLike}
-              className={cn(
-                "inline-flex items-center gap-1.5 text-sm font-semibold transition-colors",
-                liked ? "text-ember" : "text-chalk hover:text-foreground",
-              )}
-              aria-pressed={liked}
-            >
-              <Heart className={cn("size-4", liked && "fill-ember")} />
-              {item.likes + (liked ? 1 : 0)}
-            </button>
+            {item.live ? (
+              <button
+                onClick={onLike}
+                className={cn(
+                  "inline-flex items-center gap-1.5 text-sm font-semibold transition-colors",
+                  liked ? "text-ember" : "text-chalk hover:text-foreground",
+                )}
+                aria-pressed={liked}
+              >
+                <Heart className={cn("size-4", liked && "fill-ember")} />
+                {item.likes}
+              </button>
+            ) : (
+              // Seeded example post: the count is part of the demo content, so
+              // there is nothing real to like.
+              <span
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-chalk/60"
+                title="Seeded example post"
+              >
+                <Heart className="size-4" />
+                {item.likes}
+              </span>
+            )}
             <button
               onClick={() => setShowComments((v) => !v)}
               className="inline-flex items-center gap-1.5 text-sm font-semibold text-chalk transition-colors hover:text-foreground"

@@ -17,15 +17,20 @@ import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as ReviewRouteImport } from './routes/review'
+import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as CertificatesPathIdRouteImport } from './routes/certificates.$pathId'
 import { Route as CoursesCourseIdRouteImport } from './routes/courses.$courseId'
 import { Route as LearnIndexRouteImport } from './routes/learn.index'
 import { Route as PathsIndexRouteImport } from './routes/paths.index'
 import { Route as PathsPathIdRouteImport } from './routes/paths.$pathId'
+import { Route as PlacementPathIdRouteImport } from './routes/placement.$pathId'
 import { Route as ProfileIndexRouteImport } from './routes/profile.index'
 import { Route as ProfileUserIdRouteImport } from './routes/profile.$userId'
 import { Route as ProjectsIndexRouteImport } from './routes/projects.index'
 import { Route as ProjectsProjectIdRouteImport } from './routes/projects.$projectId'
+import { Route as VerifyIndexRouteImport } from './routes/verify.index'
+import { Route as VerifyCertificateIdRouteImport } from './routes/verify.$certificateId'
 import { Route as LearnCourseIdLessonIdRouteImport } from './routes/learn.$courseId.$lessonId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -68,6 +73,16 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReviewRoute = ReviewRouteImport.update({
+  id: '/review',
+  path: '/review',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UnsubscribeRoute = UnsubscribeRouteImport.update({
+  id: '/unsubscribe',
+  path: '/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CertificatesPathIdRoute = CertificatesPathIdRouteImport.update({
   id: '/certificates/$pathId',
   path: '/certificates/$pathId',
@@ -93,6 +108,11 @@ const PathsPathIdRoute = PathsPathIdRouteImport.update({
   path: '/paths/$pathId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlacementPathIdRoute = PlacementPathIdRouteImport.update({
+  id: '/placement/$pathId',
+  path: '/placement/$pathId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileIndexRoute = ProfileIndexRouteImport.update({
   id: '/profile/',
   path: '/profile/',
@@ -113,6 +133,16 @@ const ProjectsProjectIdRoute = ProjectsProjectIdRouteImport.update({
   path: '/projects/$projectId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VerifyIndexRoute = VerifyIndexRouteImport.update({
+  id: '/verify/',
+  path: '/verify/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VerifyCertificateIdRoute = VerifyCertificateIdRouteImport.update({
+  id: '/verify/$certificateId',
+  path: '/verify/$certificateId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LearnCourseIdLessonIdRoute = LearnCourseIdLessonIdRouteImport.update({
   id: '/learn/$courseId/$lessonId',
   path: '/learn/$courseId/$lessonId',
@@ -128,15 +158,20 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRoute
   '/pricing': typeof PricingRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/review': typeof ReviewRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/certificates/$pathId': typeof CertificatesPathIdRoute
   '/courses/$courseId': typeof CoursesCourseIdRoute
   '/paths/$pathId': typeof PathsPathIdRoute
+  '/placement/$pathId': typeof PlacementPathIdRoute
   '/profile/$userId': typeof ProfileUserIdRoute
   '/projects/$projectId': typeof ProjectsProjectIdRoute
+  '/verify/$certificateId': typeof VerifyCertificateIdRoute
   '/learn/': typeof LearnIndexRoute
   '/paths/': typeof PathsIndexRoute
   '/profile/': typeof ProfileIndexRoute
   '/projects/': typeof ProjectsIndexRoute
+  '/verify/': typeof VerifyIndexRoute
   '/learn/$courseId/$lessonId': typeof LearnCourseIdLessonIdRoute
 }
 export interface FileRoutesByTo {
@@ -148,15 +183,20 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/pricing': typeof PricingRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/review': typeof ReviewRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/certificates/$pathId': typeof CertificatesPathIdRoute
   '/courses/$courseId': typeof CoursesCourseIdRoute
   '/paths/$pathId': typeof PathsPathIdRoute
+  '/placement/$pathId': typeof PlacementPathIdRoute
   '/profile/$userId': typeof ProfileUserIdRoute
   '/projects/$projectId': typeof ProjectsProjectIdRoute
+  '/verify/$certificateId': typeof VerifyCertificateIdRoute
   '/learn': typeof LearnIndexRoute
   '/paths': typeof PathsIndexRoute
   '/profile': typeof ProfileIndexRoute
   '/projects': typeof ProjectsIndexRoute
+  '/verify': typeof VerifyIndexRoute
   '/learn/$courseId/$lessonId': typeof LearnCourseIdLessonIdRoute
 }
 export interface FileRoutesById {
@@ -169,15 +209,20 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/pricing': typeof PricingRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/review': typeof ReviewRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/certificates/$pathId': typeof CertificatesPathIdRoute
   '/courses/$courseId': typeof CoursesCourseIdRoute
   '/paths/$pathId': typeof PathsPathIdRoute
+  '/placement/$pathId': typeof PlacementPathIdRoute
   '/profile/$userId': typeof ProfileUserIdRoute
   '/projects/$projectId': typeof ProjectsProjectIdRoute
+  '/verify/$certificateId': typeof VerifyCertificateIdRoute
   '/learn/': typeof LearnIndexRoute
   '/paths/': typeof PathsIndexRoute
   '/profile/': typeof ProfileIndexRoute
   '/projects/': typeof ProjectsIndexRoute
+  '/verify/': typeof VerifyIndexRoute
   '/learn/$courseId/$lessonId': typeof LearnCourseIdLessonIdRoute
 }
 export interface FileRouteTypes {
@@ -191,15 +236,20 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/pricing'
     | '/reset-password'
+    | '/review'
+    | '/unsubscribe'
     | '/certificates/$pathId'
     | '/courses/$courseId'
     | '/paths/$pathId'
+    | '/placement/$pathId'
     | '/profile/$userId'
     | '/projects/$projectId'
+    | '/verify/$certificateId'
     | '/learn/'
     | '/paths/'
     | '/profile/'
     | '/projects/'
+    | '/verify/'
     | '/learn/$courseId/$lessonId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -211,15 +261,20 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/pricing'
     | '/reset-password'
+    | '/review'
+    | '/unsubscribe'
     | '/certificates/$pathId'
     | '/courses/$courseId'
     | '/paths/$pathId'
+    | '/placement/$pathId'
     | '/profile/$userId'
     | '/projects/$projectId'
+    | '/verify/$certificateId'
     | '/learn'
     | '/paths'
     | '/profile'
     | '/projects'
+    | '/verify'
     | '/learn/$courseId/$lessonId'
   id:
     | '__root__'
@@ -231,15 +286,20 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/pricing'
     | '/reset-password'
+    | '/review'
+    | '/unsubscribe'
     | '/certificates/$pathId'
     | '/courses/$courseId'
     | '/paths/$pathId'
+    | '/placement/$pathId'
     | '/profile/$userId'
     | '/projects/$projectId'
+    | '/verify/$certificateId'
     | '/learn/'
     | '/paths/'
     | '/profile/'
     | '/projects/'
+    | '/verify/'
     | '/learn/$courseId/$lessonId'
   fileRoutesById: FileRoutesById
 }
@@ -252,15 +312,20 @@ export interface RootRouteChildren {
   OnboardingRoute: typeof OnboardingRoute
   PricingRoute: typeof PricingRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ReviewRoute: typeof ReviewRoute
+  UnsubscribeRoute: typeof UnsubscribeRoute
   CertificatesPathIdRoute: typeof CertificatesPathIdRoute
   CoursesCourseIdRoute: typeof CoursesCourseIdRoute
   PathsPathIdRoute: typeof PathsPathIdRoute
+  PlacementPathIdRoute: typeof PlacementPathIdRoute
   ProfileUserIdRoute: typeof ProfileUserIdRoute
   ProjectsProjectIdRoute: typeof ProjectsProjectIdRoute
+  VerifyCertificateIdRoute: typeof VerifyCertificateIdRoute
   LearnIndexRoute: typeof LearnIndexRoute
   PathsIndexRoute: typeof PathsIndexRoute
   ProfileIndexRoute: typeof ProfileIndexRoute
   ProjectsIndexRoute: typeof ProjectsIndexRoute
+  VerifyIndexRoute: typeof VerifyIndexRoute
   LearnCourseIdLessonIdRoute: typeof LearnCourseIdLessonIdRoute
 }
 
@@ -322,6 +387,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/review': {
+      id: '/review'
+      path: '/review'
+      fullPath: '/review'
+      preLoaderRoute: typeof ReviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/unsubscribe': {
+      id: '/unsubscribe'
+      path: '/unsubscribe'
+      fullPath: '/unsubscribe'
+      preLoaderRoute: typeof UnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/certificates/$pathId': {
       id: '/certificates/$pathId'
       path: '/certificates/$pathId'
@@ -357,6 +436,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PathsPathIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/placement/$pathId': {
+      id: '/placement/$pathId'
+      path: '/placement/$pathId'
+      fullPath: '/placement/$pathId'
+      preLoaderRoute: typeof PlacementPathIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profile/': {
       id: '/profile/'
       path: '/profile'
@@ -385,6 +471,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProjectsProjectIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/verify/': {
+      id: '/verify/'
+      path: '/verify'
+      fullPath: '/verify/'
+      preLoaderRoute: typeof VerifyIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/verify/$certificateId': {
+      id: '/verify/$certificateId'
+      path: '/verify/$certificateId'
+      fullPath: '/verify/$certificateId'
+      preLoaderRoute: typeof VerifyCertificateIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/learn/$courseId/$lessonId': {
       id: '/learn/$courseId/$lessonId'
       path: '/learn/$courseId/$lessonId'
@@ -404,15 +504,20 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRoute,
   PricingRoute: PricingRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  ReviewRoute: ReviewRoute,
+  UnsubscribeRoute: UnsubscribeRoute,
   CertificatesPathIdRoute: CertificatesPathIdRoute,
   CoursesCourseIdRoute: CoursesCourseIdRoute,
   PathsPathIdRoute: PathsPathIdRoute,
+  PlacementPathIdRoute: PlacementPathIdRoute,
   ProfileUserIdRoute: ProfileUserIdRoute,
   ProjectsProjectIdRoute: ProjectsProjectIdRoute,
+  VerifyCertificateIdRoute: VerifyCertificateIdRoute,
   LearnIndexRoute: LearnIndexRoute,
   PathsIndexRoute: PathsIndexRoute,
   ProfileIndexRoute: ProfileIndexRoute,
   ProjectsIndexRoute: ProjectsIndexRoute,
+  VerifyIndexRoute: VerifyIndexRoute,
   LearnCourseIdLessonIdRoute: LearnCourseIdLessonIdRoute,
 }
 export const routeTree = rootRouteImport

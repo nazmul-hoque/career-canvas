@@ -14,6 +14,7 @@ import {
   User as UserIcon,
   LogOut,
   Route as RouteIcon,
+  Brain,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/useAuth";
@@ -34,6 +35,7 @@ import { useQueryClient } from "@tanstack/react-query";
 const nav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/learn", label: "Learn", icon: GraduationCap },
+  { to: "/review", label: "Review", icon: Brain },
   { to: "/paths", label: "Career paths", icon: RouteIcon },
   { to: "/projects", label: "Projects", icon: FolderGit2 },
   { to: "/community", label: "Community", icon: Users },
@@ -106,7 +108,9 @@ export function AppHeader() {
                 to={item.to}
                 className={cn(
                   "rounded-full px-3.5 py-2 text-sm font-semibold transition-colors",
-                  active ? "bg-brand/10 text-brand" : "text-chalk hover:bg-secondary hover:text-foreground",
+                  active
+                    ? "bg-brand/10 text-brand"
+                    : "text-chalk hover:bg-secondary hover:text-foreground",
                 )}
               >
                 {item.label}

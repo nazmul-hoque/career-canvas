@@ -28,8 +28,11 @@ import {
   pathCourses,
   type LessonMeta,
 } from "@/content/curriculum";
+import { experienceShape } from "@/content/personalisation";
+import { isLessonLive, liveLessons } from "@/content/lessons";
 import { projectById } from "@/content/projects";
 import { pathCompletion } from "@/lib/certificates";
+import { track } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/paths/$pathId")({
@@ -90,11 +93,12 @@ function PathDetail() {
 
   const done = new Set(progress.map((p) => p.lesson_id));
   const courses = pathCourses(path);
-  const { total, completed, percent, eligible } = pathCompletion(path, done);
+  const { total, live, completed, percent, eligible, published } = pathCompletion(path, done);
   const isCurrent = profile?.career_path === path.id;
+  const experience = experienceShape(profile?.experience);
 
   const nextLesson = courses
-    .flatMap((c) => courseLessons(c).map((l) => ({ course: c, lesson: l })))
+    .flatMap((c) => liveLessons(c).map((l) => ({ course: c, lesson: l })))
     .find(({ lesson }) => !done.has(lesson.id));
 
   function choosePath() {
@@ -103,6 +107,7 @@ function PathDetail() {
       { career_path: path.id },
       {
         onSuccess: () => {
+          track("path_chosen", { path_id: path.id, live_lessons: live, total_lessons: total });
           toast.success(`${path.name} is now your path`, {
             description: "Your dashboard will follow this roadmap from here.",
           });
@@ -136,7 +141,7 @@ function PathDetail() {
                 <Layers className="size-3.5" /> {courses.length} courses
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/80">
-                <BookOpen className="size-3.5" /> {total} lessons
+                <BookOpen className="size-3.5" /> {live} of {total} lessons live
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/80">
                 <Clock className="size-3.5" /> ~{path.weeks} weeks
@@ -180,6 +185,21 @@ function PathDetail() {
                 </span>
               ) : null}
             </div>
+
+            {/* The onboarding "where are you starting from?" answer, used. */}
+            {experience && completed === 0 ? (
+              <p className="mt-4 max-w-xl text-sm text-white/70">
+                {experience.effect}{" "}
+                <Link
+                  to="/placement/$pathId"
+                  params={{ pathId: path.id }}
+                  className="font-semibold text-brand underline-offset-4 hover:underline"
+                >
+                  Take the placement check
+                </Link>{" "}
+                — it awards nothing and marks nothing complete, it only suggests a starting module.
+              </p>
+            ) : null}
           </div>
 
           <div className="shrink-0 lg:pl-8">
@@ -187,7 +207,7 @@ function PathDetail() {
               <ProgressRing
                 percent={percent}
                 size={168}
-                sublabel={`${completed} of ${total} lessons`}
+                sublabel={`${completed} of ${live} lessons`}
               />
             </div>
           </div>
@@ -220,11 +240,12 @@ function PathDetail() {
           <ol className="mt-4 space-y-4">
             {courses.map((course, i) => {
               const lessons = courseLessons(course);
-              const courseDone = lessons.filter((l) => done.has(l.id)).length;
-              const coursePercent = lessons.length
-                ? Math.round((courseDone / lessons.length) * 100)
+              const written = liveLessons(course);
+              const courseDone = written.filter((l) => done.has(l.id)).length;
+              const coursePercent = written.length
+                ? Math.round((courseDone / written.length) * 100)
                 : 0;
-              const finished = coursePercent === 100;
+              const finished = written.length > 0 && coursePercent === 100;
 
               return (
                 <li key={course.id} className="card-surface p-5">
@@ -250,8 +271,8 @@ function PathDetail() {
                           {course.title}
                         </Link>
                         <span className="text-xs font-semibold text-chalk">
-                          {lessons.length} lessons · {courseTaskCount(course)} tasks ·{" "}
-                          {course.hours}h
+                          {written.length} of {lessons.length} lessons live ·{" "}
+                          {courseTaskCount(course)} tasks · {course.hours}h
                         </span>
                       </div>
                       <p className="mt-1 text-sm text-chalk">{course.summary}</p>
@@ -275,7 +296,11 @@ function PathDetail() {
                                     key={l.id}
                                     className={cn(
                                       "size-3.5",
-                                      done.has(l.id) ? "text-brand" : "text-chalk/40",
+                                      !isLessonLive(l.id)
+                                        ? "text-chalk/15"
+                                        : done.has(l.id)
+                                          ? "text-brand"
+                                          : "text-chalk/40",
                                     )}
                                   />
                                 );
@@ -338,6 +363,23 @@ function PathDetail() {
                   </Link>
                 </Button>
               </>
+            ) : !published ? (
+              <>
+                <p className="mt-1 text-sm text-chalk">
+                  This path is still being written — {live} of its {total} lessons are live. No
+                  certificate is issued for a roadmap that isn't finished, so keep going and we'll
+                  open this the moment the last lesson lands.
+                </p>
+                <div className="mt-4 text-sm font-semibold text-chalk">
+                  {completed} of {live} live lessons done
+                </div>
+                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-secondary">
+                  <div
+                    className="h-full rounded-full bg-ember transition-all duration-700"
+                    style={{ width: `${percent}%` }}
+                  />
+                </div>
+              </>
             ) : (
               <>
                 <p className="mt-1 text-sm text-chalk">
@@ -345,7 +387,7 @@ function PathDetail() {
                   put on LinkedIn.
                 </p>
                 <div className="mt-4 text-sm font-semibold text-chalk">
-                  {total - completed} lessons remaining
+                  {live - completed} lessons remaining
                 </div>
                 <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-secondary">
                   <div

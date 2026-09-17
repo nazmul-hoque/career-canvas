@@ -1,26 +1,46 @@
 import { careerPaths, courseLessons, pathCourses, type CareerPath } from "@/content/curriculum";
+import { isPathPublished, pathLiveLessons } from "@/content/lessons";
 
 /**
- * Certificates are derived, not stored. A learner is eligible the moment every
- * lesson in every course of a path is in `lesson_progress`. The ID is a stable
- * hash of (user, path) so the same completion always produces the same
- * certificate number and a shared link keeps working.
+ * Certificates are derived, not stored. The ID is a stable hash of (user, path)
+ * so the same completion always produces the same certificate number and a
+ * shared link keeps working.
+ *
+ * Eligibility deliberately requires two things: the path is fully written
+ * (`isPathPublished`) AND every one of its lessons is in `lesson_progress`.
+ * A path with unwritten lessons issues no certificate at all — a credential for
+ * a half-published roadmap is worth less than no credential.
  */
 
 export interface PathCompletion {
   path: CareerPath;
+  /** Lessons on the roadmap, written or not. */
   total: number;
+  /** Lessons actually written and openable. */
+  live: number;
+  /** Live lessons the learner has finished. */
   completed: number;
+  /** Progress against what exists, not against what is planned. */
   percent: number;
+  published: boolean;
   eligible: boolean;
 }
 
 export function pathCompletion(path: CareerPath, completedLessonIds: Set<string>): PathCompletion {
-  const lessons = pathCourses(path).flatMap(courseLessons);
-  const total = lessons.length;
-  const completed = lessons.filter((l) => completedLessonIds.has(l.id)).length;
-  const percent = total ? Math.round((completed / total) * 100) : 0;
-  return { path, total, completed, percent, eligible: total > 0 && completed === total };
+  const total = pathCourses(path).flatMap(courseLessons).length;
+  const live = pathLiveLessons(path);
+  const completed = live.filter((l) => completedLessonIds.has(l.id)).length;
+  const percent = live.length ? Math.round((completed / live.length) * 100) : 0;
+  const published = isPathPublished(path);
+  return {
+    path,
+    total,
+    live: live.length,
+    completed,
+    percent,
+    published,
+    eligible: published && live.length > 0 && completed === live.length,
+  };
 }
 
 export function allPathCompletions(completedLessonIds: Set<string>): PathCompletion[] {

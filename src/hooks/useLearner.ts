@@ -2,7 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "./useAuth";
-import { levelFromXp, achievementByKey } from "@/content/gamification";
+import { achievementByKey } from "@/content/gamification";
+import { completeLessonFn } from "@/lib/learning.functions";
 
 export interface Profile {
   id: string;
@@ -20,6 +21,8 @@ export interface Profile {
   streak_best: number;
   last_active_day: string | null;
   plan: string;
+  /** Learning reminders. Opt-out; the unsubscribe link in every email flips it. */
+  email_optin: boolean;
 }
 
 export interface ProgressRow {
@@ -28,10 +31,6 @@ export interface ProgressRow {
   xp_earned: number;
   completed_at: string;
 }
-
-const today = () => new Date().toISOString().slice(0, 10);
-const daysBetween = (a: string, b: string) =>
-  Math.round((new Date(b).getTime() - new Date(a).getTime()) / 86_400_000);
 
 export function useProfile() {
   const { user } = useSession();
@@ -119,11 +118,29 @@ export function useSubmissions(userId?: string) {
   });
 }
 
+/**
+ * Fields a learner may write about themselves. xp, level and the streak columns
+ * are deliberately absent — those are server-authored, and the matching
+ * migration revokes the client's grant on them.
+ */
+export type EditableProfile = Pick<
+  Profile,
+  | "display_name"
+  | "bio"
+  | "avatar_url"
+  | "career_path"
+  | "goal"
+  | "experience"
+  | "hours_per_week"
+  | "onboarded"
+  | "email_optin"
+>;
+
 export function useUpdateProfile() {
   const { user } = useSession();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (patch: Partial<Profile>) => {
+    mutationFn: async (patch: Partial<EditableProfile>) => {
       const { error } = await supabase.from("profiles").update(patch).eq("id", user!.id);
       if (error) throw error;
     },
@@ -162,135 +179,40 @@ export function useUnlockAchievement() {
 interface CompleteArgs {
   courseId: string;
   lessonId: string;
-  xp: number;
-  isChallenge?: boolean;
+  /** Answers given, keyed by block id — re-checked on the server. */
+  answers: Record<string, string | number>;
+  challengeSolved: boolean;
 }
 
+/**
+ * Completion is a server call. XP, level, streak and the progress row are all
+ * derived and written in `src/lib/learning.functions.ts` from the lesson's
+ * authored body — the client cannot name its own reward.
+ */
 export function useCompleteLesson() {
   const { user } = useSession();
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ courseId, lessonId, xp, isChallenge }: CompleteArgs) => {
+    mutationFn: async (args: CompleteArgs) => {
       if (!user) throw new Error("Not signed in");
-
-      const { data: existing } = await supabase
-        .from("lesson_progress")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("lesson_id", lessonId)
-        .maybeSingle();
-
-      const firstTime = !existing;
-      if (firstTime) {
-        const { error } = await supabase.from("lesson_progress").insert({
-          user_id: user.id,
-          course_id: courseId,
-          lesson_id: lessonId,
-          xp_earned: xp,
-        });
-        if (error) throw error;
-      }
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("xp, streak_current, streak_best, last_active_day")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      const day = today();
-      const gained = firstTime ? xp : 0;
-      const newXp = (profile?.xp ?? 0) + gained;
-      const previousLevel = levelFromXp(profile?.xp ?? 0).level;
-      const nextLevel = levelFromXp(newXp).level;
-
-      let streak = profile?.streak_current ?? 0;
-      const last = profile?.last_active_day ?? null;
-      if (!last) streak = 1;
-      else {
-        const gap = daysBetween(last, day);
-        if (gap === 1) streak += 1;
-        else if (gap > 1) streak = 1;
-        else streak = Math.max(streak, 1);
-      }
-
-      await supabase
-        .from("profiles")
-        .update({
-          xp: newXp,
-          level: nextLevel,
-          streak_current: streak,
-          streak_best: Math.max(streak, profile?.streak_best ?? 0),
-          last_active_day: day,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", user.id);
-
-      if (gained > 0) {
-        const { data: act } = await supabase
-          .from("daily_activity")
-          .select("id, xp")
-          .eq("user_id", user.id)
-          .eq("day", day)
-          .maybeSingle();
-        if (act) {
-          await supabase
-            .from("daily_activity")
-            .update({ xp: act.xp + gained })
-            .eq("id", act.id);
-        } else {
-          await supabase.from("daily_activity").insert({ user_id: user.id, day, xp: gained });
-        }
-      }
-
-      const { count } = await supabase
-        .from("lesson_progress")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", user.id);
-
-      const unlocks: string[] = [];
-      if ((count ?? 0) >= 1) unlocks.push("first-lesson");
-      if ((count ?? 0) >= 10) unlocks.push("ten-lessons");
-      if (isChallenge) unlocks.push("first-challenge");
-      if (newXp >= 1000) unlocks.push("xp-1000");
-      if (streak >= 7) unlocks.push("streak-7");
-      if (streak >= 30) unlocks.push("streak-30");
-      if (lessonId === "js-debug.fixit") unlocks.push("debug-master");
-
-      const newlyUnlocked: string[] = [];
-      for (const key of unlocks) {
-        const { data: has } = await supabase
-          .from("user_achievements")
-          .select("id")
-          .eq("user_id", user.id)
-          .eq("achievement_key", key)
-          .maybeSingle();
-        if (!has) {
-          await supabase.from("user_achievements").insert({ user_id: user.id, achievement_key: key });
-          newlyUnlocked.push(key);
-        }
-      }
-
-      return {
-        firstTime,
-        gained,
-        newXp,
-        streak,
-        leveledUp: nextLevel > previousLevel,
-        level: nextLevel,
-        newlyUnlocked,
-      };
+      return completeLessonFn({ data: args });
     },
     onSuccess: (result) => {
       qc.invalidateQueries({ queryKey: ["profile", user?.id] });
       qc.invalidateQueries({ queryKey: ["progress", user?.id] });
       qc.invalidateQueries({ queryKey: ["activity", user?.id] });
       qc.invalidateQueries({ queryKey: ["achievements", user?.id] });
+      qc.invalidateQueries({ queryKey: ["leaderboard"] });
       result.newlyUnlocked.forEach((key) => {
         const a = achievementByKey(key);
         if (a) toast.success(`Achievement unlocked: ${a.name}`, { description: a.description });
       });
     },
+    onError: (error) =>
+      toast.error(
+        error instanceof Error ? error.message : "We could not save that. Try again in a moment.",
+      ),
   });
 }
 

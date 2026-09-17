@@ -14,7 +14,8 @@ import {
 import { AppHeader, Wordmark } from "@/components/layout/AppShell";
 import { StatPill } from "@/components/common/StatPill";
 import { Button } from "@/components/ui/button";
-import { careerPaths, courses, pathCourses, pathLessonCount } from "@/content/curriculum";
+import { careerPaths, courses, pathCourses } from "@/content/curriculum";
+import { liveLessonCount, pathLiveLessonCount } from "@/content/lessons";
 import { projects } from "@/content/projects";
 import { cn } from "@/lib/utils";
 
@@ -85,10 +86,11 @@ const steps = [
 ];
 
 function Landing() {
-  const totalLessons = courses.reduce(
-    (sum, c) => sum + c.modules.reduce((m, mod) => m + mod.lessons.length, 0),
-    0,
-  );
+  // Count what a visitor can actually sit down and do today, not the roadmap we
+  // intend to write. Advertising planned lessons as delivered ones is the same
+  // lie the generated filler lessons used to tell.
+  const totalLessons = courses.reduce((sum, c) => sum + liveLessonCount(c), 0);
+  const liveCourses = courses.filter((c) => liveLessonCount(c) > 0).length;
 
   return (
     <div className="min-h-screen bg-canvas">
@@ -100,7 +102,7 @@ function Landing() {
           <div className="animate-rise">
             <StatPill tone="brand">
               <Sparkles className="size-3.5" />
-              {courses.length} courses · {totalLessons} hands-on lessons
+              {liveCourses} courses live · {totalLessons} hands-on lessons
             </StatPill>
             <h1 className="mt-5 font-display text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
               Become job-ready by
@@ -235,7 +237,7 @@ function Landing() {
               <p className="mt-3 flex-1 text-sm leading-relaxed text-chalk">{path.overview}</p>
               <div className="mt-5 flex items-center justify-between border-t border-border pt-4 text-xs font-semibold text-chalk">
                 <span>
-                  {pathCourses(path).length} courses · {pathLessonCount(path)} lessons
+                  {pathCourses(path).length} courses · {pathLiveLessonCount(path)} lessons live
                 </span>
                 <ArrowRight className="size-4 text-brand transition-transform group-hover:translate-x-1" />
               </div>

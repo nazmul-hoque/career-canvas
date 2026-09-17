@@ -2,6 +2,10 @@ import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check, CreditCard, Loader2, Lock, Minus, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { track } from "@/lib/analytics";
+import { startCheckoutFn, startTrialFn, switchToFreeFn } from "@/lib/billing.functions";
+import { TRIAL_DAYS } from "@/lib/entitlements";
+import { useEntitlements } from "@/hooks/useEntitlements";
 import { AppShell } from "@/components/layout/AppShell";
 import { StatPill } from "@/components/common/StatPill";
 import { Button } from "@/components/ui/button";
@@ -15,7 +19,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useSession } from "@/hooks/useAuth";
-import { useProfile, useUpdateProfile } from "@/hooks/useLearner";
+import { useQueryClient } from "@tanstack/react-query";
+import { useProfile } from "@/hooks/useLearner";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/pricing")({
@@ -25,7 +30,7 @@ export const Route = createFileRoute("/pricing")({
       {
         name: "description",
         content:
-          "Free, Pro and Lifetime plans. All courses, unlimited practice, the AI mentor, portfolio projects and certificates — monthly or yearly.",
+          "Free, Pro and Lifetime plans. Every course, unlimited practice, the AI mentor, portfolio projects and certificates — monthly or yearly.",
       },
       { property: "og:title", content: "Pricing — Ascent" },
       {
@@ -62,11 +67,12 @@ const plans: Plan[] = [
     features: [
       "First module of every course",
       "10 practice tasks a month",
+      "10 AI mentor messages a month",
       "Streaks, XP and levels",
       "Basic progress tracking",
       "Community access",
     ],
-    missing: ["AI mentor", "Portfolio projects", "Certificates"],
+    missing: ["Mentor beyond 10 messages", "Portfolio projects", "Certificates"],
   },
   {
     id: "pro",
@@ -79,7 +85,7 @@ const plans: Plan[] = [
     features: [
       "All 15 courses, every module",
       "Unlimited practice and challenges",
-      "AI mentor on every lesson",
+      "AI mentor — 500 messages a month",
       "All 8 portfolio projects with feedback",
       "Career path certificates",
       "Public portfolio profile",
@@ -97,7 +103,7 @@ const plans: Plan[] = [
     features: [
       "Everything in Pro, permanently",
       "All future courses and paths",
-      "Unlimited AI mentor usage",
+      "AI mentor — 500 messages a month, forever",
       "All projects and certificates",
       "Early access to new paths",
     ],
@@ -114,7 +120,7 @@ const comparison: {
   { label: "Courses", free: "First module", pro: "All 15", lifetime: "All + future" },
   { label: "Practice tasks", free: "10 / month", pro: "Unlimited", lifetime: "Unlimited" },
   { label: "Coding challenges", free: "Limited", pro: "Unlimited", lifetime: "Unlimited" },
-  { label: "AI mentor", free: false, pro: true, lifetime: true },
+  { label: "AI mentor", free: "10 / month", pro: "500 / month", lifetime: "500 / month" },
   { label: "Portfolio projects", free: false, pro: true, lifetime: true },
   { label: "Project feedback", free: false, pro: true, lifetime: true },
   { label: "Certificates", free: false, pro: true, lifetime: true },
@@ -126,7 +132,9 @@ const comparison: {
 function Pricing() {
   const { user } = useSession();
   const { data: profile } = useProfile();
-  const updateProfile = useUpdateProfile();
+  const qc = useQueryClient();
+  const { trialing, trialUsed, trialDaysLeft } = useEntitlements();
+  const [busy, setBusy] = useState(false);
   const [yearly, setYearly] = useState(true);
   const [checkout, setCheckout] = useState<Plan | null>(null);
   const [stage, setStage] = useState<"form" | "processing" | "done">("form");
@@ -141,43 +149,83 @@ function Pricing() {
       : { amount: plan.monthly ?? 0, suffix: "per month" };
   }
 
+  const refreshProfile = () => qc.invalidateQueries({ queryKey: ["profile", user?.id] });
+
+  async function beginTrial() {
+    if (!user) {
+      toast.info("Create an account first", { description: "Takes about twenty seconds." });
+      return;
+    }
+    setBusy(true);
+    try {
+      await startTrialFn();
+      await refreshProfile();
+      toast.success(`${TRIAL_DAYS} days of Pro, on the house`, {
+        description: "No card needed. It drops back to Free on its own.",
+      });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "We could not start your trial.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   function startCheckout(plan: Plan) {
     if (!user) {
       toast.info("Create an account first", { description: "Takes about twenty seconds." });
       return;
     }
     if (plan.id === "free") {
-      updateProfile.mutate(
-        { plan: "free" },
-        { onSuccess: () => toast.success("Switched to Free") },
-      );
+      setBusy(true);
+      switchToFreeFn()
+        .then(refreshProfile)
+        .then(() => toast.success("Switched to Free"))
+        .catch(() => toast.error("We could not change your plan. Try again in a moment."))
+        .finally(() => setBusy(false));
       return;
     }
+    track("checkout_started", {
+      plan: plan.id,
+      billing: plan.once ? "once" : yearly ? "yearly" : "monthly",
+    });
     setStage("form");
     setCheckout(plan);
   }
 
-  function confirmCheckout() {
+  async function confirmCheckout() {
     if (!checkout) return;
     setStage("processing");
-    // Mock payment. Replace this timeout with a real Stripe/Paddle session.
-    window.setTimeout(() => {
-      updateProfile.mutate(
-        { plan: checkout.id },
-        {
-          onSuccess: () => {
-            setStage("done");
-            toast.success(`You're on ${checkout.name}`, {
-              description: "No card was charged — this is a demo checkout.",
-            });
-          },
-          onError: () => {
-            setStage("form");
-            toast.error("We could not update your plan. Try again in a moment.");
-          },
+    try {
+      // With PAYMENTS_PROVIDER=stripe this returns a hosted checkout URL; in
+      // mock mode the server has already applied the plan.
+      const result = await startCheckoutFn({
+        data: {
+          plan: checkout.id === "lifetime" ? "lifetime" : "pro",
+          interval: checkout.once ? "once" : yearly ? "yearly" : "monthly",
         },
+      });
+
+      if (result.kind === "redirect") {
+        window.location.href = result.url;
+        return;
+      }
+
+      await refreshProfile();
+      track("checkout_completed", {
+        plan: checkout.id,
+        billing: checkout.once ? "once" : yearly ? "yearly" : "monthly",
+        mock: true,
+      });
+      setStage("done");
+      toast.success(`You're on ${checkout.name}`, {
+        description: "No card was charged — this is a demo checkout.",
+      });
+    } catch (error) {
+      setStage("form");
+      toast.error(
+        error instanceof Error ? error.message : "We could not start checkout. Try again shortly.",
       );
-    }, 1400);
+    }
   }
 
   return (
@@ -192,6 +240,22 @@ function Pricing() {
           the parts that cost us money to run.
         </p>
       </header>
+
+      {user && !trialUsed ? (
+        <div className="mx-auto mt-6 flex max-w-2xl flex-wrap items-center justify-center gap-3 rounded-2xl bg-brand/10 px-5 py-4 text-center">
+          <p className="text-sm font-semibold text-foreground">
+            Try Pro free for {TRIAL_DAYS} days — no card, cancels itself.
+          </p>
+          <Button size="sm" onClick={beginTrial} disabled={busy}>
+            Start free trial
+          </Button>
+        </div>
+      ) : null}
+      {trialing ? (
+        <div className="mx-auto mt-6 max-w-2xl rounded-2xl bg-ember/10 px-5 py-4 text-center text-sm font-semibold text-ember">
+          {trialDaysLeft} {trialDaysLeft === 1 ? "day" : "days"} left of your Pro trial.
+        </div>
+      ) : null}
 
       {/* Billing toggle */}
       <div className="mt-8 flex justify-center">
@@ -266,7 +330,7 @@ function Pricing() {
                 className="mt-6 w-full"
                 size="lg"
                 variant={plan.recommended ? "default" : "outline"}
-                disabled={isCurrent || updateProfile.isPending}
+                disabled={isCurrent || busy}
                 onClick={() => startCheckout(plan)}
               >
                 {isCurrent

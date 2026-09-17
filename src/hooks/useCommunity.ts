@@ -123,26 +123,69 @@ export function useAddComment(postId: string) {
 }
 
 /**
- * Likes are a plain counter on the row, and RLS only lets an author update their
- * own post — so a like on someone else's post is kept per-browser for now. Moving
- * this to a `post_likes` table with its own policy is the next step.
+ * Likes are rows in `post_likes`, one per (post, learner), with a trigger keeping
+ * `community_posts.likes` in step. They used to live in localStorage, which made
+ * them per-browser and invisible to the person who wrote the post.
+ *
+ * Seeded example posts live in src/content/community.ts rather than the
+ * database, so they carry a static count and cannot be liked — the same
+ * read-only treatment their comment threads already get.
  */
-const LIKE_KEY = "ascent.likes";
-
-export function readLikes(): Record<string, boolean> {
-  if (typeof window === "undefined") return {};
-  try {
-    return JSON.parse(window.localStorage.getItem(LIKE_KEY) ?? "{}") as Record<string, boolean>;
-  } catch {
-    return {};
-  }
+export function useMyLikes() {
+  const { user } = useSession();
+  return useQuery({
+    queryKey: ["community", "likes", user?.id],
+    enabled: Boolean(user),
+    queryFn: async (): Promise<string[]> => {
+      const { data, error } = await supabase
+        .from("post_likes")
+        .select("post_id")
+        .eq("user_id", user!.id);
+      if (error) throw error;
+      return ((data ?? []) as { post_id: string }[]).map((r) => r.post_id);
+    },
+  });
 }
 
-export function writeLikes(next: Record<string, boolean>) {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(LIKE_KEY, JSON.stringify(next));
-  } catch {
-    /* storage unavailable — likes just don't persist */
-  }
+export function useToggleLike() {
+  const { user } = useSession();
+  const qc = useQueryClient();
+  const key = ["community", "likes", user?.id];
+
+  return useMutation({
+    mutationFn: async ({ postId, liked }: { postId: string; liked: boolean }) => {
+      if (!user) throw new Error("Not signed in");
+      if (liked) {
+        const { error } = await supabase
+          .from("post_likes")
+          .delete()
+          .eq("post_id", postId)
+          .eq("user_id", user.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("post_likes")
+          .insert({ post_id: postId, user_id: user.id });
+        // Double-click racing the optimistic update — the row is already there.
+        if (error && error.code !== "23505") throw error;
+      }
+    },
+    onMutate: async ({ postId, liked }) => {
+      await qc.cancelQueries({ queryKey: key });
+      const previous = qc.getQueryData<string[]>(key) ?? [];
+      qc.setQueryData<string[]>(
+        key,
+        liked ? previous.filter((id) => id !== postId) : [...previous, postId],
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      qc.setQueryData(key, context?.previous ?? []);
+      toast.error("We could not save that like.");
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: key });
+      qc.invalidateQueries({ queryKey: ["community", "posts"] });
+    },
+  });
 }

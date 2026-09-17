@@ -18,7 +18,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "@/hooks/useAuth";
-import { useSubmission, useSubmitProject } from "@/hooks/useProjects";
+import { useEntitlements } from "@/hooks/useEntitlements";
+import { toast } from "sonner";
+import {
+  useProjectMilestones,
+  useSubmission,
+  useSubmitProject,
+  useToggleMilestone,
+} from "@/hooks/useProjects";
 import { projectById } from "@/content/projects";
 import { careerPaths } from "@/content/curriculum";
 import { cn } from "@/lib/utils";
@@ -68,12 +75,14 @@ function ProjectDetail() {
   const { project } = Route.useLoaderData();
   const { user } = useSession();
   const { data: submission, isLoading } = useSubmission(project.id);
+  const { entitlements, trialUsed } = useEntitlements();
   const submit = useSubmitProject(project.id);
 
   const [repo, setRepo] = useState("");
   const [live, setLive] = useState("");
   const [notes, setNotes] = useState("");
-  const [milestones, setMilestones] = useState<number[]>([]);
+  const { data: milestones = [] } = useProjectMilestones(project.id);
+  const toggleMilestoneMutation = useToggleMilestone(project.id);
 
   useEffect(() => {
     if (!submission) return;
@@ -82,8 +91,13 @@ function ProjectDetail() {
     setNotes(submission.notes ?? "");
   }, [submission]);
 
-  const toggleMilestone = (i: number) =>
-    setMilestones((prev) => (prev.includes(i) ? prev.filter((m) => m !== i) : [...prev, i]));
+  const toggleMilestone = (i: number) => {
+    if (!user) {
+      toast.error("Sign in to keep track of your milestones");
+      return;
+    }
+    toggleMilestoneMutation.mutate({ index: i, checked: !milestones.includes(i) });
+  };
 
   const canSubmit = Boolean(notes.trim()) && !submit.isPending;
 
@@ -151,7 +165,8 @@ function ProjectDetail() {
           <section className="card-surface p-6">
             <h2 className="font-display text-xl font-bold">Milestones</h2>
             <p className="mt-1 text-sm text-chalk">
-              Tick these off as you go — it's only for your own sense of pace.
+              Tick these off as you go — it's only for your own sense of pace, and they're saved to
+              your account.
             </p>
             <ol className="mt-4 space-y-2">
               {project.milestones.map((m, i) => {
@@ -203,6 +218,19 @@ function ProjectDetail() {
                 <Skeleton className="h-10 w-full" />
                 <Skeleton className="h-10 w-full" />
                 <Skeleton className="h-28 w-full" />
+              </div>
+            ) : !entitlements.projects ? (
+              <div className="mt-5 rounded-2xl bg-ember/10 p-5 text-center">
+                <p className="text-sm font-semibold text-foreground">
+                  Portfolio projects are part of Pro
+                </p>
+                <p className="mt-1.5 text-sm text-chalk">
+                  The brief and milestones stay open on Free — submitting for review, and the
+                  feedback that comes back, come with Pro.
+                </p>
+                <Button asChild className="mt-4">
+                  <Link to="/pricing">{trialUsed ? "See plans" : "Start your free trial"}</Link>
+                </Button>
               </div>
             ) : (
               <form

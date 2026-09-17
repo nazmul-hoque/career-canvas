@@ -52,11 +52,27 @@ function initialsOf(name: string) {
     .toUpperCase();
 }
 
+/** Anything not backed by a real account says so, everywhere it appears. */
+function SampleBadge() {
+  return (
+    <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-chalk ring-1 ring-border">
+      Sample
+    </span>
+  );
+}
+
 function Leaderboard() {
   const { user } = useSession();
   const { data: profile } = useProfile();
   const { data: live = [], isLoading } = useLeaderboard();
   const [scope, setScope] = useState<"all" | "path">("all");
+  // Seeded example learners make an empty board look alive, but ranking real
+  // people against fictional ones is a lie the moment there are real people.
+  // They are labelled wherever they appear, excluded from your rank, and hidden
+  // by default as soon as the board can stand on its own.
+  const [showSamples, setShowSamples] = useState(true);
+  const enoughRealLearners = live.length >= 8;
+  const samplesVisible = showSamples && !enoughRealLearners;
 
   const rows = useMemo<Row[]>(() => {
     const liveRows: Row[] = (
@@ -90,14 +106,16 @@ function Leaderboard() {
       live: false,
     }));
 
-    const merged = [...liveRows, ...seedRows].sort((a, b) => b.xp - a.xp);
+    const merged = [...liveRows, ...(samplesVisible ? seedRows : [])].sort((a, b) => b.xp - a.xp);
     if (scope === "all") return merged;
     const myPath = profile?.career_path ? pathById(profile.career_path)?.name : null;
     if (!myPath) return merged;
     return merged.filter((r) => r.path === myPath);
-  }, [live, profile?.career_path, scope]);
+  }, [live, profile?.career_path, scope, samplesVisible]);
 
-  const myRank = rows.findIndex((r) => r.id === user?.id);
+  // Your rank is against real learners only — a sample row must never push a
+  // real person down a place.
+  const myRank = rows.filter((r) => r.live).findIndex((r) => r.id === user?.id);
   const podium = rows.slice(0, 3);
   const rest = rows.slice(3);
 
@@ -110,9 +128,22 @@ function Leaderboard() {
             Ranked by work done, not time spent.
           </h1>
           <p className="mt-2 text-chalk">
-            XP comes from finished lessons and passed challenges. There is no way to farm it by
-            leaving a tab open.
+            XP comes from finished lessons and passed challenges, and it is written by the server
+            against the lesson you finished — there is no way to farm it from a console.
           </p>
+          {samplesVisible ? (
+            <p className="mt-2 text-sm text-chalk">
+              While the board fills up it includes {leaderboardSeed.length} sample learners, marked{" "}
+              <span className="font-semibold text-foreground">Sample</span>. They never affect your
+              rank, and they disappear once eight real learners are ranked.{" "}
+              <button
+                onClick={() => setShowSamples(false)}
+                className="font-semibold text-brand hover:underline"
+              >
+                Hide them now
+              </button>
+            </p>
+          ) : null}
         </div>
 
         <div className="flex gap-2">
@@ -225,7 +256,10 @@ function Leaderboard() {
                     {row.initials}
                   </AvatarFallback>
                 </Avatar>
-                <div className="mt-3 font-display text-lg font-bold">{row.name}</div>
+                <div className="mt-3 flex items-center gap-2 font-display text-lg font-bold">
+                  {row.name}
+                  {row.live ? null : <SampleBadge />}
+                </div>
                 <div className="text-xs text-chalk">{row.path}</div>
                 <div className="mt-3 flex items-center gap-3 text-sm font-bold">
                   <span className="inline-flex items-center gap-1 text-brand">
@@ -281,9 +315,10 @@ function Leaderboard() {
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <div className="text-sm font-semibold">
+                            <div className="flex items-center gap-2 text-sm font-semibold">
                               {row.name}
-                              {isMe ? <span className="ml-2 text-xs text-brand">You</span> : null}
+                              {isMe ? <span className="text-xs text-brand">You</span> : null}
+                              {row.live ? null : <SampleBadge />}
                             </div>
                             <div className="text-xs text-chalk">
                               Level {row.level} · {levelTitle(row.level)}

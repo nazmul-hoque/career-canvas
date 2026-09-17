@@ -18,6 +18,7 @@ import { AchievementIcon } from "@/components/common/AchievementIcon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -31,6 +32,7 @@ import {
 } from "@/hooks/useLearner";
 import { achievements, levelFromXp, levelTitle } from "@/content/gamification";
 import { courses, courseLessons, pathById } from "@/content/curriculum";
+import { isCoursePublished } from "@/content/lessons";
 import { projectById } from "@/content/projects";
 import { allPathCompletions } from "@/lib/certificates";
 import { cn } from "@/lib/utils";
@@ -114,9 +116,12 @@ function ProfilePage() {
   const level = levelFromXp(profile.xp);
   const path = profile.career_path ? pathById(profile.career_path) : null;
 
+  // Only a fully written course can be "completed" — otherwise finishing the one
+  // live lesson of a 12-lesson course would put the whole skill list on a public
+  // profile.
   const completedCourses = courses.filter((c) => {
     const lessons = courseLessons(c);
-    return lessons.length > 0 && lessons.every((l) => done.has(l.id));
+    return lessons.length > 0 && isCoursePublished(c) && lessons.every((l) => done.has(l.id));
   });
 
   const certificates = allPathCompletions(done).filter((c) => c.eligible);
@@ -488,6 +493,33 @@ function ProfilePage() {
                 </dd>
               </div>
             </dl>
+          </section>
+
+          {/* Email reminders */}
+          <section className="card-surface p-5">
+            <h2 className="font-display text-lg font-bold">Learning reminders</h2>
+            <p className="mt-1.5 text-sm text-chalk">
+              A nudge on the day your streak is about to break, and a note if you've been away a
+              week. Never more than one a day, and never marketing.
+            </p>
+            <label className="mt-4 flex cursor-pointer items-center justify-between gap-4">
+              <span className="text-sm font-semibold">
+                {profile.email_optin ? "Reminders are on" : "Reminders are off"}
+              </span>
+              <Switch
+                checked={profile.email_optin}
+                disabled={updateProfile.isPending}
+                onCheckedChange={(checked) =>
+                  updateProfile.mutate(
+                    { email_optin: checked },
+                    {
+                      onSuccess: () => toast.success(checked ? "Reminders on" : "Reminders off"),
+                      onError: () => toast.error("Could not change that. Try again in a moment."),
+                    },
+                  )
+                }
+              />
+            </label>
           </section>
         </aside>
       </div>

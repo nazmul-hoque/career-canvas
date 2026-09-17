@@ -1,10 +1,13 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { Award, Download, Lock, Printer, Share2 } from "lucide-react";
+import { Award, Download, Lock, Printer, Share2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, Wordmark } from "@/components/layout/AppShell";
 import { EmptyState } from "@/components/common/StatPill";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useEntitlements } from "@/hooks/useEntitlements";
 import { useSession } from "@/hooks/useAuth";
 import { useProfile, useProgress } from "@/hooks/useLearner";
 import { pathById, pathCourses } from "@/content/curriculum";
@@ -64,6 +67,23 @@ function Certificate() {
   const { user, isLoading: sessionLoading } = useSession();
   const { data: profile, isLoading } = useProfile();
   const { data: progress = [] } = useProgress();
+  const { entitlements, trialUsed } = useEntitlements();
+
+  // A certificate already issued stays valid forever, even if Pro lapses — the
+  // row in issued_certificates is the proof, not the current plan.
+  const { data: issuedRecord } = useQuery({
+    queryKey: ["issued-certificate", user?.id, path.id],
+    enabled: Boolean(user),
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("issued_certificates")
+        .select("certificate_id, issued_at")
+        .eq("user_id", user!.id)
+        .eq("path_id", path.id)
+        .maybeSingle();
+      return (data as { certificate_id: string; issued_at: string } | null) ?? null;
+    },
+  });
 
   if (sessionLoading || isLoading) {
     return (
@@ -91,7 +111,27 @@ function Certificate() {
   }
 
   const done = new Set(progress.map((p) => p.lesson_id));
-  const { completed, total, percent, eligible } = pathCompletion(path, done);
+  const { completed, total, live, percent, eligible, published } = pathCompletion(path, done);
+
+  if (!issuedRecord && !entitlements.certificates) {
+    return (
+      <AppShell>
+        <div className="card-surface mx-auto max-w-xl p-10 text-center">
+          <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-ember/10 text-ember">
+            <Lock className="size-6" />
+          </div>
+          <h1 className="mt-5 font-display text-2xl font-bold">Certificates come with Pro</h1>
+          <p className="mt-2 text-sm text-chalk">
+            Keep learning on Free as long as you like — a certificate for the {path.name} path is
+            part of Pro. Anything you earn while subscribed stays yours if you downgrade later.
+          </p>
+          <Button asChild className="mt-7">
+            <Link to="/pricing">{trialUsed ? "See plans" : "Start your free trial"}</Link>
+          </Button>
+        </div>
+      </AppShell>
+    );
+  }
 
   if (!eligible) {
     return (
@@ -101,11 +141,24 @@ function Certificate() {
             <Lock className="size-6" />
           </div>
           <h1 className="mt-5 font-display text-2xl font-bold">
-            Not yet — but close enough to see it
+            {published
+              ? "Not yet — but close enough to see it"
+              : "This path is still being written"}
           </h1>
           <p className="mt-2 text-sm text-chalk">
-            The {path.name} certificate unlocks when every lesson on the path is complete. You're at{" "}
-            {completed} of {total}.
+            {published ? (
+              <>
+                The {path.name} certificate unlocks when every lesson on the path is complete.
+                You're at {completed} of {total}.
+              </>
+            ) : (
+              <>
+                {live} of the {total} lessons on the {path.name} path are live so far. A certificate
+                that says you completed a path we haven't finished writing wouldn't be worth
+                anything, so this stays locked until the roadmap is complete. You're at {completed}{" "}
+                of {live} live lessons.
+              </>
+            )}
           </p>
           <div className="mx-auto mt-6 h-2 max-w-sm overflow-hidden rounded-full bg-secondary">
             <div
@@ -124,7 +177,7 @@ function Certificate() {
   }
 
   const id = certificateId(user.id, path.id);
-  const issued = formatCertificateDate(pathCompletedAt(path, progress));
+  const issued = formatCertificateDate(issuedRecord?.issued_at ?? pathCompletedAt(path, progress));
   const courseCount = pathCourses(path).length;
 
   function share() {
@@ -177,7 +230,7 @@ function Certificate() {
             </h2>
 
             <p className="mx-auto mt-6 max-w-lg text-sm leading-relaxed text-chalk">
-              {courseCount} courses and {total} hands-on lessons, including coding challenges,
+              {courseCount} courses and {live} hands-on lessons, including coding challenges,
               debugging exercises and portfolio projects assessed against published requirements.
             </p>
 
@@ -205,6 +258,7 @@ function Certificate() {
                   Certificate ID
                 </div>
                 <div className="mt-0.5 font-mono text-sm font-semibold">{id}</div>
+                <div className="mt-1 font-mono text-[10px] text-chalk">Verify at /verify/{id}</div>
               </div>
             </div>
           </div>
@@ -212,14 +266,22 @@ function Certificate() {
 
         <div className="card-surface mt-5 flex flex-wrap items-center justify-between gap-4 p-5 print:hidden">
           <p className="max-w-lg text-sm text-chalk">
-            Put the ID on your CV or LinkedIn. Anyone with this link can check it against your
-            public profile.
+            Put the ID on your CV or LinkedIn. Anyone can check it at{" "}
+            <span className="font-mono text-foreground">/verify/{id}</span> without an account — the
+            answer comes from our issuing record, not from this page.
           </p>
-          <Button asChild variant="outline" size="sm">
-            <Link to="/profile/$userId" params={{ userId: user.id }}>
-              <Download className="mr-1.5 size-3.5" /> View public profile
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button asChild variant="outline" size="sm">
+              <Link to="/verify/$certificateId" params={{ certificateId: id }}>
+                <ShieldCheck className="mr-1.5 size-3.5" /> Verification page
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link to="/profile/$userId" params={{ userId: user.id }}>
+                <Download className="mr-1.5 size-3.5" /> Public profile
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
     </AppShell>

@@ -3,7 +3,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "./useAuth";
 import { achievementByKey } from "@/content/gamification";
-import { projectById } from "@/content/projects";
+import { submitProjectFn } from "@/lib/projects.functions";
+import { track } from "@/lib/analytics";
 
 export interface Submission {
   id: string;
@@ -35,37 +36,62 @@ export function useSubmission(projectId: string) {
   });
 }
 
-/**
- * Mock reviewer. Swap the body of this function for a real LLM call — the shape
- * (submission in, markdown-ish feedback string out) is what the UI depends on.
- */
-export function mockProjectFeedback(projectId: string, notes: string): string {
-  const project = projectById(projectId);
-  const req = project?.requirements ?? [];
-  const mentioned = req.filter((r) =>
-    r
-      .toLowerCase()
-      .split(/\s+/)
-      .filter((w) => w.length > 4)
-      .some((w) => notes.toLowerCase().includes(w)),
-  );
-  const missing = req.filter((r) => !mentioned.includes(r));
+export function useProjectMilestones(projectId: string) {
+  const { user } = useSession();
+  return useQuery({
+    queryKey: ["project-milestones", user?.id, projectId],
+    enabled: Boolean(user),
+    queryFn: async (): Promise<number[]> => {
+      const { data, error } = await supabase
+        .from("project_milestones")
+        .select("milestone_index")
+        .eq("user_id", user!.id)
+        .eq("project_id", projectId);
+      if (error) throw error;
+      return ((data ?? []) as { milestone_index: number }[]).map((r) => r.milestone_index);
+    },
+  });
+}
 
-  const lines: string[] = [];
-  lines.push(
-    mentioned.length
-      ? `You've covered ${mentioned.length} of the ${req.length} requirements in your write-up — good, that's the part reviewers read first.`
-      : `Start your notes with which requirements you met. Reviewers look for that before they open the repo.`,
-  );
-  if (missing.length) {
-    lines.push(
-      `I can't tell from your notes how you handled: ${missing.slice(0, 2).join("; ")}. Add a sentence on each — if you skipped one, say why. A deliberate omission reads better than a silent one.`,
-    );
-  }
-  lines.push(
-    `Two questions before you call it done: what breaks if the data is empty, and what would you change if this had to serve ten times the traffic? Write the answers in your README — that's the paragraph that gets you the interview.`,
-  );
-  return lines.join("\n\n");
+export function useToggleMilestone(projectId: string) {
+  const { user } = useSession();
+  const qc = useQueryClient();
+  const key = ["project-milestones", user?.id, projectId];
+
+  return useMutation({
+    mutationFn: async ({ index, checked }: { index: number; checked: boolean }) => {
+      if (!user) throw new Error("Not signed in");
+      if (checked) {
+        const { error } = await supabase
+          .from("project_milestones")
+          .insert({ user_id: user.id, project_id: projectId, milestone_index: index });
+        // A double-click can race the optimistic update into a duplicate key.
+        if (error && error.code !== "23505") throw error;
+      } else {
+        const { error } = await supabase
+          .from("project_milestones")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("project_id", projectId)
+          .eq("milestone_index", index);
+        if (error) throw error;
+      }
+    },
+    onMutate: async ({ index, checked }) => {
+      await qc.cancelQueries({ queryKey: key });
+      const previous = qc.getQueryData<number[]>(key) ?? [];
+      qc.setQueryData<number[]>(
+        key,
+        checked ? [...previous, index] : previous.filter((i) => i !== index),
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      qc.setQueryData(key, context?.previous ?? []);
+      toast.error("We could not save that tick. Try again in a moment.");
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: key }),
+  });
 }
 
 export function useSubmitProject(projectId: string) {
@@ -75,51 +101,25 @@ export function useSubmitProject(projectId: string) {
   return useMutation({
     mutationFn: async (input: { repo_url: string; live_url: string; notes: string }) => {
       if (!user) throw new Error("Not signed in");
-      const feedback = mockProjectFeedback(projectId, input.notes);
+      // Server-side: the Pro gate and the review both live there now.
+      const result = await submitProjectFn({
+        data: {
+          projectId,
+          repoUrl: input.repo_url,
+          liveUrl: input.live_url,
+          notes: input.notes,
+        },
+      });
 
-      const { data: existing } = await supabase
-        .from("project_submissions")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("project_id", projectId)
-        .maybeSingle();
-
-      const row = {
-        user_id: user.id,
+      track("project_submitted", {
         project_id: projectId,
-        repo_url: input.repo_url || null,
-        live_url: input.live_url || null,
-        notes: input.notes || null,
-        status: "submitted",
-        feedback,
-      };
+        first_time: result.firstTime,
+        has_repo: Boolean(input.repo_url),
+        has_live_url: Boolean(input.live_url),
+        notes_length: input.notes.trim().length,
+      });
 
-      if (existing) {
-        const { error } = await supabase
-          .from("project_submissions")
-          .update(row)
-          .eq("id", (existing as { id: string }).id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("project_submissions").insert(row);
-        if (error) throw error;
-      }
-
-      const { data: has } = await supabase
-        .from("user_achievements")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("achievement_key", "project-complete")
-        .maybeSingle();
-      let unlocked = false;
-      if (!has) {
-        await supabase
-          .from("user_achievements")
-          .insert({ user_id: user.id, achievement_key: "project-complete" });
-        unlocked = true;
-      }
-
-      return { feedback, unlocked, firstTime: !existing };
+      return result;
     },
     onSuccess: (result) => {
       qc.invalidateQueries({ queryKey: ["submission", user?.id, projectId] });
@@ -128,11 +128,12 @@ export function useSubmitProject(projectId: string) {
       toast.success(result.firstTime ? "Project submitted" : "Submission updated", {
         description: "Your mentor review is below.",
       });
-      if (result.unlocked) {
+      if (result.unlockedAchievement) {
         const a = achievementByKey("project-complete");
         if (a) toast.success(`Achievement unlocked: ${a.name}`, { description: a.description });
       }
     },
-    onError: () => toast.error("We could not save that submission. Try again in a moment."),
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "We could not save that submission."),
   });
 }

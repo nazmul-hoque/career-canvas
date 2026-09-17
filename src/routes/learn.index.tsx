@@ -2,7 +2,14 @@ import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Search, Star, Clock, SlidersHorizontal } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
-import { courses, courseLessons, courseTaskCount, careerPaths, type SkillLevel } from "@/content/curriculum";
+import {
+  courses,
+  courseLessons,
+  courseTaskCount,
+  careerPaths,
+  type SkillLevel,
+} from "@/content/curriculum";
+import { liveLessonCount } from "@/content/lessons";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/common/StatPill";
@@ -20,7 +27,8 @@ export const Route = createFileRoute("/learn/")({
       { property: "og:title", content: "Course catalog — Ascent" },
       {
         property: "og:description",
-        content: "Interactive, practice-first courses across engineering, data, design and product.",
+        content:
+          "Interactive, practice-first courses across engineering, data, design and product.",
       },
     ],
   }),
@@ -70,7 +78,8 @@ function Catalog() {
           Fifteen courses. Every one of them makes you type.
         </h1>
         <p className="mt-2 text-chalk">
-          Each course mixes short explanations with challenges you have to pass. No passive video marathons.
+          Each course mixes short explanations with challenges you have to pass. No passive video
+          marathons.
         </p>
       </header>
 
@@ -93,7 +102,9 @@ function Catalog() {
                 onClick={() => setLevel(l)}
                 className={cn(
                   "rounded-full px-3.5 py-2 text-xs font-semibold transition-colors",
-                  level === l ? "bg-ink text-white" : "bg-secondary text-chalk hover:text-foreground",
+                  level === l
+                    ? "bg-ink text-white"
+                    : "bg-secondary text-chalk hover:text-foreground",
                 )}
               >
                 {l}
@@ -134,7 +145,9 @@ function Catalog() {
                 onClick={() => setSort(s.id)}
                 className={cn(
                   "rounded-full px-3 py-1.5 text-xs font-semibold",
-                  sort === s.id ? "bg-secondary text-foreground" : "text-chalk hover:text-foreground",
+                  sort === s.id
+                    ? "bg-secondary text-foreground"
+                    : "text-chalk hover:text-foreground",
                 )}
               >
                 {s.label}
@@ -187,7 +200,9 @@ function Catalog() {
                   </span>
                 ) : null}
               </div>
-              <h2 className="mt-4 font-display text-lg font-bold group-hover:text-brand">{c.title}</h2>
+              <h2 className="mt-4 font-display text-lg font-bold group-hover:text-brand">
+                {c.title}
+              </h2>
               <p className="mt-1.5 flex-1 text-sm text-chalk">{c.summary}</p>
               <div className="mt-5 flex items-center gap-4 text-xs font-semibold text-chalk">
                 <span className="flex items-center gap-1">
@@ -196,7 +211,9 @@ function Catalog() {
                 <span className="flex items-center gap-1">
                   <Clock className="size-3.5" /> {c.hours}h
                 </span>
-                <span>{courseLessons(c).length} lessons</span>
+                <span>
+                  {liveLessonCount(c)} of {courseLessons(c).length} lessons live
+                </span>
                 <span>{courseTaskCount(c)} tasks</span>
               </div>
             </Link>
