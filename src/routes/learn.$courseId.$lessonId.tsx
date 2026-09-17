@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import {
   ArrowLeft,
@@ -6,7 +6,6 @@ import {
   CheckCircle2,
   Circle,
   Lightbulb,
-  Lock,
   Sparkles,
   MessageSquare,
   X,
@@ -15,22 +14,13 @@ import { toast } from "sonner";
 import { AppShell } from "@/components/layout/AppShell";
 import { MentorPanel } from "@/components/learn/MentorPanel";
 import { CodeChallenge } from "@/components/learn/CodeChallenge";
-import { courseById, courseLessons, type Course, type LessonMeta } from "@/content/curriculum";
-import {
-  getLessonBody,
-  isLessonLive,
-  nextLiveLesson,
-  type LessonBlock,
-  type LessonBody,
-} from "@/content/lessons";
+import { courseById, courseLessons } from "@/content/curriculum";
+import { getLessonBody, type LessonBlock } from "@/content/lessons";
 import { useProgress, useCompleteLesson } from "@/hooks/useLearner";
 import { useSession } from "@/hooks/useAuth";
 import type { RunResult } from "@/lib/code-runner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { track } from "@/lib/analytics";
-import { isLessonUnlocked } from "@/lib/entitlements";
-import { useEntitlements } from "@/hooks/useEntitlements";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/learn/$courseId/$lessonId")({
@@ -38,24 +28,12 @@ export const Route = createFileRoute("/learn/$courseId/$lessonId")({
     const course = courseById(params.courseId);
     const body = getLessonBody(params.courseId, params.lessonId);
     const lesson = course ? courseLessons(course).find((l) => l.id === params.lessonId) : undefined;
-    if (!course || !lesson) throw notFound();
-    // `body` is null for lessons nobody has written yet — the route renders a
-    // "coming soon" state for those instead of pretending they are teachable.
+    if (!course || !lesson || !body) throw notFound();
     return { course, lesson, body };
   },
   head: ({ loaderData }) => {
     if (!loaderData) {
-      return {
-        meta: [{ title: "Lesson unavailable — Ascent" }, { name: "robots", content: "noindex" }],
-      };
-    }
-    if (!loaderData.body) {
-      return {
-        meta: [
-          { title: `${loaderData.lesson.title} — coming soon — Ascent` },
-          { name: "robots", content: "noindex" },
-        ],
-      };
+      return { meta: [{ title: "Lesson unavailable — Ascent" }, { name: "robots", content: "noindex" }] };
     }
     return {
       meta: [
@@ -68,7 +46,7 @@ export const Route = createFileRoute("/learn/$courseId/$lessonId")({
   },
   notFoundComponent: LessonMissing,
   errorComponent: LessonMissing,
-  component: LessonRoute,
+  component: LessonWorkspace,
 });
 
 function LessonMissing() {
@@ -85,137 +63,8 @@ function LessonMissing() {
   );
 }
 
-function LessonRoute() {
+function LessonWorkspace() {
   const { course, lesson, body } = Route.useLoaderData();
-  const { entitlements, trialUsed } = useEntitlements();
-
-  if (!body) return <LessonComingSoon course={course} lesson={lesson} />;
-  if (!isLessonUnlocked(course, lesson.id, entitlements)) {
-    return <LessonLocked course={course} lesson={lesson} trialUsed={trialUsed} />;
-  }
-  return <LessonWorkspace course={course} lesson={lesson} body={body} />;
-}
-
-/** Written, but beyond the first module — Free stops here. */
-function LessonLocked({
-  course,
-  lesson,
-  trialUsed,
-}: {
-  course: Course;
-  lesson: LessonMeta;
-  trialUsed: boolean;
-}) {
-  return (
-    <AppShell>
-      <div className="mx-auto max-w-xl">
-        <Link
-          to="/courses/$courseId"
-          params={{ courseId: course.id }}
-          className="eyebrow flex items-center gap-1.5"
-        >
-          <ArrowLeft className="size-3" /> {course.title}
-        </Link>
-        <div className="card-surface mt-5 p-8 text-center sm:p-10">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-ember/10 px-3 py-1 text-xs font-semibold text-ember">
-            <Lock className="size-3.5" /> Pro lesson
-          </span>
-          <h1 className="mt-4 font-display text-2xl font-bold tracking-tight sm:text-3xl">
-            {lesson.title}
-          </h1>
-          <p className="mt-3 text-sm text-chalk">
-            Free covers the first module of every course. The rest of {course.title} — along with
-            the mentor, portfolio projects and certificates — comes with Pro.
-          </p>
-          <div className="mt-6 flex flex-wrap justify-center gap-2">
-            <Button asChild>
-              <Link to="/pricing">
-                {trialUsed ? "See plans" : "Start your free trial"}{" "}
-                <ArrowRight className="size-4" />
-              </Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link to="/courses/$courseId" params={{ courseId: course.id }}>
-                Back to the course
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </div>
-    </AppShell>
-  );
-}
-
-/**
- * The lesson exists on the roadmap but nobody has written it yet. It awards no
- * XP and cannot be completed — saying so plainly beats generating filler.
- */
-function LessonComingSoon({ course, lesson }: { course: Course; lesson: LessonMeta }) {
-  const { data: progress = [] } = useProgress();
-
-  // Demand signal: which unwritten lessons people actually try to open decides
-  // what gets written next.
-  useEffect(() => {
-    track("lesson_coming_soon_viewed", { course_id: course.id, lesson_id: lesson.id });
-  }, [course.id, lesson.id]);
-
-  const done = new Set(progress.map((p) => p.lesson_id));
-  const next = nextLiveLesson(course, done);
-
-  return (
-    <AppShell>
-      <div className="mx-auto max-w-xl">
-        <Link
-          to="/courses/$courseId"
-          params={{ courseId: course.id }}
-          className="eyebrow flex items-center gap-1.5"
-        >
-          <ArrowLeft className="size-3" /> {course.title}
-        </Link>
-        <div className="card-surface mt-5 p-8 text-center sm:p-10">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-chalk">
-            <Lock className="size-3.5" /> Coming soon
-          </span>
-          <h1 className="mt-4 font-display text-2xl font-bold tracking-tight sm:text-3xl">
-            {lesson.title}
-          </h1>
-          <p className="mt-3 text-sm text-chalk">
-            This lesson is on the {course.title} roadmap but hasn't been written yet. It doesn't
-            award XP and doesn't count towards your progress or a certificate — we'd rather leave
-            the slot visibly empty than fill it with something that teaches you nothing.
-          </p>
-          <div className="mt-6 flex flex-wrap justify-center gap-2">
-            {next ? (
-              <Button asChild>
-                <Link
-                  to="/learn/$courseId/$lessonId"
-                  params={{ courseId: course.id, lessonId: next.id }}
-                >
-                  Go to the next live lesson <ArrowRight className="size-4" />
-                </Link>
-              </Button>
-            ) : null}
-            <Button asChild variant="outline">
-              <Link to="/courses/$courseId" params={{ courseId: course.id }}>
-                Back to the course
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </div>
-    </AppShell>
-  );
-}
-
-function LessonWorkspace({
-  course,
-  lesson,
-  body,
-}: {
-  course: Course;
-  lesson: LessonMeta;
-  body: LessonBody;
-}) {
   const navigate = useNavigate();
   const { user } = useSession();
   const { data: progress = [] } = useProgress();
@@ -223,48 +72,29 @@ function LessonWorkspace({
 
   const lessons = courseLessons(course);
   const index = lessons.findIndex((l) => l.id === lesson.id);
+  const next = lessons[index + 1];
   const done = new Set(progress.map((p) => p.lesson_id));
   const isDone = done.has(lesson.id);
-  // Skip past anything unwritten — sending someone to a "coming soon" screen as
-  // their reward for finishing a lesson is a dead end.
-  const next = nextLiveLesson(course, new Set([...done, lesson.id]));
 
   const challenge = body.blocks.find((b) => b.kind === "challenge");
   const [code, setCode] = useState(challenge?.kind === "challenge" ? challenge.starter : "");
   const [lastRun, setLastRun] = useState<RunResult | null>(null);
-  const [failedAttempts, setFailedAttempts] = useState(0);
   const [solved, setSolved] = useState(false);
   const [answers, setAnswers] = useState<Record<string, number | string>>({});
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [mentorOpen, setMentorOpen] = useState(false);
-
-  useEffect(() => {
-    track("lesson_started", {
-      course_id: course.id,
-      lesson_id: lesson.id,
-      type: lesson.type,
-      xp: body.xp,
-    });
-  }, [course.id, lesson.id, lesson.type, body.xp]);
 
   const quizBlocks = body.blocks.filter((b) => b.kind === "mcq" || b.kind === "fill");
   const quizDone = quizBlocks.every((b) => {
     const id = "id" in b ? b.id : "";
     if (!checked[id]) return false;
     if (b.kind === "mcq") return answers[id] === b.answer;
-    return (
-      String(answers[id] ?? "")
-        .trim()
-        .toLowerCase() === b.answer.toLowerCase()
-    );
+    return String(answers[id] ?? "").trim().toLowerCase() === b.answer.toLowerCase();
   });
   const canFinish = quizDone && (!challenge || solved);
 
   const mentorContext = useMemo(
     () => ({
-      courseId: course.id,
-      lessonId: lesson.id,
-      failedAttempts,
       lessonTitle: lesson.title,
       courseTitle: course.title,
       code: challenge ? code : undefined,
@@ -272,7 +102,7 @@ function LessonWorkspace({
       lastError: lastRun?.error ?? null,
       failingTests: lastRun?.tests.filter((t) => !t.passed).map((t) => t.name) ?? [],
     }),
-    [course.id, lesson.id, lesson.title, course.title, code, challenge, lastRun, failedAttempts],
+    [lesson.title, course.title, code, challenge, lastRun],
   );
 
   async function finish() {
@@ -281,33 +111,19 @@ function LessonWorkspace({
       navigate({ to: "/auth" });
       return;
     }
-    // Already banked — the button is just "next" at this point. Re-submitting
-    // would fail the server's answer check on a revisit.
-    if (!isDone) {
-      try {
-        const res = await complete.mutateAsync({
-          courseId: course.id,
-          lessonId: lesson.id,
-          answers,
-          challengeSolved: solved,
-        });
-        if (res.firstTime) {
-          toast.success(`+${res.gained} XP`, {
-            description: res.leveledUp
-              ? `Level up! You're now level ${res.level}.`
-              : `${res.streak} day streak going.`,
-          });
-        }
-      } catch {
-        // The mutation's onError already surfaced why; stay on the lesson.
-        return;
-      }
+    const res = await complete.mutateAsync({
+      courseId: course.id,
+      lessonId: lesson.id,
+      xp: body.xp,
+      isChallenge: Boolean(challenge),
+    });
+    if (res.firstTime) {
+      toast.success(`+${res.gained} XP`, {
+        description: res.leveledUp ? `Level up! You're now level ${res.level}.` : `${res.streak} day streak going.`,
+      });
     }
     if (next) {
-      navigate({
-        to: "/learn/$courseId/$lessonId",
-        params: { courseId: course.id, lessonId: next.id },
-      });
+      navigate({ to: "/learn/$courseId/$lessonId", params: { courseId: course.id, lessonId: next.id } });
     } else {
       navigate({ to: "/courses/$courseId", params: { courseId: course.id } });
     }
@@ -318,34 +134,16 @@ function LessonWorkspace({
       <div className="grid gap-6 xl:grid-cols-[250px_1fr_340px]">
         {/* Roadmap */}
         <aside className="card-surface hidden max-h-[calc(100vh-7rem)] overflow-y-auto p-5 xl:sticky xl:top-24 xl:block">
-          <Link
-            to="/courses/$courseId"
-            params={{ courseId: course.id }}
-            className="eyebrow flex items-center gap-1.5"
-          >
+          <Link to="/courses/$courseId" params={{ courseId: course.id }} className="eyebrow flex items-center gap-1.5">
             <ArrowLeft className="size-3" /> {course.title}
           </Link>
           <div className="mt-5 space-y-5">
             {course.modules.map((mod) => (
               <div key={mod.id}>
-                <p className="text-[11px] font-bold uppercase tracking-wider text-chalk">
-                  {mod.title}
-                </p>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-chalk">{mod.title}</p>
                 <ul className="mt-2 space-y-0.5">
                   {mod.lessons.map((l) => {
                     const active = l.id === lesson.id;
-                    if (!isLessonLive(l.id)) {
-                      return (
-                        <li
-                          key={l.id}
-                          className="flex items-start gap-2 rounded-lg px-2.5 py-2 text-sm text-chalk/60"
-                          title="Not written yet"
-                        >
-                          <Lock className="mt-0.5 size-4 shrink-0 opacity-40" />
-                          <span className="leading-snug">{l.title}</span>
-                        </li>
-                      );
-                    }
                     return (
                       <li key={l.id}>
                         <Link
@@ -353,9 +151,7 @@ function LessonWorkspace({
                           params={{ courseId: course.id, lessonId: l.id }}
                           className={cn(
                             "flex items-start gap-2 rounded-lg px-2.5 py-2 text-sm transition-colors",
-                            active
-                              ? "bg-brand/10 font-semibold text-brand"
-                              : "text-chalk hover:bg-secondary",
+                            active ? "bg-brand/10 font-semibold text-brand" : "text-chalk hover:bg-secondary",
                           )}
                         >
                           {done.has(l.id) ? (
@@ -380,9 +176,7 @@ function LessonWorkspace({
             <p className="eyebrow">
               Lesson {index + 1} of {lessons.length} · {lesson.minutes} min · {body.xp} XP
             </p>
-            <h1 className="mt-2 font-display text-2xl font-bold tracking-tight sm:text-4xl">
-              {lesson.title}
-            </h1>
+            <h1 className="mt-2 font-display text-2xl font-bold tracking-tight sm:text-4xl">{lesson.title}</h1>
             <p className="mt-2 text-chalk">{body.summary}</p>
           </header>
 
@@ -402,12 +196,7 @@ function LessonWorkspace({
                   setSolved(true);
                   toast.success("Challenge solved");
                 }}
-                onResult={(result) => {
-                  setLastRun(result);
-                  // Counts toward the mentor's three-strikes rule: after three
-                  // failed runs it stops withholding the solution.
-                  if (!result.passed) setFailedAttempts((n) => n + 1);
-                }}
+                onResult={setLastRun}
               />
             ))}
           </div>
@@ -435,10 +224,7 @@ function LessonWorkspace({
 
       {/* Mobile mentor */}
       <button
-        onClick={() => {
-          track("mentor_opened", { lesson: lesson.title, surface: "mobile" });
-          setMentorOpen(true);
-        }}
+        onClick={() => setMentorOpen(true)}
         className="fixed bottom-24 right-4 z-40 flex items-center gap-2 rounded-full bg-ink px-4 py-3 text-sm font-semibold text-white shadow-lg xl:hidden"
       >
         <Sparkles className="size-4" /> Mentor
@@ -503,9 +289,7 @@ function Block({
         <div className="border-b border-white/10 px-4 py-2 font-mono text-[11px] uppercase tracking-wider text-white/50">
           {block.caption ?? block.language}
         </div>
-        <pre className="overflow-x-auto p-4 font-mono text-[13px] leading-6 text-white/90">
-          {block.code}
-        </pre>
+        <pre className="overflow-x-auto p-4 font-mono text-[13px] leading-6 text-white/90">{block.code}</pre>
       </div>
     );
   }
@@ -525,9 +309,7 @@ function Block({
               onClick={() => !isChecked && setAnswers((a) => ({ ...a, [block.id]: i }))}
               className={cn(
                 "flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm transition-colors",
-                picked === i
-                  ? "border-brand bg-brand/5 font-semibold"
-                  : "border-border hover:bg-secondary",
+                picked === i ? "border-brand bg-brand/5 font-semibold" : "border-border hover:bg-secondary",
                 isChecked && i === block.answer && "border-brand bg-brand/10",
                 isChecked && picked === i && !correct && "border-destructive bg-destructive/5",
               )}

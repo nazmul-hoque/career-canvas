@@ -1,11 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { Send, Sparkles, Loader2 } from "lucide-react";
-import { suggestedPrompts, type MentorContext, type MentorMessage } from "@/lib/mentor";
-import { mentorReplyFn } from "@/lib/mentor.functions";
-import { supabase } from "@/integrations/supabase/client";
-import { useSession } from "@/hooks/useAuth";
-import { track } from "@/lib/analytics";
+import { askMentor, suggestedPrompts, type MentorContext, type MentorMessage } from "@/lib/mentor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -29,40 +24,7 @@ export function MentorPanel({
   ]);
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
-  const [remaining, setRemaining] = useState<number | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
-  const { user } = useSession();
-
-  // Conversations persist per lesson, so a learner can come back to how they got
-  // unstuck last time.
-  const { data: saved } = useQuery({
-    queryKey: ["mentor", user?.id, context.lessonId],
-    enabled: Boolean(user && context.lessonId),
-    queryFn: async (): Promise<MentorMessage[]> => {
-      const { data, error } = await supabase
-        .from("mentor_messages")
-        .select("id, role, content, created_at")
-        .eq("user_id", user!.id)
-        .eq("lesson_id", context.lessonId!)
-        .order("created_at", { ascending: true })
-        .limit(100);
-      if (error) throw error;
-      return (
-        (data ?? []) as { id: string; role: string; content: string; created_at: string }[]
-      ).map((row) => ({
-        id: row.id,
-        role: row.role === "mentor" ? ("mentor" as const) : ("user" as const),
-        content: row.content,
-        at: new Date(row.created_at).getTime(),
-      }));
-    },
-  });
-
-  // Replay the saved thread once, keeping the local intro at the top.
-  useEffect(() => {
-    if (!saved?.length) return;
-    setMessages((current) => (current.length > 1 ? current : [current[0]!, ...saved]));
-  }, [saved]);
 
   useEffect(() => {
     scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: "smooth" });
@@ -71,61 +33,14 @@ export function MentorPanel({
   async function send(text: string) {
     const trimmed = text.trim();
     if (!trimmed || thinking) return;
-    if (!context.courseId || !context.lessonId) return;
     if (messages.length === 1) onFirstMessage?.();
-    const userMsg: MentorMessage = {
-      id: crypto.randomUUID(),
-      role: "user",
-      content: trimmed,
-      at: Date.now(),
-    };
+    const userMsg: MentorMessage = { id: crypto.randomUUID(), role: "user", content: trimmed, at: Date.now() };
     setMessages((m) => [...m, userMsg]);
     setInput("");
     setThinking(true);
-    track("mentor_message_sent", {
-      lesson: context.lessonTitle ?? null,
-      course: context.courseTitle ?? null,
-      turn: messages.length,
-      has_code: Boolean(context.code?.trim()),
-      after_error: Boolean(context.lastError),
-    });
-
-    try {
-      const result = await mentorReplyFn({
-        data: {
-          courseId: context.courseId,
-          lessonId: context.lessonId,
-          question: trimmed,
-          failedAttempts: context.failedAttempts ?? 0,
-          code: context.code,
-          language: context.language,
-          lastError: context.lastError ?? null,
-          failingTests: context.failingTests ?? [],
-        },
-      });
-      setRemaining(result.remaining);
-      setMessages((m) => [
-        ...m,
-        { id: crypto.randomUUID(), role: "mentor", content: result.reply, at: Date.now() },
-      ]);
-    } catch (error) {
-      // Quota exhausted, misconfigured provider, network — say it in the thread
-      // rather than a toast the learner might miss mid-conversation.
-      setMessages((m) => [
-        ...m,
-        {
-          id: crypto.randomUUID(),
-          role: "mentor",
-          content:
-            error instanceof Error
-              ? error.message
-              : "I couldn't reach my brain just then. Try again in a moment.",
-          at: Date.now(),
-        },
-      ]);
-    } finally {
-      setThinking(false);
-    }
+    const reply = await askMentor(trimmed, context, messages);
+    setMessages((m) => [...m, { id: crypto.randomUUID(), role: "mentor", content: reply, at: Date.now() }]);
+    setThinking(false);
   }
 
   return (
@@ -136,11 +51,7 @@ export function MentorPanel({
         </span>
         <div>
           <p className="text-sm font-bold">AI Mentor</p>
-          <p className="text-[11px] text-chalk">
-            {remaining !== null && remaining <= 5
-              ? `${remaining} messages left this month`
-              : "Knows what lesson you're on"}
-          </p>
+          <p className="text-[11px] text-chalk">Knows what lesson you're on</p>
         </div>
       </header>
 
@@ -150,7 +61,9 @@ export function MentorPanel({
             key={m.id}
             className={cn(
               "max-w-[92%] rounded-2xl px-4 py-3 text-sm leading-relaxed",
-              m.role === "mentor" ? "bg-secondary text-foreground" : "ml-auto bg-ink text-white",
+              m.role === "mentor"
+                ? "bg-secondary text-foreground"
+                : "ml-auto bg-ink text-white",
             )}
           >
             {m.content}
@@ -169,7 +82,7 @@ export function MentorPanel({
             <button
               key={p}
               onClick={() => send(p)}
-              disabled={!user || thinking}
+              disabled={thinking}
               className="rounded-full bg-secondary px-2.5 py-1 text-[11px] font-semibold text-chalk transition-colors hover:text-foreground disabled:opacity-50"
             >
               {p}
@@ -186,16 +99,10 @@ export function MentorPanel({
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={user ? "Ask anything about this lesson…" : "Sign in to ask your mentor"}
-            disabled={!user}
+            placeholder="Ask anything about this lesson…"
             aria-label="Message the AI mentor"
           />
-          <Button
-            type="submit"
-            size="icon"
-            disabled={!user || thinking || !input.trim()}
-            aria-label="Send"
-          >
+          <Button type="submit" size="icon" disabled={thinking || !input.trim()} aria-label="Send">
             <Send className="size-4" />
           </Button>
         </form>

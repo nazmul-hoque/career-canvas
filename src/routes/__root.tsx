@@ -4,7 +4,6 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
-  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -12,7 +11,6 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { track } from "../lib/analytics";
 
 function NotFoundComponent() {
   return (
@@ -118,13 +116,6 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const pathname = useRouterState({ select: (state) => state.location.pathname });
-
-  // One pageview per navigation. This is what makes D1/D7 retention answerable
-  // without asking every feature to remember to report.
-  useEffect(() => {
-    track("pageview");
-  }, [pathname]);
 
   return (
     <QueryClientProvider client={queryClient}>

@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Play, RotateCcw, Lightbulb, CheckCircle2, XCircle, Loader2, Terminal } from "lucide-react";
 import { runCode, type RunResult } from "@/lib/code-runner";
-import { track } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -42,15 +41,6 @@ export function CodeChallenge({
     setResult(res);
     onResult(res);
     setRunning(false);
-    track("challenge_run", {
-      title,
-      language,
-      submitted: submit,
-      passed: res.passed,
-      failed_tests: res.tests.filter((t) => !t.passed).length,
-      errored: Boolean(res.error),
-      engine: res.engine,
-    });
     if (submit && res.passed) onSolved();
   }
 
@@ -65,9 +55,7 @@ export function CodeChallenge({
       <div className="grid lg:grid-cols-2">
         <div className="bg-ink">
           <div className="flex items-center justify-between border-b border-white/10 px-4 py-2">
-            <span className="font-mono text-[11px] uppercase tracking-wider text-white/50">
-              {language}
-            </span>
+            <span className="font-mono text-[11px] uppercase tracking-wider text-white/50">{language}</span>
             <div className="flex gap-1">
               <button
                 onClick={() => {
@@ -109,9 +97,7 @@ export function CodeChallenge({
                     {l}
                   </p>
                 ))}
-                {result.error ? (
-                  <p className="whitespace-pre-wrap text-destructive">{result.error}</p>
-                ) : null}
+                {result.error ? <p className="whitespace-pre-wrap text-destructive">{result.error}</p> : null}
                 <ul className="space-y-1.5 pt-2 font-sans">
                   {result.tests.map((t) => (
                     <li
@@ -121,26 +107,12 @@ export function CodeChallenge({
                         t.passed ? "text-brand" : "text-destructive",
                       )}
                     >
-                      {t.passed ? (
-                        <CheckCircle2 className="size-4" />
-                      ) : (
-                        <XCircle className="size-4" />
-                      )}
+                      {t.passed ? <CheckCircle2 className="size-4" /> : <XCircle className="size-4" />}
                       {t.name}
                     </li>
                   ))}
                 </ul>
-                <p className="pt-1 font-sans text-xs text-chalk">
-                  Finished in {result.durationMs}ms
-                  {result.engine === "python" ? " · CPython (WebAssembly)" : null}
-                </p>
-                {result.engine === "python-simulated" ? (
-                  <p className="font-sans text-xs text-ember">
-                    The Python runtime could not be loaded, so these results come from reading your
-                    code rather than running it. Check your connection and run again for a real
-                    result.
-                  </p>
-                ) : null}
+                <p className="pt-1 font-sans text-xs text-chalk">Finished in {result.durationMs}ms</p>
               </>
             )}
           </div>
@@ -161,14 +133,7 @@ export function CodeChallenge({
         <Button onClick={() => handleRun(true)} disabled={running || solved}>
           {solved ? "Solved" : "Submit solution"}
         </Button>
-        {solved ? (
-          <span className="text-sm font-semibold text-brand">All tests green. Nice work.</span>
-        ) : null}
-        {running && language === "python" ? (
-          <span className="text-sm text-chalk">
-            Starting Python — the first run downloads the interpreter.
-          </span>
-        ) : null}
+        {solved ? <span className="text-sm font-semibold text-brand">All tests green. Nice work.</span> : null}
       </div>
     </div>
   );

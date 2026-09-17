@@ -1,10 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { Star, Clock, CheckCircle2, PlayCircle, Code2, Wrench, BookOpen, Lock } from "lucide-react";
+import { Star, Clock, CheckCircle2, PlayCircle, Code2, Wrench, BookOpen } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { courseById, courseLessons, courseTaskCount } from "@/content/curriculum";
-import { isLessonLive, liveLessons, nextLiveLesson } from "@/content/lessons";
-import { isLessonUnlocked } from "@/lib/entitlements";
-import { useEntitlements } from "@/hooks/useEntitlements";
 import { useProgress } from "@/hooks/useLearner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -17,9 +14,7 @@ export const Route = createFileRoute("/courses/$courseId")({
   },
   head: ({ loaderData }) => {
     if (!loaderData) {
-      return {
-        meta: [{ title: "Course unavailable — Ascent" }, { name: "robots", content: "noindex" }],
-      };
+      return { meta: [{ title: "Course unavailable — Ascent" }, { name: "robots", content: "noindex" }] };
     }
     const { course } = loaderData;
     return {
@@ -41,9 +36,7 @@ function CourseMissing() {
     <AppShell>
       <div className="card-surface p-10 text-center">
         <h1 className="font-display text-2xl font-bold">We could not find that course</h1>
-        <p className="mt-2 text-sm text-chalk">
-          It may have been renamed. The catalog has everything current.
-        </p>
+        <p className="mt-2 text-sm text-chalk">It may have been renamed. The catalog has everything current.</p>
         <Button asChild className="mt-6">
           <Link to="/learn">Back to catalog</Link>
         </Button>
@@ -62,15 +55,11 @@ const typeIcon = {
 function CourseDetail() {
   const { course } = Route.useLoaderData();
   const { data: progress = [] } = useProgress();
-  const { entitlements } = useEntitlements();
   const done = new Set(progress.map((p) => p.lesson_id));
   const lessons = courseLessons(course);
-  // Written lessons only: unwritten slots stay on the curriculum list as
-  // "coming soon" but never inflate a denominator or a percentage.
-  const written = liveLessons(course);
-  const completed = written.filter((l) => done.has(l.id)).length;
-  const percent = written.length ? Math.round((completed / written.length) * 100) : 0;
-  const next = nextLiveLesson(course, done) ?? written[0] ?? null;
+  const completed = lessons.filter((l) => done.has(l.id)).length;
+  const percent = Math.round((completed / lessons.length) * 100);
+  const next = lessons.find((l) => !done.has(l.id)) ?? lessons[0]!;
 
   return (
     <AppShell>
@@ -79,43 +68,27 @@ function CourseDetail() {
           <p className="eyebrow text-white/60">
             {course.skill} · {course.level}
           </p>
-          <h1 className="mt-2 font-display text-3xl font-bold tracking-tight sm:text-5xl">
-            {course.title}
-          </h1>
+          <h1 className="mt-2 font-display text-3xl font-bold tracking-tight sm:text-5xl">{course.title}</h1>
           <p className="mt-3 text-white/75 sm:text-lg">{course.description}</p>
           <div className="mt-6 flex flex-wrap items-center gap-5 text-sm font-semibold text-white/80">
             <span className="flex items-center gap-1.5">
-              <Star className="size-4 fill-ember text-ember" /> {course.rating} (
-              {course.students.toLocaleString()} learners)
+              <Star className="size-4 fill-ember text-ember" /> {course.rating} ({course.students.toLocaleString()} learners)
             </span>
             <span className="flex items-center gap-1.5">
               <Clock className="size-4" /> {course.hours} hours
             </span>
-            <span>
-              {written.length} of {lessons.length} lessons live
-            </span>
+            <span>{lessons.length} lessons</span>
             <span>{courseTaskCount(course)} practical tasks</span>
           </div>
           <div className="mt-7 flex flex-wrap items-center gap-3">
-            {next ? (
-              <Button asChild size="lg" variant="secondary">
-                <Link
-                  to="/learn/$courseId/$lessonId"
-                  params={{ courseId: course.id, lessonId: next.id }}
-                >
-                  {completed > 0 ? "Continue course" : "Start course"}
-                </Link>
-              </Button>
-            ) : (
-              <span className="rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white/80">
-                {written.length
-                  ? "You've finished every live lesson here"
-                  : "No lessons written yet"}
-              </span>
-            )}
+            <Button asChild size="lg" variant="secondary">
+              <Link to="/learn/$courseId/$lessonId" params={{ courseId: course.id, lessonId: next.id }}>
+                {completed > 0 ? "Continue course" : "Start course"}
+              </Link>
+            </Button>
             {completed > 0 ? (
               <span className="text-sm text-white/70">
-                {completed}/{written.length} lessons · {percent}% complete
+                {completed}/{lessons.length} lessons · {percent}% complete
               </span>
             ) : null}
           </div>
@@ -126,9 +99,7 @@ function CourseDetail() {
         <div className="space-y-6">
           <section className="card-surface p-6 sm:p-8">
             <h2 className="font-display text-xl font-bold">Curriculum</h2>
-            <p className="mt-1 text-sm text-chalk">
-              {course.modules.length} modules, built to be done in order.
-            </p>
+            <p className="mt-1 text-sm text-chalk">{course.modules.length} modules, built to be done in order.</p>
             <div className="mt-6 space-y-6">
               {course.modules.map((mod, i) => (
                 <div key={mod.id}>
@@ -145,37 +116,6 @@ function CourseDetail() {
                     {mod.lessons.map((l) => {
                       const Icon = typeIcon[l.type];
                       const isDone = done.has(l.id);
-                      if (isLessonLive(l.id) && !isLessonUnlocked(course, l.id, entitlements)) {
-                        return (
-                          <li key={l.id} className="flex items-center gap-3 py-3 text-chalk/70">
-                            <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-ember/10 text-ember">
-                              <Lock className="size-4" />
-                            </span>
-                            <span className="flex-1 text-sm font-semibold">{l.title}</span>
-                            <Link
-                              to="/pricing"
-                              className="text-xs font-semibold text-ember hover:underline"
-                            >
-                              Pro
-                            </Link>
-                          </li>
-                        );
-                      }
-                      if (!isLessonLive(l.id)) {
-                        return (
-                          <li
-                            key={l.id}
-                            className="flex items-center gap-3 py-3 text-chalk/60"
-                            title="Not written yet"
-                          >
-                            <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-secondary">
-                              <Lock className="size-4" />
-                            </span>
-                            <span className="flex-1 text-sm font-semibold">{l.title}</span>
-                            <span className="text-xs">Coming soon</span>
-                          </li>
-                        );
-                      }
                       return (
                         <li key={l.id}>
                           <Link
@@ -189,11 +129,7 @@ function CourseDetail() {
                                 isDone ? "bg-brand/10 text-brand" : "bg-secondary text-chalk",
                               )}
                             >
-                              {isDone ? (
-                                <CheckCircle2 className="size-4" />
-                              ) : (
-                                <Icon className="size-4" />
-                              )}
+                              {isDone ? <CheckCircle2 className="size-4" /> : <Icon className="size-4" />}
                             </span>
                             <span className="flex-1 text-sm font-semibold">{l.title}</span>
                             <span className="text-xs text-chalk">
@@ -239,18 +175,10 @@ function CourseDetail() {
           <section className="card-surface p-6">
             <p className="eyebrow">Progress</p>
             <div className="mt-3 h-2 overflow-hidden rounded-full bg-line">
-              <div
-                className="h-full rounded-full bg-brand transition-all duration-700"
-                style={{ width: `${percent}%` }}
-              />
+              <div className="h-full rounded-full bg-brand transition-all duration-700" style={{ width: `${percent}%` }} />
             </div>
             <p className="mt-2 text-sm text-chalk">
-              {completed} of {written.length} live lessons complete
-              {written.length < lessons.length ? (
-                <span className="block text-xs text-chalk/70">
-                  {lessons.length - written.length} more lessons are still being written.
-                </span>
-              ) : null}
+              {completed} of {lessons.length} lessons complete
             </p>
           </section>
         </aside>
