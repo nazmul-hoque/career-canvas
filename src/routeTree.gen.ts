@@ -14,11 +14,14 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as CoursesCourseIdRouteImport } from './routes/courses.$courseId'
 import { Route as LearnIndexRouteImport } from './routes/learn.index'
 import { Route as PathsIndexRouteImport } from './routes/paths.index'
 import { Route as PathsPathIdRouteImport } from './routes/paths.$pathId'
+import { Route as ProjectsIndexRouteImport } from './routes/projects.index'
+import { Route as ProjectsProjectIdRouteImport } from './routes/projects.$projectId'
 import { Route as LearnCourseIdLessonIdRouteImport } from './routes/learn.$courseId.$lessonId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -46,6 +49,11 @@ const OnboardingRoute = OnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
@@ -71,6 +79,16 @@ const PathsPathIdRoute = PathsPathIdRouteImport.update({
   path: '/paths/$pathId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProjectsIndexRoute = ProjectsIndexRouteImport.update({
+  id: '/projects/',
+  path: '/projects/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProjectsProjectIdRoute = ProjectsProjectIdRouteImport.update({
+  id: '/projects/$projectId',
+  path: '/projects/$projectId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LearnCourseIdLessonIdRoute = LearnCourseIdLessonIdRouteImport.update({
   id: '/learn/$courseId/$lessonId',
   path: '/learn/$courseId/$lessonId',
@@ -83,11 +101,14 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/leaderboard': typeof LeaderboardRoute
   '/onboarding': typeof OnboardingRoute
+  '/pricing': typeof PricingRoute
   '/reset-password': typeof ResetPasswordRoute
   '/courses/$courseId': typeof CoursesCourseIdRoute
   '/paths/$pathId': typeof PathsPathIdRoute
+  '/projects/$projectId': typeof ProjectsProjectIdRoute
   '/learn/': typeof LearnIndexRoute
   '/paths/': typeof PathsIndexRoute
+  '/projects/': typeof ProjectsIndexRoute
   '/learn/$courseId/$lessonId': typeof LearnCourseIdLessonIdRoute
 }
 export interface FileRoutesByTo {
@@ -96,11 +117,14 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/leaderboard': typeof LeaderboardRoute
   '/onboarding': typeof OnboardingRoute
+  '/pricing': typeof PricingRoute
   '/reset-password': typeof ResetPasswordRoute
   '/courses/$courseId': typeof CoursesCourseIdRoute
   '/paths/$pathId': typeof PathsPathIdRoute
+  '/projects/$projectId': typeof ProjectsProjectIdRoute
   '/learn': typeof LearnIndexRoute
   '/paths': typeof PathsIndexRoute
+  '/projects': typeof ProjectsIndexRoute
   '/learn/$courseId/$lessonId': typeof LearnCourseIdLessonIdRoute
 }
 export interface FileRoutesById {
@@ -110,11 +134,14 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/leaderboard': typeof LeaderboardRoute
   '/onboarding': typeof OnboardingRoute
+  '/pricing': typeof PricingRoute
   '/reset-password': typeof ResetPasswordRoute
   '/courses/$courseId': typeof CoursesCourseIdRoute
   '/paths/$pathId': typeof PathsPathIdRoute
+  '/projects/$projectId': typeof ProjectsProjectIdRoute
   '/learn/': typeof LearnIndexRoute
   '/paths/': typeof PathsIndexRoute
+  '/projects/': typeof ProjectsIndexRoute
   '/learn/$courseId/$lessonId': typeof LearnCourseIdLessonIdRoute
 }
 export interface FileRouteTypes {
@@ -125,11 +152,14 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/leaderboard'
     | '/onboarding'
+    | '/pricing'
     | '/reset-password'
     | '/courses/$courseId'
     | '/paths/$pathId'
+    | '/projects/$projectId'
     | '/learn/'
     | '/paths/'
+    | '/projects/'
     | '/learn/$courseId/$lessonId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -138,11 +168,14 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/leaderboard'
     | '/onboarding'
+    | '/pricing'
     | '/reset-password'
     | '/courses/$courseId'
     | '/paths/$pathId'
+    | '/projects/$projectId'
     | '/learn'
     | '/paths'
+    | '/projects'
     | '/learn/$courseId/$lessonId'
   id:
     | '__root__'
@@ -151,11 +184,14 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/leaderboard'
     | '/onboarding'
+    | '/pricing'
     | '/reset-password'
     | '/courses/$courseId'
     | '/paths/$pathId'
+    | '/projects/$projectId'
     | '/learn/'
     | '/paths/'
+    | '/projects/'
     | '/learn/$courseId/$lessonId'
   fileRoutesById: FileRoutesById
 }
@@ -165,11 +201,14 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   LeaderboardRoute: typeof LeaderboardRoute
   OnboardingRoute: typeof OnboardingRoute
+  PricingRoute: typeof PricingRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   CoursesCourseIdRoute: typeof CoursesCourseIdRoute
   PathsPathIdRoute: typeof PathsPathIdRoute
+  ProjectsProjectIdRoute: typeof ProjectsProjectIdRoute
   LearnIndexRoute: typeof LearnIndexRoute
   PathsIndexRoute: typeof PathsIndexRoute
+  ProjectsIndexRoute: typeof ProjectsIndexRoute
   LearnCourseIdLessonIdRoute: typeof LearnCourseIdLessonIdRoute
 }
 
@@ -210,6 +249,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reset-password': {
       id: '/reset-password'
       path: '/reset-password'
@@ -245,6 +291,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PathsPathIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/projects/': {
+      id: '/projects/'
+      path: '/projects'
+      fullPath: '/projects/'
+      preLoaderRoute: typeof ProjectsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/projects/$projectId': {
+      id: '/projects/$projectId'
+      path: '/projects/$projectId'
+      fullPath: '/projects/$projectId'
+      preLoaderRoute: typeof ProjectsProjectIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/learn/$courseId/$lessonId': {
       id: '/learn/$courseId/$lessonId'
       path: '/learn/$courseId/$lessonId'
@@ -261,11 +321,14 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   LeaderboardRoute: LeaderboardRoute,
   OnboardingRoute: OnboardingRoute,
+  PricingRoute: PricingRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   CoursesCourseIdRoute: CoursesCourseIdRoute,
   PathsPathIdRoute: PathsPathIdRoute,
+  ProjectsProjectIdRoute: ProjectsProjectIdRoute,
   LearnIndexRoute: LearnIndexRoute,
   PathsIndexRoute: PathsIndexRoute,
+  ProjectsIndexRoute: ProjectsIndexRoute,
   LearnCourseIdLessonIdRoute: LearnCourseIdLessonIdRoute,
 }
 export const routeTree = rootRouteImport
