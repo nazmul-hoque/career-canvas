@@ -15,7 +15,10 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as CertificatePathIdRouteImport } from './routes/certificate.$pathId'
+import { Route as CommunityIndexRouteImport } from './routes/community.index'
 import { Route as CoursesCourseIdRouteImport } from './routes/courses.$courseId'
 import { Route as LearnIndexRouteImport } from './routes/learn.index'
 import { Route as PathsIndexRouteImport } from './routes/paths.index'
@@ -54,9 +57,24 @@ const PricingRoute = PricingRouteImport.update({
   path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CertificatePathIdRoute = CertificatePathIdRouteImport.update({
+  id: '/certificate/$pathId',
+  path: '/certificate/$pathId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CommunityIndexRoute = CommunityIndexRouteImport.update({
+  id: '/community/',
+  path: '/community/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CoursesCourseIdRoute = CoursesCourseIdRouteImport.update({
@@ -102,10 +120,13 @@ export interface FileRoutesByFullPath {
   '/leaderboard': typeof LeaderboardRoute
   '/onboarding': typeof OnboardingRoute
   '/pricing': typeof PricingRoute
+  '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/certificate/$pathId': typeof CertificatePathIdRoute
   '/courses/$courseId': typeof CoursesCourseIdRoute
   '/paths/$pathId': typeof PathsPathIdRoute
   '/projects/$projectId': typeof ProjectsProjectIdRoute
+  '/community/': typeof CommunityIndexRoute
   '/learn/': typeof LearnIndexRoute
   '/paths/': typeof PathsIndexRoute
   '/projects/': typeof ProjectsIndexRoute
@@ -118,10 +139,13 @@ export interface FileRoutesByTo {
   '/leaderboard': typeof LeaderboardRoute
   '/onboarding': typeof OnboardingRoute
   '/pricing': typeof PricingRoute
+  '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/certificate/$pathId': typeof CertificatePathIdRoute
   '/courses/$courseId': typeof CoursesCourseIdRoute
   '/paths/$pathId': typeof PathsPathIdRoute
   '/projects/$projectId': typeof ProjectsProjectIdRoute
+  '/community': typeof CommunityIndexRoute
   '/learn': typeof LearnIndexRoute
   '/paths': typeof PathsIndexRoute
   '/projects': typeof ProjectsIndexRoute
@@ -135,10 +159,13 @@ export interface FileRoutesById {
   '/leaderboard': typeof LeaderboardRoute
   '/onboarding': typeof OnboardingRoute
   '/pricing': typeof PricingRoute
+  '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/certificate/$pathId': typeof CertificatePathIdRoute
   '/courses/$courseId': typeof CoursesCourseIdRoute
   '/paths/$pathId': typeof PathsPathIdRoute
   '/projects/$projectId': typeof ProjectsProjectIdRoute
+  '/community/': typeof CommunityIndexRoute
   '/learn/': typeof LearnIndexRoute
   '/paths/': typeof PathsIndexRoute
   '/projects/': typeof ProjectsIndexRoute
@@ -153,10 +180,13 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/onboarding'
     | '/pricing'
+    | '/profile'
     | '/reset-password'
+    | '/certificate/$pathId'
     | '/courses/$courseId'
     | '/paths/$pathId'
     | '/projects/$projectId'
+    | '/community/'
     | '/learn/'
     | '/paths/'
     | '/projects/'
@@ -169,10 +199,13 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/onboarding'
     | '/pricing'
+    | '/profile'
     | '/reset-password'
+    | '/certificate/$pathId'
     | '/courses/$courseId'
     | '/paths/$pathId'
     | '/projects/$projectId'
+    | '/community'
     | '/learn'
     | '/paths'
     | '/projects'
@@ -185,10 +218,13 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/onboarding'
     | '/pricing'
+    | '/profile'
     | '/reset-password'
+    | '/certificate/$pathId'
     | '/courses/$courseId'
     | '/paths/$pathId'
     | '/projects/$projectId'
+    | '/community/'
     | '/learn/'
     | '/paths/'
     | '/projects/'
@@ -202,10 +238,13 @@ export interface RootRouteChildren {
   LeaderboardRoute: typeof LeaderboardRoute
   OnboardingRoute: typeof OnboardingRoute
   PricingRoute: typeof PricingRoute
+  ProfileRoute: typeof ProfileRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  CertificatePathIdRoute: typeof CertificatePathIdRoute
   CoursesCourseIdRoute: typeof CoursesCourseIdRoute
   PathsPathIdRoute: typeof PathsPathIdRoute
   ProjectsProjectIdRoute: typeof ProjectsProjectIdRoute
+  CommunityIndexRoute: typeof CommunityIndexRoute
   LearnIndexRoute: typeof LearnIndexRoute
   PathsIndexRoute: typeof PathsIndexRoute
   ProjectsIndexRoute: typeof ProjectsIndexRoute
@@ -256,11 +295,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reset-password': {
       id: '/reset-password'
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/certificate/$pathId': {
+      id: '/certificate/$pathId'
+      path: '/certificate/$pathId'
+      fullPath: '/certificate/$pathId'
+      preLoaderRoute: typeof CertificatePathIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/community/': {
+      id: '/community/'
+      path: '/community'
+      fullPath: '/community/'
+      preLoaderRoute: typeof CommunityIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/courses/$courseId': {
@@ -322,10 +382,13 @@ const rootRouteChildren: RootRouteChildren = {
   LeaderboardRoute: LeaderboardRoute,
   OnboardingRoute: OnboardingRoute,
   PricingRoute: PricingRoute,
+  ProfileRoute: ProfileRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  CertificatePathIdRoute: CertificatePathIdRoute,
   CoursesCourseIdRoute: CoursesCourseIdRoute,
   PathsPathIdRoute: PathsPathIdRoute,
   ProjectsProjectIdRoute: ProjectsProjectIdRoute,
+  CommunityIndexRoute: CommunityIndexRoute,
   LearnIndexRoute: LearnIndexRoute,
   PathsIndexRoute: PathsIndexRoute,
   ProjectsIndexRoute: ProjectsIndexRoute,
