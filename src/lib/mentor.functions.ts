@@ -6,6 +6,7 @@ import { getLessonBody } from "@/content/lessons";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { entitlementsFor, planState } from "@/lib/entitlements";
 import { scriptedMentorReply, type MentorContext } from "@/lib/mentor";
+import { summariseLearnerHistory } from "@/lib/mentor-history";
 
 /**
  * The AI mentor.
@@ -21,6 +22,9 @@ import { scriptedMentorReply, type MentorContext } from "@/lib/mentor";
 
 /** Turns of history sent back to the model. Older turns stay in the database. */
 const HISTORY_TURNS = 12;
+
+/** Progress and review rows read to summarise the learner's history. */
+const HISTORY_ROWS = 200;
 
 /** Failed challenge runs before the mentor may show a worked solution. */
 const REVEAL_AFTER_ATTEMPTS = 3;
@@ -59,6 +63,7 @@ function buildSystemPrompt(input: {
   lessonText: string;
   mayReveal: boolean;
   language?: string | undefined;
+  learnerHistory: string | null;
 }): string {
   return [
     "You are the AI mentor inside Ascent, an interactive platform where people learn to code by doing.",
@@ -69,6 +74,14 @@ function buildSystemPrompt(input: {
     "Lesson material the learner has in front of them:",
     input.lessonText,
     "",
+    ...(input.learnerHistory
+      ? [
+          "What you know about this learner from their progress and reviews:",
+          input.learnerHistory,
+          "Use it only where it helps — connect to something they keep forgetting, or build on something they know. Never recite it back to them.",
+          "",
+        ]
+      : []),
     "How to teach:",
     "- Be Socratic. Ask the question the learner is missing rather than handing over the answer.",
     "- One idea per reply. Two or three short paragraphs at most, no lecture.",
@@ -167,6 +180,27 @@ export const mentorReplyFn = createServerFn({ method: "POST" })
 
     let reply: string;
     if (provider) {
+      // Only fetched when a model will read it — the scripted mentor ignores it.
+      const [{ data: progressRows }, { data: reviewRows }] = await Promise.all([
+        supabaseAdmin
+          .from("lesson_progress")
+          .select("course_id, lesson_id, completed_at")
+          .eq("user_id", userId)
+          .order("completed_at", { ascending: false })
+          .limit(HISTORY_ROWS),
+        supabaseAdmin
+          .from("review_items")
+          .select("course_id, lesson_id, lapses, streak, due_on")
+          .eq("user_id", userId)
+          .limit(HISTORY_ROWS),
+      ]);
+      const learnerHistory = summariseLearnerHistory({
+        currentLessonId: data.lessonId,
+        progress: progressRows ?? [],
+        reviews: reviewRows ?? [],
+        today: new Date().toISOString().slice(0, 10),
+      });
+
       const system = buildSystemPrompt({
         courseTitle: found.course.title,
         lessonTitle: found.lesson.title,
@@ -174,6 +208,7 @@ export const mentorReplyFn = createServerFn({ method: "POST" })
         lessonText: lessonTextFor(data.courseId, data.lessonId),
         mayReveal: data.failedAttempts >= REVEAL_AFTER_ATTEMPTS,
         language: data.language,
+        learnerHistory,
       });
       reply = await provider.complete({
         system,

@@ -10,21 +10,22 @@ per item is enough — the code is the detail.
 
 ## Blocked on you (nothing ships correctly until these are done)
 
-- [ ] **Apply the eight migrations** in `supabase/migrations/`:
+- [ ] **Apply the nine migrations** in `supabase/migrations/`:
       `20260916120000_server_authored_xp`, `20260916140000_persist_milestones_and_likes`,
       `20260916160000_analytics_events`, `20260916180000_mentor_conversations`,
       `20260916200000_entitlements_and_trial`, `20260916220000_certificate_signatures`,
-      `20260916240000_reengagement`, `20260916260000_spaced_review`. Until then the
-      client keeps the write grants the first migration revokes, and the
-      milestone/like/analytics/review/email tables don't exist — those features
+      `20260916240000_reengagement`, `20260916260000_spaced_review`,
+      `20260917120000_push_notifications`. Until then the client keeps the write
+      grants the first migration revokes, and the
+      milestone/like/analytics/review/email/push tables don't exist — those features
       error, analytics silently no-ops.
 - [ ] **Add `SUPABASE_SERVICE_ROLE_KEY` to `.env`** (server-only, never `VITE_`).
       Lesson completion runs through the service-role client and fails loudly
       without it.
 - [ ] **Regenerate `src/integrations/supabase/types.ts`** from Supabase after the
       migrations land. `analytics_events`, `post_likes`, `project_milestones`,
-      `reengagement_sends`, `review_items`, `issued_certificates.signature` and
-      `profiles.email_optin` are currently hand-written into that generated file.
+      `reengagement_sends` (incl. `channel`), `review_items`, `push_subscriptions`,
+      `issued_certificates.signature` and `profiles.email_optin` are currently hand-written into that generated file.
 - [ ] **Set `MENTOR_PROVIDER` and the matching API key** in `.env` (see
       `.env.example`). Unset, the mentor falls back to the old scripted replies —
       the feature looks alive but isn't real.
@@ -50,6 +51,11 @@ per item is enough — the code is the detail.
       It falls back to the service-role key, which works — until you rotate that
       key, at which point every signature issued before the rotation stops
       verifying (the issuing record stays valid, the page says "not confirmed").
+- [ ] **Generate VAPID keys for push** — `bun run push:keys` prints
+      `VITE_VAPID_PUBLIC_KEY`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` and
+      `VAPID_SUBJECT`; put them in `.env` (set the subject to a real contact).
+      Unset, the profile toggle stays hidden and every nudge goes by email.
+      Generate once and keep them: a new pair drops every browser subscription.
 - [ ] **Decide whether to self-host Pyodide.** Python challenges fetch ~10MB of
       WebAssembly from jsDelivr on first run. `VITE_PYODIDE_URL` points it at
       your own copy if you would rather not depend on a CDN.
@@ -171,24 +177,37 @@ per item is enough — the code is the detail.
       recommends a starting module; it awards no XP and marks nothing complete,
       on purpose.
 
-- [x] **#14 Tests** — `bun test`, 63 tests in `tests/` covering the level curve,
+- [x] **#14 Tests** — `bun test`, 76 tests in `tests/` covering the level curve,
       goal sizing, live-vs-unwritten lessons, path completion and certificate
       ids, answer checking (the rule that decides whether XP is paid), review
-      scheduling, and plan entitlements including the trial. They are outside
+      scheduling, plan entitlements including the trial, the mentor's history
+      summary, and web-push encryption/VAPID signing. They are outside
       `src/` so `bun:test` needs no extra dependency. Still no component or
       integration tests.
 
+- [x] **Mentor: progress history as context** — `src/lib/mentor-history.ts`
+      (pure, tested) turns `lesson_progress` and `review_items` into a few lines
+      under a hard 1,200-character budget: what they keep missing on review, what
+      they recall reliably, what they finished recently, whether they're
+      revisiting this lesson, and a pile of overdue reviews. Only fetched when a
+      real model will read it; rows for unwritten lessons are ignored; a new
+      learner adds nothing to the prompt.
+
+- [x] **Push notifications** — web push written against RFC 8291/8292 in Web
+      Crypto (`src/lib/web-push.server.ts`, no `web-push` package, because it
+      needs `node:crypto` and the build targets a worker), with the encryption
+      checked byte-for-byte against the RFC's worked example. `push_subscriptions`
+      is client read-only; subscribe/unsubscribe/test go through
+      `src/lib/push.functions.ts`. `public/push-sw.js` only shows notifications:
+      no caching, no fetch handler. Per-device toggle and "Send a test" on the
+      profile page, hidden until VAPID keys exist. The re-engagement job tries push
+      first when the learner has a device, falls back to email only if no device
+      accepted it and they have email on, and never sends both on the same day.
+      Dead subscriptions (404/410) are deleted. Query 9 now splits return rate by
+      channel.
+
 ### Left to implement
 
-- [ ] **Mentor: progress history as context** — deferred by decision on
-      2026-09-16. Feeding "you struggled with reduce last week" into the system
-      prompt makes the mentor better and the prompt longer; revisit once there is
-      enough history to be worth the tokens. The review data now makes this
-      answerable: `review_items.lapses` is a list of what a learner keeps
-      forgetting.
-- [ ] **Push notifications** — the email channel exists; web push does not. Email
-      is the one that matters for a daily streak on desktop, so this is a second
-      pass, not a gap.
 - [ ] **Component and integration tests** — the unit layer is covered; nothing
       exercises a route end to end.
 

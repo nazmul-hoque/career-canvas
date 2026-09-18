@@ -125,16 +125,19 @@ WHERE name = 'review_completed'
 GROUP BY 1
 ORDER BY 1;
 
--- 9. DOES THE NUDGE WORK? — for each re-engagement email, whether that learner
---    completed a lesson in the following 48 hours. Compare the streak email's
---    rate against the dormant ones before spending anything on either.
+-- 9. DOES THE NUDGE WORK? — for each re-engagement nudge, whether that learner
+--    completed a lesson in the following 48 hours. Compare the streak nudge's
+--    rate against the dormant ones, and push against email, before spending
+--    anything on either. Sends from before push existed have no channel: email.
 WITH sends AS (
-  SELECT user_id, props ->> 'kind' AS kind, created_at
+  SELECT user_id, props ->> 'kind' AS kind, coalesce(props ->> 'channel', 'email') AS channel,
+         created_at
   FROM public.analytics_events
   WHERE name = 'reengagement_sent'
 )
 SELECT
   s.kind,
+  s.channel,
   count(*)                                       AS sent,
   count(*) FILTER (
     WHERE EXISTS (
@@ -153,7 +156,7 @@ SELECT
     )
   )                                              AS unsubscribed_after
 FROM sends s
-GROUP BY 1
+GROUP BY 1, 2
 ORDER BY sent DESC;
 
 -- 10. PYTHON, FOR REAL? — how often the WebAssembly interpreter failed to load

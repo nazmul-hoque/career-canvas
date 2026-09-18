@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "test": "bun test",
+    "push:keys": "bun scripts/generate-vapid-keys.ts",
     "format": "prettier --write ."
   },
   "overrides": {

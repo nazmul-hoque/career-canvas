@@ -152,7 +152,11 @@ handler like the Stripe webhook, for the same reason. The job is
 (mock | resend) seam in `src/lib/email.server.ts`. Consent is `profiles.email_optin`,
 filtered in the query so an opted-out learner's address is never read, and every
 email carries a signed unsubscribe link handled at `/unsubscribe` — POST only,
-because mail scanners follow links.
+because mail scanners follow links. Web push is the second channel
+(`src/lib/web-push.server.ts`, hand-written RFC 8291/8292 on Web Crypto — the
+`web-push` package needs `node:crypto`). A learner with a subscribed device gets
+the push; email is the fallback when no device accepts it. One nudge per learner
+per day across both channels. `push_subscriptions` is SELECT-only to the client.
 
 **Database.** Every table has RLS enabled with explicit `GRANT`s per role and
 `auth.uid()`-scoped policies. Any new table must follow that pattern, in a new

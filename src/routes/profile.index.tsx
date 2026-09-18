@@ -23,6 +23,7 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "@/hooks/useAuth";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import {
   useAchievements,
   useProfile,
@@ -70,6 +71,7 @@ function ProfilePage() {
   const { data: earned = [] } = useAchievements();
   const { data: submissions = [] } = useSubmissions();
   const updateProfile = useUpdateProfile();
+  const push = usePushNotifications();
 
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState("");
@@ -504,7 +506,7 @@ function ProfilePage() {
             </p>
             <label className="mt-4 flex cursor-pointer items-center justify-between gap-4">
               <span className="text-sm font-semibold">
-                {profile.email_optin ? "Reminders are on" : "Reminders are off"}
+                {profile.email_optin ? "Email reminders are on" : "Email reminders are off"}
               </span>
               <Switch
                 checked={profile.email_optin}
@@ -520,9 +522,66 @@ function ProfilePage() {
                 }
               />
             </label>
+            <PushReminderToggle push={push} />
           </section>
         </aside>
       </div>
     </AppShell>
+  );
+}
+
+function PushReminderToggle({ push }: { push: ReturnType<typeof usePushNotifications> }) {
+  // Not offered at all until the server has VAPID keys — a switch that can
+  // never work is worse than no switch.
+  if (push.isLoading || !push.state || push.state === "unconfigured") return null;
+
+  const busy = push.enable.isPending || push.disable.isPending;
+  const note =
+    push.state === "unsupported"
+      ? "This browser can't receive push notifications. On iPhone, add Ascent to your home screen first."
+      : push.state === "denied"
+        ? "Notifications are blocked for this site. Allow them in your browser settings to turn this on."
+        : "On a device with push on, reminders arrive there instead of by email.";
+
+  return (
+    <div className="mt-4 border-t border-border pt-4">
+      <label className="flex cursor-pointer items-center justify-between gap-4">
+        <span className="text-sm font-semibold">
+          {push.state === "on" ? "Push on this device" : "Push on this device is off"}
+        </span>
+        <Switch
+          checked={push.state === "on"}
+          disabled={busy || push.state === "unsupported" || push.state === "denied"}
+          onCheckedChange={(checked) =>
+            (checked ? push.enable : push.disable).mutate(undefined, {
+              onSuccess: () => toast.success(checked ? "Push reminders on" : "Push reminders off"),
+              onError: (error) =>
+                toast.error(error instanceof Error ? error.message : "Could not change that."),
+            })
+          }
+        />
+      </label>
+      <p className="mt-1.5 text-xs text-chalk">{note}</p>
+      {push.state === "on" ? (
+        <Button
+          size="sm"
+          variant="outline"
+          className="mt-3"
+          disabled={push.test.isPending}
+          onClick={() =>
+            push.test.mutate(undefined, {
+              onSuccess: ({ delivered }) =>
+                delivered > 0
+                  ? toast.success("Sent — it should appear in a few seconds")
+                  : toast.error("The push service didn't accept it. Try turning push off and on."),
+              onError: (error) =>
+                toast.error(error instanceof Error ? error.message : "Could not send a test."),
+            })
+          }
+        >
+          {push.test.isPending ? "Sending…" : "Send a test"}
+        </Button>
+      ) : null}
+    </div>
   );
 }

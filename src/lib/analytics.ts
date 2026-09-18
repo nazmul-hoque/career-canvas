@@ -32,6 +32,8 @@ export type EventName =
   | "checkout_started"
   | "checkout_completed"
   | "placement_completed"
+  | "push_enabled"
+  | "push_disabled"
   // Written server-side only (reengagement.server.ts, review.functions.ts);
   // listed here so the event vocabulary lives in one place.
   | "review_completed"
