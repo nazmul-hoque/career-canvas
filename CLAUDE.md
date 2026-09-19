@@ -80,7 +80,10 @@ XP, it is excluded from every progress denominator (`liveLessons`,
 `pathLiveLessonCount`), and it blocks its path's certificate
 (`pathCompletion().published`). Never generate filler to fill those slots — that
 is exactly what this replaced. To make a lesson live: add its body to `bodies`,
-then run `bun run lessons:manifest` (a test fails until you do).
+then run `bun run lessons:manifest` (a test fails until you do). For a
+Python or SQL challenge, `bun run lessons:verify` checks the reference solution
+passes every test and the starter fails one; SQL runs against the shop dataset
+in `src/content/datasets/shop.ts`, whose numbers the SQL lessons quote.
 
 **The answer key never reaches the browser.** Bodies live in
 `lesson-bodies.server.ts`, which the Start plugin refuses to bundle for the

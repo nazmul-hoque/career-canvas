@@ -2,6 +2,12 @@
 import type { LessonManifestEntry } from "./lessons";
 
 export const lessonManifest: Record<string, LessonManifestEntry> = {
+  "ai-prompt.prompts": { challenge: true, questions: 2 },
+  "ai-prompt.structured": { challenge: true, questions: 2 },
+  "ai-rag.embeddings": { challenge: true, questions: 2 },
+  "ai-rag.rag": { challenge: true, questions: 2 },
+  "ai-ship.evals": { challenge: true, questions: 2 },
+  "ai-ship.tools": { challenge: true, questions: 2 },
   "git-core.branches": { challenge: false, questions: 4 },
   "git-core.commits": { challenge: false, questions: 3 },
   "git-core.prs": { challenge: false, questions: 3 },

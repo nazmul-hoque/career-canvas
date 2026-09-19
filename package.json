@@ -12,7 +12,7 @@
     "test": "bun test",
     "push:keys": "bun scripts/generate-vapid-keys.ts",
     "lessons:manifest": "bun scripts/build-lesson-manifest.ts",
-    "lessons:verify-sql": "bun scripts/verify-sql-lessons.ts",
+    "lessons:verify": "bun scripts/verify-challenges.ts",
     "format": "prettier --write ."
   },
   "overrides": {

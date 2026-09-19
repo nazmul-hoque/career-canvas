@@ -100,6 +100,15 @@ Two facts shape every item below:
 
 ## Done
 
+- [x] **Generative AI Engineering, complete** (2026-09-19) — six lessons: prompt
+      specs and keeping user text as data, validating structured output, embeddings
+      and cosine similarity, chunking and grounded RAG prompts, tool calling and a
+      safe agent loop, and evaluation sets with regression tracking. Tool calling
+      and evaluation were advertised skills with no lesson; they now have a
+      "Shipping it" module. Every challenge is offline Python (scripted stand-ins
+      for the model), so it runs for real on Pyodide with no API key.
+      Provider-neutral on purpose: no model names, prices or SDK calls to go stale.
+
 - [x] **SQL for Analysis, complete** (2026-09-19) — five lessons (SELECT/WHERE,
       joins, GROUP BY/HAVING, a new CTEs lesson the course advertised but had no
       slot for, window functions), each ending in a query challenge that runs
@@ -109,7 +118,7 @@ Two facts shape every item below:
       discounted sale, per-order shipping that a join double-counts. No
       simulation fallback: if the engine can't load, the run says so. Every
       number the lessons quote was computed from the data;
-      `bun run lessons:verify-sql` checks each solution passes and each starter
+      `bun run lessons:verify` checks each solution passes and each starter
       fails. **Not yet run in a real browser** — see "Blocked on you".
 
 - [x] **Git & GitHub course, complete** (2026-09-19) — a "Git from zero" module
@@ -298,12 +307,12 @@ Two facts shape every item below:
 
 ## The constraint that outranks this whole list
 
-**17 of 76 lessons are written** (the roadmap in `src/content/curriculum.ts` has
-76 slots). Two courses are complete, both written 2026-09-19: Git & GitHub (7
-of 7, including "Git from zero") and SQL for Analysis (5 of 5, every lesson
-with a real query challenge).
+**23 of 78 lessons are written** (the roadmap in `src/content/curriculum.ts` has
+78 slots). Three courses are complete, all written 2026-09-19: Git & GitHub (7
+of 7, including "Git from zero"), SQL for Analysis (5 of 5) and Generative AI
+Engineering (6 of 6), the last two with a real, checked challenge in every lesson.
 Every item on the review's ranked list is now closed, which changes nothing about
 this: the platform tells the truth, measures itself, remembers what you learned
-and can prove what you finished — about seventeen lessons. Nothing above changes the
+and can prove what you finished — about twenty-three lessons. Nothing above changes the
 product's value until one whole path is written. The engineering here was about making sure the platform tells the truth
 while the content gets written — it is not a substitute for writing it.

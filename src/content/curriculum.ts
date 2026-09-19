@@ -398,12 +398,16 @@ export const courses: Course[] = [
     instructor: { name: "Kenji Aoyama", role: "AI Engineer", initials: "KA" },
     modules: [
       m("ai-prompt", "Prompting as engineering", "Specs, not incantations.", [
-        ["prompts", "Writing a prompt spec", 11, "concept"],
+        ["prompts", "Writing a prompt spec", 12, "practice"],
         ["structured", "Structured outputs", 13, "challenge"],
       ]),
       m("ai-rag", "Grounding answers", "Embeddings and retrieval.", [
-        ["embeddings", "Embeddings explained", 12, "concept"],
+        ["embeddings", "Embeddings explained", 12, "practice"],
         ["rag", "Build a retrieval step", 16, "challenge"],
+      ]),
+      m("ai-ship", "Shipping it", "Tools, agents and evaluation.", [
+        ["tools", "Tool calling and the agent loop", 16, "challenge"],
+        ["evals", "Evaluate before you ship", 14, "challenge"],
       ]),
     ],
   },
