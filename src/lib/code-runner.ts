@@ -5,11 +5,13 @@
  * runs for real on CPython-in-WebAssembly (see python-runtime.ts) — and when
  * that runtime cannot be reached, falls back to the old source-pattern
  * simulation, which reports itself as simulated so the UI never claims code ran
- * that did not.
+ * that did not. SQL runs on real SQLite inside the same Python runtime, against
+ * the shop dataset; it has no simulation — if the engine can't load, it says so.
  *
  * `RunResult` is the contract the lesson UI depends on: swap any engine for a
  * network call without changing the shape.
  */
+import { SHOP_SQL } from "@/content/datasets/shop";
 import { runPythonInPyodide } from "./python-runtime";
 
 export interface TestResult {
@@ -18,7 +20,9 @@ export interface TestResult {
 }
 
 /** Which engine produced a result — the UI is honest about simulated runs. */
-export type RunEngine = "javascript" | "python" | "python-simulated";
+export type RunEngine = "javascript" | "python" | "python-simulated" | "sql";
+
+export type ChallengeLanguage = "javascript" | "python" | "sql";
 
 export interface RunResult {
   logs: string[];
@@ -132,12 +136,79 @@ async function runPython(code: string, tests: TestSpec[]): Promise<RunResult> {
   };
 }
 
+/** Longest result the output panel prints; tests still see every row. */
+const SQL_PRINT_ROWS = 25;
+
+/**
+ * A learner's query, wrapped as a Python program: load the dataset into a fresh
+ * in-memory database, run the query, print the result as a table, and leave
+ * `rows` (a list of tuples) and `columns` (a list of names) for the tests.
+ * Strings cross into Python as JSON literals, which are valid Python strings.
+ */
+export function sqlProgram(query: string): string {
+  return [
+    "import json, sqlite3",
+    `__db = sqlite3.connect(":memory:")`,
+    `__db.executescript(json.loads(${JSON.stringify(JSON.stringify(SHOP_SQL))}))`,
+    `__cur = __db.execute(json.loads(${JSON.stringify(JSON.stringify(query))}))`,
+    "columns = [d[0] for d in __cur.description] if __cur.description else []",
+    "rows = __cur.fetchall()",
+    "__cells = [[('NULL' if v is None else str(v)) for v in r] for r in rows]",
+    "__widths = [max([len(c)] + [len(r[i]) for r in __cells]) for i, c in enumerate(columns)]",
+    "print('  '.join(c.ljust(w) for c, w in zip(columns, __widths)))",
+    "print('  '.join('-' * w for w in __widths))",
+    `for __r in __cells[:${SQL_PRINT_ROWS}]:`,
+    "    print('  '.join(v.ljust(w) for v, w in zip(__r, __widths)))",
+    `if len(rows) > ${SQL_PRINT_ROWS}:`,
+    `    print(f"... {len(rows) - ${SQL_PRINT_ROWS}} more")`,
+    "print(f\"({len(rows)} {'row' if len(rows) == 1 else 'rows'})\")",
+  ].join("\n");
+}
+
+async function runSql(query: string, tests: TestSpec[]): Promise<RunResult> {
+  const started = performance.now();
+  const failed = (error: string): RunResult => ({
+    logs: [],
+    error,
+    tests: tests.map((t) => ({ name: t.name, passed: false })),
+    passed: false,
+    durationMs: Math.round(performance.now() - started),
+    engine: "sql",
+  });
+
+  if (!query.replace(/--.*$/gm, "").trim()) return failed("Write a query first.");
+
+  const outcome = await runPythonInPyodide(
+    sqlProgram(query),
+    tests.map((t) => t.expression),
+  );
+  // No simulation for SQL: guessing a result table from the query text would
+  // be exactly the kind of fake run the UI promises never to show.
+  if (!outcome) {
+    return failed(
+      "The SQL engine couldn't load. It runs in your browser and downloads on first use, so check your connection and run again.",
+    );
+  }
+
+  const results = tests.map((t, i) => ({ name: t.name, passed: Boolean(outcome.results[i]) }));
+  return {
+    logs: outcome.logs,
+    // "sqlite3.OperationalError: no such column: nme" → "no such column: nme"
+    error: outcome.error?.replace(/^sqlite3\.\w+:\s*/, "") ?? null,
+    tests: results,
+    passed: results.length > 0 && results.every((r) => r.passed) && !outcome.error,
+    durationMs: Math.round(performance.now() - started),
+    engine: "sql",
+  };
+}
+
 export async function runCode(
-  language: "javascript" | "python",
+  language: ChallengeLanguage,
   code: string,
   tests: TestSpec[],
 ): Promise<RunResult> {
   if (language === "python") return runPython(code, tests);
+  if (language === "sql") return runSql(code, tests);
   // JavaScript is fast enough to finish before the spinner paints; the small
   // delay keeps the running state visible rather than flickering.
   await new Promise((r) => setTimeout(r, 250));

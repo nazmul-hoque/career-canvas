@@ -14,4 +14,9 @@ export const lessonManifest: Record<string, LessonManifestEntry> = {
   "layout.responsive": { challenge: false, questions: 2 },
   "py-basics.flow": { challenge: true, questions: 1 },
   "py-collections.comprehensions": { challenge: true, questions: 1 },
+  "sql-analysis.ctes": { challenge: true, questions: 2 },
+  "sql-analysis.groupby": { challenge: true, questions: 3 },
+  "sql-analysis.windows": { challenge: true, questions: 3 },
+  "sql-core.joins": { challenge: true, questions: 3 },
+  "sql-core.select": { challenge: true, questions: 3 },
 };

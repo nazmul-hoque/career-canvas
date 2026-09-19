@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Play, RotateCcw, Lightbulb, CheckCircle2, XCircle, Loader2, Terminal } from "lucide-react";
-import { runCode, type RunResult } from "@/lib/code-runner";
+import { runCode, type ChallengeLanguage, type RunResult } from "@/lib/code-runner";
+import { SHOP_SCHEMA } from "@/content/datasets/shop";
+import { InlineText } from "@/components/learn/InlineText";
 import { track } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -8,7 +10,7 @@ import { cn } from "@/lib/utils";
 interface Props {
   title: string;
   prompt: string;
-  language: "javascript" | "python";
+  language: ChallengeLanguage;
   starter: string;
   hint: string;
   tests: { name: string; expression: string }[];
@@ -59,7 +61,14 @@ export function CodeChallenge({
       <div className="border-b border-border bg-secondary/60 px-5 py-4">
         <p className="eyebrow">Coding challenge</p>
         <h3 className="mt-1 font-display text-lg font-bold">{title}</h3>
-        <p className="mt-1 text-sm text-chalk">{prompt}</p>
+        <p className="mt-1 text-sm text-chalk">
+          <InlineText text={prompt} />
+        </p>
+        {language === "sql" ? (
+          <pre className="mt-3 overflow-x-auto rounded-lg bg-background px-3 py-2 font-mono text-[12px] leading-5 text-chalk">
+            {SHOP_SCHEMA}
+          </pre>
+        ) : null}
       </div>
 
       <div className="grid lg:grid-cols-2">
@@ -133,6 +142,7 @@ export function CodeChallenge({
                 <p className="pt-1 font-sans text-xs text-chalk">
                   Finished in {result.durationMs}ms
                   {result.engine === "python" ? " · CPython (WebAssembly)" : null}
+                  {result.engine === "sql" ? " · SQLite (WebAssembly)" : null}
                 </p>
                 {result.engine === "python-simulated" ? (
                   <p className="font-sans text-xs text-ember">
@@ -150,7 +160,7 @@ export function CodeChallenge({
       {showHint ? (
         <div className="border-t border-border bg-ember/5 px-5 py-3 text-sm text-foreground">
           <span className="font-semibold text-ember">Hint · </span>
-          {hint}
+          <InlineText text={hint} />
         </div>
       ) : null}
 
@@ -164,9 +174,11 @@ export function CodeChallenge({
         {solved ? (
           <span className="text-sm font-semibold text-brand">All tests green. Nice work.</span>
         ) : null}
-        {running && language === "python" ? (
+        {running && language !== "javascript" ? (
           <span className="text-sm text-chalk">
-            Starting Python — the first run downloads the interpreter.
+            {language === "sql"
+              ? "Starting the database — the first run downloads it."
+              : "Starting Python — the first run downloads the interpreter."}
           </span>
         ) : null}
       </div>

@@ -24,6 +24,10 @@ Two facts shape every item below:
   settings, never in `.env`. Only public values with a `VITE_` prefix belong
   there.
 
+- [ ] **Run one SQL challenge in a browser.** SQL runs on Pyodide's sqlite3,
+      which loads on first import; it's verified on local CPython/SQLite but not
+      yet in Pyodide itself. Open `/learn/sql/sql-core.select`, click Run, and
+      expect a result table and "SQLite (WebAssembly)" under the tests.
 - [ ] **Set `SUPABASE_SERVICE_ROLE_KEY` as a secret** for `nqudmlzugtssfqaebaqb`
       (server-only, never `VITE_`, never `.env` — it bypasses every RLS policy).
       Do this first: lesson completion runs through the service-role client, so
@@ -95,6 +99,18 @@ Two facts shape every item below:
 ---
 
 ## Done
+
+- [x] **SQL for Analysis, complete** (2026-09-19) — five lessons (SELECT/WHERE,
+      joins, GROUP BY/HAVING, a new CTEs lesson the course advertised but had no
+      slot for, window functions), each ending in a query challenge that runs
+      for real: SQLite inside the Pyodide runtime, against one shop dataset
+      (`src/content/datasets/shop.ts`) built with the traps analysis hits — a
+      customer with no orders, a missing city, refunds and pending orders, a
+      discounted sale, per-order shipping that a join double-counts. No
+      simulation fallback: if the engine can't load, the run says so. Every
+      number the lessons quote was computed from the data;
+      `bun run lessons:verify-sql` checks each solution passes and each starter
+      fails. **Not yet run in a real browser** — see "Blocked on you".
 
 - [x] **Git & GitHub course, complete** (2026-09-19) — a "Git from zero" module
       (why version control, first repository and `.gitignore`, reading
@@ -282,11 +298,12 @@ Two facts shape every item below:
 
 ## The constraint that outranks this whole list
 
-**12 of 75 lessons are written** (the roadmap in `src/content/curriculum.ts` has
-75 slots). Git & GitHub is the first complete course: 7 of 7, including a
-"Git from zero" module for true beginners, written 2026-09-19.
+**17 of 76 lessons are written** (the roadmap in `src/content/curriculum.ts` has
+76 slots). Two courses are complete, both written 2026-09-19: Git & GitHub (7
+of 7, including "Git from zero") and SQL for Analysis (5 of 5, every lesson
+with a real query challenge).
 Every item on the review's ranked list is now closed, which changes nothing about
 this: the platform tells the truth, measures itself, remembers what you learned
-and can prove what you finished — about twelve lessons. Nothing above changes the
+and can prove what you finished — about seventeen lessons. Nothing above changes the
 product's value until one whole path is written. The engineering here was about making sure the platform tells the truth
 while the content gets written — it is not a substitute for writing it.

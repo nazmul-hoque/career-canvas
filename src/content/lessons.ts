@@ -33,7 +33,7 @@ export type LessonBlock =
       id: string;
       title: string;
       prompt: string;
-      language: "javascript" | "python";
+      language: "javascript" | "python" | "sql";
       starter: string;
       hint: string;
       solution: string;

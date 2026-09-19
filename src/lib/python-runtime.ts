@@ -87,6 +87,9 @@ self.onmessage = async (event) => {
   const { id, base, code, tests } = event.data;
   try {
     const pyodide = await boot(base);
+    // Stdlib modules Pyodide ships separately (sqlite3 for the SQL course) are
+    // fetched from the same CDN the first time code imports them.
+    await pyodide.loadPackagesFromImports(code);
     pyodide.globals.set("__ascent_payload", JSON.stringify({ code, tests }));
     const raw = pyodide.runPython(DRIVER);
     self.postMessage({ id, ok: true, outcome: JSON.parse(raw) });

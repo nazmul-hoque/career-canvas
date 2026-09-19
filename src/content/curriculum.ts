@@ -231,17 +231,18 @@ export const courses: Course[] = [
     recommended: true,
     summary: "Ask a database real questions and get trustworthy answers.",
     description:
-      "SELECT to window functions, with a realistic orders dataset the whole way through.",
+      "SELECT to window functions, run for real against one small shop's orders the whole way through.",
     skills: ["SELECT", "Joins", "Aggregation", "CTEs", "Window functions"],
     careers: ["data", "fullstack", "python"],
     instructor: { name: "Ingrid Solheim", role: "Data Engineer, ex-Spotify", initials: "IS" },
     modules: [
-      m("sql-core", "Querying", "Filter, sort and shape rows.", [
-        ["select", "SELECT and WHERE", 9, "concept"],
+      m("sql-core", "Querying", "Filter, sort and join rows.", [
+        ["select", "SELECT and WHERE", 12, "practice"],
         ["joins", "Joining tables", 13, "challenge"],
       ]),
-      m("sql-analysis", "Analysis", "Group, aggregate and window.", [
+      m("sql-analysis", "Analysis", "Group, check and window.", [
         ["groupby", "GROUP BY and HAVING", 12, "practice"],
+        ["ctes", "CTEs and numbers you can trust", 14, "challenge"],
         ["windows", "Window functions", 15, "challenge"],
       ]),
     ],

@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
+import { Database } from "bun:sqlite";
 
 import { careerPaths, courseLessons, courses, pathCourses } from "../src/content/curriculum";
+import { SHOP_SQL } from "../src/content/datasets/shop";
 import { bodies, getLessonBody } from "../src/content/lesson-bodies.server";
 import { renderManifest } from "../src/content/lesson-manifest.server";
 import {
@@ -177,4 +179,29 @@ describe("answer key", () => {
     }
     expect(offenders).toEqual([]);
   });
+});
+
+/**
+ * Every SQL challenge must run against the shop dataset. This catches a broken
+ * query or a dataset edit that removes a column; whether the solution passes
+ * its (Python) tests is checked by `bun run lessons:verify-sql`.
+ */
+describe("sql challenges", () => {
+  const challenges = Object.entries(bodies).flatMap(([id, body]) =>
+    body.blocks.flatMap((b) => (b.kind === "challenge" && b.language === "sql" ? [{ id, b }] : [])),
+  );
+
+  test("there are SQL challenges to check", () => {
+    expect(challenges.length).toBeGreaterThan(0);
+  });
+
+  for (const { id, b } of challenges) {
+    test(`${id}: solution and starter run on the shop dataset`, () => {
+      const db = new Database(":memory:");
+      db.exec(SHOP_SQL);
+      expect(() => db.query(b.solution).all()).not.toThrow();
+      expect(() => db.query(b.starter).all()).not.toThrow();
+      db.close();
+    });
+  }
 });
