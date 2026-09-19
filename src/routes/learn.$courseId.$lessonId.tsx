@@ -251,8 +251,9 @@ function LessonWorkspace({
     });
   }, [course.id, lesson.id, lesson.type, body.xp]);
 
-  const quizBlocks = body.blocks.filter((b) => b.kind === "mcq" || b.kind === "fill");
-  const quizDone = quizBlocks.every((b) => "id" in b && results[b.id]?.correct);
+  const quizIds = body.blocks.flatMap((b) => (b.kind === "mcq" || b.kind === "fill" ? [b.id] : []));
+  const unanswered = quizIds.filter((id) => String(answers[id] ?? "").trim() === "").length;
+  const wrong = quizIds.filter((id) => results[id] && !results[id].correct).length;
 
   function answer(blockId: string, value: number | string) {
     if (results[blockId]?.correct) return;
@@ -261,22 +262,38 @@ function LessonWorkspace({
     setResults(({ [blockId]: _stale, ...rest }) => rest);
   }
 
-  async function check(blockId: string) {
+  async function check(blockId: string): Promise<CheckAnswerResult | null> {
     const given = answers[blockId];
-    if (given === undefined || given === "") return;
+    if (given === undefined || given === "") return null;
     setChecking(blockId);
     try {
       const result = await checkAnswerFn({
         data: { courseId: course.id, lessonId: lesson.id, blockId, answer: given },
       });
       setResults((r) => ({ ...r, [blockId]: result }));
+      return result;
     } catch {
       toast.error("Couldn't check that answer. Try again.");
+      return null;
     } finally {
       setChecking(null);
     }
   }
-  const canFinish = quizDone && (!challenge || solved);
+
+  // Choosing an answer is enough to finish: Complete checks anything not yet
+  // checked. It used to wait for every question's own Check button, and a
+  // selected-but-unchecked answer left the button disabled with no hint why.
+  const canFinish = unanswered === 0 && wrong === 0 && (!challenge || solved);
+  const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+  const status = isDone
+    ? "You've already completed this lesson — revisit it any time."
+    : unanswered > 0
+      ? `${plural(unanswered, "question still needs", "questions still need")} an answer.`
+      : wrong > 0
+        ? `${plural(wrong, "answer isn't", "answers aren't")} right yet. Have another look.`
+        : challenge && !solved
+          ? "Pass the challenge to finish."
+          : "Everything's answered. Complete checks it and banks the XP.";
 
   const mentorContext = useMemo(
     () => ({
@@ -302,6 +319,17 @@ function LessonWorkspace({
     // Already banked — the button is just "next" at this point. Re-submitting
     // would fail the server's answer check on a revisit.
     if (!isDone) {
+      const unchecked = quizIds.filter((id) => !results[id]);
+      if (unchecked.length) {
+        const outcomes = await Promise.all(unchecked.map(check));
+        const misses = outcomes.filter((r) => !r?.correct).length;
+        if (misses) {
+          toast.error(
+            `${plural(misses, "answer isn't", "answers aren't")} right yet — it's marked above.`,
+          );
+          return;
+        }
+      }
       try {
         const res = await complete.mutateAsync({
           courseId: course.id,
@@ -432,14 +460,12 @@ function LessonWorkspace({
           </div>
 
           <div className="card-surface flex flex-wrap items-center justify-between gap-3 p-5">
-            <p className="text-sm text-chalk">
-              {isDone
-                ? "You've already completed this lesson — revisit it any time."
-                : canFinish
-                  ? "Everything checks out. Bank the XP."
-                  : "Finish the questions and challenge to unlock completion."}
-            </p>
-            <Button onClick={finish} disabled={!canFinish || complete.isPending} size="lg">
+            <p className="text-sm text-chalk">{status}</p>
+            <Button
+              onClick={finish}
+              disabled={(!isDone && !canFinish) || complete.isPending || checking !== null}
+              size="lg"
+            >
               {isDone ? "Next lesson" : `Complete · +${body.xp} XP`}
               <ArrowRight className="size-4" />
             </Button>
