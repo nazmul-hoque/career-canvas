@@ -33,7 +33,11 @@ Two facts shape every item below:
 - [ ] **Set `SUPABASE_SERVICE_ROLE_KEY` as a secret** for `nqudmlzugtssfqaebaqb`
       (server-only, never `VITE_`, never `.env` — it bypasses every RLS policy).
       Do this first: lesson completion runs through the service-role client, so
-      without it no learner can earn XP.
+      without it no learner can earn XP — Complete fails with "Missing Supabase
+      environment variable(s): SUPABASE_SERVICE_ROLE_KEY". Local dev: put it in
+      `.env.local` (git-ignored; Bun loads it) and restart the dev server.
+      Production: the host's environment settings. It's the Secret key (or the
+      legacy service_role key) under Project Settings → API Keys.
 - [ ] **Enable Google sign-in in Supabase.** The code now calls Supabase's own
       `signInWithOAuth` (the Lovable helper is gone). In the dashboard: turn on
       Google under Authentication → Sign In / Providers with a Google OAuth
