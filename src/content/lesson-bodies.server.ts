@@ -245,6 +245,316 @@ export const bodies: Record<string, LessonBody> = {
       },
     ],
   },
+  "git-start.why": {
+    summary: "What git does for you, how it differs from GitHub, and setting it up once.",
+    xp: 90,
+    blocks: [
+      {
+        kind: "text",
+        body: "Without version control, a project's history ends up in file names: `report_final.docx`, `report_final_v2.docx`, `report_final_v2_REALLY.docx`. None of them say what changed or why, and when two people edit the same file, one of them quietly loses their work.",
+      },
+      {
+        kind: "text",
+        body: "Git fixes this for a whole folder at once. That folder becomes a **repository**, and every time you save a **commit** (a snapshot of the folder), git records who made it, when, and a message saying why. You keep one copy of each file, and every earlier version stays one command away.",
+      },
+      {
+        kind: "text",
+        body: "**Git and GitHub are different things.** Git is a program on your computer, and everything in the first few lessons works offline. GitHub is a website that hosts a copy of your repository so other people can see it and work on it. You send your commits there with `push` and bring other people's back with `pull`. GitLab and Bitbucket do the same job.",
+      },
+      {
+        kind: "code",
+        language: "bash",
+        caption: "Check git is installed, then tell it who you are (once per computer)",
+        code: `git --version\n# git version 2.46.0  — any 2.23 or later works for this course\n\ngit config --global user.name "Alex Rivera"\ngit config --global user.email "alex@example.com"`,
+      },
+      {
+        kind: "callout",
+        body: "Every commit is stamped with that name and email, and GitHub uses the email to link commits to your account. Use the same email you sign up to GitHub with.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "Scenario: a shared folder",
+        code: `proposal.docx\nproposal_final.docx\nproposal_final_v2.docx\nproposal_final_v2_SAM_EDITS.docx`,
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question: "What would git give this team that the folder doesn't?",
+        options: [
+          "An automatic backup in the cloud",
+          "Smaller files",
+          "One file whose every saved version is kept, with who changed it, when and why",
+          "Automatic merging of Word documents",
+        ],
+        answer: 2,
+        explanation:
+          "That's what commits give you. A cloud copy is what GitHub adds on top, and git can't merge binary files like `.docx` line by line. It's at its best with text files such as code.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question: "You're on a train with no internet. Which of these still works?",
+        options: [
+          "Committing and looking through history, because git runs on your computer",
+          "Nothing, git needs GitHub",
+          "Only reading history",
+          "Only committing, straight to GitHub",
+        ],
+        answer: 0,
+        explanation:
+          "Your repository, including its full history, is on your laptop. Only `push` and `pull`, which talk to GitHub, need a connection.",
+      },
+      {
+        kind: "fill",
+        id: "f1",
+        prompt: "Set the email git stamps on your commits.",
+        before: "git config --global user.",
+        after: ' "alex@example.com"',
+        answer: "email",
+        explanation:
+          "`user.name` and `user.email` go on every commit you make. `--global` sets them once for every repository on this computer.",
+      },
+      {
+        kind: "callout",
+        body: "**Try it on your machine:** install git from git-scm.com if `git --version` doesn't work, then run the two `git config` lines with your own name and email. Check them with `git config --global --list`.",
+      },
+    ],
+  },
+  "git-start.first-repo": {
+    summary: "Turn a folder into a repository, make your first commit, and keep secrets out of it.",
+    xp: 110,
+    blocks: [
+      {
+        kind: "text",
+        body: "`git init` turns the current folder into a repository. It creates a hidden `.git` folder, and that folder *is* the repository: every commit and every branch lives inside it. Your files stay exactly where they were. (Delete `.git` and the history goes with it.)",
+      },
+      {
+        kind: "code",
+        language: "bash",
+        caption: "A new project, from nothing to first commit",
+        code: `mkdir shop && cd shop\ngit init                         # Initialized empty Git repository in .../shop/.git/\necho "<h1>Shop</h1>" > index.html\ngit status                       # index.html is "untracked"\ngit add index.html               # stage it\ngit commit -m "Add home page"    # record the snapshot`,
+      },
+      {
+        kind: "text",
+        body: "Git never tracks a new file on its own. A new file is **untracked** until you `git add` it, and a commit only records what's been added (staged). That's deliberate: nothing lands in history unless you chose to put it there.",
+      },
+      {
+        kind: "text",
+        body: "Some files should never be committed: passwords and API keys (often in `.env`), downloaded dependencies (`node_modules/`), and build output. List them in a file called `.gitignore` and git will act as if they don't exist. Do it **before** your first `git add .`. Once a file has been committed, it stays in history even after you delete it.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: ".gitignore",
+        code: `.env\nnode_modules/\ndist/\n.DS_Store`,
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "Scenario: a brand-new repository",
+        code: `$ git status\nOn branch main\n\nNo commits yet\n\nUntracked files:\n  (use "git add <file>..." to include in what will be committed)\n        .env\n        index.html\n\nnothing added to commit but untracked files present (use "git add" to track)`,
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question: 'You run `git commit -m "Add home page"` right now. What happens?',
+        options: [
+          "Both files are committed",
+          "Only `index.html` is committed",
+          "Nothing is committed, because nothing has been staged yet",
+          "Git deletes the untracked files",
+        ],
+        answer: 2,
+        explanation:
+          "A commit records the staging area, and it's empty. Git says so on the last line: *nothing added to commit*. Run `git add index.html` first.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          "`.env` holds your database password. What should you do before your first commit?",
+        options: [
+          "Commit it. The repository is private, so it's safe",
+          "Commit it now and delete it in the next commit",
+          "Rename it to `env.txt`",
+          "Add `.env` to `.gitignore` so git never tracks it",
+        ],
+        answer: 3,
+        explanation:
+          "Private repositories get shared, forked and made public later. Deleting the file in a later commit doesn't help either, because the earlier commit still has it and anyone can check it out. Keep secrets out of history from the start.",
+      },
+      {
+        kind: "fill",
+        id: "f1",
+        prompt: "You're inside a new project folder. Turn it into a git repository.",
+        before: "git ",
+        after: "",
+        answer: "init",
+        explanation:
+          "`git init` creates the `.git` folder that holds the history. Your files aren't tracked until you add them.",
+      },
+      {
+        kind: "callout",
+        body: "**Try it on your machine:** make a folder, `git init`, add a `.gitignore` containing `.env`, create an `.env` and an `index.html`, then run `git status`. Only `.gitignore` and `index.html` should appear. Add them, commit, and run `git log` to see your first commit.",
+      },
+    ],
+  },
+  "git-start.history": {
+    summary: "Read what changed with status, diff and log, and throw away edits you don't want.",
+    xp: 110,
+    blocks: [
+      {
+        kind: "text",
+        body: "Three commands answer nearly every *what's going on?* question. `git status` tells you which files changed and which are staged. `git diff` shows the changed lines themselves. `git log` shows the commits so far, newest first.",
+      },
+      {
+        kind: "code",
+        language: "bash",
+        code: `git diff               # changes you haven't staged yet\ngit diff --staged      # changes that will go into the next commit\ngit log --oneline      # one line per commit: short id + subject\ngit show b7a03d1       # everything one commit changed`,
+      },
+      {
+        kind: "text",
+        body: "In a diff, lines starting with `-` were removed and lines starting with `+` were added. The lines around them with no sign are unchanged context, there to show you where the change sits. A changed line shows up as a `-` line followed by a `+` line.",
+      },
+      {
+        kind: "text",
+        body: "To undo edits you haven't committed, use `git restore <file>`: the file goes back to how it was in the last commit. This one really is permanent, because the discarded edits were never saved anywhere. If you staged something by mistake, `git restore --staged <file>` unstages it and leaves your edits alone.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "Scenario: you run git diff",
+        code: `$ git diff\ndiff --git a/src/cart.js b/src/cart.js\n@@ -3,5 +3,5 @@\n function total(items) {\n-  return items.reduce((sum, i) => sum + i.price, 0);\n+  return items.reduce((sum, i) => sum + i.price * i.quantity, 0);\n }`,
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question: "What does this diff tell you?",
+        options: [
+          "The `total` function was deleted",
+          "`total` now multiplies each price by its quantity, and the change isn't staged yet",
+          "A new file called `cart.js` was created",
+          "The change has already been committed",
+        ],
+        answer: 1,
+        explanation:
+          "One line was swapped: `-` is the old version and `+` is the new one. Plain `git diff` shows only unstaged changes; once staged, they'd appear under `git diff --staged`.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "Scenario: history so far",
+        code: `$ git log --oneline\ne41f2c9 (HEAD -> main) Show shipping estimate on cart page\nb7a03d1 Fix rounding in cart total\n5c9e8f2 Add cart page`,
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question: 'Which command shows exactly what "Fix rounding in cart total" changed?',
+        options: ["`git show b7a03d1`", "`git status`", "`git diff`", "`git restore b7a03d1`"],
+        answer: 0,
+        explanation:
+          "`git show` prints a commit's message and its diff. `git status` and `git diff` only describe what you haven't committed yet.",
+      },
+      {
+        kind: "mcq",
+        id: "q3",
+        question:
+          "You experimented in `config.js` and want the file back exactly as it was in the last commit. Nothing is staged. What do you run?",
+        options: [
+          "`git log config.js`",
+          "`git diff --staged`",
+          "`git commit`, then delete the file",
+          "`git restore config.js`, knowing the experiment is gone for good",
+        ],
+        answer: 3,
+        explanation:
+          "`restore` copies the committed version back over your edits. Those edits were never committed, so git has no copy of them to get back.",
+      },
+      {
+        kind: "callout",
+        body: "**Try it on your machine:** in your practice repository, change a line in `index.html` and run `git diff`. Stage it and run `git diff` again (empty) and then `git diff --staged`. Commit it, and find the commit with `git log --oneline` and `git show`.",
+      },
+    ],
+  },
+  "git-start.remotes": {
+    summary: "Put your repository on GitHub, and keep your copy and everyone else's in step.",
+    xp: 120,
+    blocks: [
+      {
+        kind: "text",
+        body: "A **remote** is another copy of your repository, usually on GitHub, and by convention it's called `origin`. Nothing moves between your copy and the remote on its own: `push` sends your new commits up, and `pull` brings other people's commits down and merges them into your branch.",
+      },
+      {
+        kind: "code",
+        language: "bash",
+        caption: "Two ways to start",
+        code: `# A project that already exists on GitHub: download it, full history included\ngit clone https://github.com/acme/shop.git\n\n# A repository you started locally: create an empty repo on GitHub, then\ngit remote add origin https://github.com/you/shop.git\ngit push -u origin main   # -u remembers origin/main, so next time it's just \`git push\``,
+      },
+      {
+        kind: "text",
+        body: "`git fetch` downloads new commits from the remote but leaves your branch alone. After a fetch, `git status` tells you how far apart you are. `git pull` is a fetch followed by a merge, and it's what you'll usually run.",
+      },
+      {
+        kind: "text",
+        body: "If a teammate pushed since you last pulled, GitHub **rejects** your push, because accepting it would throw their commits away. The fix is always the same: `git pull`, resolve a conflict if there is one, then push again. `git push --force` would get your push through by deleting their work from GitHub. Don't use it on a shared branch.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "Scenario: you try to push",
+        code: `$ git push\nTo github.com:acme/shop.git\n ! [rejected]        main -> main (fetch first)\nerror: failed to push some refs to 'github.com:acme/shop.git'\nhint: Updates were rejected because the remote contains work that you do not\nhint: have locally.`,
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question: "What do you do?",
+        options: [
+          "`git push --force`",
+          "Delete your folder and clone the repository again",
+          "`git pull`, sort out any conflict, then `git push` again",
+          "Make another commit and push that instead",
+        ],
+        answer: 2,
+        explanation:
+          "The remote has commits you don't. Pull them in so your branch contains both, then your push goes through without deleting anyone's work.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "Scenario: after git fetch",
+        code: `$ git status\nOn branch main\nYour branch is behind 'origin/main' by 2 commits, and can be fast-forwarded.`,
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question: "What does this mean?",
+        options: [
+          "You have 2 commits that still need pushing",
+          "GitHub has 2 commits you don't have yet, and `git pull` will bring them in",
+          "2 of your commits were lost",
+          "There's a merge conflict to resolve",
+        ],
+        answer: 1,
+        explanation:
+          "*Behind* means the remote is ahead of you. *Can be fast-forwarded* means you have no new commits of your own, so pulling just moves your branch forward.",
+      },
+      {
+        kind: "fill",
+        id: "f1",
+        prompt: "Get your own copy of an existing GitHub project, with its full history.",
+        before: "git ",
+        after: " https://github.com/acme/shop.git",
+        answer: "clone",
+        explanation:
+          "`clone` downloads the whole repository, checks out its main branch, and sets it up as `origin` so `pull` and `push` work straight away.",
+      },
+      {
+        kind: "callout",
+        body: "**Try it on your machine:** create an empty repository on GitHub (no README), connect your practice repository with `git remote add origin …`, and `git push -u origin main`. Refresh the GitHub page and your commits are there. Then edit a file on GitHub's website, commit it there, and bring it back with `git pull`.",
+      },
+    ],
+  },
   "git-core.commits": {
     summary: "Make commits small enough to review and clear enough to read in a year.",
     xp: 110,
@@ -333,6 +643,10 @@ export const bodies: Record<string, LessonBody> = {
         answer: 3,
         explanation:
           "`origin/main` marks what the remote already has, so `a1b2c3d` is shared and rewriting it would break everyone's copy. `c4d5e6f` exists only on your machine.",
+      },
+      {
+        kind: "callout",
+        body: "**Try it on your machine:** in your practice repository, make two unrelated changes to one file. Stage just one with `git add -p`, commit it with a subject and a body that says why, then commit the other. `git log` should read as two clear entries.",
       },
     ],
   },
@@ -458,6 +772,10 @@ export const bodies: Record<string, LessonBody> = {
         explanation:
           "Staging the file is how you tell Git it's resolved, and the commit records the merge. `git reset --hard` would throw your resolution away. (If you'd rather start over, `git merge --abort` puts everything back as it was.)",
       },
+      {
+        kind: "callout",
+        body: "**Try it on your machine:** make a conflict on purpose. On a new branch, change a line and commit. Switch back to `main`, change the same line differently and commit. Merge the branch, resolve the conflict, `git add` and commit, then look at the result with `git log --oneline --graph`.",
+      },
     ],
   },
   "git-core.prs": {
@@ -556,6 +874,10 @@ export const bodies: Record<string, LessonBody> = {
         answer: 3,
         explanation:
           "A new commit shows the reviewer exactly what changed since they last looked, the test stops the bug coming back, and your reply lets them close the thread.",
+      },
+      {
+        kind: "callout",
+        body: "**Try it on your machine:** push a branch to your practice repository on GitHub and open a pull request against `main`, with a description that covers what, why and how you tested it. Merge it, then undo it with `git revert -m 1 <merge-sha>` and push the revert.",
       },
     ],
   },

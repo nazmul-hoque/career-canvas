@@ -96,6 +96,14 @@ Two facts shape every item below:
 
 ## Done
 
+- [x] **Git & GitHub course, complete** (2026-09-19) — a "Git from zero" module
+      (why version control, first repository and `.gitignore`, reading
+      status/diff/log, remotes and a rejected push) ahead of the everyday-git
+      module, so "Beginner" is true. Every lesson ends with a "Try it on your
+      machine" exercise; they pay no XP because the app can't check them. Note:
+      Free unlocks a course's first module, so with enforcement on, Free gets
+      the four basics and "Everyday git" needs a plan.
+
 - [x] **The answer key no longer ships to the browser** (2026-09-19) — lesson
       bodies moved to `src/content/lesson-bodies.server.ts`, which the Start
       plugin won't bundle for the client. Pages learn which lessons exist from a
@@ -274,10 +282,11 @@ Two facts shape every item below:
 
 ## The constraint that outranks this whole list
 
-**8 of 71 lessons are written** (the roadmap in `src/content/curriculum.ts` has
-71 slots). Git & GitHub is the first complete course, 3 of 3, written 2026-09-19.
+**12 of 75 lessons are written** (the roadmap in `src/content/curriculum.ts` has
+75 slots). Git & GitHub is the first complete course: 7 of 7, including a
+"Git from zero" module for true beginners, written 2026-09-19.
 Every item on the review's ranked list is now closed, which changes nothing about
 this: the platform tells the truth, measures itself, remembers what you learned
-and can prove what you finished — about eight lessons. Nothing above changes the
+and can prove what you finished — about twelve lessons. Nothing above changes the
 product's value until one whole path is written. The engineering here was about making sure the platform tells the truth
 while the content gets written — it is not a substitute for writing it.

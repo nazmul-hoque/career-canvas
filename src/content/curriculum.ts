@@ -253,11 +253,27 @@ export const courses: Course[] = [
     level: "Beginner",
     recommended: false,
     summary: "Version control that keeps you calm on a bad day.",
-    description: "Commits, branches, pull requests and getting out of trouble.",
-    skills: ["Commits", "Branching", "Merging", "Pull requests", "Undoing mistakes"],
+    description:
+      "From your first repository to commits, branches, pull requests and getting out of trouble.",
+    skills: [
+      "Repositories",
+      "Reading history",
+      "Remotes",
+      "Commits",
+      "Branching",
+      "Merging",
+      "Pull requests",
+      "Undoing mistakes",
+    ],
     careers: ["frontend", "fullstack", "python", "data"],
     instructor: { name: "Tomas Beck", role: "Platform Engineer", initials: "TB" },
     modules: [
+      m("git-start", "Git from zero", "What version control is, and your first repository.", [
+        ["why", "Why version control", 8, "concept"],
+        ["first-repo", "Your first repository", 10, "practice"],
+        ["history", "Reading history: status, diff and log", 10, "practice"],
+        ["remotes", "Remotes: clone, push and pull", 11, "practice"],
+      ]),
       m("git-core", "Everyday git", "The commands you run daily.", [
         ["commits", "Commits that tell a story", 9, "concept"],
         ["branches", "Branching and merging", 12, "practice"],
