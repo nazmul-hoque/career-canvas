@@ -13,6 +13,15 @@
  */
 import { SHOP_SQL } from "@/content/datasets/shop";
 import { runPythonInPyodide } from "./python-runtime";
+import {
+  captureConsole,
+  errorMessage,
+  withTimeout,
+  type EngineOutcome,
+  type TestSpec,
+} from "./runtime-shared";
+
+export type { TestSpec } from "./runtime-shared";
 
 export interface TestResult {
   name: string;
@@ -21,11 +30,20 @@ export interface TestResult {
   detail?: string | undefined;
 }
 
-/** Which engine produced a result — the UI is honest about simulated runs. */
-export type RunEngine =
-  "javascript" | "python" | "python-simulated" | "sql" | "react" | "excel" | "web" | "dom";
+export const CHALLENGE_LANGUAGES = [
+  "javascript",
+  "python",
+  "sql",
+  "react",
+  "excel",
+  "web",
+  "dom",
+] as const;
 
-export type ChallengeLanguage = "javascript" | "python" | "sql" | "react" | "excel" | "web" | "dom";
+export type ChallengeLanguage = (typeof CHALLENGE_LANGUAGES)[number];
+
+/** Which engine produced a result — the UI is honest about simulated runs. */
+export type RunEngine = ChallengeLanguage | "python-simulated";
 
 export interface RunResult {
   logs: string[];
@@ -36,11 +54,33 @@ export interface RunResult {
   engine: RunEngine;
 }
 
-export interface TestSpec {
-  name: string;
-  /** An expression in the challenge's own language, evaluated after the user code. */
-  expression: string;
+/** Everything an engine's outcome needs to become the RunResult the UI shows. */
+function toRunResult(
+  engine: RunEngine,
+  tests: TestSpec[],
+  outcome: EngineOutcome,
+  started: number,
+): RunResult {
+  const results = tests.map((t, i) => ({
+    name: t.name,
+    passed: Boolean(outcome.results[i]?.passed),
+    detail: outcome.results[i]?.detail ?? undefined,
+  }));
+  return {
+    logs: outcome.logs,
+    error: outcome.error,
+    tests: results,
+    passed: results.length > 0 && results.every((r) => r.passed) && !outcome.error,
+    durationMs: Math.round(performance.now() - started),
+    engine,
+  };
 }
+
+const failedOutcome = (tests: TestSpec[], error: string): EngineOutcome => ({
+  logs: [],
+  error,
+  results: tests.map(() => ({ passed: false, detail: null })),
+});
 
 /** Per-test time limit, so a test awaiting a promise that never settles still fails. */
 const JS_TEST_TIMEOUT_MS = 3_000;
@@ -51,22 +91,8 @@ const JS_TEST_TIMEOUT_MS = 3_000;
  * failed, and its message is shown, which says far more than a red cross.
  */
 export async function runJavaScript(code: string, tests: TestSpec[]): Promise<RunResult> {
-  const logs: string[] = [];
   const started = performance.now();
-  const capture = (...args: unknown[]) =>
-    logs.push(
-      args
-        .map((a) => {
-          if (typeof a === "string") return a;
-          try {
-            return JSON.stringify(a);
-          } catch {
-            return String(a);
-          }
-        })
-        .join(" "),
-    );
-
+  const logs: string[] = [];
   const checks = tests
     .map(
       (t) => `async () => {
@@ -80,41 +106,28 @@ export async function runJavaScript(code: string, tests: TestSpec[]): Promise<Ru
     .join(",\n");
   const body = `return (async () => {\n${code}\n;return [${checks}];\n})();`;
 
-  let error: string | null = null;
-  let results: TestResult[];
   try {
     const fn = new Function("console", body) as (
-      c: Record<string, typeof capture>,
+      c: ReturnType<typeof captureConsole>,
     ) => Promise<(() => Promise<{ ok: boolean; detail?: string }>)[]>;
-    const console = { log: capture, info: capture, warn: capture, error: capture };
-    const runners = await fn(console);
-    results = [];
-    for (const [i, run] of runners.entries()) {
-      const outcome = await Promise.race([
-        run(),
-        new Promise<{ ok: boolean; detail: string }>((resolve) =>
-          setTimeout(
-            () =>
-              resolve({ ok: false, detail: "The test timed out: is a promise never resolving?" }),
-            JS_TEST_TIMEOUT_MS,
-          ),
-        ),
-      ]);
-      results.push({ name: tests[i]!.name, passed: outcome.ok, detail: outcome.detail });
+    const runners = await fn(captureConsole(logs));
+    const results: EngineOutcome["results"] = [];
+    for (const run of runners) {
+      const outcome = await withTimeout(run(), JS_TEST_TIMEOUT_MS, () => ({
+        ok: false,
+        detail: "The test timed out: is a promise never resolving?",
+      }));
+      results.push({ passed: outcome.ok, detail: outcome.detail ?? null });
     }
+    return toRunResult("javascript", tests, { logs, error: null, results }, started);
   } catch (e) {
-    error = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
-    results = tests.map((t) => ({ name: t.name, passed: false }));
+    return toRunResult(
+      "javascript",
+      tests,
+      { ...failedOutcome(tests, errorMessage(e, true)), logs },
+      started,
+    );
   }
-
-  return {
-    logs,
-    error,
-    tests: results,
-    passed: results.length > 0 && results.every((r) => r.passed) && !error,
-    durationMs: Math.round(performance.now() - started),
-    engine: "javascript",
-  };
 }
 
 /**
@@ -163,15 +176,16 @@ async function runPython(code: string, tests: TestSpec[]): Promise<RunResult> {
 
   if (!outcome) return runPythonSimulated(code, tests, started);
 
-  const results = tests.map((t, i) => ({ name: t.name, passed: Boolean(outcome.results[i]) }));
-  return {
-    logs: outcome.logs.length ? outcome.logs : ["(no output)"],
-    error: outcome.error,
-    tests: results,
-    passed: results.length > 0 && results.every((r) => r.passed) && !outcome.error,
-    durationMs: Math.round(performance.now() - started),
-    engine: "python",
-  };
+  return toRunResult(
+    "python",
+    tests,
+    {
+      logs: outcome.logs.length ? outcome.logs : ["(no output)"],
+      error: outcome.error,
+      results: outcome.results.map((passed) => ({ passed, detail: null })),
+    },
+    started,
+  );
 }
 
 /** Longest result the output panel prints; tests still see every row. */
@@ -205,14 +219,7 @@ export function sqlProgram(query: string): string {
 
 async function runSql(query: string, tests: TestSpec[]): Promise<RunResult> {
   const started = performance.now();
-  const failed = (error: string): RunResult => ({
-    logs: [],
-    error,
-    tests: tests.map((t) => ({ name: t.name, passed: false })),
-    passed: false,
-    durationMs: Math.round(performance.now() - started),
-    engine: "sql",
-  });
+  const failed = (error: string) => toRunResult("sql", tests, failedOutcome(tests, error), started);
 
   if (!query.replace(/--.*$/gm, "").trim()) return failed("Write a query first.");
 
@@ -228,128 +235,76 @@ async function runSql(query: string, tests: TestSpec[]): Promise<RunResult> {
     );
   }
 
-  const results = tests.map((t, i) => ({ name: t.name, passed: Boolean(outcome.results[i]) }));
-  return {
-    logs: outcome.logs,
-    // "sqlite3.OperationalError: no such column: nme" → "no such column: nme"
-    error: outcome.error?.replace(/^sqlite3\.\w+:\s*/, "") ?? null,
-    tests: results,
-    passed: results.length > 0 && results.every((r) => r.passed) && !outcome.error,
-    durationMs: Math.round(performance.now() - started),
-    engine: "sql",
-  };
+  return toRunResult(
+    "sql",
+    tests,
+    {
+      logs: outcome.logs,
+      // "sqlite3.OperationalError: no such column: nme" → "no such column: nme"
+      error: outcome.error?.replace(/^sqlite3\.\w+:\s*/, "") ?? null,
+      results: outcome.results.map((passed) => ({ passed, detail: null })),
+    },
+    started,
+  );
 }
 
+/** What a challenge needs besides its code: Excel's sheet, the DOM lessons' markup. */
+export interface ChallengeContext {
+  sheet?: string | undefined;
+  html?: string | undefined;
+}
+
+type EngineRun = (
+  code: string,
+  tests: TestSpec[],
+  context: ChallengeContext,
+) => Promise<EngineOutcome>;
+
 /**
- * React components render for real with the app's own React (react-runtime.ts),
- * loaded on first use so pages without a React challenge never download the
- * JSX compiler.
+ * The engines that load on first use, so a page without that kind of challenge
+ * never downloads its runtime (the JSX compiler, the formula engine…). Each
+ * entry only loads; `runCode` handles a failed load the same way for all.
  */
-async function runReact(code: string, tests: TestSpec[]): Promise<RunResult> {
-  const started = performance.now();
-  let outcome;
-  try {
+const LAZY_ENGINES: Record<"react" | "excel" | "web" | "dom", () => Promise<EngineRun>> = {
+  react: async () => {
     const { runReactChallenge } = await import("./react-runtime");
-    outcome = await runReactChallenge(code, tests);
-  } catch {
-    outcome = {
-      logs: [],
-      error: "The React runner couldn't load. Check your connection and run again.",
-      results: tests.map(() => ({ passed: false, detail: null })),
-    };
-  }
-  const results = tests.map((t, i) => ({
-    name: t.name,
-    passed: Boolean(outcome.results[i]?.passed),
-    detail: outcome.results[i]?.detail ?? undefined,
-  }));
-  return {
-    logs: outcome.logs,
-    error: outcome.error,
-    tests: results,
-    passed: results.length > 0 && results.every((r) => r.passed) && !outcome.error,
-    durationMs: Math.round(performance.now() - started),
-    engine: "react",
-  };
-}
-
-/**
- * Excel challenges run on the dependency-free formula engine in
- * sheet-engine.ts, loaded on first use like the other engines.
- */
-async function runExcel(code: string, tests: TestSpec[], sheet: string): Promise<RunResult> {
-  const started = performance.now();
-  const { runSheetChallenge } = await import("./sheet-runtime");
-  const outcome = runSheetChallenge(code, sheet, tests);
-  const results = tests.map((t, i) => ({
-    name: t.name,
-    passed: Boolean(outcome.results[i]?.passed),
-    detail: outcome.results[i]?.detail ?? undefined,
-  }));
-  return {
-    logs: outcome.logs,
-    error: outcome.error,
-    tests: results,
-    passed: results.length > 0 && results.every((r) => r.passed) && !outcome.error,
-    durationMs: Math.round(performance.now() - started),
-    engine: "excel",
-  };
-}
-
-/** HTML & CSS: the page's structure and cascade, checked by web-runtime.ts. */
-async function runWeb(code: string, tests: TestSpec[]): Promise<RunResult> {
-  const started = performance.now();
-  const { runWebChallenge } = await import("./web-runtime");
-  const outcome = runWebChallenge(code, tests);
-  const results = tests.map((t, i) => ({
-    name: t.name,
-    passed: Boolean(outcome.results[i]?.passed),
-    detail: outcome.results[i]?.detail ?? undefined,
-  }));
-  return {
-    logs: outcome.logs,
-    error: outcome.error,
-    tests: results,
-    passed: results.length > 0 && results.every((r) => r.passed) && !outcome.error,
-    durationMs: Math.round(performance.now() - started),
-    engine: "web",
-  };
-}
-
-/** JavaScript against a page: dom-runtime.ts, loaded on first use. */
-async function runDom(code: string, tests: TestSpec[], html: string): Promise<RunResult> {
-  const started = performance.now();
-  const { runDomChallenge } = await import("./dom-runtime");
-  const outcome = await runDomChallenge(code, html, tests);
-  const results = tests.map((t, i) => ({
-    name: t.name,
-    passed: Boolean(outcome.results[i]?.passed),
-    detail: outcome.results[i]?.detail ?? undefined,
-  }));
-  return {
-    logs: outcome.logs,
-    error: outcome.error,
-    tests: results,
-    passed: results.length > 0 && results.every((r) => r.passed) && !outcome.error,
-    durationMs: Math.round(performance.now() - started),
-    engine: "dom",
-  };
-}
+    return (code, tests) => runReactChallenge(code, tests);
+  },
+  excel: async () => {
+    const { runSheetChallenge } = await import("./sheet-runtime");
+    return async (code, tests, context) => runSheetChallenge(code, context.sheet ?? "", tests);
+  },
+  web: async () => {
+    const { runWebChallenge } = await import("./web-runtime");
+    return async (code, tests) => runWebChallenge(code, tests);
+  },
+  dom: async () => {
+    const { runDomChallenge } = await import("./dom-runtime");
+    return (code, tests, context) => runDomChallenge(code, context.html ?? "", tests);
+  },
+};
 
 export async function runCode(
   language: ChallengeLanguage,
   code: string,
   tests: TestSpec[],
-  options: { sheet?: string | undefined; html?: string | undefined } = {},
+  context: ChallengeContext = {},
 ): Promise<RunResult> {
-  if (language === "excel") return runExcel(code, tests, options.sheet ?? "");
-  if (language === "web") return runWeb(code, tests);
+  if (language === "javascript") return runJavaScript(code, tests);
   if (language === "python") return runPython(code, tests);
   if (language === "sql") return runSql(code, tests);
-  if (language === "react") return runReact(code, tests);
-  if (language === "dom") return runDom(code, tests, options.html ?? "");
-  // JavaScript is fast enough to finish before the spinner paints; the small
-  // delay keeps the running state visible rather than flickering.
-  await new Promise((r) => setTimeout(r, 250));
-  return runJavaScript(code, tests);
+
+  const started = performance.now();
+  let run: EngineRun;
+  try {
+    run = await LAZY_ENGINES[language]();
+  } catch {
+    return toRunResult(
+      language,
+      tests,
+      failedOutcome(tests, "This runner couldn't load. Check your connection and run again."),
+      started,
+    );
+  }
+  return toRunResult(language, tests, await run(code, tests, context), started);
 }

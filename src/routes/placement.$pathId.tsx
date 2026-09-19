@@ -74,7 +74,14 @@ function Placement() {
   const graded = questions.map((q) => {
     const course = courseById(q.courseId);
     const module = course?.modules.find((m) => m.id === q.moduleId);
-    return { ...q, course, module, correct: grades?.[q.key]?.correct === true };
+    const grade = grades?.[q.key];
+    return {
+      ...q,
+      course,
+      module,
+      correct: grade?.correct === true,
+      explanation: grade?.explanation,
+    };
   });
   const score = graded.filter((g) => g.correct).length;
 
@@ -139,17 +146,15 @@ function Placement() {
 
       <div className="card-surface mt-7 space-y-5 p-6 sm:p-8">
         {graded.map((q, i) => {
-          const locked = submitted;
           const value = answers[q.key];
-          const { correct } = q;
-          const explanation = grades?.[q.key]?.explanation;
+          const { correct, explanation } = q;
           return (
             <div key={q.key} className="rounded-[14px] border border-border p-5">
               <div className="flex items-center justify-between gap-3">
                 <p className="eyebrow">
                   {i + 1} / {questions.length} · {q.course?.title}
                 </p>
-                {locked ? (
+                {submitted ? (
                   <span
                     className={cn(
                       "text-xs font-semibold",
@@ -170,15 +175,15 @@ function Placement() {
                     {q.block.options.map((option, oi) => (
                       <button
                         key={option}
-                        disabled={locked}
+                        disabled={submitted}
                         onClick={() => setAnswers((a) => ({ ...a, [q.key]: oi }))}
                         className={cn(
                           "flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm transition-colors",
                           value === oi
                             ? "border-brand bg-brand/5 font-semibold"
                             : "border-border hover:bg-secondary",
-                          locked && correct && value === oi && "border-brand bg-brand/10",
-                          locked &&
+                          submitted && correct && value === oi && "border-brand bg-brand/10",
+                          submitted &&
                             !correct &&
                             value === oi &&
                             "border-destructive bg-destructive/5",
@@ -201,7 +206,7 @@ function Placement() {
                     <span>{q.block.before}</span>
                     <Input
                       value={String(value ?? "")}
-                      disabled={locked}
+                      disabled={submitted}
                       onChange={(e) => setAnswers((a) => ({ ...a, [q.key]: e.target.value }))}
                       aria-label="Your answer"
                       className="h-8 w-40 border-white/20 bg-white/10 font-mono text-white placeholder:text-white/40"
@@ -213,7 +218,7 @@ function Placement() {
 
               {/* The right answer isn't revealed on a miss: it's a lesson's question,
                   and the lesson is where you'll meet it properly. */}
-              {locked ? (
+              {submitted ? (
                 <p className="mt-3 text-sm text-chalk">
                   {explanation ? (
                     <InlineText text={explanation} />

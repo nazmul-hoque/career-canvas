@@ -9,7 +9,7 @@ import {
   type PublicGradableBlock,
   type PublicLessonBody,
 } from "@/content/lessons";
-import { gradableBlocks, isBlockCorrect } from "@/lib/lesson-grading";
+import { gradableBlocks, isBlockCorrect, type GradableBlock } from "@/lib/lesson-grading";
 
 /**
  * Lesson content, served without its answer key.
@@ -45,6 +45,12 @@ export interface CheckAnswerResult {
   explanation: string | null;
 }
 
+/** Right or wrong, with the explanation only when right: a wrong answer's would give it away. */
+function verdict(block: GradableBlock, given: string | number | undefined): CheckAnswerResult {
+  const correct = given !== undefined && isBlockCorrect(block, { [block.id]: given });
+  return { correct, explanation: correct ? block.explanation : null };
+}
+
 export const checkAnswerFn = createServerFn({ method: "POST" })
   .validator((input: unknown) => checkAnswerSchema.parse(input))
   .handler(async ({ data }): Promise<CheckAnswerResult> => {
@@ -52,8 +58,25 @@ export const checkAnswerFn = createServerFn({ method: "POST" })
     const body = getLessonBody(data.courseId, data.lessonId);
     const block = body ? gradableBlocks(body).find((b) => b.id === data.blockId) : undefined;
     if (!block) throw new Error("That question doesn't exist.");
-    const correct = isBlockCorrect(block, { [block.id]: data.answer });
-    return { correct, explanation: correct ? block.explanation : null };
+    return verdict(block, data.answer);
+  });
+
+const checkAnswersSchema = lessonRef.extend({
+  answers: z.record(z.union([z.string(), z.number()])),
+});
+
+/** Several answers in one request: what Complete sends for anything not yet checked. */
+export const checkAnswersFn = createServerFn({ method: "POST" })
+  .validator((input: unknown) => checkAnswersSchema.parse(input))
+  .handler(async ({ data }): Promise<Record<string, CheckAnswerResult>> => {
+    const { getLessonBody } = await import("@/content/lesson-bodies.server");
+    const body = getLessonBody(data.courseId, data.lessonId);
+    if (!body) throw new Error("That lesson isn't published.");
+    return Object.fromEntries(
+      gradableBlocks(body)
+        .filter((block) => block.id in data.answers)
+        .map((block) => [block.id, verdict(block, data.answers[block.id])]),
+    );
   });
 
 /**
@@ -117,9 +140,7 @@ export const gradePlacementFn = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<PlacementGrades> => {
     const grades: PlacementGrades = {};
     for (const { block, key } of await placementBlocks(data.pathId)) {
-      const given = data.answers[key];
-      const correct = given !== undefined && isBlockCorrect(block, { [block.id]: given });
-      grades[key] = { correct, explanation: correct ? block.explanation : null };
+      grades[key] = verdict(block, data.answers[key]);
     }
     return grades;
   });

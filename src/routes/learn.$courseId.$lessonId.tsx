@@ -18,12 +18,14 @@ import { InlineText } from "@/components/learn/InlineText";
 import { CodeChallenge } from "@/components/learn/CodeChallenge";
 import { courseById, courseLessons, type Course, type LessonMeta } from "@/content/curriculum";
 import {
+  isQuestion,
   isLessonLive,
   nextLiveLesson,
   type PublicLessonBlock,
   type PublicLessonBody,
 } from "@/content/lessons";
-import { checkAnswerFn, getLessonFn, type CheckAnswerResult } from "@/lib/lessons.functions";
+import { checkAnswerFn, checkAnswersFn, type CheckAnswerResult } from "@/lib/lessons.functions";
+import { lessonQuery } from "@/hooks/useLesson";
 import { useProgress, useCompleteLesson } from "@/hooks/useLearner";
 import { useSession } from "@/hooks/useAuth";
 import type { RunResult } from "@/lib/code-runner";
@@ -35,12 +37,12 @@ import { useEntitlements } from "@/hooks/useEntitlements";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/learn/$courseId/$lessonId")({
-  loader: async ({ params }) => {
+  loader: async ({ params, context }) => {
     const course = courseById(params.courseId);
     const lesson = course ? courseLessons(course).find((l) => l.id === params.lessonId) : undefined;
     if (!course || !lesson) throw notFound();
     // Comes from the server without its answer key; see lessons.functions.ts.
-    const body = await getLessonFn({ data: { courseId: course.id, lessonId: lesson.id } });
+    const body = await context.queryClient.ensureQueryData(lessonQuery(course.id, lesson.id));
     // `body` is null for lessons nobody has written yet — the route renders a
     // "coming soon" state for those instead of pretending they are teachable.
     return { course, lesson, body };
@@ -251,7 +253,7 @@ function LessonWorkspace({
     });
   }, [course.id, lesson.id, lesson.type, body.xp]);
 
-  const quizIds = body.blocks.flatMap((b) => (b.kind === "mcq" || b.kind === "fill" ? [b.id] : []));
+  const quizIds = body.blocks.filter(isQuestion).map((b) => b.id);
   const unanswered = quizIds.filter((id) => String(answers[id] ?? "").trim() === "").length;
   const wrong = quizIds.filter((id) => results[id] && !results[id].correct).length;
 
@@ -321,8 +323,21 @@ function LessonWorkspace({
     if (!isDone) {
       const unchecked = quizIds.filter((id) => !results[id]);
       if (unchecked.length) {
-        const outcomes = await Promise.all(unchecked.map(check));
-        const misses = outcomes.filter((r) => !r?.correct).length;
+        let verdicts: Record<string, CheckAnswerResult>;
+        try {
+          verdicts = await checkAnswersFn({
+            data: {
+              courseId: course.id,
+              lessonId: lesson.id,
+              answers: Object.fromEntries(unchecked.map((id) => [id, answers[id]!])),
+            },
+          });
+        } catch {
+          toast.error("Couldn't check your answers. Try again.");
+          return;
+        }
+        setResults((r) => ({ ...r, ...verdicts }));
+        const misses = unchecked.filter((id) => !verdicts[id]?.correct).length;
         if (misses) {
           toast.error(
             `${plural(misses, "answer isn't", "answers aren't")} right yet — it's marked above.`,

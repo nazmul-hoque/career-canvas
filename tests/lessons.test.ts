@@ -185,7 +185,7 @@ describe("answer key", () => {
 /**
  * Every SQL challenge must run against the shop dataset. This catches a broken
  * query or a dataset edit that removes a column; whether the solution passes
- * its (Python) tests is checked by `bun run lessons:verify-sql`.
+ * its (Python) tests is checked by `bun run lessons:verify`.
  */
 describe("sql challenges", () => {
   const challenges = Object.entries(bodies).flatMap(([id, body]) =>

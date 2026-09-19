@@ -36,41 +36,9 @@ const isRange = (v: Evaluated): v is RangeValue =>
 
 // ─── References ────────────────────────────────────────────────────────────
 
-export interface CellRef {
-  col: number; // 1-based
-  row: number; // 1-based
-  absCol: boolean;
-  absRow: boolean;
-}
+import { cellsInRange, numberToCol, parseRef, refKey, type CellRef } from "./sheet-refs";
 
-export function colToNumber(letters: string): number {
-  let n = 0;
-  for (const ch of letters.toUpperCase()) n = n * 26 + (ch.charCodeAt(0) - 64);
-  return n;
-}
-
-export function numberToCol(n: number): string {
-  let s = "";
-  while (n > 0) {
-    const r = (n - 1) % 26;
-    s = String.fromCharCode(65 + r) + s;
-    n = Math.floor((n - 1) / 26);
-  }
-  return s;
-}
-
-const REF = /^(\$?)([A-Za-z]{1,3})(\$?)(\d+)$/;
-
-export function parseRef(text: string): CellRef | null {
-  const m = REF.exec(text);
-  if (!m) return null;
-  const row = Number(m[4]);
-  if (row < 1) return null;
-  return { absCol: m[1] === "$", col: colToNumber(m[2]!), absRow: m[3] === "$", row };
-}
-
-export const refKey = (col: number, row: number) => `${numberToCol(col)}${row}`;
-
+export { colToNumber, numberToCol, parseRef, refKey, type CellRef } from "./sheet-refs";
 function formatRef(r: CellRef) {
   return `${r.absCol ? "$" : ""}${numberToCol(r.col)}${r.absRow ? "$" : ""}${r.row}`;
 }
@@ -309,13 +277,30 @@ export function normaliseFormula(formula: string): string {
     .map((tok) => {
       if (tok.t === "str") return `"${tok.v.replace(/"/g, '""')}"`;
       if (tok.t === "ref") return formatRef(tok.v);
-      if (tok.t === "num") return String(tok.v);
       return String(tok.v);
     })
     .join("")}`;
 }
 
 // ─── Coercion and comparison ───────────────────────────────────────────────
+
+/** Whether a comparison operator holds, given the sign of a comparison. */
+function holds(op: string, cmp: number): boolean {
+  switch (op) {
+    case "=":
+      return cmp === 0;
+    case "<>":
+      return cmp !== 0;
+    case "<":
+      return cmp < 0;
+    case "<=":
+      return cmp <= 0;
+    case ">":
+      return cmp > 0;
+    default:
+      return cmp >= 0;
+  }
+}
 
 function toNumber(v: Value): number | XlError {
   if (isError(v)) return v;
@@ -396,23 +381,7 @@ function criterion(c: Value): (v: Value) => boolean {
   }
   if (numeric) {
     const n = Number(operand);
-    return (v) => {
-      if (typeof v !== "number") return op === "<>";
-      switch (op) {
-        case "=":
-          return v === n;
-        case "<>":
-          return v !== n;
-        case "<":
-          return v < n;
-        case "<=":
-          return v <= n;
-        case ">":
-          return v > n;
-        default:
-          return v >= n;
-      }
-    };
+    return (v) => (typeof v === "number" ? holds(op, v - n) : op === "<>");
   }
   if (op === "=" || op === "<>") {
     const re = wildcardRegex(operand);
@@ -423,14 +392,17 @@ function criterion(c: Value): (v: Value) => boolean {
   }
   return (v) => {
     if (typeof v !== "string") return false;
-    const cmp = compare(v, operand);
-    return op === "<" ? cmp < 0 : op === "<=" ? cmp <= 0 : op === ">" ? cmp > 0 : cmp >= 0;
+    return holds(op, compare(v, operand));
   };
 }
 
 // ─── Sheet ─────────────────────────────────────────────────────────────────
 
 export type CellInput = Scalar;
+
+/** A cell holds a formula when its text starts with "=", as in Excel. */
+export const isFormulaText = (raw: CellInput): raw is string =>
+  typeof raw === "string" && raw.startsWith("=");
 
 export class CircularReferenceError extends Error {}
 
@@ -460,8 +432,7 @@ export class Sheet {
   }
 
   isFormula(key: string) {
-    const raw = this.raw(key);
-    return typeof raw === "string" && raw.startsWith("=");
+    return isFormulaText(this.raw(key));
   }
 
   keys() {
@@ -479,14 +450,13 @@ export class Sheet {
     const cached = this.cache.get(k);
     if (cached !== undefined) return cached;
     const raw = this.cells.get(k) ?? null;
-    if (!(typeof raw === "string" && raw.startsWith("="))) return raw;
+    if (!isFormulaText(raw)) return raw;
     if (this.evaluating.has(k)) throw new CircularReferenceError(`${k} depends on itself.`);
     this.evaluating.add(k);
     try {
       let result: Value;
       try {
-        const out = this.evaluate(compileFormula(raw));
-        result = isRange(out) ? this.single(out) : out;
+        result = this.scalar(compileFormula(raw));
       } catch (error) {
         if (error instanceof CircularReferenceError) throw error;
         if (error instanceof FormulaError) this.problems.set(k, error.message);
@@ -505,15 +475,12 @@ export class Sheet {
   }
 
   private range(from: CellRef, to: CellRef): RangeValue {
-    const [c1, c2] = [Math.min(from.col, to.col), Math.max(from.col, to.col)];
-    const [r1, r2] = [Math.min(from.row, to.row), Math.max(from.row, to.row)];
-    const rows: Value[][] = [];
-    for (let r = r1; r <= r2; r++) {
-      const row: Value[] = [];
-      for (let c = c1; c <= c2; c++) row.push(this.value(refKey(c, r)));
-      rows.push(row);
-    }
-    return { kind: "range", rows };
+    return {
+      kind: "range",
+      rows: cellsInRange(from, to).map((row) =>
+        row.map(({ col, row: r }) => this.value(refKey(col, r))),
+      ),
+    };
   }
 
   private scalar(node: Node): Value {
@@ -561,20 +528,7 @@ export class Sheet {
       if (isError(y)) return y;
       return x + y;
     }
-    if (["=", "<>", "<", ">", "<=", ">="].includes(op)) {
-      const c = compare(a, b);
-      return op === "="
-        ? c === 0
-        : op === "<>"
-          ? c !== 0
-          : op === "<"
-            ? c < 0
-            : op === ">"
-              ? c > 0
-              : op === "<="
-                ? c <= 0
-                : c >= 0;
-    }
+    if (["=", "<>", "<", ">", "<=", ">="].includes(op)) return holds(op, compare(a, b));
     const x = toNumber(a);
     const y = toNumber(b);
     if (isError(x)) return x;
@@ -744,10 +698,7 @@ export class Sheet {
         need(2, name === "COUNTIF" ? 2 : 3);
         // SUMIF(range, criteria, [sum_range]) → SUMIFS(sum_range, range, criteria)
         const reordered = name === "COUNTIF" ? args : [args[2] ?? args[0]!, args[0]!, args[1]!];
-        return this.call(
-          name === "SUMIF" ? "SUMIFS" : name === "COUNTIF" ? "COUNTIFS" : "AVERAGEIFS",
-          reordered,
-        );
+        return this.call(`${name}S`, reordered);
       }
       case "SUMIFS":
       case "AVERAGEIFS": {
@@ -910,41 +861,3 @@ export class Sheet {
     }
   }
 }
-
-/** Every function the engine understands — shown to learners. */
-export const FUNCTIONS = [
-  "SUM",
-  "AVERAGE",
-  "MIN",
-  "MAX",
-  "COUNT",
-  "COUNTA",
-  "COUNTBLANK",
-  "ROUND",
-  "ABS",
-  "IF",
-  "IFERROR",
-  "AND",
-  "OR",
-  "NOT",
-  "SUMIF",
-  "SUMIFS",
-  "COUNTIF",
-  "COUNTIFS",
-  "AVERAGEIF",
-  "AVERAGEIFS",
-  "XLOOKUP",
-  "VLOOKUP",
-  "INDEX",
-  "MATCH",
-  "LEN",
-  "UPPER",
-  "LOWER",
-  "TRIM",
-  "LEFT",
-  "RIGHT",
-  "CONCAT",
-  "ISBLANK",
-  "ISNUMBER",
-  "ISERROR",
-];

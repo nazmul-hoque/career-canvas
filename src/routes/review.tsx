@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Brain, CalendarClock, Check, RotateCcw, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
@@ -10,8 +11,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "@/hooks/useAuth";
 import { dueItems, useReviewQueue, useSubmitReview, type ReviewItem } from "@/hooks/useReviews";
 import { findLesson } from "@/content/curriculum";
-import { lessonQuestionCount, type PublicGradableBlock } from "@/content/lessons";
-import { usePublicLesson } from "@/hooks/useLesson";
+import { isQuestion, lessonQuestionCount, type PublicGradableBlock } from "@/content/lessons";
+import { lessonQuery, usePublicLesson } from "@/hooks/useLesson";
 import type { SubmitReviewResult } from "@/lib/review.functions";
 import { InlineText } from "@/components/learn/InlineText";
 import { cn } from "@/lib/utils";
@@ -88,9 +89,16 @@ function Review() {
     cards[0]?.item.course_id,
     cards[0]?.item.lesson_id,
   );
-  const blocks = (currentBody?.blocks ?? []).filter(
-    (b): b is PublicGradableBlock => b.kind === "mcq" || b.kind === "fill",
-  );
+
+  // Fetch the next card's questions while this one is being answered, so
+  // moving on doesn't flash the loading skeleton.
+  const queryClient = useQueryClient();
+  const nextCard = cards[1]?.item;
+  useEffect(() => {
+    if (nextCard)
+      void queryClient.prefetchQuery(lessonQuery(nextCard.course_id, nextCard.lesson_id));
+  }, [queryClient, nextCard]);
+  const blocks = (currentBody?.blocks ?? []).filter(isQuestion);
 
   const upcoming = items.filter((i) => i.due_on > new Date().toISOString().slice(0, 10));
 

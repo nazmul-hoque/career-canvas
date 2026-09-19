@@ -41,7 +41,7 @@ export interface SubmitReviewResult {
    * The right answer and why, per question — sent only now, after grading. The
    * review page never holds the answer key while the learner is still answering.
    */
-  feedback: Record<string, { correct: boolean; answer: string | number; explanation: string }>;
+  feedback: Record<string, { answer: string | number; explanation: string }>;
 }
 
 /** A review is worth a fifth of the lesson, rounded to something tidy. */
@@ -193,7 +193,6 @@ export const submitReviewFn = createServerFn({ method: "POST" })
         gradableBlocks(body).map((block) => [
           block.id,
           {
-            correct: !graded.wrongBlockIds.includes(block.id),
             answer: block.answer,
             explanation: block.explanation,
           },

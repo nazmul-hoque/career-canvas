@@ -12,43 +12,24 @@
  * text(el). Tests are expressions and may `await`. Each test runs on a fresh page.
  */
 
-export interface DomTestSpec {
-  name: string;
-  expression: string;
-}
-
-export interface DomRunOutcome {
-  logs: string[];
-  error: string | null;
-  results: { passed: boolean; detail: string | null }[];
-}
+import {
+  captureConsole,
+  collapseWhitespace as collapse,
+  errorMessage,
+  withTimeout,
+  type EngineOutcome,
+  type TestSpec,
+} from "./runtime-shared";
 
 const TEST_TIMEOUT_MS = 3_000;
-const collapse = (t: string | null | undefined) => (t ?? "").replace(/\s+/g, " ").trim();
 
 export async function runDomChallenge(
   code: string,
   html: string,
-  tests: DomTestSpec[],
-): Promise<DomRunOutcome> {
+  tests: TestSpec[],
+): Promise<EngineOutcome> {
   const logs: string[] = [];
-  const format = (args: unknown[]) =>
-    args
-      .map((a) => {
-        if (typeof a === "string") return a;
-        try {
-          return JSON.stringify(a);
-        } catch {
-          return String(a);
-        }
-      })
-      .join(" ");
-  const console = {
-    log: (...a: unknown[]) => logs.push(format(a)),
-    info: (...a: unknown[]) => logs.push(format(a)),
-    warn: (...a: unknown[]) => logs.push(`warning: ${format(a)}`),
-    error: (...a: unknown[]) => logs.push(`error: ${format(a)}`),
-  };
+  const console = captureConsole(logs);
 
   // Every test gets a fresh page with the script freshly run, so no test sees
   // the clicks of the one before it and the order of tests never matters.
@@ -101,18 +82,16 @@ export async function runDomChallenge(
         `return (async () => {\n${code}\n;\n${check}\n})();`,
       ) as typeof fn;
     } catch (e) {
-      return { crashed: e instanceof Error ? `${e.name}: ${e.message}` : String(e) };
+      return { crashed: errorMessage(e, true) };
     }
     try {
-      return await Promise.race([
-        fn(...Object.values(helpers)),
-        new Promise<{ ok: boolean; detail: string }>((resolve) =>
-          setTimeout(() => resolve({ ok: false, detail: "The test timed out." }), TEST_TIMEOUT_MS),
-        ),
-      ]);
+      return await withTimeout(fn(...Object.values(helpers)), TEST_TIMEOUT_MS, () => ({
+        ok: false,
+        detail: "The test timed out.",
+      }));
     } catch (e) {
       // The learner's script itself threw while setting up the page.
-      return { crashed: e instanceof Error ? `${e.name}: ${e.message}` : String(e) };
+      return { crashed: errorMessage(e, true) };
     }
   };
 
@@ -128,7 +107,7 @@ export async function runDomChallenge(
   }
   const logsFromSetup = logs.length;
 
-  const results: DomRunOutcome["results"] = [];
+  const results: EngineOutcome["results"] = [];
   for (const t of tests) {
     const outcome = await run(t.expression);
     results.push(

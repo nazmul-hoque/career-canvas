@@ -7,15 +7,14 @@
  *
  * Pure: no database, no request context.
  */
-import type { LessonBlock, LessonBody } from "@/content/lessons";
+import { isQuestion, type LessonBlock, type LessonBody } from "@/content/lessons";
 
 export type Answers = Record<string, string | number>;
 
 /** Blocks a learner can get right or wrong. Text and code blocks are not graded. */
 export type GradableBlock = Extract<LessonBlock, { kind: "mcq" } | { kind: "fill" }>;
 
-export const gradableBlocks = (body: LessonBody): GradableBlock[] =>
-  body.blocks.filter((b): b is GradableBlock => b.kind === "mcq" || b.kind === "fill");
+export const gradableBlocks = (body: LessonBody): GradableBlock[] => body.blocks.filter(isQuestion);
 
 /**
  * Fill-in answers are code, and in code spacing around punctuation carries no

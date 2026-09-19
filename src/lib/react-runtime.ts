@@ -23,18 +23,15 @@
 import * as React from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { transform } from "sucrase";
-
-export interface ReactTestSpec {
-  name: string;
-  /** An async function body; `return` true to pass. JSX is allowed. */
-  expression: string;
-}
-
-export interface ReactRunOutcome {
-  logs: string[];
-  error: string | null;
-  results: { passed: boolean; detail: string | null }[];
-}
+import {
+  accessibleName,
+  captureConsole,
+  collapseWhitespace as normalise,
+  errorMessage as message,
+  withTimeout,
+  type EngineOutcome,
+  type TestSpec,
+} from "./runtime-shared";
 
 const TEST_TIMEOUT_MS = 4_000;
 
@@ -86,8 +83,6 @@ function compile(source: string): string {
   }).code;
 }
 
-const normalise = (text: string | null | undefined) => (text ?? "").replace(/\s+/g, " ").trim();
-
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 /**
@@ -97,33 +92,6 @@ const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve,
 async function settle() {
   await sleep(0);
   await sleep(10);
-}
-
-/** The accessible name, as far as these challenges need it. */
-function accessibleName(el: Element): string {
-  const label = el.getAttribute("aria-label");
-  if (label) return normalise(label);
-  const labelledBy = el.getAttribute("aria-labelledby");
-  if (labelledBy) {
-    return normalise(
-      labelledBy
-        .split(/\s+/)
-        .map((id) => el.ownerDocument.getElementById(id)?.textContent ?? "")
-        .join(" "),
-    );
-  }
-  if (el.id) {
-    const forLabel = Array.from(el.ownerDocument.querySelectorAll("label")).find(
-      (label) => label.htmlFor === el.id,
-    );
-    if (forLabel) return normalise(forLabel.textContent);
-  }
-  const wrapping = el.closest("label");
-  if (wrapping && wrapping !== el) return normalise(wrapping.textContent);
-  if (el instanceof HTMLInputElement && (el.type === "submit" || el.type === "button")) {
-    return normalise(el.value);
-  }
-  return normalise(el.textContent);
 }
 
 function roleOf(el: Element): string | null {
@@ -178,7 +146,7 @@ function createHarness(errors: unknown[]) {
     return allElements().filter(
       (el) =>
         roleOf(el) === role &&
-        (options.name === undefined || matches(accessibleName(el), options.name)),
+        (options.name === undefined || matches(accessibleName(el, true) ?? "", options.name)),
     );
   }
 
@@ -186,7 +154,7 @@ function createHarness(errors: unknown[]) {
     return allElements().filter(
       (el) =>
         ["input", "textarea", "select"].includes(el.tagName.toLowerCase()) &&
-        matches(accessibleName(el), expected),
+        matches(accessibleName(el, true) ?? "", expected),
     );
   }
 
@@ -313,34 +281,11 @@ const HARNESS_NAMES = [
   "waitFor",
 ] as const satisfies readonly (keyof Harness)[];
 
-const message = (error: unknown) =>
-  error instanceof Error ? error.message : typeof error === "string" ? error : "Something threw.";
-
-function captureConsole(logs: string[]) {
-  const format = (args: unknown[]) =>
-    args
-      .map((a) => {
-        if (typeof a === "string") return a;
-        try {
-          return JSON.stringify(a);
-        } catch {
-          return String(a);
-        }
-      })
-      .join(" ");
-  return {
-    log: (...args: unknown[]) => logs.push(format(args)),
-    info: (...args: unknown[]) => logs.push(format(args)),
-    warn: (...args: unknown[]) => logs.push(`warning: ${format(args)}`),
-    error: (...args: unknown[]) => logs.push(`error: ${format(args)}`),
-  };
-}
-
 /**
  * Builds the learner's module and the tests in one scope, so tests can refer
  * to the components by name. Returns the test functions and whatever `App` is.
  */
-function build(code: string, tests: ReactTestSpec[], harness: Harness, logs: string[]) {
+function build(code: string, tests: TestSpec[], harness: Harness, logs: string[]) {
   const testFns = tests.map((t) => `async function () {\n${t.expression}\n}`).join(",\n");
   const source = `${prepareSource(code)}\n;return { App: typeof App === "undefined" ? undefined : App, tests: [${testFns}] };`;
   const compiled = compile(source);
@@ -357,10 +302,7 @@ function build(code: string, tests: ReactTestSpec[], harness: Harness, logs: str
   return factory(...values);
 }
 
-export async function runReactChallenge(
-  code: string,
-  tests: ReactTestSpec[],
-): Promise<ReactRunOutcome> {
+export async function runReactChallenge(code: string, tests: TestSpec[]): Promise<EngineOutcome> {
   const logs: string[] = [];
   const errors: unknown[] = [];
   const harness = createHarness(errors);
@@ -376,16 +318,13 @@ export async function runReactChallenge(
     };
   }
 
-  const results: ReactRunOutcome["results"] = [];
+  const results: EngineOutcome["results"] = [];
   for (const test of built.tests) {
     errors.length = 0;
     try {
-      const passed = await Promise.race([
-        test(),
-        sleep(TEST_TIMEOUT_MS).then(() => {
-          throw new Error("The test timed out. Is something re-rendering forever?");
-        }),
-      ]);
+      const passed = await withTimeout(test(), TEST_TIMEOUT_MS, () => {
+        throw new Error("The test timed out. Is something re-rendering forever?");
+      });
       const crashed = errors[0];
       results.push(
         crashed

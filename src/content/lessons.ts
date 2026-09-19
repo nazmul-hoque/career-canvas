@@ -6,6 +6,7 @@ import {
   type LessonMeta,
 } from "./curriculum";
 import { lessonManifest } from "./lesson-manifest.gen";
+import type { ChallengeLanguage } from "@/lib/code-runner";
 
 export type LessonBlock =
   | { kind: "text"; body: string }
@@ -35,7 +36,7 @@ export type LessonBlock =
       id: string;
       title: string;
       prompt: string;
-      language: "javascript" | "python" | "sql" | "react" | "excel" | "web" | "dom";
+      language: ChallengeLanguage;
       /** Excel challenges only: which sheet in datasets/sheets.ts to start from. */
       sheet?: string | undefined;
       /** DOM challenges only: the fixed page markup the learner's script works on. */
@@ -97,6 +98,11 @@ export const toPublicBody = (body: LessonBody): PublicLessonBody => ({
   blocks: body.blocks.map(toPublicBlock),
 });
 
+/** A question block, full or public: the blocks a learner answers. */
+export const isQuestion = <B extends { kind: string }>(
+  block: B,
+): block is Extract<B, { kind: "mcq" | "fill" }> => block.kind === "mcq" || block.kind === "fill";
+
 /** The facts about a lesson that pages outside the lesson itself need. */
 export interface LessonManifestEntry {
   challenge: boolean;
@@ -105,7 +111,7 @@ export interface LessonManifestEntry {
 
 export const manifestEntry = (body: LessonBody): LessonManifestEntry => ({
   challenge: body.blocks.some((b) => b.kind === "challenge"),
-  questions: body.blocks.filter((b) => b.kind === "mcq" || b.kind === "fill").length,
+  questions: body.blocks.filter(isQuestion).length,
 });
 
 /**

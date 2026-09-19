@@ -28,19 +28,10 @@ import {
   shiftFormula,
   type CellInput,
   type Value,
+  isFormulaText,
 } from "./sheet-engine";
-
-export interface SheetTestSpec {
-  name: string;
-  /** A JavaScript expression; see the helpers in `runSheetChallenge`. */
-  expression: string;
-}
-
-export interface SheetRunOutcome {
-  logs: string[];
-  error: string | null;
-  results: { passed: boolean; detail: string | null }[];
-}
+import { cellsInRange } from "./sheet-refs";
+import { errorMessage, evalTests, type EngineOutcome, type TestSpec } from "./runtime-shared";
 
 interface Entry {
   line: number;
@@ -88,18 +79,15 @@ export function buildSheet(sheetName: string, code: string): Sheet {
       throw new FormulaError(`Line ${entry.line} (${entry.from}): ${(error as Error).message}`);
     }
     const a = parseRef(entry.from)!;
-    const b = parseRef(entry.to)!;
-    for (let row = Math.min(a.row, b.row); row <= Math.max(a.row, b.row); row++) {
-      for (let col = Math.min(a.col, b.col); col <= Math.max(a.col, b.col); col++) {
-        const key = refKey(col, row);
-        const existing = data.cells[key];
-        if (existing !== undefined && existing !== null) {
-          throw new FormulaError(
-            `Line ${entry.line}: ${key} already holds data ("${String(existing)}"). Write formulas into the empty cells.`,
-          );
-        }
-        sheet.set(key, shiftFormula(entry.formula, row - a.row, col - a.col));
+    for (const { col, row } of cellsInRange(a, parseRef(entry.to)!).flat()) {
+      const key = refKey(col, row);
+      const existing = data.cells[key];
+      if (existing !== undefined && existing !== null) {
+        throw new FormulaError(
+          `Line ${entry.line}: ${key} already holds data ("${String(existing)}"). Write formulas into the empty cells.`,
+        );
       }
+      sheet.set(key, shiftFormula(entry.formula, row - a.row, col - a.col));
     }
   }
   return sheet;
@@ -144,20 +132,17 @@ function rangeKeys(range: string): string[] {
   const a = parseRef(from);
   const b = parseRef(to);
   if (!a || !b) throw new Error(`"${range}" isn't a cell or range.`);
-  const keys: string[] = [];
-  for (let row = Math.min(a.row, b.row); row <= Math.max(a.row, b.row); row++) {
-    for (let col = Math.min(a.col, b.col); col <= Math.max(a.col, b.col); col++)
-      keys.push(refKey(col, row));
-  }
-  return keys;
+  return cellsInRange(a, b)
+    .flat()
+    .map(({ col, row }) => refKey(col, row));
 }
 
 export function runSheetChallenge(
   code: string,
   sheetName: string,
-  tests: SheetTestSpec[],
-): SheetRunOutcome {
-  const failAll = (error: string): SheetRunOutcome => ({
+  tests: TestSpec[],
+): EngineOutcome {
+  const failAll = (error: string): EngineOutcome => ({
     logs: [],
     error,
     results: tests.map(() => ({ passed: false, detail: null })),
@@ -184,7 +169,7 @@ export function runSheetChallenge(
       plain(sheet.withOverrides(overrides).value(ref)),
     formula: (ref: string) => {
       const raw = sheet.raw(ref);
-      return typeof raw === "string" && raw.startsWith("=") ? normaliseFormula(raw) : null;
+      return isFormulaText(raw) ? normaliseFormula(raw) : null;
     },
     near: (actual: unknown, expected: number, tolerance = 1e-9) =>
       typeof actual === "number" && Math.abs(actual - expected) <= tolerance,
@@ -198,18 +183,11 @@ export function runSheetChallenge(
       }),
   };
 
-  const results = tests.map((t) => {
-    try {
-      const fn = new Function(...Object.keys(helpers), `return (${t.expression});`);
-      return { passed: fn(...Object.values(helpers)) === true, detail: null };
-    } catch (error) {
-      const detail =
-        error instanceof CircularReferenceError
-          ? `Circular reference: ${error.message}`
-          : (error as Error).message;
-      return { passed: false, detail };
-    }
-  });
+  const results = evalTests(helpers, tests, (error) =>
+    error instanceof CircularReferenceError
+      ? `Circular reference: ${error.message}`
+      : errorMessage(error),
+  );
 
   return { logs, error: problems.length ? problems.join("\n") : null, results };
 }

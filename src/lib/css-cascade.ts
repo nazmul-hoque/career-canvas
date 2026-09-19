@@ -323,10 +323,10 @@ export function cascadedValue(
         compareSpecificity(x.specificity, y.specificity) ||
         x.order - y.order,
     );
-    const winner = candidates.at(-1)!.value;
-    if (winner !== "inherit") return winner;
   }
-  if ((INHERITED.has(name) || candidates.at(-1)?.value === "inherit") && el.parentElement) {
+  const winner = candidates.at(-1)?.value;
+  if (winner !== undefined && winner !== "inherit") return winner;
+  if ((INHERITED.has(name) || winner === "inherit") && el.parentElement) {
     return cascadedValue(el.parentElement, name, rules, width);
   }
   return null;

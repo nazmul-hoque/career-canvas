@@ -42,6 +42,53 @@ interface WorkerReply {
  * against that namespace. A test
  * that raises counts as failed — the same contract the JavaScript runner uses.
  */
+/**
+ * The Python side of every run, exported so the lesson verifier runs exactly
+ * this under local python3. It runs the code in a fresh namespace and a fresh
+ * working directory, captures stdout (exposed to tests as `__stdout__`), then
+ * evaluates each test as a Python expression against that namespace.
+ */
+export const PYTHON_DRIVER = [
+  "import io, json, os, shutil, sys, tempfile, traceback",
+  "payload = json.loads(__ascent_payload)",
+  "# Each run starts in an empty working directory, so a file written by an",
+  "# earlier run (the interpreter is reused) can never satisfy a test.",
+  "home = os.getcwd()",
+  "workdir = tempfile.mkdtemp()",
+  "os.chdir(workdir)",
+  'namespace = {"__name__": "__main__"}',
+  "buffer = io.StringIO()",
+  "stdout, stderr = sys.stdout, sys.stderr",
+  "sys.stdout = sys.stderr = buffer",
+  "error = None",
+  "try:",
+  '    exec(payload["code"], namespace)',
+  "except BaseException:",
+  "    lines = traceback.format_exc().strip().splitlines()",
+  '    error = lines[-1] if lines else "Your code raised an error."',
+  "finally:",
+  "    sys.stdout, sys.stderr = stdout, stderr",
+  "# What the program printed, so a test can check output as well as values.",
+  'namespace["__stdout__"] = buffer.getvalue()',
+  "results = []",
+  'for expression in payload["tests"]:',
+  "    if error is not None:",
+  "        results.append(False)",
+  "        continue",
+  "    try:",
+  "        results.append(bool(eval(expression, namespace)))",
+  "    except BaseException:",
+  "        results.append(False)",
+  "os.chdir(home)",
+  "shutil.rmtree(workdir, ignore_errors=True)",
+  "__ascent_result = json.dumps({",
+  '    "logs": buffer.getvalue().splitlines(),',
+  '    "error": error,',
+  '    "results": results,',
+  "})",
+  "__ascent_result",
+].join("\n");
+
 const WORKER_SOURCE = String.raw`
 let pyodideReady = null;
 
@@ -53,38 +100,7 @@ async function boot(base) {
   return pyodideReady;
 }
 
-const DRIVER = [
-  'import io, json, sys, traceback',
-  'payload = json.loads(__ascent_payload)',
-  'namespace = {"__name__": "__main__"}',
-  'buffer = io.StringIO()',
-  'stdout, stderr = sys.stdout, sys.stderr',
-  'sys.stdout = sys.stderr = buffer',
-  'error = None',
-  'try:',
-  '    exec(payload["code"], namespace)',
-  'except BaseException:',
-  '    lines = traceback.format_exc().strip().splitlines()',
-  '    error = lines[-1] if lines else "Your code raised an error."',
-  'finally:',
-  '    sys.stdout, sys.stderr = stdout, stderr',
-  '# What the program printed, so a test can check output as well as values.',
-  'namespace["__stdout__"] = buffer.getvalue()',
-  'results = []',
-  'for expression in payload["tests"]:',
-  '    if error is not None:',
-  '        results.append(False)',
-  '        continue',
-  '    try:',
-  '        results.append(bool(eval(expression, namespace)))',
-  '    except BaseException:',
-  '        results.append(False)',
-  'json.dumps({',
-  '    "logs": buffer.getvalue().splitlines(),',
-  '    "error": error,',
-  '    "results": results,',
-  '})',
-].join("\n");
+const DRIVER = ${JSON.stringify(PYTHON_DRIVER)};
 
 self.onmessage = async (event) => {
   const { id, base, code, tests } = event.data;
@@ -94,7 +110,7 @@ self.onmessage = async (event) => {
     // fetched from the same CDN the first time code imports them.
     await pyodide.loadPackagesFromImports(code);
     pyodide.globals.set("__ascent_payload", JSON.stringify({ code, tests }));
-    const raw = pyodide.runPython(DRIVER);
+    const raw = pyodide.runPython(PYTHON_DRIVER);
     self.postMessage({ id, ok: true, outcome: JSON.parse(raw) });
   } catch (error) {
     self.postMessage({ id, ok: false, fatal: String(error && error.message ? error.message : error) });

@@ -9,13 +9,33 @@ import {
   Terminal,
   Eye,
 } from "lucide-react";
-import { runCode, type ChallengeLanguage, type RunResult } from "@/lib/code-runner";
+import { runCode, type ChallengeLanguage, type RunEngine, type RunResult } from "@/lib/code-runner";
+import { numberToCol, parseRef } from "@/lib/sheet-refs";
 import { SHOP_SCHEMA } from "@/content/datasets/shop";
 import { SHEETS } from "@/content/datasets/sheets";
 import { InlineText } from "@/components/learn/InlineText";
 import { track } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+
+/** What ran the code, said honestly under the test results. */
+const ENGINE_LABELS: Partial<Record<RunEngine, string>> = {
+  python: "CPython (WebAssembly)",
+  sql: "SQLite (WebAssembly)",
+  react: "React, rendered in this page",
+  excel: "Spreadsheet engine (an Excel-compatible subset)",
+  web: "Checks the page structure and which CSS rules apply",
+  dom: "Your script, run against a fresh copy of the page",
+};
+
+/** Shown while an engine that downloads on first use is starting. */
+const STARTING_MESSAGES: Partial<Record<ChallengeLanguage, string>> = {
+  python: "Starting Python — the first run downloads the interpreter.",
+  sql: "Starting the database — the first run downloads it.",
+};
+
+const PANEL_HEADER =
+  "flex items-center gap-2 border-b border-border px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-chalk";
 
 interface Props {
   title: string;
@@ -59,7 +79,12 @@ export function CodeChallenge({
   async function handleRun(submit: boolean) {
     setRunning(true);
     if (language === "react" || language === "web" || language === "dom") setPreviewCode(code);
-    const res = await runCode(language, code, tests, { sheet, html });
+    // Some engines finish before the spinner paints; a short minimum keeps the
+    // running state visible instead of flickering.
+    const [res] = await Promise.all([
+      runCode(language, code, tests, { sheet, html }),
+      new Promise((resolve) => setTimeout(resolve, 250)),
+    ]);
     setResult(res);
     onResult(res);
     setRunning(false);
@@ -141,7 +166,7 @@ export function CodeChallenge({
           {language === "dom" && previewCode !== null ? (
             <DomPreview code={previewCode} html={html ?? ""} />
           ) : null}
-          <div className="flex items-center gap-2 border-b border-border px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-chalk">
+          <div className={PANEL_HEADER}>
             <Terminal className="size-3.5" /> Output
           </div>
           <div className="flex-1 space-y-3 overflow-y-auto p-4 font-mono text-[13px]">
@@ -181,15 +206,7 @@ export function CodeChallenge({
                 </ul>
                 <p className="pt-1 font-sans text-xs text-chalk">
                   Finished in {result.durationMs}ms
-                  {result.engine === "python" ? " · CPython (WebAssembly)" : null}
-                  {result.engine === "sql" ? " · SQLite (WebAssembly)" : null}
-                  {result.engine === "react" ? " · React, rendered in this page" : null}
-                  {result.engine === "excel"
-                    ? " · Spreadsheet engine (an Excel-compatible subset)"
-                    : null}
-                  {result.engine === "web"
-                    ? " · Checks the page structure and which CSS rules apply"
-                    : null}
+                  {ENGINE_LABELS[result.engine] ? ` · ${ENGINE_LABELS[result.engine]}` : null}
                 </p>
                 {result.engine === "python-simulated" ? (
                   <p className="font-sans text-xs text-ember">
@@ -221,12 +238,8 @@ export function CodeChallenge({
         {solved ? (
           <span className="text-sm font-semibold text-brand">All tests green. Nice work.</span>
         ) : null}
-        {running && (language === "python" || language === "sql") ? (
-          <span className="text-sm text-chalk">
-            {language === "sql"
-              ? "Starting the database — the first run downloads it."
-              : "Starting Python — the first run downloads the interpreter."}
-          </span>
+        {running && STARTING_MESSAGES[language] ? (
+          <span className="text-sm text-chalk">{STARTING_MESSAGES[language]}</span>
         ) : null}
       </div>
     </div>
@@ -261,13 +274,10 @@ function ReactPreview({ code }: { code: string }) {
   }, [code]);
 
   return (
-    <div className="border-b border-border">
-      <div className="flex items-center gap-2 border-b border-border px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-chalk">
-        <Eye className="size-3.5" /> Preview
-      </div>
+    <PreviewPanel>
       {error ? <p className="px-4 pt-3 font-mono text-[13px] text-destructive">{error}</p> : null}
       <div ref={host} className="challenge-preview max-h-72 overflow-y-auto p-4 text-sm" />
-    </div>
+    </PreviewPanel>
   );
 }
 
@@ -275,14 +285,10 @@ function ReactPreview({ code }: { code: string }) {
 function SheetPreview({ name }: { name: string }) {
   const data = SHEETS[name];
   if (!data) return null;
-  const keys = Object.keys(data.cells);
-  const colOf = (key: string) => key.replace(/\d+$/, "");
-  const rowOf = (key: string) => Number(key.replace(/^[A-Z]+/, ""));
-  const toNumber = (letters: string) =>
-    [...letters].reduce((n, ch) => n * 26 + ch.charCodeAt(0) - 64, 0);
-  const maxCol = Math.max(...keys.map((k) => toNumber(colOf(k))));
-  const maxRow = Math.max(...keys.map(rowOf));
-  const letters = Array.from({ length: maxCol }, (_, i) => String.fromCharCode(65 + i));
+  const refs = Object.keys(data.cells).map((key) => parseRef(key)!);
+  const maxCol = Math.max(...refs.map((r) => r.col));
+  const maxRow = Math.max(...refs.map((r) => r.row));
+  const letters = Array.from({ length: maxCol }, (_, i) => numberToCol(i + 1));
 
   return (
     <div className="mt-3">
@@ -331,11 +337,8 @@ function SheetPreview({ name }: { name: string }) {
 function PagePreview({ html }: { html: string }) {
   const [width, setWidth] = useState<"phone" | "desktop">("desktop");
   return (
-    <div className="border-b border-border">
-      <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-chalk">
-        <span className="flex items-center gap-2">
-          <Eye className="size-3.5" /> Preview
-        </span>
+    <PreviewPanel
+      actions={
         <span className="flex gap-1 normal-case tracking-normal">
           {(["phone", "desktop"] as const).map((w) => (
             <button
@@ -350,7 +353,8 @@ function PagePreview({ html }: { html: string }) {
             </button>
           ))}
         </span>
-      </div>
+      }
+    >
       <div className="flex justify-center overflow-x-auto bg-secondary/40 p-2">
         <iframe
           title="Page preview"
@@ -360,7 +364,7 @@ function PagePreview({ html }: { html: string }) {
           style={{ width: width === "phone" ? 375 : "100%" }}
         />
       </div>
-    </div>
+    </PreviewPanel>
   );
 }
 
@@ -384,10 +388,7 @@ function DomPreview({ code, html }: { code: string; html: string }) {
   }, [code, html]);
 
   return (
-    <div className="border-b border-border">
-      <div className="flex items-center gap-2 border-b border-border px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-chalk">
-        <Eye className="size-3.5" /> Preview · try it
-      </div>
+    <PreviewPanel title="Preview · try it">
       <div className="bg-secondary/40 p-2">
         {doc ? (
           <iframe
@@ -398,6 +399,29 @@ function DomPreview({ code, html }: { code: string; html: string }) {
           />
         ) : null}
       </div>
+    </PreviewPanel>
+  );
+}
+
+/** The frame every preview shares: a titled header, optional controls, the body. */
+function PreviewPanel({
+  title = "Preview",
+  actions,
+  children,
+}: {
+  title?: string;
+  actions?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="border-b border-border">
+      <div className={cn(PANEL_HEADER, "justify-between")}>
+        <span className="flex items-center gap-2">
+          <Eye className="size-3.5" /> {title}
+        </span>
+        {actions}
+      </div>
+      {children}
     </div>
   );
 }

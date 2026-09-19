@@ -18,19 +18,13 @@
  *   source                           the page as written
  */
 import { cascadedValue, parseCss, type Rule } from "./css-cascade";
-
-export interface WebTestSpec {
-  name: string;
-  expression: string;
-}
-
-export interface WebRunOutcome {
-  logs: string[];
-  error: string | null;
-  results: { passed: boolean; detail: string | null }[];
-}
-
-const collapse = (t: string | null | undefined) => (t ?? "").replace(/\s+/g, " ").trim();
+import {
+  accessibleName,
+  collapseWhitespace as collapse,
+  evalTests,
+  type EngineOutcome,
+  type TestSpec,
+} from "./runtime-shared";
 
 export function parsePage(source: string) {
   const doc = new DOMParser().parseFromString(source, "text/html");
@@ -42,31 +36,6 @@ export function parsePage(source: string) {
     rules.push(...parsed);
   }
   return { doc, rules };
-}
-
-/** The label text a form control has: <label for>, a wrapping <label>, or aria-label. */
-function labelOf(doc: Document, el: Element | null): string | null {
-  if (!el) return null;
-  const aria = el.getAttribute("aria-label");
-  if (aria?.trim()) return collapse(aria);
-  const labelledBy = el.getAttribute("aria-labelledby");
-  if (labelledBy) {
-    const text = labelledBy
-      .split(/\s+/)
-      .map((id) => doc.getElementById(id)?.textContent ?? "")
-      .join(" ");
-    if (collapse(text)) return collapse(text);
-  }
-  const id = el.getAttribute("id");
-  if (id) {
-    const forLabel = Array.from(doc.querySelectorAll("label")).find(
-      (l) => l.getAttribute("for") === id,
-    );
-    if (forLabel && collapse(forLabel.textContent)) return collapse(forLabel.textContent);
-  }
-  const wrapping = el.closest("label");
-  if (wrapping && collapse(wrapping.textContent)) return collapse(wrapping.textContent);
-  return null;
 }
 
 /** A short outline of the page for the Output panel: the element tree, tags and classes. */
@@ -92,18 +61,9 @@ function outline(doc: Document): string[] {
   return lines;
 }
 
-export function runWebChallenge(source: string, tests: WebTestSpec[]): WebRunOutcome {
-  let page: ReturnType<typeof parsePage>;
-  try {
-    page = parsePage(source);
-  } catch (error) {
-    return {
-      logs: [],
-      error: `The page couldn't be read: ${(error as Error).message}`,
-      results: tests.map(() => ({ passed: false, detail: null })),
-    };
-  }
-  const { doc, rules } = page;
+export function runWebChallenge(source: string, tests: TestSpec[]): EngineOutcome {
+  // DOMParser never throws on text/html: a broken page still parses, as it would in a browser.
+  const { doc, rules } = parsePage(source);
 
   const resolve = (target: Element | string | null): Element | null =>
     typeof target === "string" ? doc.querySelector(target) : target;
@@ -122,19 +82,15 @@ export function runWebChallenge(source: string, tests: WebTestSpec[]): WebRunOut
     declared: (prop: string) =>
       rules.flatMap((r) => r.declarations.filter((d) => d.prop === prop).map((d) => d.value)),
     media: () => [...new Set(rules.map((r) => r.media).filter((m): m is string => Boolean(m)))],
-    labelOf: (target: Element | string | null) => labelOf(doc, resolve(target)),
+    labelOf: (target: Element | string | null) => {
+      const el = resolve(target);
+      return el ? accessibleName(el, false) : null;
+    },
     text: (target: Element | string | null) => collapse(resolve(target)?.textContent),
     source,
   };
 
-  const results = tests.map((t) => {
-    try {
-      const fn = new Function(...Object.keys(helpers), `return (${t.expression});`);
-      return { passed: fn(...Object.values(helpers)) === true, detail: null };
-    } catch (error) {
-      return { passed: false, detail: (error as Error).message };
-    }
-  });
+  const results = evalTests(helpers, tests);
 
   return { logs: outline(doc), error: null, results };
 }
