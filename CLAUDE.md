@@ -110,7 +110,10 @@ convention.
 
 **Auth.** Client-side only — there are no `beforeLoad` route guards. Pages call
 `useSession()` and render a loading/empty state; `AppShell` redirects to `/auth`
-on sign-out. OAuth goes through `src/integrations/lovable` (auto-generated).
+on sign-out. Google sign-in is Supabase's own `signInWithOAuth` in `auth.tsx`,
+redirecting to `/dashboard`; the client reads the session from the URL on return.
+The Lovable Cloud auth helper was removed with the move off Lovable Cloud — don't
+let Lovable re-add it.
 
 **Gamification copy must match the rule.** The streak is held by completing any
 one lesson **or one due review** (both stamp `profiles.last_active_day` from the

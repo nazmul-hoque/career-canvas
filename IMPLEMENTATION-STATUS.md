@@ -28,10 +28,14 @@ Two facts shape every item below:
       (server-only, never `VITE_`, never `.env` — it bypasses every RLS policy).
       Do this first: lesson completion runs through the service-role client, so
       without it no learner can earn XP.
-- [ ] **Switch OAuth off the Lovable helper.** Social sign-in goes through
-      `src/integrations/lovable`, which is tied to Lovable Cloud; on your own
-      project it needs Supabase's `signInWithOAuth` and the providers enabled in
-      the dashboard. Email/password sign-in is unaffected.
+- [ ] **Enable Google sign-in in Supabase.** The code now calls Supabase's own
+      `signInWithOAuth` (the Lovable helper is gone). In the dashboard: turn on
+      Google under Authentication → Sign In / Providers with a Google OAuth
+      client ID and secret (its authorised redirect URI is
+      `https://nqudmlzugtssfqaebaqb.supabase.co/auth/v1/callback`), set the Site
+      URL, and add `<your-domain>/dashboard` and
+      `http://localhost:8080/dashboard` to the redirect allow-list. Until then the
+      button shows "Google sign-in is unavailable"; email sign-in is unaffected.
 - [ ] **Set `MENTOR_PROVIDER` and the matching API key** as secrets (see
       `.env.example`). Unset, the mentor falls back to the old scripted replies —
       the feature looks alive but isn't real.

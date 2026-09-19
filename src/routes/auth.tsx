@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import { track } from "@/lib/analytics";
 import { ArrowLeft, Loader2, Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -83,15 +82,14 @@ function AuthPage() {
   }
 
   async function google() {
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+    // Leaves the page for Google; the client picks the session out of the URL
+    // when the browser lands back on /dashboard. That URL must be in the
+    // project's allowed redirect list, or Supabase falls back to the Site URL.
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/dashboard` },
     });
-    if (result.error) {
-      toast.error("Google sign-in is unavailable right now");
-      return;
-    }
-    if (result.redirected) return;
-    navigate({ to: "/dashboard" });
+    if (error) toast.error("Google sign-in is unavailable right now");
   }
 
   if (sent) {
