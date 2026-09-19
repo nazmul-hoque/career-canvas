@@ -23,7 +23,7 @@ import {
   useProgress,
   useLeaderboard,
 } from "@/hooks/useLearner";
-import { careerPaths, courseById, courses, pathById } from "@/content/curriculum";
+import { careerPaths, courseById, courseLessons, courses, pathById } from "@/content/curriculum";
 import {
   achievements,
   dailyXpGoal,
@@ -33,7 +33,7 @@ import {
 } from "@/content/gamification";
 import { experienceShape, goalShape, prefersProjects } from "@/content/personalisation";
 import { dueItems, useReviewQueue } from "@/hooks/useReviews";
-import { liveLessons } from "@/content/lessons";
+import { liveLessonCount, liveLessons } from "@/content/lessons";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -521,7 +521,7 @@ function Dashboard() {
                 >
                   <span className="block text-sm font-semibold">{c.title}</span>
                   <span className="block text-xs text-chalk">
-                    {c.level} · {c.hours}h · ★ {c.rating}
+                    {c.level} · {liveLessonCount(c)} of {courseLessons(c).length} lessons live
                   </span>
                 </Link>
               </li>

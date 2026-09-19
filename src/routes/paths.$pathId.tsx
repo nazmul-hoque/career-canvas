@@ -21,15 +21,9 @@ import {
   useUpdateProfile,
   useUnlockAchievement,
 } from "@/hooks/useLearner";
-import {
-  courseLessons,
-  courseTaskCount,
-  pathById,
-  pathCourses,
-  type LessonMeta,
-} from "@/content/curriculum";
+import { courseLessons, pathById, pathCourses, type LessonMeta } from "@/content/curriculum";
 import { experienceShape } from "@/content/personalisation";
-import { isLessonLive, liveLessons } from "@/content/lessons";
+import { formatMinutes, isLessonLive, liveLessons, liveMinutes } from "@/content/lessons";
 import { projectById } from "@/content/projects";
 import { pathCompletion } from "@/lib/certificates";
 import { track } from "@/lib/analytics";
@@ -271,8 +265,8 @@ function PathDetail() {
                           {course.title}
                         </Link>
                         <span className="text-xs font-semibold text-chalk">
-                          {written.length} of {lessons.length} lessons live ·{" "}
-                          {courseTaskCount(course)} tasks · {course.hours}h
+                          {written.length} of {lessons.length} lessons live
+                          {written.length ? ` · ${formatMinutes(liveMinutes(course))}` : ""}
                         </span>
                       </div>
                       <p className="mt-1 text-sm text-chalk">{course.summary}</p>

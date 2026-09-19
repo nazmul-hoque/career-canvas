@@ -1,8 +1,15 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { Star, Clock, CheckCircle2, PlayCircle, Code2, Wrench, BookOpen, Lock } from "lucide-react";
+import { Clock, CheckCircle2, PlayCircle, Code2, Wrench, BookOpen, Lock } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
-import { courseById, courseLessons, courseTaskCount } from "@/content/curriculum";
-import { isLessonLive, liveLessons, nextLiveLesson } from "@/content/lessons";
+import { courseById, courseLessons } from "@/content/curriculum";
+import {
+  formatMinutes,
+  isLessonLive,
+  liveChallengeCount,
+  liveLessons,
+  liveMinutes,
+  nextLiveLesson,
+} from "@/content/lessons";
 import { isLessonUnlocked } from "@/lib/entitlements";
 import { useEntitlements } from "@/hooks/useEntitlements";
 import { useProgress } from "@/hooks/useLearner";
@@ -68,6 +75,7 @@ function CourseDetail() {
   // Written lessons only: unwritten slots stay on the curriculum list as
   // "coming soon" but never inflate a denominator or a percentage.
   const written = liveLessons(course);
+  const challenges = liveChallengeCount(course);
   const completed = written.filter((l) => done.has(l.id)).length;
   const percent = written.length ? Math.round((completed / written.length) * 100) : 0;
   const next = nextLiveLesson(course, done) ?? written[0] ?? null;
@@ -84,17 +92,19 @@ function CourseDetail() {
           </h1>
           <p className="mt-3 text-white/75 sm:text-lg">{course.description}</p>
           <div className="mt-6 flex flex-wrap items-center gap-5 text-sm font-semibold text-white/80">
-            <span className="flex items-center gap-1.5">
-              <Star className="size-4 fill-ember text-ember" /> {course.rating} (
-              {course.students.toLocaleString()} learners)
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Clock className="size-4" /> {course.hours} hours
-            </span>
+            {written.length ? (
+              <span className="flex items-center gap-1.5">
+                <Clock className="size-4" /> {formatMinutes(liveMinutes(course))}
+              </span>
+            ) : null}
             <span>
               {written.length} of {lessons.length} lessons live
             </span>
-            <span>{courseTaskCount(course)} practical tasks</span>
+            {challenges ? (
+              <span>
+                {challenges} coding {challenges === 1 ? "challenge" : "challenges"}
+              </span>
+            ) : null}
           </div>
           <div className="mt-7 flex flex-wrap items-center gap-3">
             {next ? (

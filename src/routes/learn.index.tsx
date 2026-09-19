@@ -1,15 +1,9 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Search, Star, Clock, SlidersHorizontal } from "lucide-react";
+import { Search, Clock, SlidersHorizontal } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
-import {
-  courses,
-  courseLessons,
-  courseTaskCount,
-  careerPaths,
-  type SkillLevel,
-} from "@/content/curriculum";
-import { liveLessonCount } from "@/content/lessons";
+import { courses, courseLessons, careerPaths, type SkillLevel } from "@/content/curriculum";
+import { formatMinutes, liveChallengeCount, liveLessonCount, liveMinutes } from "@/content/lessons";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/common/StatPill";
@@ -38,9 +32,7 @@ export const Route = createFileRoute("/learn/")({
 const levels: (SkillLevel | "All")[] = ["All", "Beginner", "Intermediate", "Advanced"];
 const sorts = [
   { id: "recommended", label: "Recommended" },
-  { id: "popular", label: "Most popular" },
-  { id: "short", label: "Shortest first" },
-  { id: "rating", label: "Highest rated" },
+  { id: "written", label: "Most written" },
 ] as const;
 
 function Catalog() {
@@ -62,10 +54,9 @@ function Catalog() {
       return matchesQuery && matchesLevel && matchesCareer;
     });
     list = [...list].sort((a, b) => {
-      if (sort === "popular") return b.popularity - a.popularity;
-      if (sort === "short") return a.hours - b.hours;
-      if (sort === "rating") return b.rating - a.rating;
-      return Number(b.recommended) - Number(a.recommended) || b.popularity - a.popularity;
+      const written = liveLessonCount(b) - liveLessonCount(a);
+      if (sort === "written") return written;
+      return Number(b.recommended) - Number(a.recommended) || written;
     });
     return list;
   }, [query, level, career, sort]);
@@ -205,16 +196,15 @@ function Catalog() {
               </h2>
               <p className="mt-1.5 flex-1 text-sm text-chalk">{c.summary}</p>
               <div className="mt-5 flex items-center gap-4 text-xs font-semibold text-chalk">
-                <span className="flex items-center gap-1">
-                  <Star className="size-3.5 fill-ember text-ember" /> {c.rating}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Clock className="size-3.5" /> {c.hours}h
-                </span>
+                {liveLessonCount(c) ? (
+                  <span className="flex items-center gap-1">
+                    <Clock className="size-3.5" /> {formatMinutes(liveMinutes(c))}
+                  </span>
+                ) : null}
                 <span>
                   {liveLessonCount(c)} of {courseLessons(c).length} lessons live
                 </span>
-                <span>{courseTaskCount(c)} tasks</span>
+                {liveChallengeCount(c) ? <span>{liveChallengeCount(c)} challenges</span> : null}
               </div>
             </Link>
           ))}

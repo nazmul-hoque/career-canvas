@@ -19,10 +19,6 @@ export interface Course {
   title: string;
   skill: string;
   level: SkillLevel;
-  hours: number;
-  rating: number;
-  students: number;
-  popularity: number;
   recommended: boolean;
   summary: string;
   description: string;
@@ -68,10 +64,6 @@ export const courses: Course[] = [
     title: "HTML & CSS Foundations",
     skill: "HTML & CSS",
     level: "Beginner",
-    hours: 14,
-    rating: 4.8,
-    students: 24180,
-    popularity: 98,
     recommended: true,
     summary: "Structure and style real pages from the very first lesson.",
     description:
@@ -80,11 +72,16 @@ export const courses: Course[] = [
     careers: ["frontend", "fullstack", "uxui"],
     instructor: { name: "Mara Oyelaran", role: "Design Engineer, ex-Figma", initials: "MO" },
     modules: [
-      m("html-basics", "Markup that means something", "Tags, structure, and why semantics matter.", [
-        ["intro", "How a browser reads your page", 8, "concept"],
-        ["tags", "Semantic tags in practice", 10, "practice"],
-        ["forms", "Forms and inputs", 12, "challenge"],
-      ]),
+      m(
+        "html-basics",
+        "Markup that means something",
+        "Tags, structure, and why semantics matter.",
+        [
+          ["intro", "How a browser reads your page", 8, "concept"],
+          ["tags", "Semantic tags in practice", 10, "practice"],
+          ["forms", "Forms and inputs", 12, "challenge"],
+        ],
+      ),
       m("css-core", "Styling fundamentals", "The cascade, the box model, and modern units.", [
         ["cascade", "The cascade without the mystery", 9, "concept"],
         ["boxmodel", "Box model and spacing", 11, "practice"],
@@ -103,15 +100,18 @@ export const courses: Course[] = [
     title: "JavaScript From Zero",
     skill: "JavaScript",
     level: "Beginner",
-    hours: 22,
-    rating: 4.9,
-    students: 31400,
-    popularity: 100,
     recommended: true,
     summary: "Write real logic: values, functions, arrays, objects, and the DOM.",
     description:
       "The language of the web, taught by writing it. Every concept lands in a code editor with tests, hints and an AI mentor watching your back.",
-    skills: ["Variables & types", "Functions", "Arrays & objects", "DOM", "Debugging", "Async basics"],
+    skills: [
+      "Variables & types",
+      "Functions",
+      "Arrays & objects",
+      "DOM",
+      "Debugging",
+      "Async basics",
+    ],
     careers: ["frontend", "fullstack", "ai"],
     instructor: { name: "Diego Salas", role: "Staff Engineer, ex-Shopify", initials: "DS" },
     modules: [
@@ -140,15 +140,18 @@ export const courses: Course[] = [
     title: "React in Practice",
     skill: "React",
     level: "Intermediate",
-    hours: 26,
-    rating: 4.8,
-    students: 19850,
-    popularity: 94,
     recommended: true,
     summary: "Components, state and data fetching, built the way teams actually build.",
     description:
       "Move from page-level thinking to component thinking. You will build a dashboard, a form-heavy flow and a data view with loading and error states.",
-    skills: ["Components", "Props & state", "Hooks", "Lists & keys", "Data fetching", "Composition"],
+    skills: [
+      "Components",
+      "Props & state",
+      "Hooks",
+      "Lists & keys",
+      "Data fetching",
+      "Composition",
+    ],
     careers: ["frontend", "fullstack"],
     instructor: { name: "Priya Raghunathan", role: "Frontend Lead, ex-Linear", initials: "PR" },
     modules: [
@@ -172,10 +175,6 @@ export const courses: Course[] = [
     title: "TypeScript for Real Projects",
     skill: "TypeScript",
     level: "Intermediate",
-    hours: 16,
-    rating: 4.7,
-    students: 12400,
-    popularity: 82,
     recommended: false,
     summary: "Types that catch bugs before your users do.",
     description:
@@ -199,10 +198,6 @@ export const courses: Course[] = [
     title: "Python Essentials",
     skill: "Python",
     level: "Beginner",
-    hours: 20,
-    rating: 4.9,
-    students: 28600,
-    popularity: 97,
     recommended: true,
     summary: "From your first print to functions, files and small automations.",
     description:
@@ -233,10 +228,6 @@ export const courses: Course[] = [
     title: "SQL for Analysis",
     skill: "SQL",
     level: "Beginner",
-    hours: 15,
-    rating: 4.8,
-    students: 17300,
-    popularity: 90,
     recommended: true,
     summary: "Ask a database real questions and get trustworthy answers.",
     description:
@@ -260,10 +251,6 @@ export const courses: Course[] = [
     title: "Git & GitHub",
     skill: "Git",
     level: "Beginner",
-    hours: 8,
-    rating: 4.7,
-    students: 20100,
-    popularity: 86,
     recommended: false,
     summary: "Version control that keeps you calm on a bad day.",
     description: "Commits, branches, pull requests and getting out of trouble.",
@@ -283,10 +270,6 @@ export const courses: Course[] = [
     title: "Node.js & APIs",
     skill: "Node.js",
     level: "Intermediate",
-    hours: 18,
-    rating: 4.6,
-    students: 9800,
-    popularity: 74,
     recommended: false,
     summary: "Build the server side of the products you already design.",
     description: "HTTP, routing, validation, persistence and the security basics that matter.",
@@ -309,10 +292,6 @@ export const courses: Course[] = [
     title: "Data Analytics Toolkit",
     skill: "Data Analytics",
     level: "Intermediate",
-    hours: 21,
-    rating: 4.7,
-    students: 11200,
-    popularity: 80,
     recommended: true,
     summary: "Turn messy tables into decisions people act on.",
     description: "Cleaning, exploring, visualising and telling the story behind the numbers.",
@@ -335,10 +314,6 @@ export const courses: Course[] = [
     title: "Excel for Analysts",
     skill: "Excel",
     level: "Beginner",
-    hours: 10,
-    rating: 4.5,
-    students: 8600,
-    popularity: 62,
     recommended: false,
     summary: "Pivot tables, lookups and models that do not break.",
     description: "The spreadsheet skills hiring managers still test for.",
@@ -357,10 +332,6 @@ export const courses: Course[] = [
     title: "Figma for Product Teams",
     skill: "Figma",
     level: "Beginner",
-    hours: 12,
-    rating: 4.8,
-    students: 14100,
-    popularity: 84,
     recommended: false,
     summary: "Design files that engineers can actually build from.",
     description: "Auto layout, components, variables and handoff.",
@@ -379,13 +350,10 @@ export const courses: Course[] = [
     title: "UX Design Fundamentals",
     skill: "UX Design",
     level: "Beginner",
-    hours: 16,
-    rating: 4.7,
-    students: 13050,
-    popularity: 79,
     recommended: false,
     summary: "Research, flows and interfaces grounded in evidence.",
-    description: "From problem framing to usability testing, with a portfolio case study at the end.",
+    description:
+      "From problem framing to usability testing, with a portfolio case study at the end.",
     skills: ["Research", "Flows", "Wireframes", "Usability testing", "Case studies"],
     careers: ["uxui", "product"],
     instructor: { name: "Mara Oyelaran", role: "Design Engineer, ex-Figma", initials: "MO" },
@@ -404,13 +372,10 @@ export const courses: Course[] = [
     title: "Generative AI Engineering",
     skill: "Generative AI",
     level: "Intermediate",
-    hours: 19,
-    rating: 4.9,
-    students: 15600,
-    popularity: 96,
     recommended: true,
     summary: "Prompts, retrieval and agents, built into real products.",
-    description: "Work with LLM APIs, ground answers in your own data and ship a chat feature that behaves.",
+    description:
+      "Work with LLM APIs, ground answers in your own data and ship a chat feature that behaves.",
     skills: ["Prompting", "Embeddings", "RAG", "Tool calling", "Evaluation"],
     careers: ["ai", "fullstack", "python"],
     instructor: { name: "Kenji Aoyama", role: "AI Engineer", initials: "KA" },
@@ -430,10 +395,6 @@ export const courses: Course[] = [
     title: "Machine Learning Basics",
     skill: "Machine Learning",
     level: "Advanced",
-    hours: 24,
-    rating: 4.6,
-    students: 7400,
-    popularity: 70,
     recommended: false,
     summary: "Models, features and honest evaluation.",
     description: "Supervised learning end to end, with the maths kept to what you need.",
@@ -452,10 +413,6 @@ export const courses: Course[] = [
     title: "Product Management Craft",
     skill: "Product Management",
     level: "Intermediate",
-    hours: 14,
-    rating: 4.6,
-    students: 9100,
-    popularity: 72,
     recommended: false,
     summary: "Discovery, prioritisation and shipping with a team.",
     description: "Write specs people read, prioritise honestly and measure what shipped.",
@@ -492,8 +449,7 @@ export const careerPaths: CareerPath[] = [
     id: "fullstack",
     name: "Full-stack Developer",
     tagline: "Frontend · APIs · Databases",
-    overview:
-      "Own a feature end to end: the screen, the endpoint and the table behind it.",
+    overview: "Own a feature end to end: the screen, the endpoint and the table behind it.",
     difficulty: "Intermediate",
     weeks: 30,
     skills: ["JavaScript", "React", "Node.js", "SQL", "Auth", "Deployment"],
@@ -550,7 +506,8 @@ export const careerPaths: CareerPath[] = [
     id: "ai",
     name: "AI / GenAI Developer",
     tagline: "LLMs · Prompts · Agents",
-    overview: "Build features on top of language models: prompting, retrieval, tools and evaluation.",
+    overview:
+      "Build features on top of language models: prompting, retrieval, tools and evaluation.",
     difficulty: "Intermediate",
     weeks: 16,
     skills: ["Python", "Prompting", "Embeddings", "RAG", "Evaluation", "APIs"],
@@ -566,9 +523,6 @@ export const courseLessons = (course: Course): LessonMeta[] =>
   course.modules.flatMap((mod) => mod.lessons);
 
 export const courseLessonCount = (course: Course) => courseLessons(course).length;
-
-export const courseTaskCount = (course: Course) =>
-  courseLessons(course).filter((l) => l.type !== "concept").length;
 
 export const findLesson = (courseId: string, lessonId: string) => {
   const course = courseById(courseId);

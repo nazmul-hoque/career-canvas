@@ -96,6 +96,18 @@ Two facts shape every item below:
 
 ## Done
 
+- [x] **Course figures are derived, not invented** (2026-09-19) — the
+      hand-typed `hours`, `rating`, `students` and `popularity` are gone from
+      `curriculum.ts`. Length is the sum of the written lessons' minutes
+      (`liveMinutes`), "practical tasks" (which counted planned lessons labelled
+      practice) is now the number of written lessons with a checked coding
+      challenge, and the catalog's "Most popular"/"Highest rated" sorts became
+      "Most written". Instructors are still invented names — see below.
+- [x] **Git questions test reasoning, not recall** (2026-09-19) — each question
+      now reads real `git status` / `git log --graph` / conflict output and asks
+      what happens or what to do; correct answers are spread across positions
+      (they were all option B).
+
 - [x] **Database set up** (2026-09-19) — all 11 migrations applied to
       `nqudmlzugtssfqaebaqb` with `supabase db push` and recorded in its migration
       history; all 15 tables answer, and an anonymous write to `lesson_progress`
@@ -239,6 +251,16 @@ Two facts shape every item below:
 
 ### Left to implement
 
+- [ ] **Instructors are invented people.** Every course names an instructor
+      ("Tomas Beck, Platform Engineer") who doesn't exist. Replace with real
+      authors or drop the card.
+- [ ] **The answer key ships to the browser.** The lesson route's loader returns
+      the whole `LessonBody`, so every mcq `answer` index and fill `answer` is in
+      the SSR payload — view-source shows them. The server still re-grades
+      (`lesson-grading.ts`), but it's re-grading answers the learner could read.
+      Fix: send the client a body with `answer`/`explanation`/`solution`
+      stripped, and have a server function check one block and return the
+      explanation. Affects every lesson and `/review`.
 - [ ] **Component and integration tests** — the unit layer is covered; nothing
       exercises a route end to end.
 

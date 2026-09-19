@@ -316,44 +316,61 @@ const bodies: Record<string, LessonBody> = {
         body: "Forgot a file or made a typo in the last commit? `git commit --amend` replaces it. Only do this before you push: amending creates a new commit with a new ID, so anyone who already pulled the old one ends up with a history that no longer matches yours.",
       },
       {
+        kind: "code",
+        language: "text",
+        caption: "Scenario: you run git status",
+        code: `$ git status\nOn branch main\nChanges to be committed:\n        modified:   src/cart.js\n\nChanges not staged for commit:\n        modified:   src/cart.js\n        modified:   README.md`,
+      },
+      {
         kind: "mcq",
         id: "q1",
         question:
-          "You fixed a bug and tidied unrelated formatting in the same file. What gives the most useful history?",
+          'You now run `git commit -m "Fix rounding in cart total"`. What goes into the commit?',
         options: [
-          "One commit, because it is one file",
-          "Two commits: stage the fix with `git add -p`, commit it, then commit the formatting",
-          "Commit everything with the message 'misc changes'",
-          "Wait until the end of the week and commit all of it together",
+          "Only the staged part of `src/cart.js`",
+          "Every change to `src/cart.js`, staged or not",
+          "Everything listed, including `README.md`",
+          "Nothing: you have to run `git add .` first",
         ],
-        answer: 1,
+        answer: 0,
         explanation:
-          "Commits should split by intent, not by file. Separate commits let a reviewer read the fix without the noise, and let you revert one without the other.",
+          "A commit records the staging area and nothing else. `src/cart.js` appears in both lists because only some of its changes were staged, and the unstaged ones stay in your working copy for a later commit.",
       },
       {
         kind: "mcq",
         id: "q2",
-        question: "Which subject line follows the convention?",
+        question:
+          "In March a teammate wants to know why the checkout total started rounding differently. Which commit lets them find out without asking you?",
         options: [
-          "fixed the bug",
-          "Fix login redirect when session has expired",
-          "Changes to auth.ts, session.ts and router.ts after review feedback from Sam",
-          "WIP",
+          "`a91c3e0 Updates`",
+          "`a91c3e0 Fix cart.js`",
+          "`a91c3e0 Round cart total in cents`, with a body explaining the float bug it fixes",
+          "`a91c3e0 Changes after review from Sam`",
         ],
-        answer: 1,
+        answer: 2,
         explanation:
-          "Short, written as a command, and specific about the effect. File names belong in the diff, and a reviewer's name adds nothing a reader needs.",
+          "The diff already shows which file changed. Only the message can record why, and a subject that states the effect is what they'll find when searching the log.",
       },
       {
-        kind: "fill",
-        id: "f1",
-        prompt:
-          "You committed, then noticed a typo. You haven't pushed yet. Complete the command that replaces the last commit.",
-        before: "git commit --",
-        after: "",
-        answer: "amend",
+        kind: "code",
+        language: "text",
+        caption: "Scenario: your log, just before pushing",
+        code: `$ git log --oneline\nc4d5e6f (HEAD -> main) Add discount code field\na1b2c3d (origin/main) Fix rounding in cart total\n9e8d7c6 Show free-shipping banner`,
+      },
+      {
+        kind: "mcq",
+        id: "q3",
+        question:
+          "You spot a typo in the discount code label. Which commit can you still safely `--amend`?",
+        options: [
+          "Both of the top two",
+          "Neither: amending is never safe",
+          "`a1b2c3d`, because it's older",
+          "`c4d5e6f` only, because it isn't on `origin` yet",
+        ],
+        answer: 3,
         explanation:
-          "--amend folds the currently staged changes into the last commit and lets you edit its message. It creates a new commit, which is why it is only safe before pushing.",
+          "`origin/main` marks what the remote already has, so `a1b2c3d` is shared and rewriting it would break everyone's copy. `c4d5e6f` exists only on your machine.",
       },
     ],
   },
@@ -399,45 +416,85 @@ const bodies: Record<string, LessonBody> = {
         body: "A conflict isn't an error. It means two people changed the same thing and someone has to decide which version is right. Read both sides before choosing, because the right answer is sometimes a combination of the two.",
       },
       {
+        kind: "code",
+        language: "text",
+        caption: "Scenario A",
+        code: `$ git log --oneline --graph --all\n* 7d1e9a0 (feature/discount-codes) Validate discount code format\n* 3c8b2f1 Add discount code field\n* a1b2c3d (HEAD -> main) Fix rounding in cart total`,
+      },
+      {
         kind: "mcq",
         id: "q1",
-        question:
-          "You branched from `main`, made three commits, and nobody has touched `main` since. What does `git merge` do?",
+        question: "On `main`, you run `git merge feature/discount-codes`. What happens?",
         options: [
-          "Creates a merge commit with two parents",
-          "Fast-forwards: moves `main` to your latest commit, no new commit",
-          "Refuses until you rebase",
-          "Copies your three commits under new IDs",
+          "Git creates a merge commit with two parents",
+          "A conflict, because both branches touched the cart",
+          "`main` moves to `7d1e9a0`: a fast-forward, with no new commit",
+          "The two feature commits are copied onto `main` with new IDs",
         ],
-        answer: 1,
+        answer: 2,
         explanation:
-          "With no new commits on main there is nothing to join, so Git simply moves the label forward.",
+          "`main` is still at the commit the branch started from, so there's nothing to join. Git just moves the label forward.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "Scenario B: someone pushed to main in the meantime",
+        code: `$ git log --oneline --graph --all\n* 5e6f7a8 (HEAD -> main) Raise free shipping to 60\n| * 7d1e9a0 (feature/discount-codes) Validate discount code format\n| * 3c8b2f1 Add discount code field\n|/\n* a1b2c3d Fix rounding in cart total`,
       },
       {
         kind: "mcq",
         id: "q2",
-        question:
-          "You've edited the conflicted file so it reads correctly and deleted the three marker lines. How do you tell Git the conflict is resolved?",
+        question: "Now what does `git merge feature/discount-codes` produce?",
         options: [
-          "Nothing to do, Git notices the markers are gone",
-          "`git add` the file, then `git commit` to finish the merge",
-          "`git merge --continue` before saving the file",
-          "`git reset --hard`",
+          "A fast-forward to `7d1e9a0`",
+          "A new merge commit whose parents are `5e6f7a8` and `7d1e9a0`",
+          "It discards `5e6f7a8` to make room for the feature",
+          "An error: branches that have diverged can't be merged",
         ],
         answer: 1,
         explanation:
-          "Staging the file is how you tell Git it's resolved. The commit then records the merge. (`git reset --hard` would throw your resolution away.)",
+          "Both branches moved on after `a1b2c3d`, so Git joins them with a commit that has two parents. Neither side's commits are lost.",
       },
       {
-        kind: "fill",
-        id: "f1",
-        prompt:
-          "Halfway through a messy conflict you realise you merged the wrong branch. Complete the command that puts everything back as it was before the merge.",
-        before: "git merge --",
-        after: "",
-        answer: "abort",
+        kind: "code",
+        language: "text",
+        caption: "The merge stops with a conflict in src/config.js",
+        code: `<<<<<<< HEAD\nconst FREE_SHIPPING_OVER = 60;\n=======\nconst FREE_SHIPPING_OVER = 50;\nconst DISCOUNT_CODE_PATTERN = /^[A-Z0-9]{6}$/;\n>>>>>>> feature/discount-codes`,
+      },
+      {
+        kind: "mcq",
+        id: "q3",
+        question:
+          "`main` raised the threshold to 60 on purpose. Your branch only meant to add the pattern line. What should the file say once you've resolved it?",
+        options: [
+          "Only the `HEAD` side: threshold 60 and no pattern",
+          "Only your side: threshold 50 plus the pattern",
+          "Threshold 60 **and** the pattern line, with all three markers removed",
+          "Both threshold lines, so nothing is lost",
+        ],
+        answer: 2,
         explanation:
-          "--abort restores the working tree and staging area to exactly where they were before the merge started.",
+          "Your branch still has the old threshold only because it started before `main` changed it. Keep the change each side intended: `main`'s 60 and your new line.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "After editing the file",
+        code: `$ git status\nOn branch main\nYou have unmerged paths.\n  (fix conflicts and run "git commit")\n\nUnmerged paths:\n        both modified:   src/config.js`,
+      },
+      {
+        kind: "mcq",
+        id: "q4",
+        question: "You've fixed `src/config.js` and saved it. What do you run next?",
+        options: [
+          "`git add src/config.js`, then `git commit`",
+          "`git merge feature/discount-codes` again",
+          "`git reset --hard`",
+          "Nothing: Git will notice the markers are gone",
+        ],
+        answer: 0,
+        explanation:
+          "Staging the file is how you tell Git it's resolved, and the commit records the merge. `git reset --hard` would throw your resolution away. (If you'd rather start over, `git merge --abort` puts everything back as it was.)",
       },
     ],
   },
@@ -478,43 +535,65 @@ const bodies: Record<string, LessonBody> = {
         body: "Use `reset` and `--amend` only on commits nobody else has. Once a commit is shared, undo it with `revert`.",
       },
       {
-        kind: "mcq",
-        id: "q1",
-        question: "Which pull request is most likely to get a careful review?",
-        options: [
-          "A 1,800-line PR titled 'Sprint work'",
-          "A 150-line PR that adds discount codes, explains why, and says how it was tested",
-          "A PR with no description, because the code speaks for itself",
-          "Three features in one PR so reviewers only have to look once",
-        ],
-        answer: 1,
-        explanation:
-          "Small and explained is what makes a real review possible. Large, unexplained PRs get skimmed and approved.",
+        kind: "code",
+        language: "text",
+        caption: "Scenario: a pull request waiting for review",
+        code: `Title:        Updates\nFiles changed: 41    +1,812  −604\nDescription:  (empty)`,
       },
       {
-        kind: "fill",
-        id: "f1",
-        prompt:
-          "Commit a1b2c3d is already on the shared `main` and broke checkout. Undo it without rewriting history.",
-        before: "git ",
-        after: " a1b2c3d",
-        answer: "revert",
+        kind: "mcq",
+        id: "q1",
+        question: "What would do the most to get this a real review?",
+        options: [
+          "Add more reviewers so someone notices it",
+          "Mark it urgent",
+          "Approve it yourself, since the tests pass",
+          "Split it into focused PRs, each saying what changes, why, and how it was tested",
+        ],
+        answer: 3,
         explanation:
-          "revert adds a new commit that undoes a1b2c3d. Nothing already shared is rewritten, so nobody's copy breaks.",
+          "Nobody can review 1,800 unexplained lines properly. They skim and approve. Small, explained PRs are the only kind that get a real review.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption:
+          "Scenario: checkout broke after this merge, and three teammates have already pulled main",
+        code: `$ git log --oneline\nf00ba12 (HEAD -> main, origin/main) Merge pull request #42 from feature/discount-codes\n5e6f7a8 Raise free shipping to 60\na1b2c3d Fix rounding in cart total`,
       },
       {
         kind: "mcq",
         id: "q2",
-        question: "A reviewer asks for changes. What is the most helpful way to respond?",
+        question: "How do you undo pull request #42?",
         options: [
-          "Squash everything and force-push so the PR looks clean",
-          "Push the fixes as new commits and reply to each comment",
-          "Close the PR and open a new one",
-          "Resolve all the threads yourself so the PR can be merged",
+          "`git revert -m 1 f00ba12`, then push the revert (or open a PR for it)",
+          "`git reset --hard 5e6f7a8`, then `git push --force`",
+          "`git commit --amend` to edit the merge",
+          "Delete the `feature/discount-codes` branch",
         ],
-        answer: 1,
+        answer: 0,
         explanation:
-          "New commits show the reviewer exactly what changed since they last looked, and replies close each loop. Force-pushing wipes out that trail.",
+          "`f00ba12` is already shared, so rewriting it would break your teammates' copies. `revert` adds a new commit that undoes it. `-m 1` says to keep `main`'s side, because a merge has two parents.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "A review comment on your PR",
+        code: `src/discount.js, line 12\n> What happens if code is an empty string?`,
+      },
+      {
+        kind: "mcq",
+        id: "q3",
+        question: "It turns out an empty code crashes the checkout. What's the best response?",
+        options: [
+          "Resolve the thread, since it's an edge case",
+          "Reply that it works on your machine",
+          "Squash everything and force-push a clean version",
+          "Add a test for the empty case, fix it in a new commit, and reply saying what changed",
+        ],
+        answer: 3,
+        explanation:
+          "A new commit shows the reviewer exactly what changed since they last looked, the test stops the bug coming back, and your reply lets them close the thread.",
       },
     ],
   },
@@ -553,6 +632,27 @@ export const isPathPublished = (path: CareerPath) => {
   const list = pathCourses(path);
   return list.length > 0 && list.every(isCoursePublished);
 };
+
+// Course figures are derived from what is written, never authored. Courses
+// used to carry a hand-typed rating, learner count and length ("8 hours" for a
+// course with nothing in it), which a real learner reads as fact.
+
+/** Estimated minutes to work through the written lessons. */
+export const liveMinutes = (course: Course) =>
+  liveLessons(course).reduce((sum, lesson) => sum + lesson.minutes, 0);
+
+/** Written lessons with a coding challenge the runner actually checks. */
+export const liveChallengeCount = (course: Course) =>
+  liveLessons(course).filter((lesson) =>
+    bodies[lesson.id]?.blocks.some((block) => block.kind === "challenge"),
+  ).length;
+
+export function formatMinutes(minutes: number): string {
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  return rest ? `${hours} h ${rest} min` : `${hours} h`;
+}
 
 /** First live lesson in the course the learner has not finished yet. */
 export const nextLiveLesson = (course: Course, done: Set<string>) =>
