@@ -283,6 +283,241 @@ const bodies: Record<string, LessonBody> = {
       },
     ],
   },
+  "git-core.commits": {
+    summary: "Make commits small enough to review and clear enough to read in a year.",
+    xp: 110,
+    blocks: [
+      {
+        kind: "text",
+        body: "A commit is a snapshot of your project plus a note explaining it. Git keeps every snapshot, so the history becomes a story of how the code got here. When something breaks six months from now, that story is what you read to find out why a line exists. A good commit does one thing and says why.",
+      },
+      {
+        kind: "text",
+        body: "Changes reach a commit in two steps. `git add` moves them into the **staging area**, and `git commit` records whatever is staged. The pause between the two steps is useful: if you fixed a bug and renamed a variable in the same file, `git add -p` lets you stage the fix alone, commit it, and commit the rename separately.",
+      },
+      {
+        kind: "code",
+        language: "bash",
+        caption: "Stage part of a file, check it, then commit",
+        code: `git status              # what changed, and what is staged\ngit add -p src/cart.js  # pick the hunks that belong to this commit\ngit diff --staged       # read exactly what you are about to commit\ngit commit`,
+      },
+      {
+        kind: "text",
+        body: "The message has two parts. The subject line is short (about 50 characters) and written as a command: *Fix rounding in cart total*, not *Fixed stuff*. After a blank line, the body explains **why** the change was needed. The diff already shows what changed; nothing else records why.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "A message someone can use later",
+        code: `Fix rounding in cart total\n\nPrices were summed as floats, so 2 x 9.99 + 24.50 came out as\n44.480000000000004 and failed the equality check at checkout.\nSum in cents and convert once at the end.`,
+      },
+      {
+        kind: "callout",
+        body: "Forgot a file or made a typo in the last commit? `git commit --amend` replaces it. Only do this before you push: amending creates a new commit with a new ID, so anyone who already pulled the old one ends up with a history that no longer matches yours.",
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          "You fixed a bug and tidied unrelated formatting in the same file. What gives the most useful history?",
+        options: [
+          "One commit, because it is one file",
+          "Two commits: stage the fix with `git add -p`, commit it, then commit the formatting",
+          "Commit everything with the message 'misc changes'",
+          "Wait until the end of the week and commit all of it together",
+        ],
+        answer: 1,
+        explanation:
+          "Commits should split by intent, not by file. Separate commits let a reviewer read the fix without the noise, and let you revert one without the other.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question: "Which subject line follows the convention?",
+        options: [
+          "fixed the bug",
+          "Fix login redirect when session has expired",
+          "Changes to auth.ts, session.ts and router.ts after review feedback from Sam",
+          "WIP",
+        ],
+        answer: 1,
+        explanation:
+          "Short, written as a command, and specific about the effect. File names belong in the diff, and a reviewer's name adds nothing a reader needs.",
+      },
+      {
+        kind: "fill",
+        id: "f1",
+        prompt:
+          "You committed, then noticed a typo. You haven't pushed yet. Complete the command that replaces the last commit.",
+        before: "git commit --",
+        after: "",
+        answer: "amend",
+        explanation:
+          "--amend folds the currently staged changes into the last commit and lets you edit its message. It creates a new commit, which is why it is only safe before pushing.",
+      },
+    ],
+  },
+  "git-core.branches": {
+    summary: "Work on a branch, bring it back with a merge, and resolve a conflict calmly.",
+    xp: 140,
+    blocks: [
+      {
+        kind: "text",
+        body: "A branch is only a movable label pointing at a commit. Creating one costs nothing and copies nothing. Working on a branch keeps half-finished work away from `main`, so `main` always stays in a state you could ship.",
+      },
+      {
+        kind: "code",
+        language: "bash",
+        caption: "Start a branch, work on it, look at the shape of history",
+        code: `git switch -c feature/discount-codes   # create the branch and move onto it\n# ...edit, add, commit as usual...\ngit log --oneline --graph --all        # see where each branch points`,
+      },
+      {
+        kind: "text",
+        body: "`git merge` brings the branch back in two ways. If `main` has not moved since you branched, Git just slides the `main` label forward to your latest commit. This is called a **fast-forward**, and no new commit is created. If both branches have new commits, Git creates a **merge commit** with two parents, joining the two histories.",
+      },
+      {
+        kind: "code",
+        language: "bash",
+        code: `git switch main\ngit pull                      # get everyone else's work first\ngit merge feature/discount-codes`,
+      },
+      {
+        kind: "text",
+        body: "A **conflict** happens when both branches changed the same lines and Git cannot decide which version should win. It stops, marks the file, and waits for you. Everything between `<<<<<<<` and the divider is your side (`HEAD`), and everything between the divider and `>>>>>>>` is the incoming branch.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "What a conflict looks like inside the file",
+        code: `<<<<<<< HEAD\nconst FREE_SHIPPING_OVER = 50;\n=======\nconst FREE_SHIPPING_OVER = 75;\n>>>>>>> feature/discount-codes`,
+      },
+      {
+        kind: "text",
+        body: "To resolve it, edit the file so it reads the way it should. That might be one side, the other, or a mix of both. Delete all three marker lines, then run `git add` on the file and `git commit` to finish the merge. If you'd rather back out and think first, `git merge --abort` returns everything to how it was before the merge.",
+      },
+      {
+        kind: "callout",
+        body: "A conflict isn't an error. It means two people changed the same thing and someone has to decide which version is right. Read both sides before choosing, because the right answer is sometimes a combination of the two.",
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          "You branched from `main`, made three commits, and nobody has touched `main` since. What does `git merge` do?",
+        options: [
+          "Creates a merge commit with two parents",
+          "Fast-forwards: moves `main` to your latest commit, no new commit",
+          "Refuses until you rebase",
+          "Copies your three commits under new IDs",
+        ],
+        answer: 1,
+        explanation:
+          "With no new commits on main there is nothing to join, so Git simply moves the label forward.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          "You've edited the conflicted file so it reads correctly and deleted the three marker lines. How do you tell Git the conflict is resolved?",
+        options: [
+          "Nothing to do, Git notices the markers are gone",
+          "`git add` the file, then `git commit` to finish the merge",
+          "`git merge --continue` before saving the file",
+          "`git reset --hard`",
+        ],
+        answer: 1,
+        explanation:
+          "Staging the file is how you tell Git it's resolved. The commit then records the merge. (`git reset --hard` would throw your resolution away.)",
+      },
+      {
+        kind: "fill",
+        id: "f1",
+        prompt:
+          "Halfway through a messy conflict you realise you merged the wrong branch. Complete the command that puts everything back as it was before the merge.",
+        before: "git merge --",
+        after: "",
+        answer: "abort",
+        explanation:
+          "--abort restores the working tree and staging area to exactly where they were before the merge started.",
+      },
+    ],
+  },
+  "git-core.prs": {
+    summary:
+      "Open a pull request someone can review, and undo a bad merge without rewriting history.",
+    xp: 130,
+    blocks: [
+      {
+        kind: "text",
+        body: "A pull request asks your team to merge your branch into `main`. It is also where the review happens, so the job is to make reviewing easy. Keep it small, focused on one change, and explained well enough that the reviewer doesn't have to guess what you meant.",
+      },
+      {
+        kind: "code",
+        language: "bash",
+        caption: "Publish the branch and open the pull request",
+        code: `git push -u origin feature/discount-codes   # -u remembers the remote for next time\ngh pr create --fill                         # or open it from the GitHub page`,
+      },
+      {
+        kind: "text",
+        body: "A useful description answers three questions: **what** changes, **why** it's needed, and **how you checked it**. Link the issue it closes, and add a screenshot if the UI changes. A 200-line pull request gets a careful review, while a 2,000-line one usually gets a quick glance and an approval.",
+      },
+      {
+        kind: "text",
+        body: "Review comments are about the code, not the person. If you're reviewing, ask questions (*what happens if the list is empty?*) and say which comments block the merge and which are optional. If you're the author, reply to every comment, push fixes as new commits so the reviewer can see what changed, and resolve a thread only once the reviewer is satisfied.",
+      },
+      {
+        kind: "text",
+        body: "Sometimes a merged change breaks `main` anyway. The fix is not to rewrite shared history, because `git reset` followed by a force-push pulls commits out from under everyone who has already pulled them. Instead, `git revert` creates a **new** commit that undoes the bad one. History stays intact, and you can open a pull request for the revert like any other change.",
+      },
+      {
+        kind: "code",
+        language: "bash",
+        code: `git log --oneline            # find the commit that broke things, e.g. a1b2c3d\ngit revert a1b2c3d           # new commit that undoes it\ngit revert -m 1 <merge-sha>  # for a merge commit: keep main's side (parent 1)`,
+      },
+      {
+        kind: "callout",
+        body: "Use `reset` and `--amend` only on commits nobody else has. Once a commit is shared, undo it with `revert`.",
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question: "Which pull request is most likely to get a careful review?",
+        options: [
+          "A 1,800-line PR titled 'Sprint work'",
+          "A 150-line PR that adds discount codes, explains why, and says how it was tested",
+          "A PR with no description, because the code speaks for itself",
+          "Three features in one PR so reviewers only have to look once",
+        ],
+        answer: 1,
+        explanation:
+          "Small and explained is what makes a real review possible. Large, unexplained PRs get skimmed and approved.",
+      },
+      {
+        kind: "fill",
+        id: "f1",
+        prompt:
+          "Commit a1b2c3d is already on the shared `main` and broke checkout. Undo it without rewriting history.",
+        before: "git ",
+        after: " a1b2c3d",
+        answer: "revert",
+        explanation:
+          "revert adds a new commit that undoes a1b2c3d. Nothing already shared is rewritten, so nobody's copy breaks.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question: "A reviewer asks for changes. What is the most helpful way to respond?",
+        options: [
+          "Squash everything and force-push so the PR looks clean",
+          "Push the fixes as new commits and reply to each comment",
+          "Close the PR and open a new one",
+          "Resolve all the threads yourself so the PR can be merged",
+        ],
+        answer: 1,
+        explanation:
+          "New commits show the reviewer exactly what changed since they last looked, and replies close each loop. Force-pushing wipes out that trail.",
+      },
+    ],
+  },
 };
 
 /**

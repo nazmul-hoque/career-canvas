@@ -246,9 +246,10 @@ Two facts shape every item below:
 
 ## The constraint that outranks this whole list
 
-**5 of 123 lessons are written.** Every item on the review's ranked list is now
-closed, which changes nothing about this: the platform tells the truth, measures
-itself, remembers what you learned and can prove what you finished — about five
-lessons. Nothing above changes the product's value until that number is ~40 for
-one path. The engineering here was about making sure the platform tells the truth
+**8 of 71 lessons are written** (the roadmap in `src/content/curriculum.ts` has
+71 slots). Git & GitHub is the first complete course, 3 of 3, written 2026-09-19.
+Every item on the review's ranked list is now closed, which changes nothing about
+this: the platform tells the truth, measures itself, remembers what you learned
+and can prove what you finished — about eight lessons. Nothing above changes the
+product's value until one whole path is written. The engineering here was about making sure the platform tells the truth
 while the content gets written — it is not a substitute for writing it.

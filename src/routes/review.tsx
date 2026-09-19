@@ -12,6 +12,7 @@ import { dueItems, useReviewQueue, useSubmitReview, type ReviewItem } from "@/ho
 import { findLesson } from "@/content/curriculum";
 import { getLessonBody } from "@/content/lessons";
 import { gradableBlocks, type GradableBlock } from "@/lib/lesson-grading";
+import { InlineText } from "@/components/learn/InlineText";
 import { cn } from "@/lib/utils";
 
 /**
@@ -301,7 +302,9 @@ function Question({
   if (block.kind === "mcq") {
     return (
       <div className="rounded-[14px] border border-border p-5">
-        <p className="font-semibold">{block.question}</p>
+        <p className="font-semibold">
+          <InlineText text={block.question} />
+        </p>
         <div className="mt-4 space-y-2">
           {block.options.map((option, i) => (
             <button
@@ -319,18 +322,24 @@ function Question({
               <span className="grid size-6 shrink-0 place-items-center rounded-full border border-current text-[11px] font-bold">
                 {String.fromCharCode(65 + i)}
               </span>
-              {option}
+              <InlineText text={option} />
             </button>
           ))}
         </div>
-        {locked ? <p className="mt-3 text-sm text-chalk">{block.explanation}</p> : null}
+        {locked ? (
+          <p className="mt-3 text-sm text-chalk">
+            <InlineText text={block.explanation} />
+          </p>
+        ) : null}
       </div>
     );
   }
 
   return (
     <div className="rounded-[14px] border border-border p-5">
-      <p className="font-semibold">{block.prompt}</p>
+      <p className="font-semibold">
+        <InlineText text={block.prompt} />
+      </p>
       <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl bg-ink px-4 py-3 font-mono text-[13px] text-white/90">
         <span>{block.before}</span>
         <Input
@@ -345,7 +354,7 @@ function Question({
       {locked ? (
         <p className="mt-3 text-sm text-chalk">
           Answer: <span className="font-mono font-semibold">{block.answer}</span> —{" "}
-          {block.explanation}
+          <InlineText text={block.explanation} />
         </p>
       ) : null}
     </div>

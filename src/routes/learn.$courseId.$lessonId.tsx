@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/AppShell";
 import { MentorPanel } from "@/components/learn/MentorPanel";
+import { InlineText } from "@/components/learn/InlineText";
 import { CodeChallenge } from "@/components/learn/CodeChallenge";
 import { courseById, courseLessons, type Course, type LessonMeta } from "@/content/curriculum";
 import {
@@ -485,14 +486,20 @@ function Block({
   onResult,
 }: BlockProps) {
   if (block.kind === "text") {
-    return <p className="text-[15px] leading-7 text-foreground">{block.body}</p>;
+    return (
+      <p className="text-[15px] leading-7 text-foreground">
+        <InlineText text={block.body} />
+      </p>
+    );
   }
 
   if (block.kind === "callout") {
     return (
       <div className="flex gap-3 rounded-[14px] border border-ember/25 bg-ember/5 p-4">
         <Lightbulb className="mt-0.5 size-4 shrink-0 text-ember" />
-        <p className="text-sm leading-6">{block.body}</p>
+        <p className="text-sm leading-6">
+          <InlineText text={block.body} />
+        </p>
       </div>
     );
   }
@@ -517,7 +524,9 @@ function Block({
     return (
       <div className="rounded-[14px] border border-border p-5">
         <p className="eyebrow">Check yourself</p>
-        <p className="mt-2 font-semibold">{block.question}</p>
+        <p className="mt-2 font-semibold">
+          <InlineText text={block.question} />
+        </p>
         <div className="mt-4 space-y-2">
           {block.options.map((opt, i) => (
             <button
@@ -535,14 +544,16 @@ function Block({
               <span className="grid size-6 shrink-0 place-items-center rounded-full border border-current text-[11px] font-bold">
                 {String.fromCharCode(65 + i)}
               </span>
-              {opt}
+              <InlineText text={opt} />
             </button>
           ))}
         </div>
         {isChecked ? (
           <p className={cn("mt-3 text-sm", correct ? "text-brand" : "text-destructive")}>
             {correct ? "Correct. " : "Not quite. "}
-            <span className="text-foreground">{block.explanation}</span>
+            <span className="text-foreground">
+              <InlineText text={block.explanation} />
+            </span>
           </p>
         ) : (
           <Button
@@ -565,7 +576,9 @@ function Block({
     return (
       <div className="rounded-[14px] border border-border p-5">
         <p className="eyebrow">Fill the gap</p>
-        <p className="mt-2 font-semibold">{block.prompt}</p>
+        <p className="mt-2 font-semibold">
+          <InlineText text={block.prompt} />
+        </p>
         <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl bg-ink px-4 py-3 font-mono text-[13px] text-white/90">
           <span>{block.before}</span>
           <Input
@@ -580,7 +593,9 @@ function Block({
         {isChecked ? (
           <p className={cn("mt-3 text-sm", correct ? "text-brand" : "text-destructive")}>
             {correct ? "That's it. " : "Try again. "}
-            <span className="text-foreground">{correct ? block.explanation : ""}</span>
+            <span className="text-foreground">
+              {correct ? <InlineText text={block.explanation} /> : null}
+            </span>
           </p>
         ) : null}
         <Button
