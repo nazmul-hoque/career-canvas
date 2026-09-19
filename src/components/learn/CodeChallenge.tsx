@@ -55,7 +55,7 @@ export function CodeChallenge({
 
   async function handleRun(submit: boolean) {
     setRunning(true);
-    if (language === "react") setPreviewCode(code);
+    if (language === "react" || language === "web") setPreviewCode(code);
     const res = await runCode(language, code, tests, { sheet });
     setResult(res);
     onResult(res);
@@ -126,6 +126,7 @@ export function CodeChallenge({
           {language === "react" && previewCode !== null ? (
             <ReactPreview code={previewCode} />
           ) : null}
+          {language === "web" && previewCode !== null ? <PagePreview html={previewCode} /> : null}
           <div className="flex items-center gap-2 border-b border-border px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-chalk">
             <Terminal className="size-3.5" /> Output
           </div>
@@ -171,6 +172,9 @@ export function CodeChallenge({
                   {result.engine === "react" ? " · React, rendered in this page" : null}
                   {result.engine === "excel"
                     ? " · Spreadsheet engine (an Excel-compatible subset)"
+                    : null}
+                  {result.engine === "web"
+                    ? " · Checks the page structure and which CSS rules apply"
                     : null}
                 </p>
                 {result.engine === "python-simulated" ? (
@@ -300,6 +304,47 @@ function SheetPreview({ name }: { name: string }) {
             ))}
           </tbody>
         </table>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The learner's page, rendered for real by this browser. The frame is fully
+ * sandboxed (no scripts, no same-origin access), so a page can't reach the
+ * app. The width toggle is how responsive lessons show both layouts.
+ */
+function PagePreview({ html }: { html: string }) {
+  const [width, setWidth] = useState<"phone" | "desktop">("desktop");
+  return (
+    <div className="border-b border-border">
+      <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-chalk">
+        <span className="flex items-center gap-2">
+          <Eye className="size-3.5" /> Preview
+        </span>
+        <span className="flex gap-1 normal-case tracking-normal">
+          {(["phone", "desktop"] as const).map((w) => (
+            <button
+              key={w}
+              onClick={() => setWidth(w)}
+              className={cn(
+                "rounded-md px-2 py-0.5 font-semibold",
+                width === w ? "bg-secondary text-foreground" : "text-chalk hover:text-foreground",
+              )}
+            >
+              {w === "phone" ? "Phone · 375px" : "Desktop"}
+            </button>
+          ))}
+        </span>
+      </div>
+      <div className="flex justify-center overflow-x-auto bg-secondary/40 p-2">
+        <iframe
+          title="Page preview"
+          sandbox=""
+          srcDoc={html}
+          className="h-72 rounded-md border border-border bg-background"
+          style={{ width: width === "phone" ? 375 : "100%" }}
+        />
       </div>
     </div>
   );

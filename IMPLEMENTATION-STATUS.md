@@ -106,6 +106,19 @@ Two facts shape every item below:
 
 ## Done
 
+- [x] **HTML & CSS Foundations, complete** (2026-09-19) — ten lessons (the one
+      existing lesson, `layout.responsive`, rewritten in place): the page
+      skeleton, semantic landmarks and headings, accessible forms, the cascade,
+      the box model, rem/em/ch/clamp, flexbox, grid vs flex, intrinsic
+      responsive layout and mobile-first media queries. New `web` challenge
+      language: the Preview renders the page for real in a fully sandboxed
+      iframe (no scripts) with a Phone/Desktop toggle; tests check structure
+      (the browser's own DOMParser) and which declaration wins for an element at
+      a given width (`src/lib/css-cascade.ts`: importance, inline, specificity,
+      order, inheritance, @media, margin/padding/flex/gap shorthands). Pixel
+      layout is deliberately not graded — it can't be reproduced outside a
+      browser. `tests/css-cascade.test.ts` pins the cascade to the spec.
+
 - [x] **Data Analytics Toolkit, complete, with pandas** (2026-09-19) — six
       lessons on one messy export (duplicates, "$1,173.00" as text, "apparel "
       vs "APPAREL", a test order, a missing amount): cleaning in code, EDA that
@@ -375,17 +388,18 @@ Two facts shape every item below:
 
 ## The constraint that outranks this whole list
 
-**56 of 89 lessons are written** (the roadmap in `src/content/curriculum.ts` has
-89 slots). Eight courses are complete, all written 2026-09-19: Git & GitHub (7 of
+**65 of 89 lessons are written** (the roadmap in `src/content/curriculum.ts` has
+89 slots). Nine courses are complete, all written 2026-09-19: Git & GitHub (7 of
 7), SQL for Analysis (5 of 5), Generative AI Engineering (6 of 6), Machine
 Learning Basics (6 of 6), React in Practice (8 of 8), Python Essentials (9 of 9),
-Excel for Analysts (6 of 6) and Data Analytics Toolkit (6 of 6). **Three paths can
-issue a certificate: Python Developer, Data Analyst and AI / GenAI Developer.**
-Issuing one still needs `SUPABASE_SERVICE_ROLE_KEY` set (see "Blocked on you").
-Next closest: Full-Stack (JavaScript 8, Node 4) and Frontend (HTML & CSS 9,
-JavaScript 8, TypeScript 4).
+Excel for Analysts (6 of 6), Data Analytics Toolkit (6 of 6) and HTML & CSS
+Foundations (10 of 10). **Three paths can issue a certificate: Python Developer,
+Data Analyst and AI / GenAI Developer.** Issuing one still needs
+`SUPABASE_SERVICE_ROLE_KEY` set (see "Blocked on you"). Next closest: Frontend
+(JavaScript 8, TypeScript 4) and Full-Stack (JavaScript 8, Node 4) — both wait on
+the JavaScript course.
 Every item on the review's ranked list is now closed, which changes nothing about
 this: the platform tells the truth, measures itself, remembers what you learned
-and can prove what you finished — about fifty-six lessons. Nothing above changes the
+and can prove what you finished — about sixty-five lessons. Nothing above changes the
 product's value until one whole path is written. The engineering here was about making sure the platform tells the truth
 while the content gets written — it is not a substitute for writing it.

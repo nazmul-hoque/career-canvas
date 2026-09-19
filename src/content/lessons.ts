@@ -35,7 +35,7 @@ export type LessonBlock =
       id: string;
       title: string;
       prompt: string;
-      language: "javascript" | "python" | "sql" | "react" | "excel";
+      language: "javascript" | "python" | "sql" | "react" | "excel" | "web";
       /** Excel challenges only: which sheet in datasets/sheets.ts to start from. */
       sheet?: string | undefined;
       starter: string;

@@ -22,9 +22,10 @@ export interface TestResult {
 }
 
 /** Which engine produced a result — the UI is honest about simulated runs. */
-export type RunEngine = "javascript" | "python" | "python-simulated" | "sql" | "react" | "excel";
+export type RunEngine =
+  "javascript" | "python" | "python-simulated" | "sql" | "react" | "excel" | "web";
 
-export type ChallengeLanguage = "javascript" | "python" | "sql" | "react" | "excel";
+export type ChallengeLanguage = "javascript" | "python" | "sql" | "react" | "excel" | "web";
 
 export interface RunResult {
   logs: string[];
@@ -260,6 +261,26 @@ async function runExcel(code: string, tests: TestSpec[], sheet: string): Promise
   };
 }
 
+/** HTML & CSS: the page's structure and cascade, checked by web-runtime.ts. */
+async function runWeb(code: string, tests: TestSpec[]): Promise<RunResult> {
+  const started = performance.now();
+  const { runWebChallenge } = await import("./web-runtime");
+  const outcome = runWebChallenge(code, tests);
+  const results = tests.map((t, i) => ({
+    name: t.name,
+    passed: Boolean(outcome.results[i]?.passed),
+    detail: outcome.results[i]?.detail ?? undefined,
+  }));
+  return {
+    logs: outcome.logs,
+    error: outcome.error,
+    tests: results,
+    passed: results.length > 0 && results.every((r) => r.passed) && !outcome.error,
+    durationMs: Math.round(performance.now() - started),
+    engine: "web",
+  };
+}
+
 export async function runCode(
   language: ChallengeLanguage,
   code: string,
@@ -267,6 +288,7 @@ export async function runCode(
   options: { sheet?: string | undefined } = {},
 ): Promise<RunResult> {
   if (language === "excel") return runExcel(code, tests, options.sheet ?? "");
+  if (language === "web") return runWeb(code, tests);
   if (language === "python") return runPython(code, tests);
   if (language === "sql") return runSql(code, tests);
   if (language === "react") return runReact(code, tests);

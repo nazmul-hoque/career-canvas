@@ -114,19 +114,950 @@ export const bodies: Record<string, LessonBody> = {
       },
     ],
   },
-  "layout.responsive": {
-    summary: "Make a layout that holds together from a phone to a widescreen monitor.",
+  "html-basics.intro": {
+    summary:
+      "What the browser does with your HTML, and the few lines every page needs before any content.",
+    xp: 90,
+    blocks: [
+      {
+        kind: "text",
+        body: "A browser reads your HTML from top to bottom and builds a tree of elements called the **DOM**. It's that tree, not your text file, that gets styled, laid out and read aloud by screen readers. Elements nest: `<p>` inside `<main>` inside `<body>`, and every element you open, you close.",
+      },
+      {
+        kind: "code",
+        language: "html",
+        caption: "The skeleton every page starts from",
+        code: `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Rain shells — Trailhead Outdoor</title>
+  </head>
+  <body>
+    <h1>Rain shells</h1>
+  </body>
+</html>`,
+      },
+      {
+        kind: "text",
+        body: "Each line earns its place. `<!doctype html>` switches the browser into standards mode. `lang` tells screen readers which voice to use and translators which language to translate from. `charset` stops accented letters turning into garbage. The **viewport** meta tag stops phones pretending to be a 980-pixel-wide desktop and shrinking your page to fit. `<title>` is the text in the browser tab and the headline in search results. Everything in `<head>` is information about the page; everything in `<body>` is the page.",
+      },
+      {
+        kind: "text",
+        body: "Browsers are forgiving: they quietly fix unclosed tags and misplaced elements rather than showing an error. That's good for visitors and bad for you, because a mistake can hide until it breaks a layout. Your browser's DevTools (the **Elements** panel) shows the tree the browser actually built, which isn't always the one you meant to write.",
+      },
+      {
+        kind: "callout",
+        body: "In these challenges you edit the whole page, and **Run** does two things. The **Preview** renders it in your browser, with a Phone/Desktop switch. The tests check the page's structure and which CSS rules apply to each element. They never measure pixels, because a real layout depends on your screen.",
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          "A page looks right on a laptop, but on a phone it's tiny and you have to pinch to zoom. What's most likely missing?",
+        options: [
+          "The doctype",
+          '`<meta name="viewport" content="width=device-width, initial-scale=1">`',
+          "A `<title>`",
+          "The `lang` attribute",
+        ],
+        answer: 1,
+        explanation:
+          "Without it, mobile browsers lay the page out at around 980px wide and then scale it down to fit the screen.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question: "You forgot to close a `<div>`. What does the browser do?",
+        options: [
+          "It shows an error page",
+          "It refuses to render anything after it",
+          "It guesses where the element ends and carries on, so check the Elements panel to see what it actually built",
+          "It closes it at the very end of the page, always",
+        ],
+        answer: 2,
+        explanation:
+          "HTML parsing never fails outright. The browser's guess is often not what you meant, which is why the DOM tree is the thing to check.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Fix the page skeleton",
+        prompt:
+          "This page is missing the essentials. Give `<html>` a `lang`, and add a `charset` meta tag, a viewport meta tag with `width=device-width`, and a `<title>`. A page should also have exactly one `h1`, so make the second heading an `h2`.",
+        language: "web",
+        starter: `<!doctype html>
+<html>
+  <head>
+  </head>
+  <body>
+    <h1>Trailhead Outdoor</h1>
+    <h1>New this week</h1>
+    <p>Rain shells, headlamps and everything for a wet weekend.</p>
+  </body>
+</html>`,
+        hint: 'Add `lang="en"` to `<html>`. Inside `<head>`: `<meta charset="utf-8">`, `<meta name="viewport" content="width=device-width, initial-scale=1">` and a `<title>`.',
+        solution: `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Trailhead Outdoor</title>
+  </head>
+  <body>
+    <h1>Trailhead Outdoor</h1>
+    <h2>New this week</h2>
+    <p>Rain shells, headlamps and everything for a wet weekend.</p>
+  </body>
+</html>`,
+        tests: [
+          {
+            name: "The page declares its language",
+            expression: `/^[a-z]{2}/i.test($("html").getAttribute("lang") || "")`,
+          },
+          { name: "It declares a character set", expression: `$("meta[charset]") !== null` },
+          {
+            name: "It has a viewport meta tag for phones",
+            expression: `/width=device-width/.test($('meta[name="viewport"]')?.getAttribute("content") || "")`,
+          },
+          { name: "It has a title", expression: `text("title").length > 0` },
+          { name: "Exactly one h1", expression: `$$("h1").length === 1 && $$("h2").length === 1` },
+        ],
+      },
+    ],
+  },
+  "html-basics.tags": {
+    summary:
+      "Choose elements for what they mean, so browsers, screen readers and search engines understand the page.",
+    xp: 120,
+    blocks: [
+      {
+        kind: "text",
+        body: 'Every element says what its content *is*. A `<div>` says nothing; a `<nav>` says "these are the site\'s main links"; a `<button>` says "pressing this does something". Screen readers let people jump between these **landmarks**, search engines weigh them, and browsers give them behaviour for free. A `<button>` can be focused with Tab and pressed with Enter or Space; a clickable `<div>` can\'t.',
+      },
+      {
+        kind: "code",
+        language: "html",
+        caption: "The landmarks most pages need",
+        code: `<header>   logo and site-wide things
+  <nav>    the main navigation links, usually as a <ul>
+<main>     the page's own content, exactly one per page
+  <article>  a self-contained piece (a product, a post)
+  <section>  a themed part of something, with its own heading
+<aside>    related but secondary content
+<footer>   contact, legal, secondary links`,
+      },
+      {
+        kind: "text",
+        body: "**Headings are the page's outline**, not a way to get big text. One `h1` says what the page is about. `h2`s are its sections, with `h3`s inside those, and you don't skip levels (an `h4` straight after an `h1`). Use CSS for size.",
+      },
+      {
+        kind: "text",
+        body: '**Links go somewhere; buttons do something.** Use `<a href>` for navigation and `<button>` for actions such as adding to a cart or opening a menu. Every image needs an `alt` attribute: describe what matters ("Rain shell jacket in orange, hood up"), or use `alt=""` for decoration, so screen readers skip it instead of reading out the file name.',
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          'An "Add to cart" control is a `<div>` with a click handler. What\'s the problem?',
+        options: [
+          "Divs can't be styled like buttons",
+          "Keyboard users can't reach or press it, and screen readers don't announce it as a button. A `<button>` does all that for free",
+          "It's slower",
+          "Nothing, if it looks like a button",
+        ],
+        answer: 1,
+        explanation:
+          'Rebuilding a button from a div means re-adding focus, key handling and the role yourself, and it\'s usually done incompletely. Use the element that already means "button".',
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question: "A decorative wave graphic separates two sections. What `alt` should it have?",
+        options: [
+          "No alt attribute at all",
+          '`alt="wave.svg"`',
+          '`alt=""`, empty, so screen readers skip it',
+          '`alt="decorative wave graphic separating sections"`',
+        ],
+        answer: 2,
+        explanation:
+          'With no alt at all, many screen readers read out the file name. An empty alt says "this is decoration"; describing it would add noise to every visit.',
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "From div soup to meaning",
+        prompt:
+          "Rewrite this product page with meaningful elements: a `header` with the site's links in a `nav` (as a list), one `main`, and a `footer`. Fix the headings so they don't skip a level, make \"Add to cart\" a real `button`, and give the product photo a descriptive `alt`.",
+        language: "web",
+        starter: `<div class="header">
+  <div class="logo">Trailhead</div>
+  <div class="nav">
+    <a href="/tents">Tents</a>
+    <a href="/jackets">Jackets</a>
+    <a href="/sale">Sale</a>
+  </div>
+</div>
+<div class="main">
+  <h1>Rain Shell Jacket</h1>
+  <img src="shell.jpg">
+  <h4>Details</h4>
+  <p>Fully taped seams, 180 g, packs into its own pocket.</p>
+  <div class="button">Add to cart</div>
+</div>
+<div class="footer">© Trailhead Outdoor</div>`,
+        hint: "Swap each `div` for the element that says what it is. Links in a `nav` go in `<ul><li><a>…</a></li></ul>`. After an `h1`, the next level down is `h2`.",
+        solution: `<header>
+  <p class="logo">Trailhead</p>
+  <nav>
+    <ul>
+      <li><a href="/tents">Tents</a></li>
+      <li><a href="/jackets">Jackets</a></li>
+      <li><a href="/sale">Sale</a></li>
+    </ul>
+  </nav>
+</header>
+<main>
+  <h1>Rain Shell Jacket</h1>
+  <img src="shell.jpg" alt="Orange rain shell jacket with the hood up">
+  <h2>Details</h2>
+  <p>Fully taped seams, 180 g, packs into its own pocket.</p>
+  <button type="button">Add to cart</button>
+</main>
+<footer>© Trailhead Outdoor</footer>`,
+        tests: [
+          {
+            name: "Has header, nav, one main and footer",
+            expression: `!!$("header") && !!$("header nav") && $$("main").length === 1 && !!$("footer")`,
+          },
+          { name: "The nav links are a list", expression: `$$("nav ul li a").length === 3` },
+          {
+            name: "Headings don't skip a level",
+            expression: `(() => { const lv = $$("h1, h2, h3, h4, h5, h6").map((h) => Number(h.tagName[1])); return lv[0] === 1 && lv.every((l, i) => i === 0 || l <= lv[i - 1] + 1); })()`,
+          },
+          {
+            name: "Add to cart is a real button",
+            expression: `$$("button").some((b) => /add to cart/i.test(b.textContent))`,
+          },
+          {
+            name: "The product photo describes itself",
+            expression: `($("main img")?.getAttribute("alt") || "").trim().length > 5`,
+          },
+        ],
+      },
+    ],
+  },
+  "html-basics.forms": {
+    summary:
+      "Build forms everyone can fill in: labels, the right input types, names, and grouped choices.",
+    xp: 140,
+    blocks: [
+      {
+        kind: "text",
+        body: "**Every field needs a label.** Connect it with `for` and `id`, or wrap the input inside the `<label>`. A proper label is read out by screen readers, and clicking it focuses the field (which matters on a phone). A placeholder isn't a label: it disappears as soon as someone starts typing, and it's often too faint to read.",
+      },
+      {
+        kind: "code",
+        language: "html",
+        code: `<label for="email">Email</label>
+<input id="email" name="email" type="email" autocomplete="email" required>
+
+<label>
+  Full name
+  <input name="name" autocomplete="name" required>
+</label>`,
+      },
+      {
+        kind: "text",
+        body: "The `type` attribute does real work. `email`, `tel` and `number` bring up the right phone keyboard and get basic checking for free. `name` is what's sent to the server; a field without one isn't submitted at all. `required` and `autocomplete` save people typing and mistakes.",
+      },
+      {
+        kind: "text",
+        body: '**Radio buttons that belong together share a `name`**, which is what makes them one group where only one can be picked. Put them in a `<fieldset>` with a `<legend>` asking the question ("Delivery"), so a screen reader announces the question with each option. End the form with a `<button type="submit">`: pressing Enter in a field submits the form through it.',
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          'A sign-up form uses placeholders ("Email", "Password") instead of labels. What goes wrong?',
+        options: [
+          "Nothing, because placeholders are shorter",
+          "The hint disappears while typing, it's often low-contrast, and some screen readers don't announce it as the field's name",
+          "The form can't be submitted",
+          "The inputs become optional",
+        ],
+        answer: 1,
+        explanation:
+          "Once someone has typed into three fields, they can't see what any of them was for. Keep a visible label; a placeholder can add an example, like `name@example.com`.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question: "Two delivery radio buttons can both be selected at once. Why?",
+        options: [
+          "They need `required`",
+          "They have different `name` attributes, so the browser treats them as separate groups",
+          "They're missing a `<fieldset>`",
+          "Radios can't be in a form",
+        ],
+        answer: 1,
+        explanation:
+          "The shared `name` is what makes radios exclusive. The fieldset and legend are for the question, not the behaviour.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "A checkout form everyone can use",
+        prompt:
+          'Fix the form. Every field needs a label and a `name`. The email field should be `type="email"` and `required`. The two delivery options should be one radio group (same `name`) inside a `fieldset` with a `legend`. "Place order" should be a submit `button`.',
+        language: "web",
+        starter: `<form action="/checkout" method="post">
+  <input placeholder="Email">
+  <input placeholder="Full name">
+
+  <p>Delivery</p>
+  <input type="radio" value="standard"> Standard
+  <input type="radio" value="express"> Express
+
+  <div class="btn">Place order</div>
+</form>`,
+        hint: 'Wrap each input in a `<label>`, or give it an `id` and a matching `<label for>`. Put the radios in `<fieldset><legend>Delivery</legend>…</fieldset>` with `name="delivery"` on both.',
+        solution: `<form action="/checkout" method="post">
+  <label for="email">Email</label>
+  <input id="email" name="email" type="email" autocomplete="email" required>
+
+  <label for="name">Full name</label>
+  <input id="name" name="name" autocomplete="name" required>
+
+  <fieldset>
+    <legend>Delivery</legend>
+    <label><input type="radio" name="delivery" value="standard" checked> Standard</label>
+    <label><input type="radio" name="delivery" value="express"> Express</label>
+  </fieldset>
+
+  <button type="submit">Place order</button>
+</form>`,
+        tests: [
+          {
+            name: "Every field has a label",
+            expression: `$$("input").length === 4 && $$("input").every((i) => labelOf(i))`,
+          },
+          {
+            name: "Every field has a name",
+            expression: `$$("input").every((i) => i.getAttribute("name"))`,
+          },
+          {
+            name: "The email field is an email field, and required",
+            expression: `!!$('input[type="email"][required]') && /email/i.test(labelOf('input[type="email"]') || "")`,
+          },
+          {
+            name: "Delivery is one radio group with a legend",
+            expression: `(() => { const r = $$('input[type="radio"]'); return r.length === 2 && new Set(r.map((x) => x.getAttribute("name"))).size === 1 && r.every((x) => !!x.closest("fieldset")?.querySelector("legend")); })()`,
+          },
+          {
+            name: "Place order submits the form",
+            expression: `$$("form button").some((b) => (b.getAttribute("type") || "submit") === "submit" && /place order/i.test(b.textContent))`,
+          },
+        ],
+      },
+    ],
+  },
+  "css-core.cascade": {
+    summary:
+      "Know exactly which rule wins when several target the same element, and keep it that way.",
     xp: 130,
     blocks: [
       {
         kind: "text",
-        body: "Responsive layout is less about breakpoints than about letting elements decide their own size. `flex: 1` tells a child to take whatever space is left after its siblings have taken what they need.",
+        body: 'When several rules set the same property on an element, the browser picks one by working down a fixed list. **1. Importance**: `!important` beats normal declarations. **2. Specificity**: the more specific selector wins. **3. Order**: among equals, the rule that comes later wins. Styles in a `style=""` attribute beat stylesheet rules. It isn\'t mysterious, just strict.',
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "Specificity: (ids, classes, elements), compared left to right",
+        code: `p                      (0, 0, 1)
+.price                 (0, 1, 0)
+.product p             (0, 1, 1)
+.product .price        (0, 2, 0)
+#products p            (1, 0, 1)   one id beats any number of classes
+:where(.x) p           (0, 0, 1)   :where() adds nothing
+a:hover, [type=email]  pseudo-classes and attributes count as classes`,
+      },
+      {
+        kind: "text",
+        body: "**Inheritance** fills in what isn't set. Text properties (`color`, `font-*`, `line-height`) pass down from parent to child; box properties (`padding`, `border`, `width`) don't.",
+      },
+      {
+        kind: "text",
+        body: "The habit that avoids fights: **keep specificity low and flat**. Style with single classes, avoid ids in CSS, and don't nest selectors deeper than you need to. Reaching for `!important` usually means an earlier rule was too specific; fix that rule instead, or the next change will need an `!important` of its own. DevTools shows every rule that matched, with the losers crossed out.",
       },
       {
         kind: "code",
         language: "css",
-        caption: "The card should fill the leftover space",
-        code: `.row {\n  display: flex;\n  gap: 16px;\n}\n\n.card {\n  /* stretch me */\n}`,
+        caption: "Scenario",
+        code: `#products p  { color: #333; }
+.sale-price  { color: #c00; }
+
+/* <p class="sale-price"> inside <section id="products"> */`,
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question: "What colour is the sale price?",
+        options: [
+          "#c00, because it's the later rule",
+          "#c00, because a class beats an element",
+          "#333, because `#products p` (1,0,1) beats `.sale-price` (0,1,0)",
+          "It depends on the browser",
+        ],
+        answer: 2,
+        explanation: "Specificity is checked before order. The id outweighs any number of classes.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          "A `div` has `color: navy; padding: 2rem`, and a `p` inside it sets neither. What does the `p` get?",
+        options: [
+          "Both navy text and 2rem of padding",
+          "Navy text, but no padding: colour inherits, padding doesn't",
+          "Neither",
+          "Padding only",
+        ],
+        answer: 1,
+        explanation:
+          "Text styling flows down so a whole article can share a font and colour. Box properties stay put, or every nested element would pile up padding.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Make the sale price red, properly",
+        prompt:
+          "The sale price should be red (`#c00`) and bold, while the product's other paragraphs stay `#333`. Right now an overly specific rule wins. Fix the selectors, without `!important` and without `style` attributes.",
+        language: "web",
+        starter: `<style>
+  #products p { color: #333; }
+  .sale-price { color: #c00; font-weight: 700; }
+</style>
+
+<section id="products">
+  <article class="product">
+    <h2>Headlamp</h2>
+    <p>Rechargeable, 400 lumens.</p>
+    <p class="sale-price">Now $29</p>
+  </article>
+</section>`,
+        hint: "Lower the first rule to a class-based selector (`.product p`, which is 0,1,1) and make the price rule win on specificity, for example `.product .sale-price` (0,2,0).",
+        solution: `<style>
+  .product p { color: #333; }
+  .product .sale-price { color: #c00; font-weight: 700; }
+</style>
+
+<section id="products">
+  <article class="product">
+    <h2>Headlamp</h2>
+    <p>Rechargeable, 400 lumens.</p>
+    <p class="sale-price">Now $29</p>
+  </article>
+</section>`,
+        tests: [
+          { name: "The sale price is red", expression: `style(".sale-price", "color") === "#c00"` },
+          { name: "…and still bold", expression: `style(".sale-price", "font-weight") === "700"` },
+          {
+            name: "Other paragraphs stay #333",
+            expression: `style(".product p:not(.sale-price)", "color") === "#333"`,
+          },
+          {
+            name: "No !important and no style attributes",
+            expression: `!/!\\s*important/i.test(source) && $$("[style]").length === 0`,
+          },
+        ],
+      },
+    ],
+  },
+  "css-core.boxmodel": {
+    summary:
+      "Content, padding, border and margin, the one reset that makes widths behave, and spacing with gap.",
+    xp: 120,
+    blocks: [
+      {
+        kind: "text",
+        body: "Every element is a box made of four layers: **content**, then **padding** (space inside the border), then **border**, then **margin** (space outside, between boxes). Padding takes the element's background; margin is transparent.",
+      },
+      {
+        kind: "text",
+        body: "By default (`box-sizing: content-box`), `width` sets only the content. Padding and border are added on top, so a `300px` card with `20px` padding and a `1px` border is actually 342px wide, and it overflows its 300px column. Almost every modern stylesheet starts with one rule that makes `width` mean the whole box:",
+      },
+      {
+        kind: "code",
+        language: "css",
+        code: `*, *::before, *::after {
+  box-sizing: border-box;
+}`,
+      },
+      {
+        kind: "text",
+        body: "Shorthands go clockwise from the top: `padding: 8px 16px` is 8 top and bottom, 16 left and right; four values are top, right, bottom, left. Vertical margins between blocks **collapse**: two 16px margins make 16px of space, not 32. For space *between* items in a flex or grid container, prefer `gap` on the container over margins on every child: it never doubles up and never leaves stray space after the last item.",
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          "With the default `content-box`, how wide is `.card { width: 300px; padding: 20px; border: 1px solid }` on screen?",
+        options: ["300px", "320px", "342px", "341px"],
+        answer: 2,
+        explanation:
+          "300 + 20 + 20 + 1 + 1 = 342. With `border-box`, it would be exactly 300px, with the content shrinking to fit.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question: "What does `padding: 1.5rem 1rem` set?",
+        options: [
+          "1.5rem on the left and right, 1rem top and bottom",
+          "1.5rem at the top, 1rem everywhere else",
+          "1.5rem top and bottom, 1rem left and right",
+          "1.5rem all round, with a 1rem gap",
+        ],
+        answer: 2,
+        explanation:
+          "Two values: vertical first, then horizontal. Four values go clockwise from the top.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Cards that fit their column",
+        prompt:
+          "These cards overflow their 300px column. Add the `border-box` reset for all elements. Give `.card` padding of `1.5rem` top and bottom and `1rem` left and right, in one shorthand. Then space the cards with `gap` on `.cards` (make it a flex column or a grid) instead of a margin on each card.",
+        language: "web",
+        starter: `<style>
+  .cards { width: 300px; }
+  .card { width: 300px; padding: 24px; border: 1px solid #ccc; margin-bottom: 16px; }
+</style>
+
+<div class="cards">
+  <div class="card">Rain Shell Jacket</div>
+  <div class="card">Headlamp</div>
+</div>`,
+        hint: "`*, *::before, *::after { box-sizing: border-box; }`, then `.card { padding: 1.5rem 1rem; }` and `.cards { display: flex; flex-direction: column; gap: 1rem; }` (or `display: grid`). Remove the margin.",
+        solution: `<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  .cards { width: 300px; display: grid; gap: 1rem; }
+  .card { width: 300px; padding: 1.5rem 1rem; border: 1px solid #ccc; }
+</style>
+
+<div class="cards">
+  <div class="card">Rain Shell Jacket</div>
+  <div class="card">Headlamp</div>
+</div>`,
+        tests: [
+          {
+            name: "Width includes padding and border (border-box)",
+            expression: `style(".card", "box-sizing") === "border-box" && style("body", "box-sizing") === "border-box"`,
+          },
+          {
+            name: "Padding is 1.5rem top/bottom, 1rem left/right",
+            expression: `style(".card", "padding-top") === "1.5rem" && style(".card", "padding-bottom") === "1.5rem" && style(".card", "padding-left") === "1rem" && style(".card", "padding-right") === "1rem"`,
+          },
+          {
+            name: "The container spaces its cards with gap",
+            expression: `["flex", "grid"].includes(style(".cards", "display")) && style(".cards", "row-gap") !== null`,
+          },
+          {
+            name: "No margins on the cards",
+            expression: `[null, "0"].includes(style(".card", "margin-bottom"))`,
+          },
+        ],
+      },
+    ],
+  },
+  "css-core.units": {
+    summary:
+      "Sizes that respect the reader's settings and adapt to the screen: rem, em, ch and clamp().",
+    xp: 120,
+    blocks: [
+      {
+        kind: "text",
+        body: "`px` is fixed. That sounds safe, but it ignores the reader: someone who has set their browser's default text size to 20px (common among people with low vision) still gets your 16px text. **`rem`** is relative to that root size (1rem is 16px by default), so text sized in rem grows with their setting. Use rem for font sizes and most spacing.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        code: `rem    relative to the root font size; the default for type and spacing
+em     relative to this element's own font size; good for padding inside a button
+%      relative to the parent (widths)
+vw/vh  1% of the viewport's width/height
+ch     about the width of a "0"; max-width: 65ch keeps lines readable
+clamp(min, preferred, max)   fluid, within limits`,
+      },
+      {
+        kind: "text",
+        body: "**`em` compounds.** A list item at `1.2em` inside another at `1.2em` is 1.44 times the base, and a third level is 1.728. That's a trap for font sizes, but useful for padding: `padding: 0.75em 1.25em` on a button keeps it in proportion, whatever size its text is.",
+      },
+      {
+        kind: "text",
+        body: "**Fluid type with `clamp()`**: `font-size: clamp(2rem, 1rem + 4vw, 3.5rem)` grows with the screen between a floor and a ceiling, with no media queries. For text columns, limit the *line length* rather than the width: `max-width: 65ch` keeps lines readable on a 27-inch screen, and lets them fill a phone.",
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          "A reader sets their browser's default text size to 20px. Which body text grows to match?",
+        options: [
+          "`font-size: 16px`",
+          "`font-size: 1rem`",
+          "Both",
+          "Neither: sites control their own sizes",
+        ],
+        answer: 1,
+        explanation:
+          "1rem follows the root size the reader chose; 16px stays 16px. (Page zoom scales both, but the text-size setting only affects relative units.)",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          "`.menu li { font-size: 1.2em }`, and menus are nested three levels deep. How big is the innermost text?",
+        options: [
+          "1.2 × the base",
+          "3.6 × the base",
+          "1.728 × the base (1.2³)",
+          "The same as the base",
+        ],
+        answer: 2,
+        explanation:
+          "Each level multiplies its parent's size. With `1.2rem`, every level would be exactly 1.2 × the root.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Readable at any size",
+        prompt:
+          "Replace the pixel sizes. Set the `body` font size in `rem`. Make the `h1` fluid with `clamp()`, using rem limits. Replace `.article`'s fixed width with a `max-width` between 45ch and 75ch. Give `.btn` padding in `em` so it scales with its text. No `font-size` anywhere should use `px`.",
+        language: "web",
+        starter: `<style>
+  body { font-size: 16px; }
+  h1 { font-size: 40px; }
+  .article { width: 900px; }
+  .btn { padding: 12px 20px; font-size: 14px; }
+</style>
+
+<article class="article">
+  <h1>Packing for a wet weekend</h1>
+  <p>A good rain shell, a spare base layer and a headlamp cover most of it…</p>
+  <a class="btn" href="/rain">Shop rain gear</a>
+</article>`,
+        hint: "`body { font-size: 1rem; }`, `h1 { font-size: clamp(2rem, 1rem + 4vw, 3.5rem); }`, `.article { max-width: 65ch; }`, and `.btn { padding: 0.75em 1.25em; font-size: 0.875rem; }`.",
+        solution: `<style>
+  body { font-size: 1rem; }
+  h1 { font-size: clamp(2rem, 1rem + 4vw, 3.5rem); }
+  .article { max-width: 65ch; }
+  .btn { padding: 0.75em 1.25em; font-size: 0.875rem; }
+</style>
+
+<article class="article">
+  <h1>Packing for a wet weekend</h1>
+  <p>A good rain shell, a spare base layer and a headlamp cover most of it…</p>
+  <a class="btn" href="/rain">Shop rain gear</a>
+</article>`,
+        tests: [
+          {
+            name: "Body text is sized in rem",
+            expression: `/^[\\d.]+rem$/.test(style("body", "font-size") || "")`,
+          },
+          {
+            name: "The heading is fluid, with rem limits",
+            expression: `/^clamp\\(\\s*[\\d.]+rem.*[\\d.]+rem\\s*\\)$/.test(style("h1", "font-size") || "")`,
+          },
+          {
+            name: "The article limits its line length, not its width",
+            expression: `(() => { const v = style(".article", "max-width") || ""; const n = parseFloat(v); return /ch$/.test(v) && n >= 45 && n <= 75 && style(".article", "width") === null; })()`,
+          },
+          {
+            name: "Button padding scales with its text",
+            expression: `/^[\\d.]+em$/.test(style(".btn", "padding-top") || "") && /^[\\d.]+em$/.test(style(".btn", "padding-left") || "")`,
+          },
+          {
+            name: "No font size in px",
+            expression: `declared("font-size").length >= 3 && declared("font-size").every((v) => !/px/.test(v))`,
+          },
+        ],
+      },
+    ],
+  },
+  "layout.flexbox": {
+    summary: "Lay things out in a row or a column, and align them on both axes.",
+    xp: 130,
+    blocks: [
+      {
+        kind: "text",
+        body: "`display: flex` on a container lays its children out along a line: a row by default, or a column with `flex-direction: column`. That line is the **main axis**, and across it runs the **cross axis**. Nearly all of flexbox is two questions: how should items be spread along the main axis, and how should they sit across it?",
+      },
+      {
+        kind: "code",
+        language: "css",
+        code: `.site-header {
+  display: flex;
+  justify-content: space-between;  /* main axis: start, center, space-between… */
+  align-items: center;             /* cross axis: stretch (default), center, start… */
+  gap: 1rem;                       /* space between items */
+}`,
+      },
+      {
+        kind: "text",
+        body: "Items can grow and shrink with `flex: 1` (take a share of the spare space) or `flex: none` (stay their natural size). `flex-wrap: wrap` lets items move onto a new line instead of squashing. And a handy trick: `margin-left: auto` on one item pushes it, and everything after it, to the far end.",
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          "In a flex row, the logo is taller than the links, and you want everything centred vertically. Which property?",
+        options: [
+          "`justify-content: center`",
+          "`align-items: center`",
+          "`vertical-align: middle`",
+          "`flex-direction: column`",
+        ],
+        answer: 1,
+        explanation:
+          "Vertical is the cross axis in a row, and `align-items` controls the cross axis. `justify-content` would bunch everything into the middle horizontally.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          'In a row of nav links, how do you push just the last one ("Cart") to the right-hand edge?',
+        options: [
+          "`float: right` on it",
+          "`margin-left: auto` on it",
+          "`justify-content: flex-end` on the container",
+          "`position: absolute; right: 0`",
+        ],
+        answer: 1,
+        explanation:
+          "An auto margin soaks up all the free space on that side. `flex-end` on the container would push every item to the right, not just the last.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "A site header with flexbox",
+        prompt:
+          "Lay out the header: the logo, the menu and the cart link spread across the row (`space-between`) and centred vertically. The menu (`.menu`) should itself be a flex row with a `gap` between its links, and no list bullets.",
+        language: "web",
+        starter: `<style>
+  .site-header { padding: 1rem; }
+  .logo { font-size: 1.5rem; font-weight: 700; }
+</style>
+
+<header class="site-header">
+  <a class="logo" href="/">Trailhead</a>
+  <ul class="menu">
+    <li><a href="/tents">Tents</a></li>
+    <li><a href="/jackets">Jackets</a></li>
+    <li><a href="/sale">Sale</a></li>
+  </ul>
+  <a class="cart" href="/cart">Cart (2)</a>
+</header>`,
+        hint: "`.site-header { display: flex; justify-content: space-between; align-items: center; }` and `.menu { display: flex; gap: 1.5rem; list-style: none; margin: 0; padding: 0; }`.",
+        solution: `<style>
+  .site-header {
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .logo { font-size: 1.5rem; font-weight: 700; }
+  .menu {
+    display: flex;
+    gap: 1.5rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+</style>
+
+<header class="site-header">
+  <a class="logo" href="/">Trailhead</a>
+  <ul class="menu">
+    <li><a href="/tents">Tents</a></li>
+    <li><a href="/jackets">Jackets</a></li>
+    <li><a href="/sale">Sale</a></li>
+  </ul>
+  <a class="cart" href="/cart">Cart (2)</a>
+</header>`,
+        tests: [
+          {
+            name: "The header is a flex row",
+            expression: `style(".site-header", "display") === "flex" && [null, "row"].includes(style(".site-header", "flex-direction"))`,
+          },
+          {
+            name: "Items spread across it",
+            expression: `style(".site-header", "justify-content") === "space-between"`,
+          },
+          {
+            name: "…and are centred vertically",
+            expression: `style(".site-header", "align-items") === "center"`,
+          },
+          {
+            name: "The menu is a flex row with a gap",
+            expression: `style(".menu", "display") === "flex" && style(".menu", "column-gap") !== null`,
+          },
+          {
+            name: "No bullets on the menu",
+            expression: `[style(".menu", "list-style"), style(".menu", "list-style-type")].includes("none")`,
+          },
+        ],
+      },
+    ],
+  },
+  "layout.grid": {
+    summary:
+      "Use grid for rows and columns together, flexbox for one direction, and let the grid decide how many columns fit.",
+    xp: 140,
+    blocks: [
+      {
+        kind: "text",
+        body: "**Flexbox is one-dimensional**: it lines items up in a row *or* a column, and each line sizes itself. **Grid is two-dimensional**: rows *and* columns, so items line up both ways. Reach for flex to arrange things *along* a line (a toolbar, a header), and for grid to arrange things *in* a layout (a gallery, a page).",
+      },
+      {
+        kind: "code",
+        language: "css",
+        code: `.products {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);   /* three equal columns */
+  gap: 1rem;
+}
+.featured { grid-column: span 2; }         /* this item is two columns wide */`,
+      },
+      {
+        kind: "text",
+        body: "`fr` is a share of the free space: `2fr 1fr` gives the first column two thirds. The most useful line in CSS layout lets the grid work out how many columns fit, with no media queries: `repeat(auto-fit, minmax(12rem, 1fr))`, meaning *as many columns as fit, each at least 12rem, sharing any leftover space*.",
+      },
+      {
+        kind: "text",
+        body: "`auto-fit` vs `auto-fill` only matters when there are fewer items than columns would fit. `auto-fill` keeps the empty column slots; `auto-fit` collapses them, so the items stretch to fill the row. For a product gallery, `auto-fit` is usually what you want.",
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question: "Which layout is grid a better fit for than flexbox?",
+        options: [
+          "A row of buttons in a toolbar",
+          "A logo and links spread across a header",
+          "A gallery of product cards whose columns should line up row after row",
+          "Centring one icon inside a button",
+        ],
+        answer: 2,
+        explanation:
+          "Cards in columns need alignment in two directions at once. With flex-wrap, each row sizes itself, so the columns stop lining up.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          "What does `grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr))` do on a phone 375px wide?",
+        options: [
+          "Three squashed columns",
+          "One column: only one 12rem column fits, and it stretches to the full width",
+          "A horizontal scrollbar",
+          "Nothing, because it needs a media query",
+        ],
+        answer: 1,
+        explanation:
+          "12rem is 192px. Two of them plus a gap don't fit in 375px, so the grid makes one column. On a wide screen, it makes as many as fit.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "A product grid that fits any screen",
+        prompt:
+          "Replace the float layout. Make `.products` a grid that fits as many columns as it can, each at least `12rem` wide (`repeat(auto-fit, minmax(…))`), with a `gap`. Make the `.featured` product span two columns. Remove the floats and fixed widths from `.product`.",
+        language: "web",
+        starter: `<style>
+  .product { float: left; width: 30%; margin: 1%; border: 1px solid #ddd; padding: 1rem; }
+</style>
+
+<section class="products">
+  <article class="product featured">Rain Shell Jacket</article>
+  <article class="product">Headlamp</article>
+  <article class="product">Water Bottle</article>
+  <article class="product">Trekking Poles</article>
+  <article class="product">Wool Socks</article>
+</section>`,
+        hint: "`.products { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }` and `.featured { grid-column: span 2; }`. Delete `float`, `width` and `margin` from `.product`.",
+        solution: `<style>
+  .products {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+    gap: 1rem;
+  }
+  .product { border: 1px solid #ddd; padding: 1rem; }
+  .featured { grid-column: span 2; }
+</style>
+
+<section class="products">
+  <article class="product featured">Rain Shell Jacket</article>
+  <article class="product">Headlamp</article>
+  <article class="product">Water Bottle</article>
+  <article class="product">Trekking Poles</article>
+  <article class="product">Wool Socks</article>
+</section>`,
+        tests: [
+          {
+            name: "The container is a grid",
+            expression: `style(".products", "display") === "grid"`,
+          },
+          {
+            name: "Columns fit themselves: repeat(auto-fit/auto-fill, minmax(…))",
+            expression: `/^repeat\\(\\s*auto-(fit|fill)\\s*,\\s*minmax\\(/.test(style(".products", "grid-template-columns") || "")`,
+          },
+          {
+            name: "There's a gap between cards",
+            expression: `style(".products", "row-gap") !== null`,
+          },
+          {
+            name: "The featured product spans two columns",
+            expression: `/span 2/.test(style(".featured", "grid-column") || "")`,
+          },
+          {
+            name: "No floats or fixed widths on the cards",
+            expression: `[null, "none"].includes(style(".product", "float")) && style(".product", "width") === null`,
+          },
+        ],
+      },
+    ],
+  },
+  "layout.responsive": {
+    summary:
+      "Make a layout that holds together from a phone to a widescreen monitor, mostly without media queries.",
+    xp: 130,
+    blocks: [
+      {
+        kind: "text",
+        body: "Responsive design is less about breakpoints than about letting elements decide their own size. Before adding a single media query, get rid of what fights the screen: fixed widths, images wider than their container, and rows that can't wrap. A lot of layouts then work at every width on their own.",
+      },
+      {
+        kind: "code",
+        language: "css",
+        caption: "Intrinsic layout: it wraps when it has to",
+        code: `.cards {
+  display: flex;
+  flex-wrap: wrap;          /* move to a new line instead of squashing */
+  gap: 1rem;
+}
+.card {
+  flex: 1 1 15rem;          /* grow, shrink, and aim for 15rem before wrapping */
+}
+img {
+  max-width: 100%;          /* never wider than its container */
+  height: auto;             /* keep the proportions */
+}`,
+      },
+      {
+        kind: "text",
+        body: "`flex: 1` tells an item to take a share of whatever space is left after its siblings have what they need. Adding a basis, as in `flex: 1 1 15rem`, says *about 15rem, but grow into spare space*. Three cards sit in a row on a laptop and stack on a phone, with no media query. Watch for one catch: a flex item won't shrink below its content's width unless you give it `min-width: 0`, which is why long URLs sometimes burst out of cards.",
       },
       {
         kind: "mcq",
@@ -151,6 +1082,171 @@ export const bodies: Record<string, LessonBody> = {
         answer: "flex: 1",
         accept: ["flex: 1 1 0%", "flex: 1 1 0"],
         explanation: "flex: 1 is the shorthand for grow 1, shrink 1, basis 0%.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Cards that wrap on their own",
+        prompt:
+          "These cards have a fixed width, so they spill off a phone screen. Make `.cards` a wrapping flex row with a `gap`. Give `.card` `flex: 1 1` plus a basis (such as `15rem`) instead of a width. Stop images being wider than their card with `max-width: 100%`. Check both widths in the Preview.",
+        language: "web",
+        starter: `<style>
+  .card { width: 400px; display: inline-block; border: 1px solid #ddd; padding: 1rem; }
+</style>
+
+<div class="cards">
+  <div class="card"><img src="https://picsum.photos/600/300?1" alt="Rain shell on a hook"><h3>Rain Shell</h3></div>
+  <div class="card"><img src="https://picsum.photos/600/300?2" alt="Headlamp on a tent pole"><h3>Headlamp</h3></div>
+  <div class="card"><img src="https://picsum.photos/600/300?3" alt="Water bottle by a stream"><h3>Water Bottle</h3></div>
+</div>`,
+        hint: "`.cards { display: flex; flex-wrap: wrap; gap: 1rem; }`, `.card { flex: 1 1 15rem; }` (and delete `width`/`inline-block`), `img { max-width: 100%; height: auto; }`.",
+        solution: `<style>
+  .cards { display: flex; flex-wrap: wrap; gap: 1rem; }
+  .card { flex: 1 1 15rem; border: 1px solid #ddd; padding: 1rem; }
+  img { max-width: 100%; height: auto; }
+</style>
+
+<div class="cards">
+  <div class="card"><img src="https://picsum.photos/600/300?1" alt="Rain shell on a hook"><h3>Rain Shell</h3></div>
+  <div class="card"><img src="https://picsum.photos/600/300?2" alt="Headlamp on a tent pole"><h3>Headlamp</h3></div>
+  <div class="card"><img src="https://picsum.photos/600/300?3" alt="Water bottle by a stream"><h3>Water Bottle</h3></div>
+</div>`,
+        tests: [
+          {
+            name: "The cards wrap instead of overflowing",
+            expression: `style(".cards", "display") === "flex" && style(".cards", "flex-wrap") === "wrap"`,
+          },
+          { name: "There's a gap between them", expression: `style(".cards", "row-gap") !== null` },
+          {
+            name: "Cards grow from a basis instead of a fixed width",
+            expression: `style(".card", "flex-grow") === "1" && /^[\\d.]+(rem|em|px)$/.test(style(".card", "flex-basis") || "") && style(".card", "width") === null`,
+          },
+          {
+            name: "Images never overflow their card",
+            expression: `style("img", "max-width") === "100%"`,
+          },
+        ],
+      },
+    ],
+  },
+  "layout.media": {
+    summary:
+      "Mobile-first media queries, with breakpoints set by the content rather than by device names.",
+    xp: 140,
+    blocks: [
+      {
+        kind: "text",
+        body: "When intrinsic layout isn't enough (a sidebar that should sit beside the content on a wide screen, say), a **media query** applies rules only when a condition is true. Write your CSS **mobile-first**: the base rules are for small screens, and `min-width` queries add to them as space appears.",
+      },
+      {
+        kind: "code",
+        language: "css",
+        code: `.layout { display: grid; gap: 1rem; }        /* phones: one column */
+
+@media (min-width: 48rem) {                   /* 768px at default text size */
+  .layout { grid-template-columns: 15rem 1fr; }   /* sidebar + content */
+}`,
+      },
+      {
+        kind: "text",
+        body: "Why mobile-first? Small screens get the simplest CSS, with no overrides to undo; each query only *adds*; and it pushes you to decide what matters most. The desktop-first alternative, with `max-width` queries undoing a wide layout, tends to pile up overrides.",
+      },
+      {
+        kind: "text",
+        body: "Choose a **breakpoint where the content breaks**, not where a particular phone ends: widen the Preview until the layout looks cramped or stretched, and put the breakpoint there. Write breakpoints in `rem` or `em`, so they respond when someone enlarges their text. Media queries also cover preferences: `@media (prefers-reduced-motion: reduce)` is where to switch off animations for people who get motion sickness.",
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question: 'What does "mobile-first" CSS mean in practice?',
+        options: [
+          "Designing only for phones",
+          "Base styles for small screens, with `min-width` media queries adding layout as the screen grows",
+          "Using `max-width` queries to fix the desktop layout for phones",
+          "Detecting the device with JavaScript",
+        ],
+        answer: 1,
+        explanation:
+          "The small-screen styles apply everywhere, and larger screens get extra rules on top. Nothing has to be undone.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question: "Why write a breakpoint as `48rem` rather than `768px`?",
+        options: [
+          "rem is faster",
+          "It's the same thing either way",
+          "A rem breakpoint moves with the reader's text size, so if they enlarge text the layout switches earlier and stays readable",
+          "Pixels aren't allowed in media queries",
+        ],
+        answer: 2,
+        explanation:
+          "At the default size the two are identical. The difference shows for exactly the readers who need it: larger text means content breaks sooner, and an em/rem breakpoint follows it.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Go mobile-first",
+        prompt:
+          "This layout is desktop-first: a two-column grid that a `max-width` query takes apart for phones. Rewrite it mobile-first. By default, `.layout` is a one-column grid and `.menu` stacks as a column. A `min-width` query in `rem` or `em` adds the `15rem 1fr` columns and turns the menu into a row. Check both widths in the Preview.",
+        language: "web",
+        starter: `<style>
+  .layout { display: grid; grid-template-columns: 15rem 1fr; gap: 1rem; }
+  .menu { display: flex; gap: 1rem; list-style: none; padding: 0; }
+
+  @media (max-width: 767px) {
+    .layout { grid-template-columns: 1fr; }
+    .menu { flex-direction: column; }
+  }
+</style>
+
+<div class="layout">
+  <aside>
+    <ul class="menu">
+      <li><a href="/tents">Tents</a></li>
+      <li><a href="/jackets">Jackets</a></li>
+    </ul>
+  </aside>
+  <main><h1>Rain shells</h1><p>Everything for a wet weekend.</p></main>
+</div>`,
+        hint: "Base rules: `.layout { display: grid; gap: 1rem; }` and `.menu { display: flex; flex-direction: column; … }`. Then `@media (min-width: 48rem) { .layout { grid-template-columns: 15rem 1fr; } .menu { flex-direction: row; } }`.",
+        solution: `<style>
+  .layout { display: grid; gap: 1rem; }
+  .menu { display: flex; flex-direction: column; gap: 1rem; list-style: none; padding: 0; }
+
+  @media (min-width: 48rem) {
+    .layout { grid-template-columns: 15rem 1fr; }
+    .menu { flex-direction: row; }
+  }
+</style>
+
+<div class="layout">
+  <aside>
+    <ul class="menu">
+      <li><a href="/tents">Tents</a></li>
+      <li><a href="/jackets">Jackets</a></li>
+    </ul>
+  </aside>
+  <main><h1>Rain shells</h1><p>Everything for a wet weekend.</p></main>
+</div>`,
+        tests: [
+          {
+            name: "On a phone: one column",
+            expression: `style(".layout", "display", 375) === "grid" && [null, "1fr", "none"].includes(style(".layout", "grid-template-columns", 375))`,
+          },
+          {
+            name: "On a wide screen: sidebar and content",
+            expression: `style(".layout", "grid-template-columns", 1024) === "15rem 1fr"`,
+          },
+          {
+            name: "The menu stacks on a phone and runs in a row when there's room",
+            expression: `style(".menu", "flex-direction", 375) === "column" && style(".menu", "flex-direction", 1024) === "row"`,
+          },
+          {
+            name: "Mobile-first: only min-width queries, in rem or em",
+            expression: `media().length > 0 && media().every((q) => /min-width\\s*:\\s*[\\d.]+r?em/.test(q))`,
+          },
+        ],
       },
     ],
   },
