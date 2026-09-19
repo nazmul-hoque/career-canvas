@@ -18,12 +18,12 @@ import { InlineText } from "@/components/learn/InlineText";
 import { CodeChallenge } from "@/components/learn/CodeChallenge";
 import { courseById, courseLessons, type Course, type LessonMeta } from "@/content/curriculum";
 import {
-  getLessonBody,
   isLessonLive,
   nextLiveLesson,
-  type LessonBlock,
-  type LessonBody,
+  type PublicLessonBlock,
+  type PublicLessonBody,
 } from "@/content/lessons";
+import { checkAnswerFn, getLessonFn, type CheckAnswerResult } from "@/lib/lessons.functions";
 import { useProgress, useCompleteLesson } from "@/hooks/useLearner";
 import { useSession } from "@/hooks/useAuth";
 import type { RunResult } from "@/lib/code-runner";
@@ -35,11 +35,12 @@ import { useEntitlements } from "@/hooks/useEntitlements";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/learn/$courseId/$lessonId")({
-  loader: ({ params }) => {
+  loader: async ({ params }) => {
     const course = courseById(params.courseId);
-    const body = getLessonBody(params.courseId, params.lessonId);
     const lesson = course ? courseLessons(course).find((l) => l.id === params.lessonId) : undefined;
     if (!course || !lesson) throw notFound();
+    // Comes from the server without its answer key; see lessons.functions.ts.
+    const body = await getLessonFn({ data: { courseId: course.id, lessonId: lesson.id } });
     // `body` is null for lessons nobody has written yet — the route renders a
     // "coming soon" state for those instead of pretending they are teachable.
     return { course, lesson, body };
@@ -215,7 +216,7 @@ function LessonWorkspace({
 }: {
   course: Course;
   lesson: LessonMeta;
-  body: LessonBody;
+  body: PublicLessonBody;
 }) {
   const navigate = useNavigate();
   const { user } = useSession();
@@ -236,7 +237,9 @@ function LessonWorkspace({
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [solved, setSolved] = useState(false);
   const [answers, setAnswers] = useState<Record<string, number | string>>({});
-  const [checked, setChecked] = useState<Record<string, boolean>>({});
+  // Only the server knows the answers, so a question is done when it said so.
+  const [results, setResults] = useState<Record<string, CheckAnswerResult>>({});
+  const [checking, setChecking] = useState<string | null>(null);
   const [mentorOpen, setMentorOpen] = useState(false);
 
   useEffect(() => {
@@ -249,16 +252,30 @@ function LessonWorkspace({
   }, [course.id, lesson.id, lesson.type, body.xp]);
 
   const quizBlocks = body.blocks.filter((b) => b.kind === "mcq" || b.kind === "fill");
-  const quizDone = quizBlocks.every((b) => {
-    const id = "id" in b ? b.id : "";
-    if (!checked[id]) return false;
-    if (b.kind === "mcq") return answers[id] === b.answer;
-    return (
-      String(answers[id] ?? "")
-        .trim()
-        .toLowerCase() === b.answer.toLowerCase()
-    );
-  });
+  const quizDone = quizBlocks.every((b) => "id" in b && results[b.id]?.correct);
+
+  function answer(blockId: string, value: number | string) {
+    if (results[blockId]?.correct) return;
+    setAnswers((a) => ({ ...a, [blockId]: value }));
+    // A new attempt clears the old verdict, so "Not quite" doesn't linger.
+    setResults(({ [blockId]: _stale, ...rest }) => rest);
+  }
+
+  async function check(blockId: string) {
+    const given = answers[blockId];
+    if (given === undefined || given === "") return;
+    setChecking(blockId);
+    try {
+      const result = await checkAnswerFn({
+        data: { courseId: course.id, lessonId: lesson.id, blockId, answer: given },
+      });
+      setResults((r) => ({ ...r, [blockId]: result }));
+    } catch {
+      toast.error("Couldn't check that answer. Try again.");
+    } finally {
+      setChecking(null);
+    }
+  }
   const canFinish = quizDone && (!challenge || solved);
 
   const mentorContext = useMemo(
@@ -393,9 +410,10 @@ function LessonWorkspace({
                 key={i}
                 block={block}
                 answers={answers}
-                checked={checked}
-                setAnswers={setAnswers}
-                setChecked={setChecked}
+                results={results}
+                checking={checking}
+                onAnswer={answer}
+                onCheck={check}
                 code={code}
                 setCode={setCode}
                 solved={solved}
@@ -461,11 +479,12 @@ function LessonWorkspace({
 }
 
 interface BlockProps {
-  block: LessonBlock;
+  block: PublicLessonBlock;
   answers: Record<string, number | string>;
-  checked: Record<string, boolean>;
-  setAnswers: (fn: (a: Record<string, number | string>) => Record<string, number | string>) => void;
-  setChecked: (fn: (c: Record<string, boolean>) => Record<string, boolean>) => void;
+  results: Record<string, CheckAnswerResult>;
+  checking: string | null;
+  onAnswer: (blockId: string, value: number | string) => void;
+  onCheck: (blockId: string) => void;
   code: string;
   setCode: (c: string) => void;
   solved: boolean;
@@ -476,9 +495,10 @@ interface BlockProps {
 function Block({
   block,
   answers,
-  checked,
-  setAnswers,
-  setChecked,
+  results,
+  checking,
+  onAnswer,
+  onCheck,
   code,
   setCode,
   solved,
@@ -519,8 +539,8 @@ function Block({
 
   if (block.kind === "mcq") {
     const picked = answers[block.id];
-    const isChecked = checked[block.id];
-    const correct = picked === block.answer;
+    const result = results[block.id];
+    const correct = result?.correct === true;
     return (
       <div className="rounded-[14px] border border-border p-5">
         <p className="eyebrow">Check yourself</p>
@@ -531,14 +551,14 @@ function Block({
           {block.options.map((opt, i) => (
             <button
               key={opt}
-              onClick={() => !isChecked && setAnswers((a) => ({ ...a, [block.id]: i }))}
+              onClick={() => onAnswer(block.id, i)}
               className={cn(
                 "flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm transition-colors",
                 picked === i
                   ? "border-brand bg-brand/5 font-semibold"
                   : "border-border hover:bg-secondary",
-                isChecked && i === block.answer && "border-brand bg-brand/10",
-                isChecked && picked === i && !correct && "border-destructive bg-destructive/5",
+                correct && picked === i && "border-brand bg-brand/10",
+                result && !correct && picked === i && "border-destructive bg-destructive/5",
               )}
             >
               <span className="grid size-6 shrink-0 place-items-center rounded-full border border-current text-[11px] font-bold">
@@ -548,21 +568,23 @@ function Block({
             </button>
           ))}
         </div>
-        {isChecked ? (
+        {result ? (
           <p className={cn("mt-3 text-sm", correct ? "text-brand" : "text-destructive")}>
-            {correct ? "Correct. " : "Not quite. "}
-            <span className="text-foreground">
-              <InlineText text={block.explanation} />
-            </span>
+            {correct ? "Correct. " : "Not quite. Have another look and pick again."}
+            {result.explanation ? (
+              <span className="text-foreground">
+                <InlineText text={result.explanation} />
+              </span>
+            ) : null}
           </p>
         ) : (
           <Button
             variant="outline"
             className="mt-4"
-            disabled={picked === undefined}
-            onClick={() => setChecked((c) => ({ ...c, [block.id]: true }))}
+            disabled={picked === undefined || checking === block.id}
+            onClick={() => onCheck(block.id)}
           >
-            Check answer
+            {checking === block.id ? "Checking…" : "Check answer"}
           </Button>
         )}
       </div>
@@ -571,8 +593,8 @@ function Block({
 
   if (block.kind === "fill") {
     const value = String(answers[block.id] ?? "");
-    const isChecked = checked[block.id];
-    const correct = value.trim().toLowerCase() === block.answer.toLowerCase();
+    const result = results[block.id];
+    const correct = result?.correct === true;
     return (
       <div className="rounded-[14px] border border-border p-5">
         <p className="eyebrow">Fill the gap</p>
@@ -583,28 +605,30 @@ function Block({
           <span>{block.before}</span>
           <Input
             value={value}
-            onChange={(e) => setAnswers((a) => ({ ...a, [block.id]: e.target.value }))}
-            disabled={isChecked && correct}
+            onChange={(e) => onAnswer(block.id, e.target.value)}
+            disabled={correct}
             aria-label="Your answer"
             className="h-8 w-40 border-white/20 bg-white/10 font-mono text-white placeholder:text-white/40"
           />
           <span>{block.after}</span>
         </div>
-        {isChecked ? (
+        {result ? (
           <p className={cn("mt-3 text-sm", correct ? "text-brand" : "text-destructive")}>
-            {correct ? "That's it. " : "Try again. "}
-            <span className="text-foreground">
-              {correct ? <InlineText text={block.explanation} /> : null}
-            </span>
+            {correct ? "That's it. " : "Try again."}
+            {result.explanation ? (
+              <span className="text-foreground">
+                <InlineText text={result.explanation} />
+              </span>
+            ) : null}
           </p>
         ) : null}
         <Button
           variant="outline"
           className="mt-4"
-          disabled={!value.trim() || (isChecked && correct)}
-          onClick={() => setChecked((c) => ({ ...c, [block.id]: true }))}
+          disabled={!value.trim() || correct || checking === block.id}
+          onClick={() => onCheck(block.id)}
         >
-          Check answer
+          {checking === block.id ? "Checking…" : "Check answer"}
         </Button>
       </div>
     );

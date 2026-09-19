@@ -1,12 +1,18 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { Check, Compass, X } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { pathById, pathCourses, type Course, type ModuleMeta } from "@/content/curriculum";
-import { getLessonBody, isLessonLive } from "@/content/lessons";
-import { gradableBlocks, isBlockCorrect, type GradableBlock } from "@/lib/lesson-grading";
+import { toast } from "sonner";
+import { courseById, pathById, pathCourses } from "@/content/curriculum";
+import { InlineText } from "@/components/learn/InlineText";
+import {
+  getPlacementFn,
+  gradePlacementFn,
+  type PlacementGrades,
+  type PlacementQuestion,
+} from "@/lib/lessons.functions";
 import { track } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
@@ -21,10 +27,12 @@ import { cn } from "@/lib/utils";
  * The questions are the real ones from lessons that exist. Nothing is generated.
  */
 export const Route = createFileRoute("/placement/$pathId")({
-  loader: ({ params }) => {
+  loader: async ({ params }) => {
     const path = pathById(params.pathId);
     if (!path) throw notFound();
-    return { path };
+    // Questions arrive without answers; the server grades the whole check.
+    const questions = await getPlacementFn({ data: { pathId: path.id } });
+    return { path, questions };
   },
   head: ({ loaderData }) => ({
     meta: [
@@ -52,47 +60,40 @@ export const Route = createFileRoute("/placement/$pathId")({
   component: Placement,
 });
 
-interface Question {
-  block: GradableBlock;
-  course: Course;
-  module: ModuleMeta;
-  lessonTitle: string;
-}
-
-/** One question per live lesson, in roadmap order, capped so this stays short. */
-const MAX_QUESTIONS = 10;
-
-function buildQuestions(courses: Course[]): Question[] {
-  const out: Question[] = [];
-  for (const course of courses) {
-    for (const module of course.modules) {
-      for (const lesson of module.lessons) {
-        if (!isLessonLive(lesson.id)) continue;
-        const body = getLessonBody(course.id, lesson.id);
-        if (!body) continue;
-        const block = gradableBlocks(body)[0];
-        if (!block) continue;
-        out.push({ block, course, module, lessonTitle: lesson.title });
-      }
-    }
-  }
-  return out.slice(0, MAX_QUESTIONS);
-}
-
 function Placement() {
-  const { path } = Route.useLoaderData();
+  const { path, questions } = Route.useLoaderData();
   const courses = pathCourses(path);
-  const questions = useMemo(() => buildQuestions(courses), [courses]);
 
   const [answers, setAnswers] = useState<Record<string, string | number>>({});
-  const [submitted, setSubmitted] = useState(false);
+  const [grades, setGrades] = useState<PlacementGrades | null>(null);
+  const [grading, setGrading] = useState(false);
+  const submitted = grades !== null;
 
-  const answeredAll = questions.every(
-    (q) => answers[q.block.id] !== undefined && answers[q.block.id] !== "",
-  );
+  const answeredAll = questions.every((q) => answers[q.key] !== undefined && answers[q.key] !== "");
 
-  const graded = questions.map((q) => ({ ...q, correct: isBlockCorrect(q.block, answers) }));
+  const graded = questions.map((q) => {
+    const course = courseById(q.courseId);
+    const module = course?.modules.find((m) => m.id === q.moduleId);
+    return { ...q, course, module, correct: grades?.[q.key]?.correct === true };
+  });
   const score = graded.filter((g) => g.correct).length;
+
+  async function submit() {
+    setGrading(true);
+    try {
+      const result = await gradePlacementFn({ data: { pathId: path.id, answers } });
+      setGrades(result);
+      track("placement_completed", {
+        path_id: path.id,
+        score: questions.filter((q) => result[q.key]?.correct).length,
+        questions: questions.length,
+      });
+    } catch {
+      toast.error("Couldn't check your answers. Try again.");
+    } finally {
+      setGrading(false);
+    }
+  }
 
   // The recommendation is the earliest module holding a question you missed.
   // Getting everything right recommends the module after the last one covered —
@@ -137,15 +138,16 @@ function Placement() {
       </header>
 
       <div className="card-surface mt-7 space-y-5 p-6 sm:p-8">
-        {questions.map((q, i) => {
+        {graded.map((q, i) => {
           const locked = submitted;
-          const value = answers[q.block.id];
-          const correct = isBlockCorrect(q.block, answers);
+          const value = answers[q.key];
+          const { correct } = q;
+          const explanation = grades?.[q.key]?.explanation;
           return (
-            <div key={q.block.id} className="rounded-[14px] border border-border p-5">
+            <div key={q.key} className="rounded-[14px] border border-border p-5">
               <div className="flex items-center justify-between gap-3">
                 <p className="eyebrow">
-                  {i + 1} / {questions.length} · {q.course.title}
+                  {i + 1} / {questions.length} · {q.course?.title}
                 </p>
                 {locked ? (
                   <span
@@ -161,38 +163,46 @@ function Placement() {
 
               {q.block.kind === "mcq" ? (
                 <>
-                  <p className="mt-2 font-semibold">{q.block.question}</p>
+                  <p className="mt-2 font-semibold">
+                    <InlineText text={q.block.question} />
+                  </p>
                   <div className="mt-4 space-y-2">
                     {q.block.options.map((option, oi) => (
                       <button
                         key={option}
                         disabled={locked}
-                        onClick={() => setAnswers((a) => ({ ...a, [q.block.id]: oi }))}
+                        onClick={() => setAnswers((a) => ({ ...a, [q.key]: oi }))}
                         className={cn(
                           "flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm transition-colors",
                           value === oi
                             ? "border-brand bg-brand/5 font-semibold"
                             : "border-border hover:bg-secondary",
-                          locked && oi === q.block.answer && "border-brand bg-brand/10",
+                          locked && correct && value === oi && "border-brand bg-brand/10",
+                          locked &&
+                            !correct &&
+                            value === oi &&
+                            "border-destructive bg-destructive/5",
                         )}
                       >
                         <span className="grid size-6 shrink-0 place-items-center rounded-full border border-current text-[11px] font-bold">
                           {String.fromCharCode(65 + oi)}
                         </span>
-                        {option}
+                        <InlineText text={option} />
                       </button>
                     ))}
                   </div>
                 </>
               ) : (
                 <>
-                  <p className="mt-2 font-semibold">{q.block.prompt}</p>
+                  <p className="mt-2 font-semibold">
+                    <InlineText text={q.block.prompt} />
+                  </p>
                   <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl bg-ink px-4 py-3 font-mono text-[13px] text-white/90">
                     <span>{q.block.before}</span>
                     <Input
                       value={String(value ?? "")}
                       disabled={locked}
-                      onChange={(e) => setAnswers((a) => ({ ...a, [q.block.id]: e.target.value }))}
+                      onChange={(e) => setAnswers((a) => ({ ...a, [q.key]: e.target.value }))}
                       aria-label="Your answer"
                       className="h-8 w-40 border-white/20 bg-white/10 font-mono text-white placeholder:text-white/40"
                     />
@@ -201,24 +211,28 @@ function Placement() {
                 </>
               )}
 
-              {locked ? <p className="mt-3 text-sm text-chalk">{q.block.explanation}</p> : null}
+              {/* The right answer isn't revealed on a miss: it's a lesson's question,
+                  and the lesson is where you'll meet it properly. */}
+              {locked ? (
+                <p className="mt-3 text-sm text-chalk">
+                  {explanation ? (
+                    <InlineText text={explanation} />
+                  ) : (
+                    `Covered in "${q.lessonTitle}".`
+                  )}
+                </p>
+              ) : null}
             </div>
           );
         })}
 
         {!submitted ? (
-          <Button
-            disabled={!answeredAll}
-            onClick={() => {
-              setSubmitted(true);
-              track("placement_completed", {
-                path_id: path.id,
-                score,
-                questions: questions.length,
-              });
-            }}
-          >
-            {answeredAll ? "See where to start" : "Answer every question first"}
+          <Button disabled={!answeredAll || grading} onClick={submit}>
+            {grading
+              ? "Checking…"
+              : answeredAll
+                ? "See where to start"
+                : "Answer every question first"}
           </Button>
         ) : null}
       </div>

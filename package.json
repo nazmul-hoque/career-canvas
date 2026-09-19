@@ -11,6 +11,7 @@
     "lint": "eslint .",
     "test": "bun test",
     "push:keys": "bun scripts/generate-vapid-keys.ts",
+    "lessons:manifest": "bun scripts/build-lesson-manifest.ts",
     "format": "prettier --write ."
   },
   "overrides": {

@@ -1,14 +1,16 @@
 import { describe, expect, test } from "bun:test";
 
 import { careerPaths, courseLessons, courses, pathCourses } from "../src/content/curriculum";
+import { bodies, getLessonBody } from "../src/content/lesson-bodies.server";
+import { renderManifest } from "../src/content/lesson-manifest.server";
 import {
-  getLessonBody,
   isCoursePublished,
   isLessonLive,
   isPathPublished,
   liveLessons,
   nextLiveLesson,
   pathLiveLessons,
+  toPublicBody,
 } from "../src/content/lessons";
 import { allPathCompletions, certificateId, pathCompletion } from "../src/lib/certificates";
 
@@ -130,5 +132,49 @@ describe("certificate ids", () => {
   test("ids are printable and carry the path", () => {
     const id = certificateId("user-1", "frontend");
     expect(id).toMatch(/^ASC-[A-Z0-9]{1,4}-[A-Z0-9]{7}$/);
+  });
+});
+
+/**
+ * The answer key stays on the server. The browser learns which lessons exist
+ * from a generated manifest and sees lessons only through toPublicBody; if any
+ * of these fail, answers can reach the page source or the client bundle.
+ */
+describe("answer key", () => {
+  test("the committed manifest matches the authored lessons", async () => {
+    const committed = await Bun.file(
+      new URL("../src/content/lesson-manifest.gen.ts", import.meta.url),
+    ).text();
+    // Run `bun run lessons:manifest` when this fails.
+    expect(committed).toBe(renderManifest());
+  });
+
+  test("a public lesson carries no answers, explanations or solutions", () => {
+    for (const body of Object.values(bodies)) {
+      const json = JSON.stringify(toPublicBody(body));
+      for (const block of body.blocks) {
+        if (block.kind === "mcq" || block.kind === "fill") {
+          expect(json).not.toContain(JSON.stringify(block.explanation));
+        }
+        if (block.kind === "challenge") expect(json).not.toContain(JSON.stringify(block.solution));
+      }
+      for (const block of toPublicBody(body).blocks) {
+        expect(block).not.toHaveProperty("answer");
+        expect(block).not.toHaveProperty("explanation");
+        expect(block).not.toHaveProperty("solution");
+      }
+    }
+  });
+
+  test("nothing that reaches the browser imports the bodies statically", async () => {
+    const glob = new Bun.Glob("src/**/*.{ts,tsx}");
+    const offenders: string[] = [];
+    for await (const file of glob.scan(".")) {
+      if (file.includes(".server.")) continue;
+      const text = await Bun.file(file).text();
+      // `await import(...)` inside a server handler is the allowed form.
+      if (/^import[^;]*lesson-(bodies|manifest)\.server/m.test(text)) offenders.push(file);
+    }
+    expect(offenders).toEqual([]);
   });
 });

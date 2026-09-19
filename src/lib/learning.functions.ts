@@ -5,7 +5,7 @@ import { careerPaths, findLesson } from "@/content/curriculum";
 import { certificateId, pathCompletion } from "@/lib/certificates";
 import { entitlementsFor, isLessonUnlocked, planState } from "@/lib/entitlements";
 import { levelFromXp } from "@/content/gamification";
-import { getLessonBody, isLessonLive } from "@/content/lessons";
+import { isLessonLive } from "@/content/lessons";
 import { gradeLesson, isReviewable } from "@/lib/lesson-grading";
 import { initialReview } from "@/lib/review-schedule";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -67,6 +67,7 @@ export const completeLessonFn = createServerFn({ method: "POST" })
       throw new Error("That lesson isn't published yet, so it can't be completed.");
     }
 
+    const { getLessonBody } = await import("@/content/lesson-bodies.server");
     const body = getLessonBody(courseId, lessonId);
     if (!body) throw new Error("That lesson isn't published yet, so it can't be completed.");
 

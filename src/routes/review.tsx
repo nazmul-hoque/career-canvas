@@ -10,8 +10,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "@/hooks/useAuth";
 import { dueItems, useReviewQueue, useSubmitReview, type ReviewItem } from "@/hooks/useReviews";
 import { findLesson } from "@/content/curriculum";
-import { getLessonBody } from "@/content/lessons";
-import { gradableBlocks, type GradableBlock } from "@/lib/lesson-grading";
+import { lessonQuestionCount, type PublicGradableBlock } from "@/content/lessons";
+import { usePublicLesson } from "@/hooks/useLesson";
+import type { SubmitReviewResult } from "@/lib/review.functions";
 import { InlineText } from "@/components/learn/InlineText";
 import { cn } from "@/lib/utils";
 
@@ -49,8 +50,9 @@ interface Card {
   item: ReviewItem;
   courseTitle: string;
   lessonTitle: string;
-  blocks: GradableBlock[];
 }
+
+type Feedback = SubmitReviewResult["feedback"][string];
 
 function Review() {
   const { user, isLoading: sessionLoading } = useSession();
@@ -66,6 +68,7 @@ function Review() {
     correct: boolean;
     gained: number;
     dueOn: string;
+    feedback: SubmitReviewResult["feedback"];
   } | null>(null);
 
   const cards = useMemo<Card[]>(() => {
@@ -73,21 +76,25 @@ function Review() {
       .filter((item) => !reviewed.includes(item.id))
       .map((item) => {
         const found = findLesson(item.course_id, item.lesson_id);
-        const body = getLessonBody(item.course_id, item.lesson_id);
-        if (!found || !body) return null;
-        return {
-          item,
-          courseTitle: found.course.title,
-          lessonTitle: found.lesson.title,
-          blocks: gradableBlocks(body),
-        };
+        if (!found || !lessonQuestionCount(item.lesson_id)) return null;
+        return { item, courseTitle: found.course.title, lessonTitle: found.lesson.title };
       })
-      .filter((c): c is Card => Boolean(c) && (c as Card).blocks.length > 0);
+      .filter((c): c is Card => Boolean(c));
   }, [items, reviewed]);
+
+  // The questions arrive without their answers; those come back from the
+  // server with the grade.
+  const { data: currentBody, isLoading: bodyLoading } = usePublicLesson(
+    cards[0]?.item.course_id,
+    cards[0]?.item.lesson_id,
+  );
+  const blocks = (currentBody?.blocks ?? []).filter(
+    (b): b is PublicGradableBlock => b.kind === "mcq" || b.kind === "fill",
+  );
 
   const upcoming = items.filter((i) => i.due_on > new Date().toISOString().slice(0, 10));
 
-  if (sessionLoading || (user && isLoading)) {
+  if (sessionLoading || (user && isLoading) || (cards.length > 0 && bodyLoading)) {
     return (
       <AppShell>
         <Skeleton className="h-[420px] w-full rounded-[22px]" />
@@ -168,7 +175,8 @@ function Review() {
     );
   }
 
-  const answered = card.blocks.every((b) => answers[b.id] !== undefined && answers[b.id] !== "");
+  const answered =
+    blocks.length > 0 && blocks.every((b) => answers[b.id] !== undefined && answers[b.id] !== "");
 
   async function check() {
     if (!card) return;
@@ -178,7 +186,12 @@ function Review() {
         lessonId: card.item.lesson_id,
         answers,
       });
-      setOutcome({ correct: result.correct, gained: result.gained, dueOn: result.dueOn });
+      setOutcome({
+        correct: result.correct,
+        gained: result.gained,
+        dueOn: result.dueOn,
+        feedback: result.feedback,
+      });
       if (result.correct && result.gained > 0) {
         toast.success(`+${result.gained} XP`, { description: `Back on ${result.dueOn}.` });
       }
@@ -223,12 +236,12 @@ function Review() {
         </p>
 
         <div className="mt-6 space-y-5">
-          {card.blocks.map((block) => (
+          {blocks.map((block) => (
             <Question
               key={block.id}
               block={block}
               value={answers[block.id]}
-              locked={Boolean(outcome)}
+              feedback={outcome?.feedback[block.id]}
               onChange={(value) => setAnswers((a) => ({ ...a, [block.id]: value }))}
             />
           ))}
@@ -291,14 +304,16 @@ function Review() {
 function Question({
   block,
   value,
-  locked,
+  feedback,
   onChange,
 }: {
-  block: GradableBlock;
+  block: PublicGradableBlock;
   value: string | number | undefined;
-  locked: boolean;
+  /** Present once graded — the only time the answer is known here. */
+  feedback: Feedback | undefined;
   onChange: (value: string | number) => void;
 }) {
+  const locked = Boolean(feedback);
   if (block.kind === "mcq") {
     return (
       <div className="rounded-[14px] border border-border p-5">
@@ -316,7 +331,7 @@ function Question({
                 value === i
                   ? "border-brand bg-brand/5 font-semibold"
                   : "border-border hover:bg-secondary",
-                locked && i === block.answer && "border-brand bg-brand/10",
+                feedback && i === feedback.answer && "border-brand bg-brand/10",
               )}
             >
               <span className="grid size-6 shrink-0 place-items-center rounded-full border border-current text-[11px] font-bold">
@@ -326,9 +341,9 @@ function Question({
             </button>
           ))}
         </div>
-        {locked ? (
+        {feedback ? (
           <p className="mt-3 text-sm text-chalk">
-            <InlineText text={block.explanation} />
+            <InlineText text={feedback.explanation} />
           </p>
         ) : null}
       </div>
@@ -351,10 +366,10 @@ function Question({
         />
         <span>{block.after}</span>
       </div>
-      {locked ? (
+      {feedback ? (
         <p className="mt-3 text-sm text-chalk">
-          Answer: <span className="font-mono font-semibold">{block.answer}</span> —{" "}
-          <InlineText text={block.explanation} />
+          Answer: <span className="font-mono font-semibold">{feedback.answer}</span> —{" "}
+          <InlineText text={feedback.explanation} />
         </p>
       ) : null}
     </div>

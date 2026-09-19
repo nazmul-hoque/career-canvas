@@ -74,13 +74,24 @@ segments are bare `$id`. `__root.tsx` is the only root layout and must keep its
 match that when adding routes.
 
 **Live vs. unwritten lessons.** A lesson only exists if it has an authored body
-in `src/content/lessons.ts`. Everything else on a roadmap is a planned slot:
+in `src/content/lesson-bodies.server.ts`. Everything else on a roadmap is a planned slot:
 `isLessonLive()` is false, the lesson route renders "coming soon", it awards no
 XP, it is excluded from every progress denominator (`liveLessons`,
 `pathLiveLessonCount`), and it blocks its path's certificate
 (`pathCompletion().published`). Never generate filler to fill those slots — that
-is exactly what this replaced. Adding a body to `bodies` is all it takes to make
-a lesson live everywhere.
+is exactly what this replaced. To make a lesson live: add its body to `bodies`,
+then run `bun run lessons:manifest` (a test fails until you do).
+
+**The answer key never reaches the browser.** Bodies live in
+`lesson-bodies.server.ts`, which the Start plugin refuses to bundle for the
+client (`**/*.server.*`); only server handlers `await import` it. The browser
+knows which lessons exist from the generated `lesson-manifest.gen.ts`, loads a
+lesson through `getLessonFn` as `toPublicBody()` (no `answer`, `explanation` or
+`solution`), and asks `checkAnswerFn` whether an answer is right — the
+explanation comes back only when it is. Review feedback arrives with the grade
+from `submitReviewFn`; placement is graded by `gradePlacementFn`. Never import
+the bodies from a route, hook or component, and never reveal the right option on
+a wrong answer.
 
 **Content vs. data.** Curriculum, lessons, projects and community seeds are
 static TypeScript in `src/content/`; per-user state (profile, XP, progress,
@@ -138,8 +149,9 @@ pays a fifth of the lesson's XP, capped. Scheduling is `src/lib/review-schedule.
 is allowed but pays nothing. `review_items` is SELECT-only to the client.
 
 **Answer checking lives in one place.** `src/lib/lesson-grading.ts` — shared by
-lesson completion and review, and the only definition of "got it right". Don't
-re-implement the comparison in a route; an mcq answer is an index, not a string.
+lesson completion, review, placement and `checkAnswerFn`, and the only definition
+of "got it right". It runs on the server only — a route can't compare answers,
+because it doesn't have them. An mcq answer is an index, not a string.
 
 **Certificates are verifiable.** `issued_certificates` carries an HMAC signature
 written at issue time (`src/lib/signing.server.ts`, keyed by

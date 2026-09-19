@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { findLesson } from "@/content/curriculum";
-import { getLessonBody } from "@/content/lessons";
+import type { LessonBody } from "@/content/lessons";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { entitlementsFor, planState } from "@/lib/entitlements";
 import { scriptedMentorReply, type MentorContext } from "@/lib/mentor";
@@ -100,8 +100,7 @@ function buildSystemPrompt(input: {
 }
 
 /** Lesson prose, trimmed to what is useful as context. */
-function lessonTextFor(courseId: string, lessonId: string): string {
-  const body = getLessonBody(courseId, lessonId);
+function lessonTextFor(body: LessonBody | null): string {
   if (!body) return "";
   return body.blocks
     .map((block) => {
@@ -201,11 +200,13 @@ export const mentorReplyFn = createServerFn({ method: "POST" })
         today: new Date().toISOString().slice(0, 10),
       });
 
+      const { getLessonBody } = await import("@/content/lesson-bodies.server");
+      const body = getLessonBody(data.courseId, data.lessonId);
       const system = buildSystemPrompt({
         courseTitle: found.course.title,
         lessonTitle: found.lesson.title,
-        lessonSummary: getLessonBody(data.courseId, data.lessonId)?.summary ?? "",
-        lessonText: lessonTextFor(data.courseId, data.lessonId),
+        lessonSummary: body?.summary ?? "",
+        lessonText: lessonTextFor(body),
         mayReveal: data.failedAttempts >= REVEAL_AFTER_ATTEMPTS,
         language: data.language,
         learnerHistory,

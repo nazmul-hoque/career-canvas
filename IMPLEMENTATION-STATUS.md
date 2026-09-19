@@ -96,6 +96,19 @@ Two facts shape every item below:
 
 ## Done
 
+- [x] **The answer key no longer ships to the browser** (2026-09-19) — lesson
+      bodies moved to `src/content/lesson-bodies.server.ts`, which the Start
+      plugin won't bundle for the client. Pages learn which lessons exist from a
+      generated manifest (`bun run lessons:manifest`), load lessons without
+      answers/explanations/solutions through `getLessonFn`, and check answers with
+      `checkAnswerFn`, which returns the explanation only for a right answer — a
+      wrong mcq pick no longer lights up the correct option. Review gets answers
+      back with its grade; placement is graded server-side, which also fixed
+      placement answers colliding across lessons (every lesson's first question is
+      `q1`). Verified in the production build: no explanation or solution text in
+      `.output/public`. Tests guard the manifest, the public shape, and static
+      imports of the bodies.
+
 - [x] **Course figures are derived, not invented** (2026-09-19) — the
       hand-typed `hours`, `rating`, `students` and `popularity` are gone from
       `curriculum.ts`. Length is the sum of the written lessons' minutes
@@ -254,13 +267,6 @@ Two facts shape every item below:
 - [ ] **Instructors are invented people.** Every course names an instructor
       ("Tomas Beck, Platform Engineer") who doesn't exist. Replace with real
       authors or drop the card.
-- [ ] **The answer key ships to the browser.** The lesson route's loader returns
-      the whole `LessonBody`, so every mcq `answer` index and fill `answer` is in
-      the SSR payload — view-source shows them. The server still re-grades
-      (`lesson-grading.ts`), but it's re-grading answers the learner could read.
-      Fix: send the client a body with `answer`/`explanation`/`solution`
-      stripped, and have a server function check one block and return the
-      explanation. Affects every lesson and `/review`.
 - [ ] **Component and integration tests** — the unit layer is covered; nothing
       exercises a route end to end.
 

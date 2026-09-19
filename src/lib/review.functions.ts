@@ -2,9 +2,9 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { findLesson } from "@/content/curriculum";
-import { getLessonBody, isLessonLive } from "@/content/lessons";
+import { isLessonLive } from "@/content/lessons";
 import { levelFromXp } from "@/content/gamification";
-import { gradeReview } from "@/lib/lesson-grading";
+import { gradableBlocks, gradeReview } from "@/lib/lesson-grading";
 import { nextReview } from "@/lib/review-schedule";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
@@ -37,6 +37,11 @@ export interface SubmitReviewResult {
   dueOn: string;
   intervalDays: number;
   wrongBlockIds: string[];
+  /**
+   * The right answer and why, per question — sent only now, after grading. The
+   * review page never holds the answer key while the learner is still answering.
+   */
+  feedback: Record<string, { correct: boolean; answer: string | number; explanation: string }>;
 }
 
 /** A review is worth a fifth of the lesson, rounded to something tidy. */
@@ -57,6 +62,7 @@ export const submitReviewFn = createServerFn({ method: "POST" })
     if (!findLesson(courseId, lessonId) || !isLessonLive(lessonId)) {
       throw new Error("That lesson isn't published, so there is nothing to review.");
     }
+    const { getLessonBody } = await import("@/content/lesson-bodies.server");
     const body = getLessonBody(courseId, lessonId);
     if (!body) throw new Error("That lesson isn't published, so there is nothing to review.");
 
@@ -183,5 +189,15 @@ export const submitReviewFn = createServerFn({ method: "POST" })
       dueOn: scheduled.dueOn,
       intervalDays: scheduled.intervalDays,
       wrongBlockIds: graded.wrongBlockIds,
+      feedback: Object.fromEntries(
+        gradableBlocks(body).map((block) => [
+          block.id,
+          {
+            correct: !graded.wrongBlockIds.includes(block.id),
+            answer: block.answer,
+            explanation: block.explanation,
+          },
+        ]),
+      ),
     };
   });
