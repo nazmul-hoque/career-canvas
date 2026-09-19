@@ -1,5 +1,14 @@
-import { useState } from "react";
-import { Play, RotateCcw, Lightbulb, CheckCircle2, XCircle, Loader2, Terminal } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import {
+  Play,
+  RotateCcw,
+  Lightbulb,
+  CheckCircle2,
+  XCircle,
+  Loader2,
+  Terminal,
+  Eye,
+} from "lucide-react";
 import { runCode, type ChallengeLanguage, type RunResult } from "@/lib/code-runner";
 import { SHOP_SCHEMA } from "@/content/datasets/shop";
 import { InlineText } from "@/components/learn/InlineText";
@@ -37,9 +46,12 @@ export function CodeChallenge({
   const [result, setResult] = useState<RunResult | null>(null);
   const [running, setRunning] = useState(false);
   const [showHint, setShowHint] = useState(false);
+  // The code the preview shows: what was last run, not every keystroke.
+  const [previewCode, setPreviewCode] = useState<string | null>(null);
 
   async function handleRun(submit: boolean) {
     setRunning(true);
+    if (language === "react") setPreviewCode(code);
     const res = await runCode(language, code, tests);
     setResult(res);
     onResult(res);
@@ -82,6 +94,7 @@ export function CodeChallenge({
                 onClick={() => {
                   onCodeChange(starter);
                   setResult(null);
+                  setPreviewCode(null);
                 }}
                 className="flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold text-white/60 transition-colors hover:text-white"
               >
@@ -105,6 +118,9 @@ export function CodeChallenge({
         </div>
 
         <div className="flex flex-col border-t border-border lg:border-l lg:border-t-0">
+          {language === "react" && previewCode !== null ? (
+            <ReactPreview code={previewCode} />
+          ) : null}
           <div className="flex items-center gap-2 border-b border-border px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-chalk">
             <Terminal className="size-3.5" /> Output
           </div>
@@ -123,19 +139,23 @@ export function CodeChallenge({
                 ) : null}
                 <ul className="space-y-1.5 pt-2 font-sans">
                   {result.tests.map((t) => (
-                    <li
-                      key={t.name}
-                      className={cn(
-                        "flex items-center gap-2 text-sm",
-                        t.passed ? "text-brand" : "text-destructive",
-                      )}
-                    >
-                      {t.passed ? (
-                        <CheckCircle2 className="size-4" />
-                      ) : (
-                        <XCircle className="size-4" />
-                      )}
-                      {t.name}
+                    <li key={t.name} className="text-sm">
+                      <span
+                        className={cn(
+                          "flex items-center gap-2",
+                          t.passed ? "text-brand" : "text-destructive",
+                        )}
+                      >
+                        {t.passed ? (
+                          <CheckCircle2 className="size-4 shrink-0" />
+                        ) : (
+                          <XCircle className="size-4 shrink-0" />
+                        )}
+                        {t.name}
+                      </span>
+                      {!t.passed && t.detail ? (
+                        <span className="ml-6 block text-xs text-chalk">{t.detail}</span>
+                      ) : null}
                     </li>
                   ))}
                 </ul>
@@ -143,6 +163,7 @@ export function CodeChallenge({
                   Finished in {result.durationMs}ms
                   {result.engine === "python" ? " · CPython (WebAssembly)" : null}
                   {result.engine === "sql" ? " · SQLite (WebAssembly)" : null}
+                  {result.engine === "react" ? " · React, rendered in this page" : null}
                 </p>
                 {result.engine === "python-simulated" ? (
                   <p className="font-sans text-xs text-ember">
@@ -174,7 +195,7 @@ export function CodeChallenge({
         {solved ? (
           <span className="text-sm font-semibold text-brand">All tests green. Nice work.</span>
         ) : null}
-        {running && language !== "javascript" ? (
+        {running && (language === "python" || language === "sql") ? (
           <span className="text-sm text-chalk">
             {language === "sql"
               ? "Starting the database — the first run downloads it."
@@ -182,6 +203,44 @@ export function CodeChallenge({
           </span>
         ) : null}
       </div>
+    </div>
+  );
+}
+
+/**
+ * The learner's `App`, rendered by the real React in its own root. Each run
+ * mounts into a fresh element, because a root can't be created on a container
+ * another root still owns.
+ */
+function ReactPreview({ code }: { code: string }) {
+  const host = useRef<HTMLDivElement>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    let unmount = () => {};
+    setError(null);
+    import("@/lib/react-runtime")
+      .then(({ mountPreview }) => {
+        if (cancelled || !host.current) return;
+        unmount = mountPreview(code, host.current, (message) => {
+          if (!cancelled) setError(message);
+        });
+      })
+      .catch(() => setError("The preview couldn't load. Check your connection and run again."));
+    return () => {
+      cancelled = true;
+      unmount();
+    };
+  }, [code]);
+
+  return (
+    <div className="border-b border-border">
+      <div className="flex items-center gap-2 border-b border-border px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-chalk">
+        <Eye className="size-3.5" /> Preview
+      </div>
+      {error ? <p className="px-4 pt-3 font-mono text-[13px] text-destructive">{error}</p> : null}
+      <div ref={host} className="challenge-preview max-h-72 overflow-y-auto p-4 text-sm" />
     </div>
   );
 }

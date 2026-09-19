@@ -1,6 +1,7 @@
 /**
- * Runs every SQL and Python challenge on the local python3 — the same program
- * the browser runs on Pyodide (its sqlite3 is the same engine):
+ * Runs every SQL, Python and React challenge the way the browser does: SQL and
+ * Python on the local python3 (the same program Pyodide runs; its sqlite3 is
+ * the same engine), React through react-runtime.ts itself in a simulated DOM:
  *
  *   bun run lessons:verify
  *
@@ -10,8 +11,20 @@
  * scripted models) must be in the solution as well as the starter. Run it after
  * changing a challenge or src/content/datasets/shop.ts.
  */
+import { GlobalRegistrator } from "@happy-dom/global-registrator";
 import { bodies } from "../src/content/lesson-bodies.server";
 import { sqlProgram } from "../src/lib/code-runner";
+
+GlobalRegistrator.register();
+const { runReactChallenge } = await import("../src/lib/react-runtime");
+
+async function reactResults(code: string, tests: { name: string; expression: string }[]) {
+  const run = await runReactChallenge(code, tests);
+  return {
+    results: run.results.map((r) => r.passed),
+    error: run.error ?? run.results.find((r) => r.detail)?.detail ?? "",
+  };
+}
 
 let failures = 0;
 for (const [id, body] of Object.entries(bodies)) {
@@ -22,6 +35,15 @@ for (const [id, body] of Object.entries(bodies)) {
       ["solution", block.solution, true],
       ["starter", block.starter, false],
     ] as const) {
+      if (block.language === "react") {
+        const { results, error } = await reactResults(code, block.tests);
+        const ok = (results.length > 0 && results.every(Boolean)) === shouldPass;
+        if (!ok) failures++;
+        console.log(
+          `${ok ? "ok  " : "FAIL"} ${id} ${label} ${results.map((r) => (r ? "✓" : "✗")).join("")}${!ok && error ? `  ${error}` : ""}`,
+        );
+        continue;
+      }
       const program = block.language === "sql" ? sqlProgram(code) : code;
       // A test that raises counts as failed, as it does in the browser runner.
       const wrapped = [
@@ -47,4 +69,6 @@ for (const [id, body] of Object.entries(bodies)) {
     }
   }
 }
+await new Promise((resolve) => setTimeout(resolve, 50));
+await GlobalRegistrator.unregister();
 process.exit(failures ? 1 : 0);

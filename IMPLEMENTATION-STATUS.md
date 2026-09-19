@@ -24,10 +24,12 @@ Two facts shape every item below:
   settings, never in `.env`. Only public values with a `VITE_` prefix belong
   there.
 
-- [ ] **Run one SQL challenge in a browser.** SQL runs on Pyodide's sqlite3,
-      which loads on first import; it's verified on local CPython/SQLite but not
-      yet in Pyodide itself. Open `/learn/sql/sql-core.select`, click Run, and
-      expect a result table and "SQLite (WebAssembly)" under the tests.
+- [ ] **Run one SQL, one Python and one React challenge in a real browser.**
+      Each is verified by `lessons:verify` (SQL/Python on local CPython, React
+      under happy-dom) but none has been clicked in Chrome yet. Open
+      `/learn/sql/sql-core.select`, `/learn/genai/ai-rag.embeddings` and
+      `/learn/react/react-core.state`, click Run, and expect results — plus a
+      rendered Preview for React.
 - [ ] **Set `SUPABASE_SERVICE_ROLE_KEY` as a secret** for `nqudmlzugtssfqaebaqb`
       (server-only, never `VITE_`, never `.env` — it bypasses every RLS policy).
       Do this first: lesson completion runs through the service-role client, so
@@ -99,6 +101,18 @@ Two facts shape every item below:
 ---
 
 ## Done
+
+- [x] **React in Practice, complete, on a real React runner** (2026-09-19) —
+      `src/lib/react-runtime.ts` compiles the learner's JSX with sucrase and
+      renders it with the app's own React: hidden for the tests, visible in a
+      new Preview panel. Tests act like a user (click, fill, blur, read the
+      screen) and a failing one says why ("Couldn't find the text …"). Sucrase
+      is a lazy 201 KB chunk loaded only by a React challenge. Eight lessons:
+      components, props/composition, state without mutation or stored derived
+      values, effects with cleanup, a custom debounce hook, keys (the index-key
+      bug, reproduced), a new forms lesson the course description promised, and
+      the four data states with stale-response handling. `lessons:verify` runs
+      every React solution through the same runtime under happy-dom.
 
 - [x] **Machine Learning Basics, complete** (2026-09-19) — six lessons: fitting
       a line and beating a baseline, precision/recall against the cost of a
@@ -310,21 +324,23 @@ Two facts shape every item below:
 - [ ] **Instructors are invented people.** Every course names an instructor
       ("Tomas Beck, Platform Engineer") who doesn't exist. Replace with real
       authors or drop the card.
-- [ ] **Component and integration tests** — the unit layer is covered; nothing
-      exercises a route end to end.
+- [ ] **Component and integration tests** — the unit layer is covered, and
+      happy-dom now runs React in tests (`tests/react-runtime.test.ts`), so
+      component tests for the app itself are unblocked; none exist yet, and
+      nothing exercises a route end to end.
 
 ---
 
 ## The constraint that outranks this whole list
 
-**29 of 82 lessons are written** (the roadmap in `src/content/curriculum.ts` has
-82 slots). Four courses are complete, all written 2026-09-19: Git & GitHub (7 of
-7), SQL for Analysis (5 of 5), Generative AI Engineering (6 of 6) and Machine
-Learning Basics (6 of 6). **No path can issue a certificate yet.** The nearest is
-AI / GenAI Developer, which needs only the Python course (2 of 9): writing those
-7 lessons also brings the Python Developer path to within Python alone.
+**37 of 83 lessons are written** (the roadmap in `src/content/curriculum.ts` has
+83 slots). Five courses are complete, all written 2026-09-19: Git & GitHub (7 of
+7), SQL for Analysis (5 of 5), Generative AI Engineering (6 of 6), Machine
+Learning Basics (6 of 6) and React in Practice (8 of 8). **No path can issue a
+certificate yet.** The nearest is AI / GenAI Developer, which needs only the
+Python course (2 of 9); Frontend needs HTML & CSS, JavaScript and TypeScript.
 Every item on the review's ranked list is now closed, which changes nothing about
 this: the platform tells the truth, measures itself, remembers what you learned
-and can prove what you finished — about twenty-nine lessons. Nothing above changes the
+and can prove what you finished — about thirty-seven lessons. Nothing above changes the
 product's value until one whole path is written. The engineering here was about making sure the platform tells the truth
 while the content gets written — it is not a substitute for writing it.

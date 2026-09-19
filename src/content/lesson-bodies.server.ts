@@ -246,6 +246,1278 @@ export const bodies: Record<string, LessonBody> = {
       },
     ],
   },
+  "react-core.first": {
+    summary:
+      "Components are functions that turn data into UI. Write one, and render it with conditions.",
+    xp: 120,
+    blocks: [
+      {
+        kind: "text",
+        body: 'React rests on one idea: **the screen is a function of your data**. You don\'t tell the page *how* to change ("find the price, replace its text"). You describe what it should look like for the data you have, and React works out what to update. Most React bugs come from working against that idea.',
+      },
+      {
+        kind: "text",
+        body: "A **component** is a function whose name starts with a capital letter and that returns JSX. JSX looks like HTML, but it's JavaScript: `<h3>{product.name}</h3>` compiles to a function call, and anything inside `{}` is an ordinary JavaScript expression. A few differences from HTML follow from that: `className` instead of `class`, `htmlFor` instead of `for`, and a component returns one root element (wrap siblings in `<>…</>` when you need to).",
+      },
+      {
+        kind: "code",
+        language: "jsx",
+        code: `function Price({ amount }) {
+  return <p>\${amount.toFixed(2)}</p>;
+}
+
+function Stock({ count }) {
+  // A condition is just JavaScript: a ternary picks one of two elements
+  return count === 0 ? <p>Sold out</p> : <p>In stock: {count}</p>;
+}`,
+      },
+      {
+        kind: "text",
+        body: "Data comes in as **props**, a single object argument that's usually destructured: `function Price({ amount })`. You use a component like a tag, `<Price amount={35} />`, and the curly braces pass any JavaScript value, not just strings.",
+      },
+      {
+        kind: "text",
+        body: "Watch out for `{count && <p>…</p>}`. When `count` is `0`, `&&` returns `0`, and React renders numbers, so a stray **0** appears on the page. Use `count > 0 && …` or a ternary.",
+      },
+      {
+        kind: "callout",
+        body: 'In these challenges React is already loaded: `useState` and the other hooks are available without importing. You can still write `import { useState } from "react"` out of habit; it\'s ignored. The Preview panel shows your `App` each time you click Run.',
+      },
+      {
+        kind: "code",
+        language: "jsx",
+        caption: "Scenario",
+        code: `function CartBadge({ count }) {
+  return <span>Cart {count && <b>{count}</b>}</span>;
+}
+
+<CartBadge count={0} />`,
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question: "What does this render when the cart is empty?",
+        options: ["Cart", "Cart 0", "Cart false", "Nothing, because the component returns null"],
+        answer: 1,
+        explanation:
+          "`0 && …` evaluates to `0`, and React renders numbers (`false`, `null` and `undefined` render nothing). Write `count > 0 && …`.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          "You define `function productCard() {…}` and render `<productCard />`. Nothing appears, and there's no error. Why?",
+        options: [
+          "Components must be arrow functions",
+          "It needs to be exported first",
+          "Props are missing",
+          "A lowercase tag is treated as an HTML element, so React renders an unknown `<productcard>` element instead of calling your function",
+        ],
+        answer: 3,
+        explanation:
+          "Capitalised names are components and lowercase names are HTML tags. Rename it to `ProductCard`.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "A product card",
+        prompt:
+          'Write `ProductCard({ product })`. It should render the product\'s name in an `h3`, the price formatted like `$35.00`, and "Sold out" when `stock` is 0 or "In stock: 4" otherwise. Make sure no stray 0 appears on the page. `App` already renders two cards.',
+        language: "react",
+        starter: `const PRODUCTS = [
+  { id: 1, name: "Trail Runner Shoes", price: 120, stock: 4 },
+  { id: 2, name: "Camp Stove", price: 75, stock: 0 },
+];
+
+function ProductCard({ product }) {
+  // your code here
+  return null;
+}
+
+export default function App() {
+  return (
+    <div>
+      <ProductCard product={PRODUCTS[0]} />
+      <ProductCard product={PRODUCTS[1]} />
+    </div>
+  );
+}`,
+        hint: "Return an `<article>` holding an `<h3>`, a `<p>` with `${product.price.toFixed(2)}`, and a ternary on `product.stock === 0`.",
+        solution: `const PRODUCTS = [
+  { id: 1, name: "Trail Runner Shoes", price: 120, stock: 4 },
+  { id: 2, name: "Camp Stove", price: 75, stock: 0 },
+];
+
+function ProductCard({ product }) {
+  return (
+    <article>
+      <h3>{product.name}</h3>
+      <p>\${product.price.toFixed(2)}</p>
+      {product.stock === 0 ? <p>Sold out</p> : <p>In stock: {product.stock}</p>}
+    </article>
+  );
+}
+
+export default function App() {
+  return (
+    <div>
+      <ProductCard product={PRODUCTS[0]} />
+      <ProductCard product={PRODUCTS[1]} />
+    </div>
+  );
+}`,
+        tests: [
+          {
+            name: "Shows the name as a heading",
+            expression: `await render(<ProductCard product={{ id: 9, name: "Headlamp", price: 35, stock: 2 }} />);
+return getByRole("heading", { name: "Headlamp" }) !== null;`,
+          },
+          {
+            name: "Formats the price with two decimals",
+            expression: `await render(<ProductCard product={{ id: 9, name: "Headlamp", price: 35, stock: 2 }} />);
+return text().includes("$35.00");`,
+          },
+          {
+            name: "Shows the stock when there is some",
+            expression: `await render(<ProductCard product={{ id: 9, name: "Headlamp", price: 35, stock: 2 }} />);
+return text().includes("In stock: 2");`,
+          },
+          {
+            name: "Says sold out, with no stray 0 on the page",
+            expression: `await render(<ProductCard product={{ id: 8, name: "Camp Stove", price: 75, stock: 0 }} />);
+return text().includes("Sold out") && !text().includes("In stock") && !text().split(" ").includes("0");`,
+          },
+          {
+            name: "App shows both products",
+            expression: `await render(<App />);
+return getAllByRole("heading").length === 2;`,
+          },
+        ],
+      },
+    ],
+  },
+  "react-core.props": {
+    summary: "Split a screen into components, pass data down, and send events back up.",
+    xp: 130,
+    blocks: [
+      {
+        kind: "text",
+        body: "Real screens are built from small components that each do one job. Start by drawing boxes on the design: a box that repeats (a product row) or has its own clear purpose (a filter panel) is a component.",
+      },
+      {
+        kind: "text",
+        body: "**Data flows down, events flow up.** A parent passes data to a child as props, and props are read-only, so the child never changes them. When the child needs to change something the parent owns, the parent passes a function as well (`onClose`, `onSelect`) and the child calls it.",
+      },
+      {
+        kind: "text",
+        body: "**`children` is how components compose.** Whatever you put between a component's tags arrives as `props.children`. That lets a `Panel` provide the frame (title, close button, spacing) while the caller decides what goes inside, which beats a component with twelve boolean props for every possible variation.",
+      },
+      {
+        kind: "code",
+        language: "jsx",
+        code: `function Card({ title, children }) {
+  return (
+    <section>
+      <h2>{title}</h2>
+      {children}
+    </section>
+  );
+}
+
+<Card title="Shipping">
+  <p>Free over $50.</p>
+</Card>`,
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question: "A `SizePicker` child needs to change the size stored in its parent. How?",
+        options: [
+          'The parent passes `size` and an `onChange` function; the child calls `onChange("M")`',
+          'The child sets `props.size = "M"`',
+          "The child keeps its own copy of the size and the parent reads it",
+          "Store the size in a global variable",
+        ],
+        answer: 0,
+        explanation:
+          "Props are read-only, and a copy would drift out of sync. The owner of the data passes down both the value and a way to change it.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          "A `Panel` has grown the props `showHeader`, `headerText`, `showFooter`, `footerText`, `footerButton` and `footerButtonOnClick`. What's the better design?",
+        options: [
+          "Add a `config` object with the same fields",
+          "Split it into `PanelWithHeader` and `PanelWithFooter`",
+          "Let callers pass the content as `children`, keeping only what every panel shares (such as the title)",
+          "Keep adding props as new cases appear",
+        ],
+        answer: 2,
+        explanation:
+          "Composition lets each caller decide what goes inside, without the component having to predict every variation.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Compose a panel",
+        prompt:
+          'Write `Panel({ title, children, onClose })`. It renders a `section` containing an `h2` with the title, a button labelled "Close" that calls `onClose`, and then the `children`. `App` is written for you: it hides the panel when it\'s closed, and shows a "Show filters" button to bring it back. (You\'ll write state like that yourself in the next lesson.)',
+        language: "react",
+        starter: `function Panel({ title, children, onClose }) {
+  // your code here
+  return null;
+}
+
+export default function App() {
+  const [open, setOpen] = useState(true);
+  if (!open) return <button onClick={() => setOpen(true)}>Show filters</button>;
+  return (
+    <Panel title="Filters" onClose={() => setOpen(false)}>
+      <p>Pick a size and a colour.</p>
+    </Panel>
+  );
+}`,
+        hint: "Return `<section>` holding `<h2>{title}</h2>`, `<button onClick={onClose}>Close</button>` and `{children}`.",
+        solution: `function Panel({ title, children, onClose }) {
+  return (
+    <section>
+      <h2>{title}</h2>
+      <button onClick={onClose}>Close</button>
+      {children}
+    </section>
+  );
+}
+
+export default function App() {
+  const [open, setOpen] = useState(true);
+  if (!open) return <button onClick={() => setOpen(true)}>Show filters</button>;
+  return (
+    <Panel title="Filters" onClose={() => setOpen(false)}>
+      <p>Pick a size and a colour.</p>
+    </Panel>
+  );
+}`,
+        tests: [
+          {
+            name: "Renders the title and the children",
+            expression: `await render(<Panel title="Sizes" onClose={() => {}}><p>Pick one</p></Panel>);
+return getByRole("heading", { name: "Sizes" }) !== null && getByText("Pick one") !== null;`,
+          },
+          {
+            name: "Close calls onClose",
+            expression: `let closed = 0;
+await render(<Panel title="Sizes" onClose={() => closed++}><p>Pick one</p></Panel>);
+await click(getByRole("button", { name: "Close" }));
+return closed === 1;`,
+          },
+          {
+            name: "In App, closing hides the panel and Show filters brings it back",
+            expression: `await render(<App />);
+await click(getByRole("button", { name: "Close" }));
+const hidden = queryByRole("heading", { name: "Filters" }) === null;
+await click(getByRole("button", { name: "Show filters" }));
+return hidden && getByRole("heading", { name: "Filters" }) !== null;`,
+          },
+        ],
+      },
+    ],
+  },
+  "react-core.state": {
+    summary:
+      "Give components memory with useState, update it without mutating, and compute what you can.",
+    xp: 160,
+    blocks: [
+      {
+        kind: "text",
+        body: "**State** is a component's memory. `const [count, setCount] = useState(0)` gives you the current value and a function to replace it. Calling the setter doesn't change the variable you're holding. It asks React to render the component again, and on that render `useState` returns the new value.",
+      },
+      {
+        kind: "text",
+        body: "**Never mutate state; replace it.** React decides whether to re-render by checking whether you gave it a *different* value. `items.push(x); setItems(items)` hands back the same array, so React sees nothing new. Build a new array or object instead: `[...items, x]`, `items.filter(…)`, `{ ...form, email }`.",
+      },
+      {
+        kind: "code",
+        language: "jsx",
+        code: `// When the next value depends on the current one, pass a function.
+// React gives it the latest value, even if several updates are queued.
+setItems((current) => [...current, newItem]);
+setCount((c) => c + 1);`,
+      },
+      {
+        kind: "text",
+        body: "**Don't store what you can calculate.** If `total` can be worked out from the cart lines, compute it while rendering: `const total = lines.reduce(…)`. Keeping it in its own state means updating two things every time, and sooner or later one update gets missed.",
+      },
+      {
+        kind: "text",
+        body: "When two components need the same state, move it up to their closest common parent and pass it down. This is called **lifting state up**, and it keeps a single source of truth.",
+      },
+      {
+        kind: "code",
+        language: "jsx",
+        caption: "Scenario: clicking Add does nothing on screen",
+        code: `function add(item) {
+  items.push(item);
+  setItems(items);
+}`,
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question: "Why doesn't the list update?",
+        options: [
+          "`setItems` is asynchronous and needs `await`",
+          "Arrays can't be stored in state",
+          "It's the same array object, so React sees no change and skips the re-render. Use `setItems([...items, item])`",
+          "`push` returns the new length",
+        ],
+        answer: 2,
+        explanation:
+          "React compares the old and new values by identity. The contents changed, but the array is the same object, so nothing tells React to re-render.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          "A cart keeps `lines` and `total` in two `useState`s and updates both on add and on remove. After a few removals, the total is wrong. What's the lasting fix?",
+        options: [
+          "Remove the `total` state and calculate it from `lines` during render",
+          "Add a `useEffect` that sets `total` whenever `lines` changes",
+          "Recalculate `total` when the page loads",
+          "Store the total in `localStorage`",
+        ],
+        answer: 0,
+        explanation:
+          "A value calculated during render can't disagree with its source. An effect would work, but it renders once with the wrong total first, and it's code you don't need.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Fix the cart",
+        prompt:
+          "This cart's total goes wrong after you remove something. Make the total always match the lines: adding shows a new line and updates the total, and removing a line updates both. Fixing the total properly will expose a second bug. Fix that one too.",
+        language: "react",
+        starter: `const CATALOG = [
+  { id: "headlamp", name: "Headlamp", price: 35 },
+  { id: "bottle", name: "Water Bottle", price: 20 },
+];
+
+let nextKey = 1;
+
+export default function App() {
+  const [lines, setLines] = useState([]);
+  const [total, setTotal] = useState(0);
+
+  function add(product) {
+    lines.push({ key: nextKey++, ...product });
+    setLines(lines);
+    setTotal(total + product.price);
+  }
+
+  function remove(key) {
+    setLines(lines.filter((line) => line.key !== key));
+  }
+
+  return (
+    <div>
+      {CATALOG.map((product) => (
+        <button key={product.id} onClick={() => add(product)}>
+          Add {product.name}
+        </button>
+      ))}
+      <ul>
+        {lines.map((line) => (
+          <li key={line.key}>
+            {line.name} <button onClick={() => remove(line.key)}>Remove</button>
+          </li>
+        ))}
+      </ul>
+      <p>Total: \${total}</p>
+    </div>
+  );
+}`,
+        hint: "Delete the `total` state and compute `const total = lines.reduce((sum, line) => sum + line.price, 0)`. Adding then stops showing up on screen, because `push` changes the same array. Build a new one with `setLines((current) => [...current, line])`.",
+        solution: `const CATALOG = [
+  { id: "headlamp", name: "Headlamp", price: 35 },
+  { id: "bottle", name: "Water Bottle", price: 20 },
+];
+
+let nextKey = 1;
+
+export default function App() {
+  const [lines, setLines] = useState([]);
+  const total = lines.reduce((sum, line) => sum + line.price, 0);
+
+  function add(product) {
+    const line = { key: nextKey++, ...product };
+    setLines((current) => [...current, line]);
+  }
+
+  function remove(key) {
+    setLines((current) => current.filter((line) => line.key !== key));
+  }
+
+  return (
+    <div>
+      {CATALOG.map((product) => (
+        <button key={product.id} onClick={() => add(product)}>
+          Add {product.name}
+        </button>
+      ))}
+      <ul>
+        {lines.map((line) => (
+          <li key={line.key}>
+            {line.name} <button onClick={() => remove(line.key)}>Remove</button>
+          </li>
+        ))}
+      </ul>
+      <p>Total: \${total}</p>
+    </div>
+  );
+}`,
+        tests: [
+          {
+            name: "Adding shows a line",
+            expression: `await render(<App />);
+await click(getByRole("button", { name: "Add Headlamp" }));
+return getAllByRole("listitem").length === 1;`,
+          },
+          {
+            name: "The total adds up",
+            expression: `await render(<App />);
+await click(getByRole("button", { name: "Add Headlamp" }));
+await click(getByRole("button", { name: "Add Water Bottle" }));
+return text().includes("Total: $55");`,
+          },
+          {
+            name: "Removing updates the lines and the total",
+            expression: `await render(<App />);
+await click(getByRole("button", { name: "Add Headlamp" }));
+await click(getByRole("button", { name: "Add Water Bottle" }));
+await click(getAllByRole("button", { name: "Remove" })[0]);
+return getAllByRole("listitem").length === 1 && text().includes("Total: $20");`,
+          },
+          {
+            name: "The same product can be added twice",
+            expression: `await render(<App />);
+const add = getByRole("button", { name: "Add Headlamp" });
+await click(add);
+await click(add);
+return getAllByRole("listitem").length === 2 && text().includes("Total: $70");`,
+          },
+        ],
+      },
+    ],
+  },
+  "react-hooks.effect": {
+    summary: "Use effects only to sync with the outside world, and always clean up after them.",
+    xp: 150,
+    blocks: [
+      {
+        kind: "text",
+        body: "`useEffect` runs code *after* React has updated the screen. It exists for one job: **keeping your component in sync with something outside React**, such as a timer, a subscription, a browser API or a network connection. It isn't for calculating values or for reacting to clicks.",
+      },
+      {
+        kind: "text",
+        body: "Before writing an effect, check whether you need one. Values derived from props or state are calculated during render. Things that happen because the user did something belong in the event handler. A good share of effects in real codebases are the first case in disguise, and they cost an extra render and a class of bugs.",
+      },
+      {
+        kind: "code",
+        language: "jsx",
+        code: `useEffect(() => {
+  const id = setInterval(() => setTicks((t) => t + 1), 1000);
+  return () => clearInterval(id);   // cleanup: runs before the next run, and on unmount
+}, [running]);                       // dependencies: re-run only when these change`,
+      },
+      {
+        kind: "text",
+        body: "Three rules prevent most effect bugs. **List every value from the component the effect uses** in the dependency array; leave it out altogether and the effect runs after every render. **Return a cleanup** for anything you start (timers, listeners, subscriptions), or you'll stack a new one on every re-run. And **use the updater form** (`setTicks(t => t + 1)`) inside long-lived callbacks, because the callback captured the value from the render that created it and will keep seeing that old value.",
+      },
+      {
+        kind: "callout",
+        body: "In development, React's Strict Mode deliberately runs each effect, cleans it up and runs it again. If that breaks something (two intervals, doubled requests), the effect is missing its cleanup, and it would have broken in production eventually too.",
+      },
+      {
+        kind: "code",
+        language: "jsx",
+        caption: "Scenario",
+        code: `const [first, setFirst] = useState("Ada");
+const [last, setLast] = useState("Lovelace");
+const [fullName, setFullName] = useState("");
+
+useEffect(() => {
+  setFullName(first + " " + last);
+}, [first, last]);`,
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question: "What's the better way to write this?",
+        options: [
+          "Add `fullName` to the dependency array",
+          "Use `useLayoutEffect` so it runs sooner",
+          "Move it to a custom hook",
+          'Drop the state and effect: `const fullName = first + " " + last;`',
+        ],
+        answer: 3,
+        explanation:
+          "It's derived data. Calculating it during render is simpler and never shows a stale value for a frame.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          'An effect calls `window.addEventListener("resize", onResize)` and returns nothing. The component mounts and unmounts as the user switches tabs. What happens over time?',
+        options: [
+          "Nothing, because React removes listeners automatically",
+          "Listeners pile up, one per mount, and each keeps calling a handler for a component that's gone",
+          "The browser ignores duplicate listeners",
+          "The effect throws on the second mount",
+        ],
+        answer: 1,
+        explanation:
+          'React knows nothing about listeners you add yourself. Return `() => window.removeEventListener("resize", onResize)`.',
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Fix the stopwatch",
+        prompt:
+          "This stopwatch ticks every 100 ms while running. Instead it speeds up, Stop doesn't stop it, and the count jumps about. Fix the effect so it counts steadily while running, stops when stopped, and Reset puts it back to 0.",
+        language: "react",
+        starter: `export default function App() {
+  const [running, setRunning] = useState(false);
+  const [ticks, setTicks] = useState(0);
+
+  useEffect(() => {
+    if (!running) return;
+    setInterval(() => {
+      setTicks(ticks + 1);
+    }, 100);
+  });
+
+  return (
+    <div>
+      <p>{ticks} ticks</p>
+      <button onClick={() => setRunning(!running)}>{running ? "Stop" : "Start"}</button>
+      <button onClick={() => { setRunning(false); setTicks(0); }}>Reset</button>
+    </div>
+  );
+}`,
+        hint: "Three changes: keep the interval's id and `return () => clearInterval(id)`; add `[running]` as the dependency array; and use `setTicks((t) => t + 1)` so the callback never reads a stale `ticks`.",
+        solution: `export default function App() {
+  const [running, setRunning] = useState(false);
+  const [ticks, setTicks] = useState(0);
+
+  useEffect(() => {
+    if (!running) return;
+    const id = setInterval(() => {
+      setTicks((t) => t + 1);
+    }, 100);
+    return () => clearInterval(id);
+  }, [running]);
+
+  return (
+    <div>
+      <p>{ticks} ticks</p>
+      <button onClick={() => setRunning(!running)}>{running ? "Stop" : "Start"}</button>
+      <button onClick={() => { setRunning(false); setTicks(0); }}>Reset</button>
+    </div>
+  );
+}`,
+        tests: [
+          {
+            name: "Counts steadily while running",
+            expression: `await render(<App />);
+await click(getByRole("button", { name: "Start" }));
+await sleep(540);
+const n = Number(text().match(/(\\d+) ticks/)[1]);
+return n >= 4 && n <= 6;`,
+          },
+          {
+            name: "Stop stops it",
+            expression: `await render(<App />);
+await click(getByRole("button", { name: "Start" }));
+await sleep(320);
+await click(getByRole("button", { name: "Stop" }));
+const stoppedAt = text();
+await sleep(320);
+return text() === stoppedAt;`,
+          },
+          {
+            name: "Reset goes back to 0",
+            expression: `await render(<App />);
+await click(getByRole("button", { name: "Start" }));
+await sleep(250);
+await click(getByRole("button", { name: "Reset" }));
+await sleep(250);
+return text().startsWith("0 ticks");`,
+          },
+        ],
+      },
+    ],
+  },
+  "react-hooks.custom": {
+    summary: "Pull stateful logic into a hook you can reuse, and know the rules hooks live by.",
+    xp: 160,
+    blocks: [
+      {
+        kind: "text",
+        body: "When two components need the same *behaviour* (a toggle, a debounced search, a value synced to local storage), move it into a **custom hook**: a function whose name starts with `use` and that calls other hooks. Components stay short, and the behaviour gets one name and one place to fix bugs.",
+      },
+      {
+        kind: "code",
+        language: "jsx",
+        code: `function useToggle(initial = false) {
+  const [on, setOn] = useState(initial);
+  const toggle = () => setOn((v) => !v);
+  return [on, toggle];
+}
+
+const [menuOpen, toggleMenu] = useToggle();`,
+      },
+      {
+        kind: "text",
+        body: "A custom hook shares **logic, not state**. Each component that calls `useToggle()` gets its own separate `on`. To share one value between components, lift the state up or use context.",
+      },
+      {
+        kind: "text",
+        body: "**The rules of hooks:** call them at the top level of a component or of another hook, never inside a condition, a loop or a nested function. React matches each hook to its stored state by call order, so a hook that runs on some renders and not others shifts every hook after it onto the wrong state.",
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question: "`Header` and `Sidebar` both call `useToggle()`. Clicking the header's toggle…",
+        options: [
+          "Toggles both, because they share the hook",
+          "Toggles only the header's value; each call has its own state",
+          "Throws, because a hook can only be used once",
+          "Toggles whichever component rendered last",
+        ],
+        answer: 1,
+        explanation:
+          "Every call to a hook creates independent state. Custom hooks reuse behaviour, not data.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question: "Why is `if (isAdmin) { useEffect(…) }` a bug?",
+        options: [
+          "Effects can't read props",
+          "Admins need a different hook",
+          "React tracks hooks by call order; when `isAdmin` changes, every later hook lines up with the wrong state",
+          "It's only a lint warning",
+        ],
+        answer: 2,
+        explanation:
+          "Call the hook unconditionally and put the condition inside it: `useEffect(() => { if (!isAdmin) return; … }, [isAdmin])`.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "useDebouncedValue",
+        prompt:
+          "A search box shouldn't query on every keystroke. Write `useDebouncedValue(value, delay)`: it returns `value` unchanged on the first render, then only updates once `value` has stopped changing for `delay` milliseconds. Each change restarts the wait. The search box in `App` shows the result.",
+        language: "react",
+        starter: `function useDebouncedValue(value, delay) {
+  // your code here
+  return value;
+}
+
+export default function App() {
+  const [query, setQuery] = useState("");
+  const debounced = useDebouncedValue(query, 300);
+  return (
+    <div>
+      <label htmlFor="search">Search</label>
+      <input id="search" value={query} onChange={(e) => setQuery(e.target.value)} />
+      <p>Searching for: {debounced || "nothing yet"}</p>
+    </div>
+  );
+}`,
+        hint: "Keep the debounced value in `useState(value)`. In a `useEffect` on `[value, delay]`, start a `setTimeout` that sets it, and return `() => clearTimeout(id)` so each new keystroke cancels the previous timer.",
+        solution: `function useDebouncedValue(value, delay) {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const id = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(id);
+  }, [value, delay]);
+  return debounced;
+}
+
+export default function App() {
+  const [query, setQuery] = useState("");
+  const debounced = useDebouncedValue(query, 300);
+  return (
+    <div>
+      <label htmlFor="search">Search</label>
+      <input id="search" value={query} onChange={(e) => setQuery(e.target.value)} />
+      <p>Searching for: {debounced || "nothing yet"}</p>
+    </div>
+  );
+}`,
+        tests: [
+          {
+            name: "Returns the starting value straight away",
+            expression: `function Probe() {
+  return <p>{useDebouncedValue("tents", 50)}</p>;
+}
+await render(<Probe />);
+return text() === "tents";`,
+          },
+          {
+            name: "Doesn't update while you're typing",
+            expression: `await render(<App />);
+await fill(getByLabelText("Search"), "boots");
+return text().includes("Searching for: nothing yet");`,
+          },
+          {
+            name: "Updates once typing stops",
+            expression: `await render(<App />);
+await fill(getByLabelText("Search"), "boots");
+await sleep(400);
+return text().includes("Searching for: boots");`,
+          },
+          {
+            name: "Each keystroke restarts the wait",
+            expression: `await render(<App />);
+const box = getByLabelText("Search");
+await fill(box, "b");
+await sleep(100);
+await fill(box, "bo");
+await sleep(100);
+await fill(box, "boots");
+await sleep(150);
+const stillWaiting = text().includes("nothing yet");
+await sleep(250);
+return stillWaiting && text().includes("Searching for: boots");`,
+          },
+        ],
+      },
+    ],
+  },
+  "react-data.lists": {
+    summary: "Render arrays with map, and give every item a key that follows it around.",
+    xp: 140,
+    blocks: [
+      {
+        kind: "text",
+        body: "To render a list, `map` your data to elements: `{tasks.map((task) => <li key={task.id}>{task.title}</li>)}`. Filter and sort the *data* before mapping. Don't try to hide elements afterwards.",
+      },
+      {
+        kind: "text",
+        body: "The **key** is how React recognises an item from one render to the next. When the list changes, React matches old and new elements by key, and it keeps each item's state and DOM (typed text, focus, open or closed) with its key. A good key is stable and unique among its siblings, which usually means an id from your data.",
+      },
+      {
+        kind: "text",
+        body: '**The index is a bad key for any list that can reorder, insert or delete.** With `key={index}`, React thinks "item 0 is still item 0" after you sort, so the text someone typed into the first row stays in the first row while the task it belonged to moves elsewhere. With `key={Math.random()}` it\'s worse: every render gives every item a new identity, so React throws the DOM away and inputs lose focus as you type.',
+      },
+      {
+        kind: "code",
+        language: "jsx",
+        code: `// Index keys: fine for a static list that never changes order
+{tags.map((tag, i) => <span key={i}>{tag}</span>)}
+
+// Anything that sorts, filters, inserts or holds state: use the data's id
+{tasks.map((task) => <TaskRow key={task.id} task={task} />)}`,
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          "Each row of a sortable list has a note field, and the list uses `key={index}`. A user types a note on the first row, then sorts. What happens?",
+        options: [
+          "The note moves with its task",
+          "The note disappears",
+          "React throws a key warning and refuses to sort",
+          "The note stays on the first row, which now shows a different task",
+        ],
+        answer: 3,
+        explanation:
+          "React keeps the input at key 0, and key 0 is now a different task. The state follows the key, and the key followed the position.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question: "Why is `key={crypto.randomUUID()}` inside `map` a bug?",
+        options: [
+          "UUIDs are too long for keys",
+          "Every render creates new keys, so React remounts every row: inputs lose focus and state resets",
+          "Keys must be numbers",
+          "It's fine, because the keys are unique",
+        ],
+        answer: 1,
+        explanation:
+          "A key has to be the same across renders for the same item. Generate the id once, when the item is created, and store it with the data.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Notes that stay put",
+        prompt:
+          'Each task has a note field. Type a note for "Charge headlamp", then click "Sort A–Z": the note ends up on the wrong task. Fix it so every note stays with its own task, whichever way the list is sorted.',
+        language: "react",
+        starter: `const TASKS = [
+  { id: "t1", title: "Pack tent", added: 1 },
+  { id: "t2", title: "Buy gas canister", added: 2 },
+  { id: "t3", title: "Charge headlamp", added: 3 },
+];
+
+export default function App() {
+  const [sortBy, setSortBy] = useState("newest");
+  const tasks = [...TASKS].sort((a, b) =>
+    sortBy === "title" ? a.title.localeCompare(b.title) : b.added - a.added,
+  );
+
+  return (
+    <div>
+      <button onClick={() => setSortBy("title")}>Sort A–Z</button>
+      <button onClick={() => setSortBy("newest")}>Newest first</button>
+      <ul>
+        {tasks.map((task, index) => (
+          <li key={index}>
+            {task.title}
+            <input aria-label={\`Note for \${task.title}\`} defaultValue="" />
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}`,
+        hint: "The note lives in the `<input>`'s DOM, and React keeps that DOM with the key. Give each row a key that belongs to the task rather than the position.",
+        solution: `const TASKS = [
+  { id: "t1", title: "Pack tent", added: 1 },
+  { id: "t2", title: "Buy gas canister", added: 2 },
+  { id: "t3", title: "Charge headlamp", added: 3 },
+];
+
+export default function App() {
+  const [sortBy, setSortBy] = useState("newest");
+  const tasks = [...TASKS].sort((a, b) =>
+    sortBy === "title" ? a.title.localeCompare(b.title) : b.added - a.added,
+  );
+
+  return (
+    <div>
+      <button onClick={() => setSortBy("title")}>Sort A–Z</button>
+      <button onClick={() => setSortBy("newest")}>Newest first</button>
+      <ul>
+        {tasks.map((task) => (
+          <li key={task.id}>
+            {task.title}
+            <input aria-label={\`Note for \${task.title}\`} defaultValue="" />
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}`,
+        tests: [
+          {
+            name: "Sorting still lists every task",
+            expression: `await render(<App />);
+await click(getByRole("button", { name: "Sort A–Z" }));
+return getAllByRole("listitem").length === 3;`,
+          },
+          {
+            name: "A note stays with its task after sorting",
+            expression: `await render(<App />);
+await fill(getByLabelText("Note for Charge headlamp"), "spare batteries");
+await click(getByRole("button", { name: "Sort A–Z" }));
+return getByLabelText("Note for Charge headlamp").value === "spare batteries";`,
+          },
+          {
+            name: "…and doesn't turn up on another task",
+            expression: `await render(<App />);
+await fill(getByLabelText("Note for Charge headlamp"), "spare batteries");
+await click(getByRole("button", { name: "Sort A–Z" }));
+return getByLabelText("Note for Buy gas canister").value === "";`,
+          },
+          {
+            name: "Sorting back keeps it too",
+            expression: `await render(<App />);
+await fill(getByLabelText("Note for Charge headlamp"), "spare batteries");
+await click(getByRole("button", { name: "Sort A–Z" }));
+await click(getByRole("button", { name: "Newest first" }));
+return getByLabelText("Note for Charge headlamp").value === "spare batteries";`,
+          },
+        ],
+      },
+    ],
+  },
+  "react-data.forms": {
+    summary:
+      "Controlled inputs, errors shown at the right moment, and a submit that can't fire twice.",
+    xp: 170,
+    blocks: [
+      {
+        kind: "text",
+        body: "A **controlled input** takes its value from state and reports changes back: `value={email}` together with `onChange={(e) => setEmail(e.target.value)}`. State becomes the single source of truth, so validating, resetting or pre-filling the form is ordinary state work.",
+      },
+      {
+        kind: "text",
+        body: "**Show errors at the right moment.** \"Invalid email\" appearing after the first letter is shouting at someone who hasn't finished typing. The common rule: show a field's error once the user has *left* the field (blur), or when they try to submit, and from then on update it live as they fix it.",
+      },
+      {
+        kind: "text",
+        body: 'Make errors accessible. Put the message next to its field, give it `role="alert"` so screen readers announce it, and link it to the input with `aria-describedby`. Say how to fix the problem ("Use at least 8 characters"), not just that there is one.',
+      },
+      {
+        kind: "text",
+        body: "**Submitting is a state too.** Call `event.preventDefault()` so the browser doesn't reload the page. While the request is in flight, disable the button and change its label, so a double-click can't create two accounts. Afterwards, show a result, and handle the case where the server says no.",
+      },
+      {
+        kind: "code",
+        language: "jsx",
+        code: `const [status, setStatus] = useState("idle"); // "idle" | "submitting" | "done"
+
+<button type="submit" disabled={status === "submitting"}>
+  {status === "submitting" ? "Creating account…" : "Create account"}
+</button>`,
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question: 'When should a sign-up form first show "Enter a valid email address"?',
+        options: [
+          "As soon as the page loads",
+          "On the first keystroke",
+          "When the user leaves the email field, or tries to submit, with an invalid value",
+          "Only after the server rejects it",
+        ],
+        answer: 2,
+        explanation:
+          "That's early enough to help and late enough not to nag. Once the error is showing, update it on every keystroke so it disappears the moment the value is fixed.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          'Some customers are charged twice when they double-click "Place order". What\'s the front-end fix?',
+        options: [
+          "Disable the button and show progress while the request is in flight",
+          "Add a confirmation dialog",
+          "Debounce the click by one second",
+          "Tell customers to click once",
+        ],
+        answer: 0,
+        explanation:
+          "A disabled button can't fire a second submit, and the progress label says why. The server should also reject duplicates, but the UI shouldn't invite them.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "A sign-up form that behaves",
+        prompt:
+          'Finish `SignupForm({ onSubmit })`. Email must contain "@" and the password must be at least 8 characters. Show each field\'s error (with `role="alert"`) once the field has been left, or after a submit attempt, and never before. Only a valid form calls `onSubmit({ email, password })`. `onSubmit` returns a promise: while it\'s pending, the button reads "Creating account…" and is disabled. When it resolves, show "Account created".',
+        language: "react",
+        starter: `function SignupForm({ onSubmit }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  function handleSubmit(event) {
+    event.preventDefault();
+    onSubmit({ email, password });
+  }
+
+  return (
+    <form onSubmit={handleSubmit} noValidate>
+      <label htmlFor="email">Email</label>
+      <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+      <label htmlFor="password">Password</label>
+      <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+      <button type="submit">Create account</button>
+    </form>
+  );
+}
+
+export default function App() {
+  return <SignupForm onSubmit={() => new Promise((resolve) => setTimeout(resolve, 800))} />;
+}`,
+        hint: 'Compute the errors from the values on every render. Keep a `touched` object (set on blur, and for every field on submit) and show an error only when its field is touched. Add a `status` state: return early from submit if there are errors or you\'re already submitting, `await onSubmit(...)`, then set `"done"`.',
+        solution: `function validate({ email, password }) {
+  const errors = {};
+  if (!email.includes("@")) errors.email = "Enter a valid email address.";
+  if (password.length < 8) errors.password = "Use at least 8 characters.";
+  return errors;
+}
+
+function SignupForm({ onSubmit }) {
+  const [values, setValues] = useState({ email: "", password: "" });
+  const [touched, setTouched] = useState({});
+  const [status, setStatus] = useState("idle");
+  const errors = validate(values);
+
+  const update = (field) => (event) => setValues((v) => ({ ...v, [field]: event.target.value }));
+  const leave = (field) => () => setTouched((t) => ({ ...t, [field]: true }));
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    setTouched({ email: true, password: true });
+    if (Object.keys(errors).length > 0 || status === "submitting") return;
+    setStatus("submitting");
+    await onSubmit(values);
+    setStatus("done");
+  }
+
+  if (status === "done") return <p role="status">Account created</p>;
+
+  return (
+    <form onSubmit={handleSubmit} noValidate>
+      <label htmlFor="email">Email</label>
+      <input id="email" type="email" value={values.email} onChange={update("email")}
+        onBlur={leave("email")} aria-describedby="email-error" />
+      {touched.email && errors.email ? <p id="email-error" role="alert">{errors.email}</p> : null}
+      <label htmlFor="password">Password</label>
+      <input id="password" type="password" value={values.password} onChange={update("password")}
+        onBlur={leave("password")} aria-describedby="password-error" />
+      {touched.password && errors.password ? <p id="password-error" role="alert">{errors.password}</p> : null}
+      <button type="submit" disabled={status === "submitting"}>
+        {status === "submitting" ? "Creating account…" : "Create account"}
+      </button>
+    </form>
+  );
+}
+
+export default function App() {
+  return <SignupForm onSubmit={() => new Promise((resolve) => setTimeout(resolve, 800))} />;
+}`,
+        tests: [
+          {
+            name: "No error while the field is still being filled in",
+            expression: `await render(<SignupForm onSubmit={async () => {}} />);
+await fill(getByLabelText("Email"), "ada");
+return queryByRole("alert") === null;`,
+          },
+          {
+            name: "Leaving the email field shows its error",
+            expression: `await render(<SignupForm onSubmit={async () => {}} />);
+const email = getByLabelText("Email");
+await fill(email, "ada");
+await blur(email);
+return /email/i.test(getByRole("alert").textContent);`,
+          },
+          {
+            name: "Submitting an empty form shows both errors and sends nothing",
+            expression: `let calls = 0;
+await render(<SignupForm onSubmit={async () => { calls++; }} />);
+await click(getByRole("button", { name: "Create account" }));
+return getAllByRole("alert").length === 2 && calls === 0;`,
+          },
+          {
+            name: "A valid form sends the values",
+            expression: `const sent = [];
+await render(<SignupForm onSubmit={async (values) => { sent.push(values); }} />);
+await fill(getByLabelText("Email"), "ada@example.com");
+await fill(getByLabelText("Password"), "correct horse");
+await click(getByRole("button", { name: "Create account" }));
+return sent.length === 1 && sent[0].email === "ada@example.com" && sent[0].password === "correct horse";`,
+          },
+          {
+            name: "Disabled while submitting, so a double-click sends once",
+            expression: `let calls = 0;
+await render(<SignupForm onSubmit={() => { calls++; return new Promise((r) => setTimeout(r, 200)); }} />);
+await fill(getByLabelText("Email"), "ada@example.com");
+await fill(getByLabelText("Password"), "correct horse");
+await click(getByRole("button", { name: "Create account" }));
+const busy = getByRole("button", { name: "Creating account…" });
+const disabled = busy.disabled;
+await click(busy);
+await sleep(300);
+return disabled && calls === 1 && text().includes("Account created");`,
+          },
+        ],
+      },
+    ],
+  },
+  "react-data.fetch": {
+    summary:
+      "Handle loading, error, empty and success, and never show a response that arrived too late.",
+    xp: 190,
+    blocks: [
+      {
+        kind: "text",
+        body: "Every screen that loads data has **four states**, and users see all of them: **loading**, **error** (with a way to try again), **empty** (loaded fine, nothing to show) and **success**. Tutorials build the last one. Production is the other three.",
+      },
+      {
+        kind: "text",
+        body: 'Model those states as **one** status rather than separate booleans. `isLoading`, `isError` and `data` stored separately can combine into states that make no sense, such as loading and failed at the same time. `{ status: "loading" | "error" | "success", products }` can only ever be one of them.',
+      },
+      {
+        kind: "code",
+        language: "jsx",
+        code: `useEffect(() => {
+  let ignore = false;                       // set by the cleanup below
+  setState({ status: "loading" });
+  fetchProducts()
+    .then((products) => { if (!ignore) setState({ status: "success", products }); })
+    .catch(() => { if (!ignore) setState({ status: "error" }); });
+  return () => { ignore = true; };          // a newer request has started: drop this one
+}, [fetchProducts, attempt]);`,
+      },
+      {
+        kind: "text",
+        body: '**Responses arrive out of order.** Type "boo" then "boots" quickly, and the "boo" results can arrive last and overwrite the right ones. The `ignore` flag in the cleanup makes each effect run discard its response once a newer run has started. (An `AbortController` goes further and cancels the request itself.)',
+      },
+      {
+        kind: "text",
+        body: "In a real app, reach for a data library instead of hand-writing this in every component. TanStack Query (which this platform uses) adds caching, deduplication, retries and refetching on focus, and gives you the same states:",
+      },
+      {
+        kind: "code",
+        language: "jsx",
+        caption: "With TanStack Query (not run here)",
+        code: `const { data, isPending, isError, refetch } = useQuery({
+  queryKey: ["products"],
+  queryFn: fetchProducts,
+});`,
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          "A component tracks `isLoading`, `isError` and `products` in three separate `useState`s. Which bug does that invite?",
+        options: [
+          "It re-renders too often",
+          "It can't show an empty state",
+          "States that can't happen together can still be stored together, like loading and failed at once, if one setter call is missed",
+          "The data can't be cached",
+        ],
+        answer: 2,
+        explanation:
+          "Three booleans allow eight combinations, and only four of them are meaningful. A single status value makes the impossible ones impossible to store.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          "On a search page, results sometimes show matches for the previous query. What's the cause, and the fix?",
+        options: [
+          "The API is slow, so add a spinner",
+          "An older request resolved after a newer one. Ignore stale responses in the effect's cleanup, or use a data library that does it for you",
+          "Debounce the input",
+          "Clear the results before each request",
+        ],
+        answer: 1,
+        explanation:
+          "Debouncing makes it rarer but doesn't stop it; any two requests can finish out of order. Only discarding stale responses fixes it.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "All four states",
+        prompt:
+          'Rewrite `ProductList({ fetchProducts })` so it shows "Loading products…" while the request is pending. If it fails, show "Couldn\'t load products." with `role="alert"` and a "Try again" button that fetches again. If it succeeds with no products, show "No products yet.". Otherwise show a list of product names. `fetchProducts` returns a promise of `[{ id, name }]` and can reject.',
+        language: "react",
+        starter: `function ProductList({ fetchProducts }) {
+  const [products, setProducts] = useState([]);
+
+  useEffect(() => {
+    fetchProducts().then(setProducts);
+  }, [fetchProducts]);
+
+  return (
+    <ul>
+      {products.map((product) => (
+        <li key={product.id}>{product.name}</li>
+      ))}
+    </ul>
+  );
+}
+
+const SAMPLE = [
+  { id: 1, name: "Headlamp" },
+  { id: 2, name: "Water Bottle" },
+];
+const loadSample = () => new Promise((resolve) => setTimeout(() => resolve(SAMPLE), 600));
+
+export default function App() {
+  return <ProductList fetchProducts={loadSample} />;
+}`,
+        hint: 'Keep one `state` object with a `status`. Keep an `attempt` counter in the effect\'s dependencies, and have "Try again" increment it. Use `.then` and `.catch` with an `ignore` flag set in the cleanup, then return a different element for each status.',
+        solution: `function ProductList({ fetchProducts }) {
+  const [state, setState] = useState({ status: "loading" });
+  const [attempt, setAttempt] = useState(0);
+
+  useEffect(() => {
+    let ignore = false;
+    setState({ status: "loading" });
+    fetchProducts()
+      .then((products) => {
+        if (!ignore) setState({ status: "success", products });
+      })
+      .catch(() => {
+        if (!ignore) setState({ status: "error" });
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [fetchProducts, attempt]);
+
+  if (state.status === "loading") return <p>Loading products…</p>;
+  if (state.status === "error") {
+    return (
+      <div>
+        <p role="alert">Couldn't load products.</p>
+        <button onClick={() => setAttempt((a) => a + 1)}>Try again</button>
+      </div>
+    );
+  }
+  if (state.products.length === 0) return <p>No products yet.</p>;
+  return (
+    <ul>
+      {state.products.map((product) => (
+        <li key={product.id}>{product.name}</li>
+      ))}
+    </ul>
+  );
+}
+
+const SAMPLE = [
+  { id: 1, name: "Headlamp" },
+  { id: 2, name: "Water Bottle" },
+];
+const loadSample = () => new Promise((resolve) => setTimeout(() => resolve(SAMPLE), 600));
+
+export default function App() {
+  return <ProductList fetchProducts={loadSample} />;
+}`,
+        tests: [
+          {
+            name: "Shows loading while the request is pending",
+            expression: `await render(<ProductList fetchProducts={() => new Promise(() => {})} />);
+return text() === "Loading products…";`,
+          },
+          {
+            name: "Shows the products",
+            expression: `await render(<ProductList fetchProducts={async () => [{ id: 1, name: "Headlamp" }, { id: 2, name: "Water Bottle" }]} />);
+await waitFor(() => getAllByRole("listitem").length === 2);
+return getByText("Water Bottle") !== null;`,
+          },
+          {
+            name: "Says so when there are no products",
+            expression: `await render(<ProductList fetchProducts={async () => []} />);
+await waitFor(() => text() === "No products yet.");
+return true;`,
+          },
+          {
+            name: "Shows an error and Try again fetches again",
+            expression: `let attempts = 0;
+const flaky = async () => {
+  attempts++;
+  if (attempts === 1) throw new Error("503");
+  return [{ id: 1, name: "Headlamp" }];
+};
+await render(<ProductList fetchProducts={flaky} />);
+await waitFor(() => getByRole("alert"));
+await click(getByRole("button", { name: "Try again" }));
+await waitFor(() => getAllByRole("listitem").length === 1);
+return attempts === 2;`,
+          },
+        ],
+      },
+    ],
+  },
   "ml-core.fit": {
     summary: "What training actually does, fitting a line by hand, and why a baseline comes first.",
     xp: 150,

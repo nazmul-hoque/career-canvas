@@ -17,12 +17,14 @@ import { runPythonInPyodide } from "./python-runtime";
 export interface TestResult {
   name: string;
   passed: boolean;
+  /** Why it failed, when the engine can say (the React runtime can). */
+  detail?: string | undefined;
 }
 
 /** Which engine produced a result — the UI is honest about simulated runs. */
-export type RunEngine = "javascript" | "python" | "python-simulated" | "sql";
+export type RunEngine = "javascript" | "python" | "python-simulated" | "sql" | "react";
 
-export type ChallengeLanguage = "javascript" | "python" | "sql";
+export type ChallengeLanguage = "javascript" | "python" | "sql" | "react";
 
 export interface RunResult {
   logs: string[];
@@ -202,6 +204,39 @@ async function runSql(query: string, tests: TestSpec[]): Promise<RunResult> {
   };
 }
 
+/**
+ * React components render for real with the app's own React (react-runtime.ts),
+ * loaded on first use so pages without a React challenge never download the
+ * JSX compiler.
+ */
+async function runReact(code: string, tests: TestSpec[]): Promise<RunResult> {
+  const started = performance.now();
+  let outcome;
+  try {
+    const { runReactChallenge } = await import("./react-runtime");
+    outcome = await runReactChallenge(code, tests);
+  } catch {
+    outcome = {
+      logs: [],
+      error: "The React runner couldn't load. Check your connection and run again.",
+      results: tests.map(() => ({ passed: false, detail: null })),
+    };
+  }
+  const results = tests.map((t, i) => ({
+    name: t.name,
+    passed: Boolean(outcome.results[i]?.passed),
+    detail: outcome.results[i]?.detail ?? undefined,
+  }));
+  return {
+    logs: outcome.logs,
+    error: outcome.error,
+    tests: results,
+    passed: results.length > 0 && results.every((r) => r.passed) && !outcome.error,
+    durationMs: Math.round(performance.now() - started),
+    engine: "react",
+  };
+}
+
 export async function runCode(
   language: ChallengeLanguage,
   code: string,
@@ -209,6 +244,7 @@ export async function runCode(
 ): Promise<RunResult> {
   if (language === "python") return runPython(code, tests);
   if (language === "sql") return runSql(code, tests);
+  if (language === "react") return runReact(code, tests);
   // JavaScript is fast enough to finish before the spinner paints; the small
   // delay keeps the running state visible rather than flickering.
   await new Promise((r) => setTimeout(r, 250));

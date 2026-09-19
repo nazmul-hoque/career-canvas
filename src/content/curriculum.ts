@@ -156,16 +156,17 @@ export const courses: Course[] = [
     instructor: { name: "Priya Raghunathan", role: "Frontend Lead, ex-Linear", initials: "PR" },
     modules: [
       m("react-core", "Thinking in components", "Split a screen into parts that compose.", [
-        ["first", "Your first component", 10, "concept"],
+        ["first", "Your first component", 12, "practice"],
         ["props", "Props and composition", 12, "practice"],
-        ["state", "State and re-renders", 14, "challenge"],
+        ["state", "State and re-renders", 15, "challenge"],
       ]),
       m("react-hooks", "Hooks", "Effects, refs and custom hooks.", [
-        ["effect", "useEffect without the footguns", 13, "concept"],
-        ["custom", "Writing a custom hook", 15, "challenge"],
+        ["effect", "useEffect without the footguns", 14, "challenge"],
+        ["custom", "Writing a custom hook", 14, "challenge"],
       ]),
-      m("react-data", "Data on screen", "Lists, loading, empty and error states.", [
-        ["lists", "Rendering lists and keys", 11, "practice"],
+      m("react-data", "Data on screen", "Lists, forms, loading, empty and error states.", [
+        ["lists", "Rendering lists and keys", 12, "practice"],
+        ["forms", "Forms that behave", 15, "challenge"],
         ["fetch", "Fetching and loading states", 16, "challenge"],
       ]),
     ],

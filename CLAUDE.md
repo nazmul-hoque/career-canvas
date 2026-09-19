@@ -205,7 +205,13 @@ added. If it can't boot, the old source-pattern simulation takes over and the
 result carries `engine: "python-simulated"`, which the UI labels. Never let a
 simulated run present itself as a real one. Python challenge `tests` are real
 Python expressions evaluated against the learner's namespace; JavaScript ones are
-JS expressions.
+JS expressions. SQL runs on Pyodide's sqlite3 against the shop dataset (no
+simulation). React challenges (`language: "react"`) render the learner's JSX with
+the app's own React via `src/lib/react-runtime.ts` — sucrase compiles it, loaded
+lazily; a visible Preview mounts `App`. React `tests` are async function bodies
+using user-level helpers (`render`, `getByRole`, `getByLabelText`, `click`, `fill`,
+`blur`, `waitFor`, `text`) and should assert what a user sees, never how the
+code is written. `tests/react-runtime.test.ts` runs it under happy-dom.
 
 **Still mocked.** The checkout in `src/routes/pricing.tsx` when
 `PAYMENTS_PROVIDER=mock`. Its input/output shape is the contract the UI depends
