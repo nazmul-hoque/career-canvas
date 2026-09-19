@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { track } from "@/lib/analytics";
 import { ArrowLeft, Loader2, Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
@@ -54,14 +55,17 @@ function AuthPage() {
         });
         if (error) throw error;
         if (!data.session) {
+          track("signed_up", { method: "email", verification_required: true });
           setSent("verify");
           return;
         }
+        track("signed_up", { method: "email", verification_required: false });
         toast.success("Welcome to Ascent");
         navigate({ to: "/onboarding" });
       } else if (mode === "login") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        track("signed_in", { method: "email" });
         toast.success("Welcome back");
         navigate({ to: "/dashboard" });
       } else {
@@ -123,7 +127,10 @@ function AuthPage() {
       <div className="w-full max-w-md">
         <div className="mb-6 flex items-center justify-between">
           <Wordmark />
-          <Link to="/" className="flex items-center gap-1.5 text-sm font-semibold text-chalk hover:text-foreground">
+          <Link
+            to="/"
+            className="flex items-center gap-1.5 text-sm font-semibold text-chalk hover:text-foreground"
+          >
             <ArrowLeft className="size-4" /> Home
           </Link>
         </div>
@@ -150,7 +157,8 @@ function AuthPage() {
                 <GoogleMark /> Continue with Google
               </Button>
               <div className="my-5 flex items-center gap-3 text-xs font-semibold uppercase tracking-widest text-chalk">
-                <span className="h-px flex-1 bg-border" /> or <span className="h-px flex-1 bg-border" />
+                <span className="h-px flex-1 bg-border" /> or{" "}
+                <span className="h-px flex-1 bg-border" />
               </div>
             </>
           ) : null}
@@ -159,7 +167,12 @@ function AuthPage() {
             {mode === "signup" ? (
               <div className="space-y-1.5">
                 <Label htmlFor="name">Name</Label>
-                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Alex Rivera" />
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Alex Rivera"
+                />
               </div>
             ) : null}
             <div className="space-y-1.5">
@@ -201,7 +214,11 @@ function AuthPage() {
 
             <Button type="submit" className="w-full" disabled={busy}>
               {busy ? <Loader2 className="size-4 animate-spin" /> : null}
-              {mode === "signup" ? "Create account" : mode === "login" ? "Sign in" : "Send reset link"}
+              {mode === "signup"
+                ? "Create account"
+                : mode === "login"
+                  ? "Sign in"
+                  : "Send reset link"}
             </Button>
           </form>
 
@@ -209,14 +226,20 @@ function AuthPage() {
             {mode === "signup" ? (
               <>
                 Already have an account?{" "}
-                <button className="font-semibold text-brand hover:underline" onClick={() => setMode("login")}>
+                <button
+                  className="font-semibold text-brand hover:underline"
+                  onClick={() => setMode("login")}
+                >
                   Sign in
                 </button>
               </>
             ) : (
               <>
                 New to Ascent?{" "}
-                <button className="font-semibold text-brand hover:underline" onClick={() => setMode("signup")}>
+                <button
+                  className="font-semibold text-brand hover:underline"
+                  onClick={() => setMode("signup")}
+                >
                   Create a free account
                 </button>
               </>
@@ -229,7 +252,11 @@ function AuthPage() {
 }
 
 function Centered({ children }: { children: React.ReactNode }) {
-  return <div className="flex min-h-screen items-center justify-center bg-canvas px-4 py-12">{children}</div>;
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-canvas px-4 py-12">
+      {children}
+    </div>
+  );
 }
 
 function GoogleMark() {

@@ -1,4 +1,11 @@
-import { findLesson, type LessonMeta } from "./curriculum";
+import {
+  courseLessons,
+  findLesson,
+  pathCourses,
+  type CareerPath,
+  type Course,
+  type LessonMeta,
+} from "./curriculum";
 
 export type LessonBlock =
   | { kind: "text"; body: string }
@@ -46,7 +53,7 @@ const bodies: Record<string, LessonBody> = {
     blocks: [
       {
         kind: "text",
-        body: "A function is a named recipe. You hand it ingredients (arguments), it does its work, and it hands something back (the return value). If a function does not return anything, calling it gives you `undefined` — one of the most common sources of the dreaded \"why is my value empty?\" bug.",
+        body: 'A function is a named recipe. You hand it ingredients (arguments), it does its work, and it hands something back (the return value). If a function does not return anything, calling it gives you `undefined` — one of the most common sources of the dreaded "why is my value empty?" bug.',
       },
       {
         kind: "code",
@@ -61,7 +68,8 @@ const bodies: Record<string, LessonBody> = {
       {
         kind: "mcq",
         id: "q1",
-        question: "What does `total(4, 5)` evaluate to if the function body is `price * quantity` with no `return`?",
+        question:
+          "What does `total(4, 5)` evaluate to if the function body is `price * quantity` with no `return`?",
         options: ["20", "undefined", "NaN", "It throws an error"],
         answer: 1,
         explanation:
@@ -219,9 +227,10 @@ const bodies: Record<string, LessonBody> = {
         hint: "Use if / elif / else and return inside each branch.",
         solution: `def grade(score):\n    if score >= 90:\n        return "A"\n    elif score >= 80:\n        return "B"\n    return "C"`,
         tests: [
-          { name: "Defines grade()", expression: "def grade" },
-          { name: "Handles the 90+ case", expression: "90" },
-          { name: "Handles the 80-89 case", expression: "80" },
+          { name: "95 scores an A", expression: 'grade(95) == "A"' },
+          { name: "90 is the boundary for an A", expression: 'grade(90) == "A"' },
+          { name: "87 scores a B", expression: 'grade(87) == "B"' },
+          { name: "Anything under 80 scores a C", expression: 'grade(41) == "C"' },
         ],
       },
     ],
@@ -256,60 +265,60 @@ const bodies: Record<string, LessonBody> = {
           "Write `paid_totals(orders)` that returns a list of the `total` of every order whose `status` is 'paid'.",
         language: "python",
         starter: `def paid_totals(orders):\n    # your code here\n    pass`,
-        hint: "orders is a list of dicts — loop over it inside square brackets and filter on o[\"status\"].",
+        hint: 'orders is a list of dicts — loop over it inside square brackets and filter on o["status"].',
         solution: `def paid_totals(orders):\n    return [o["total"] for o in orders if o["status"] == "paid"]`,
         tests: [
-          { name: "Defines paid_totals()", expression: "def paid_totals" },
-          { name: "Uses a comprehension", expression: "for" },
-          { name: "Filters on status", expression: "paid" },
+          {
+            name: "Keeps only the paid orders",
+            expression:
+              'paid_totals([{"total": 10, "status": "paid"}, {"total": 99, "status": "pending"}]) == [10]',
+          },
+          {
+            name: "Keeps the original order",
+            expression:
+              'paid_totals([{"total": 5, "status": "paid"}, {"total": 7, "status": "paid"}]) == [5, 7]',
+          },
+          { name: "An empty list gives an empty list", expression: "paid_totals([]) == []" },
         ],
       },
     ],
   },
 };
 
-const fallbackBody = (courseId: string, lesson: LessonMeta, moduleTitle: string): LessonBody => ({
-  summary: `${lesson.title} — part of ${moduleTitle}.`,
-  xp: lesson.type === "concept" ? 80 : lesson.type === "practice" ? 110 : 150,
-  blocks: [
-    {
-      kind: "text",
-      body: `In this lesson you will work through **${lesson.title}** hands-on. Read the short explanation, try the check below, and ask your mentor anything that stays fuzzy — the panel on the right knows which lesson you are in.`,
-    },
-    {
-      kind: "callout",
-      body: `Give it roughly ${lesson.minutes} focused minutes. Finishing keeps today's streak alive.`,
-    },
-    {
-      kind: "mcq",
-      id: "q1",
-      question: `What is the fastest way to make "${lesson.title}" stick?`,
-      options: [
-        "Read the explanation twice and move on",
-        "Type the example yourself, break it on purpose, then fix it",
-        "Watch someone else do it",
-        "Save it for later",
-      ],
-      answer: 1,
-      explanation:
-        "Recall and repair beat recognition. Breaking the example and fixing it is the whole method here.",
-    },
-    {
-      kind: "fill",
-      id: "f1",
-      prompt: `Finish the sentence: the point of this lesson is to practise ${lesson.title.toLowerCase()} until it feels ___.`,
-      before: "until it feels ",
-      after: ".",
-      answer: "automatic",
-      explanation: "Fluency, not familiarity, is the target.",
-    },
-  ],
-});
-
+/**
+ * Only lessons with an authored body in `bodies` are "live". Everything else on
+ * a roadmap is unwritten and stays that way until someone writes it: it cannot
+ * be opened, awards no XP, counts in no progress denominator, and blocks the
+ * certificate for its path. Generated filler used to fill these slots and pay
+ * out XP, which quietly certified nothing.
+ */
 export function getLessonBody(courseId: string, lessonId: string): LessonBody | null {
   const found = findLesson(courseId, lessonId);
   if (!found) return null;
-  return bodies[lessonId] ?? fallbackBody(courseId, found.lesson, found.module.title);
+  return bodies[lessonId] ?? null;
 }
 
-export const hasAuthoredBody = (lessonId: string) => lessonId in bodies;
+export const isLessonLive = (lessonId: string) => lessonId in bodies;
+
+export const liveLessons = (course: Course): LessonMeta[] =>
+  courseLessons(course).filter((l) => isLessonLive(l.id));
+
+export const liveLessonCount = (course: Course) => liveLessons(course).length;
+
+export const isCoursePublished = (course: Course) =>
+  liveLessonCount(course) === courseLessons(course).length;
+
+export const pathLiveLessons = (path: CareerPath): LessonMeta[] =>
+  pathCourses(path).flatMap(liveLessons);
+
+export const pathLiveLessonCount = (path: CareerPath) => pathLiveLessons(path).length;
+
+/** A path can only issue a certificate once every lesson in it is written. */
+export const isPathPublished = (path: CareerPath) => {
+  const list = pathCourses(path);
+  return list.length > 0 && list.every(isCoursePublished);
+};
+
+/** First live lesson in the course the learner has not finished yet. */
+export const nextLiveLesson = (course: Course, done: Set<string>) =>
+  liveLessons(course).find((l) => !done.has(l.id)) ?? null;

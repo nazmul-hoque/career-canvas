@@ -2,9 +2,11 @@ import { useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { Loader2, Check } from "lucide-react";
 import { toast } from "sonner";
+import { track } from "@/lib/analytics";
 import { useSession } from "@/hooks/useAuth";
 import { useProfile, useUpdateProfile } from "@/hooks/useLearner";
 import { careerPaths } from "@/content/curriculum";
+import { dailyXpGoal, weeklyXpGoal } from "@/content/gamification";
 import { Button } from "@/components/ui/button";
 import { Wordmark } from "@/components/layout/AppShell";
 import { cn } from "@/lib/utils";
@@ -15,19 +17,31 @@ export const Route = createFileRoute("/onboarding")({
       { title: "Personalise your roadmap — Ascent" },
       {
         name: "description",
-        content: "Answer four quick questions and Ascent builds a learning plan around your goal, level and weekly time.",
+        content:
+          "Answer four quick questions and Ascent builds a learning plan around your goal, level and weekly time.",
       },
       { property: "og:title", content: "Personalise your roadmap — Ascent" },
-      { property: "og:description", content: "Four questions, one roadmap built around your goal." },
+      {
+        property: "og:description",
+        content: "Four questions, one roadmap built around your goal.",
+      },
     ],
   }),
   component: Onboarding,
 });
 
 const goals = [
-  { id: "first-job", label: "Get my first tech job", note: "Portfolio-first roadmap with interview prep" },
+  {
+    id: "first-job",
+    label: "Get my first tech job",
+    note: "Portfolio-first roadmap with interview prep",
+  },
   { id: "switch", label: "Change careers", note: "Fastest credible route from where you are now" },
-  { id: "level-up", label: "Improve my current skills", note: "Deeper practice on the parts you already touch" },
+  {
+    id: "level-up",
+    label: "Improve my current skills",
+    note: "Deeper practice on the parts you already touch",
+  },
   { id: "projects", label: "Build projects", note: "Heavier on briefs, lighter on theory" },
   { id: "fun", label: "Learn for fun", note: "Short sessions, no pressure, keep the streak" },
 ];
@@ -95,7 +109,9 @@ function Onboarding() {
       <Shell>
         <div className="card-surface p-8 text-center">
           <h1 className="font-display text-2xl font-bold">Create an account first</h1>
-          <p className="mt-2 text-sm text-chalk">Your roadmap is saved to your profile, so we need you signed in.</p>
+          <p className="mt-2 text-sm text-chalk">
+            Your roadmap is saved to your profile, so we need you signed in.
+          </p>
           <Button asChild className="mt-6">
             <Link to="/auth">Sign in or sign up</Link>
           </Button>
@@ -112,7 +128,13 @@ function Onboarding() {
       body: (
         <div className="grid gap-3">
           {goals.map((g) => (
-            <OptionCard key={g.id} selected={goal === g.id} title={g.label} note={g.note} onClick={() => setGoal(g.id)} />
+            <OptionCard
+              key={g.id}
+              selected={goal === g.id}
+              title={g.label}
+              note={g.note}
+              onClick={() => setGoal(g.id)}
+            />
           ))}
         </div>
       ),
@@ -142,14 +164,22 @@ function Onboarding() {
       body: (
         <div className="grid gap-3 sm:grid-cols-2">
           {careerPaths.map((p) => (
-            <OptionCard key={p.id} selected={path === p.id} title={p.name} note={p.tagline} onClick={() => setPath(p.id)} />
+            <OptionCard
+              key={p.id}
+              selected={path === p.id}
+              title={p.name}
+              note={p.tagline}
+              onClick={() => setPath(p.id)}
+            />
           ))}
         </div>
       ),
     },
     {
       title: "How many hours a week can you really give?",
-      subtitle: "We size your daily goal from this. Under-promise and keep the streak.",
+      subtitle: weekly
+        ? `That's ${dailyXpGoal(weekly)} XP a day, ${weeklyXpGoal(weekly)} a week — and one lesson always holds the streak, whatever the goal says.`
+        : "We size your daily goal from this — literally: the number you pick sets it. Under-promise and keep the streak.",
       valid: Boolean(weekly),
       body: (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
@@ -186,6 +216,12 @@ function Onboarding() {
         onboarded: true,
         display_name: profile?.display_name ?? "Learner",
       });
+      track("onboarding_completed", {
+        goal,
+        experience,
+        career_path: path,
+        hours_per_week: weekly,
+      });
       toast.success("Roadmap ready", { description: "Your dashboard is personalised." });
       navigate({ to: "/dashboard" });
     } catch {
@@ -200,7 +236,10 @@ function Onboarding() {
           {steps.map((_, i) => (
             <span
               key={i}
-              className={cn("h-1.5 flex-1 rounded-full transition-colors", i <= step ? "bg-brand" : "bg-line")}
+              className={cn(
+                "h-1.5 flex-1 rounded-full transition-colors",
+                i <= step ? "bg-brand" : "bg-line",
+              )}
             />
           ))}
         </div>
@@ -209,13 +248,19 @@ function Onboarding() {
         </p>
       </div>
 
-      <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">{current.title}</h1>
+      <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
+        {current.title}
+      </h1>
       <p className="mt-2 text-chalk">{current.subtitle}</p>
 
       <div className="mt-8 animate-rise">{current.body}</div>
 
       <div className="mt-10 flex items-center justify-between">
-        <Button variant="ghost" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0}>
+        <Button
+          variant="ghost"
+          onClick={() => setStep((s) => Math.max(0, s - 1))}
+          disabled={step === 0}
+        >
           Back
         </Button>
         {step === steps.length - 1 ? (

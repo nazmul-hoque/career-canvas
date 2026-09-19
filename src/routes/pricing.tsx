@@ -1,9 +1,16 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Check, Loader2 } from "lucide-react";
+import { Check, CreditCard, Loader2, Lock, Minus, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { track } from "@/lib/analytics";
+import { startCheckoutFn, startTrialFn, switchToFreeFn } from "@/lib/billing.functions";
+import { TRIAL_DAYS } from "@/lib/entitlements";
+import { useEntitlements } from "@/hooks/useEntitlements";
 import { AppShell } from "@/components/layout/AppShell";
+import { StatPill } from "@/components/common/StatPill";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -11,187 +18,540 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import { useSession } from "@/hooks/useAuth";
+import { useQueryClient } from "@tanstack/react-query";
+import { useProfile } from "@/hooks/useLearner";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({
     meta: [
       { title: "Pricing — Ascent" },
-      { name: "description", content: "Free to start. Pro unlocks every course, unlimited practice, the AI mentor, projects and certificates." },
+      {
+        name: "description",
+        content:
+          "Free, Pro and Lifetime plans. Every course, unlimited practice, the AI mentor, portfolio projects and certificates — monthly or yearly.",
+      },
       { property: "og:title", content: "Pricing — Ascent" },
-      { property: "og:description", content: "Free to start. Pro unlocks everything. Lifetime pays once." },
+      {
+        property: "og:description",
+        content: "Start free. Upgrade when the AI mentor starts paying for itself.",
+      },
     ],
   }),
   component: Pricing,
 });
 
-const plans = [
+type PlanId = "free" | "pro" | "lifetime";
+
+interface Plan {
+  id: PlanId;
+  name: string;
+  blurb: string;
+  monthly: number | null;
+  yearly: number | null;
+  once: number | null;
+  features: string[];
+  missing: string[];
+  recommended?: boolean;
+}
+
+const plans: Plan[] = [
   {
     id: "free",
-    name: "Base camp",
-    blurb: "Get moving today, no card needed.",
+    name: "Free",
+    blurb: "Enough to find out whether this actually suits how you learn.",
     monthly: 0,
     yearly: 0,
+    once: null,
     features: [
-      "3 courses of your choice",
-      "10 practice tasks per month",
+      "First module of every course",
+      "10 practice tasks a month",
+      "10 AI mentor messages a month",
+      "Streaks, XP and levels",
       "Basic progress tracking",
-      "Community access (read only)",
+      "Community access",
     ],
+    missing: ["Mentor beyond 10 messages", "Portfolio projects", "Certificates"],
   },
   {
     id: "pro",
     name: "Pro",
-    blurb: "Everything you need to get job-ready.",
+    blurb: "Everything unlocked, including the mentor that makes challenges survivable.",
     monthly: 19,
-    yearly: 182,
+    yearly: 168,
+    once: null,
     recommended: true,
     features: [
-      "Every course and career path",
+      "All 15 courses, every module",
       "Unlimited practice and challenges",
-      "AI Mentor on every lesson",
-      "All portfolio projects with reviews",
-      "Certificates for completed paths",
-      "Full community and leaderboard",
+      "AI mentor — 500 messages a month",
+      "All 8 portfolio projects with feedback",
+      "Career path certificates",
+      "Public portfolio profile",
+      "Priority community answers",
     ],
+    missing: [],
   },
   {
     id: "lifetime",
     name: "Lifetime",
-    blurb: "One payment. Everything, forever.",
-    monthly: 399,
-    yearly: 399,
+    blurb: "One payment. Everything now, and everything we add later.",
+    monthly: null,
+    yearly: null,
+    once: 449,
     features: [
-      "All current and future courses",
-      "Unlimited AI Mentor usage",
-      "Every project and certificate",
-      "Priority project reviews",
-      "Lifetime updates",
+      "Everything in Pro, permanently",
+      "All future courses and paths",
+      "AI mentor — 500 messages a month, forever",
+      "All projects and certificates",
+      "Early access to new paths",
     ],
+    missing: [],
   },
 ];
 
+const comparison: {
+  label: string;
+  free: string | boolean;
+  pro: string | boolean;
+  lifetime: string | boolean;
+}[] = [
+  { label: "Courses", free: "First module", pro: "All 15", lifetime: "All + future" },
+  { label: "Practice tasks", free: "10 / month", pro: "Unlimited", lifetime: "Unlimited" },
+  { label: "Coding challenges", free: "Limited", pro: "Unlimited", lifetime: "Unlimited" },
+  { label: "AI mentor", free: "10 / month", pro: "500 / month", lifetime: "500 / month" },
+  { label: "Portfolio projects", free: false, pro: true, lifetime: true },
+  { label: "Project feedback", free: false, pro: true, lifetime: true },
+  { label: "Certificates", free: false, pro: true, lifetime: true },
+  { label: "Public profile", free: false, pro: true, lifetime: true },
+  { label: "Community", free: true, pro: true, lifetime: true },
+  { label: "Leaderboard", free: true, pro: true, lifetime: true },
+];
+
 function Pricing() {
+  const { user } = useSession();
+  const { data: profile } = useProfile();
+  const qc = useQueryClient();
+  const { trialing, trialUsed, trialDaysLeft } = useEntitlements();
+  const [busy, setBusy] = useState(false);
   const [yearly, setYearly] = useState(true);
-  const [checkout, setCheckout] = useState<string | null>(null);
-  const [processing, setProcessing] = useState(false);
+  const [checkout, setCheckout] = useState<Plan | null>(null);
+  const [stage, setStage] = useState<"form" | "processing" | "done">("form");
 
-  const plan = plans.find((p) => p.id === checkout);
+  const currentPlan = user ? ((profile?.plan ?? "free") as PlanId) : null;
 
-  async function pay() {
-    setProcessing(true);
-    await new Promise((r) => setTimeout(r, 1200));
-    setProcessing(false);
-    setCheckout(null);
-    toast.success("Demo checkout complete", {
-      description: "No payment was taken — this flow is a mock for now.",
+  function priceOf(plan: Plan) {
+    if (plan.once !== null) return { amount: plan.once, suffix: "once" };
+    if (plan.monthly === 0) return { amount: 0, suffix: "forever" };
+    return yearly
+      ? { amount: Math.round((plan.yearly ?? 0) / 12), suffix: "per month, billed yearly" }
+      : { amount: plan.monthly ?? 0, suffix: "per month" };
+  }
+
+  const refreshProfile = () => qc.invalidateQueries({ queryKey: ["profile", user?.id] });
+
+  async function beginTrial() {
+    if (!user) {
+      toast.info("Create an account first", { description: "Takes about twenty seconds." });
+      return;
+    }
+    setBusy(true);
+    try {
+      await startTrialFn();
+      await refreshProfile();
+      toast.success(`${TRIAL_DAYS} days of Pro, on the house`, {
+        description: "No card needed. It drops back to Free on its own.",
+      });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "We could not start your trial.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function startCheckout(plan: Plan) {
+    if (!user) {
+      toast.info("Create an account first", { description: "Takes about twenty seconds." });
+      return;
+    }
+    if (plan.id === "free") {
+      setBusy(true);
+      switchToFreeFn()
+        .then(refreshProfile)
+        .then(() => toast.success("Switched to Free"))
+        .catch(() => toast.error("We could not change your plan. Try again in a moment."))
+        .finally(() => setBusy(false));
+      return;
+    }
+    track("checkout_started", {
+      plan: plan.id,
+      billing: plan.once ? "once" : yearly ? "yearly" : "monthly",
     });
+    setStage("form");
+    setCheckout(plan);
+  }
+
+  async function confirmCheckout() {
+    if (!checkout) return;
+    setStage("processing");
+    try {
+      // With PAYMENTS_PROVIDER=stripe this returns a hosted checkout URL; in
+      // mock mode the server has already applied the plan.
+      const result = await startCheckoutFn({
+        data: {
+          plan: checkout.id === "lifetime" ? "lifetime" : "pro",
+          interval: checkout.once ? "once" : yearly ? "yearly" : "monthly",
+        },
+      });
+
+      if (result.kind === "redirect") {
+        window.location.href = result.url;
+        return;
+      }
+
+      await refreshProfile();
+      track("checkout_completed", {
+        plan: checkout.id,
+        billing: checkout.once ? "once" : yearly ? "yearly" : "monthly",
+        mock: true,
+      });
+      setStage("done");
+      toast.success(`You're on ${checkout.name}`, {
+        description: "No card was charged — this is a demo checkout.",
+      });
+    } catch (error) {
+      setStage("form");
+      toast.error(
+        error instanceof Error ? error.message : "We could not start checkout. Try again shortly.",
+      );
+    }
   }
 
   return (
     <AppShell>
       <header className="mx-auto max-w-2xl text-center">
         <p className="eyebrow">Pricing</p>
-        <h1 className="mt-2 font-display text-3xl font-bold tracking-tight sm:text-5xl">
-          Pay for the climb, not the brochure
+        <h1 className="mt-1 font-display text-3xl font-bold tracking-tight sm:text-4xl">
+          Start free. Upgrade when the mentor starts earning its keep.
         </h1>
-        <p className="mt-3 text-chalk">Cancel whenever. Your progress, projects and certificates stay yours.</p>
-
-        <div className="mt-7 inline-flex items-center gap-1 rounded-full bg-secondary p-1">
-          {[
-            { id: false, label: "Monthly" },
-            { id: true, label: "Yearly · save 20%" },
-          ].map((opt) => (
-            <button
-              key={String(opt.id)}
-              onClick={() => setYearly(opt.id)}
-              className={cn(
-                "rounded-full px-4 py-1.5 text-sm font-semibold transition-colors",
-                yearly === opt.id ? "bg-background shadow-sm" : "text-chalk",
-              )}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
+        <p className="mt-3 text-chalk">
+          No trial countdown, no card to cancel. The free plan stays useful — it just stops before
+          the parts that cost us money to run.
+        </p>
       </header>
 
-      <div className="mt-10 grid gap-5 lg:grid-cols-3">
-        {plans.map((p) => {
-          const price = p.id === "lifetime" ? p.monthly : yearly ? Math.round(p.yearly / 12) : p.monthly;
-          return (
-            <section
-              key={p.id}
+      {user && !trialUsed ? (
+        <div className="mx-auto mt-6 flex max-w-2xl flex-wrap items-center justify-center gap-3 rounded-2xl bg-brand/10 px-5 py-4 text-center">
+          <p className="text-sm font-semibold text-foreground">
+            Try Pro free for {TRIAL_DAYS} days — no card, cancels itself.
+          </p>
+          <Button size="sm" onClick={beginTrial} disabled={busy}>
+            Start free trial
+          </Button>
+        </div>
+      ) : null}
+      {trialing ? (
+        <div className="mx-auto mt-6 max-w-2xl rounded-2xl bg-ember/10 px-5 py-4 text-center text-sm font-semibold text-ember">
+          {trialDaysLeft} {trialDaysLeft === 1 ? "day" : "days"} left of your Pro trial.
+        </div>
+      ) : null}
+
+      {/* Billing toggle */}
+      <div className="mt-8 flex justify-center">
+        <div className="inline-flex items-center gap-1 rounded-full bg-card p-1 ring-1 ring-border">
+          <button
+            onClick={() => setYearly(false)}
+            className={cn(
+              "rounded-full px-4 py-2 text-sm font-semibold transition-colors",
+              !yearly ? "bg-ink text-white" : "text-chalk hover:text-foreground",
+            )}
+          >
+            Monthly
+          </button>
+          <button
+            onClick={() => setYearly(true)}
+            className={cn(
+              "inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-colors",
+              yearly ? "bg-ink text-white" : "text-chalk hover:text-foreground",
+            )}
+          >
+            Yearly
+            <span
               className={cn(
-                "flex flex-col p-7",
-                p.recommended ? "ink-surface rounded-[18px] text-white" : "card-surface",
+                "rounded-full px-2 py-0.5 text-[10px] font-bold",
+                yearly ? "bg-brand text-brand-foreground" : "bg-brand/10 text-brand",
               )}
             >
-              {p.recommended ? (
-                <span className="mb-4 self-start rounded-full bg-ember px-2.5 py-1 text-[11px] font-bold text-white">
-                  Most chosen
-                </span>
-              ) : null}
-              <h2 className="font-display text-xl font-bold">{p.name}</h2>
-              <p className={cn("mt-1 text-sm", p.recommended ? "text-white/70" : "text-chalk")}>{p.blurb}</p>
-              <p className="mt-6 font-display text-4xl font-bold">
-                ${price}
-                <span className={cn("text-base font-semibold", p.recommended ? "text-white/60" : "text-chalk")}>
-                  {p.id === "lifetime" ? " once" : "/mo"}
-                </span>
-              </p>
-              {p.id !== "lifetime" && yearly && p.yearly > 0 ? (
-                <p className={cn("mt-1 text-xs", p.recommended ? "text-white/60" : "text-chalk")}>
-                  ${p.yearly} billed yearly
-                </p>
-              ) : null}
-              <ul className="mt-6 flex-1 space-y-2.5">
-                {p.features.map((f) => (
+              Save 26%
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {/* Plans */}
+      <div className="mt-8 grid items-start gap-5 lg:grid-cols-3">
+        {plans.map((plan) => {
+          const price = priceOf(plan);
+          const isCurrent = currentPlan === plan.id;
+          return (
+            <div
+              key={plan.id}
+              className={cn(
+                "card-surface flex flex-col p-7",
+                plan.recommended && "ring-2 ring-brand lg:-mt-3 lg:pb-10 lg:pt-10",
+              )}
+            >
+              <div className="flex items-center justify-between">
+                <h2 className="font-display text-xl font-bold">{plan.name}</h2>
+                {plan.recommended ? (
+                  <StatPill tone="brand">
+                    <Sparkles className="size-3" /> Recommended
+                  </StatPill>
+                ) : null}
+                {isCurrent ? <StatPill>Current</StatPill> : null}
+              </div>
+
+              <p className="mt-2 text-sm leading-relaxed text-chalk">{plan.blurb}</p>
+
+              <div className="mt-6">
+                <div className="flex items-baseline gap-1.5">
+                  <span className="font-display text-4xl font-bold tracking-tight">
+                    ${price.amount}
+                  </span>
+                  <span className="text-sm font-semibold text-chalk">{price.suffix}</span>
+                </div>
+                {plan.id === "pro" && yearly ? (
+                  <p className="mt-1 text-xs text-chalk">${plan.yearly} billed once a year</p>
+                ) : null}
+              </div>
+
+              <Button
+                className="mt-6 w-full"
+                size="lg"
+                variant={plan.recommended ? "default" : "outline"}
+                disabled={isCurrent || busy}
+                onClick={() => startCheckout(plan)}
+              >
+                {isCurrent
+                  ? "Your current plan"
+                  : plan.id === "free"
+                    ? "Switch to Free"
+                    : `Get ${plan.name}`}
+              </Button>
+
+              <ul className="mt-7 space-y-2.5">
+                {plan.features.map((f) => (
                   <li key={f} className="flex items-start gap-2.5 text-sm">
-                    <Check className={cn("mt-0.5 size-4 shrink-0", p.recommended ? "text-brand" : "text-brand")} />
-                    {f}
+                    <Check className="mt-0.5 size-4 shrink-0 text-brand" />
+                    <span>{f}</span>
+                  </li>
+                ))}
+                {plan.missing.map((f) => (
+                  <li key={f} className="flex items-start gap-2.5 text-sm text-chalk/70">
+                    <Minus className="mt-0.5 size-4 shrink-0" />
+                    <span>{f}</span>
                   </li>
                 ))}
               </ul>
-              {p.id === "free" ? (
-                <Button asChild variant="outline" className="mt-7">
-                  <Link to="/auth">Start free</Link>
-                </Button>
-              ) : (
-                <Button
-                  className="mt-7"
-                  variant={p.recommended ? "secondary" : "default"}
-                  onClick={() => setCheckout(p.id)}
-                >
-                  Choose {p.name}
-                </Button>
-              )}
-            </section>
+            </div>
           );
         })}
       </div>
 
-      <Dialog open={Boolean(checkout)} onOpenChange={(open) => !open && setCheckout(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Checkout · {plan?.name}</DialogTitle>
-            <DialogDescription>
-              This is a demo. No card is charged and nothing is stored.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3">
-            <Input placeholder="Name on card" />
-            <Input placeholder="4242 4242 4242 4242" />
-            <div className="grid grid-cols-2 gap-3">
-              <Input placeholder="MM / YY" />
-              <Input placeholder="CVC" />
-            </div>
-          </div>
-          <Button onClick={pay} disabled={processing} className="w-full">
-            {processing ? <Loader2 className="size-4 animate-spin" /> : null}
-            Pay {plan?.id === "lifetime" ? "$399" : yearly ? `$${plan?.yearly}` : `$${plan?.monthly}`}
+      {!user ? (
+        <div className="card-surface mt-6 flex flex-wrap items-center justify-between gap-4 p-5">
+          <p className="text-sm text-chalk">
+            Create a free account first — you can upgrade from inside the app any time.
+          </p>
+          <Button asChild size="sm">
+            <Link to="/auth">Start free</Link>
           </Button>
+        </div>
+      ) : null}
+
+      {/* Comparison */}
+      <section className="mt-12">
+        <h2 className="font-display text-2xl font-bold tracking-tight">Line by line</h2>
+        <div className="card-surface mt-4 overflow-x-auto">
+          <table className="w-full min-w-[560px]">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-chalk">
+                  Feature
+                </th>
+                {plans.map((p) => (
+                  <th
+                    key={p.id}
+                    className={cn(
+                      "px-5 py-3 text-center text-xs font-semibold uppercase tracking-wider",
+                      p.recommended ? "text-brand" : "text-chalk",
+                    )}
+                  >
+                    {p.name}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {comparison.map((row) => (
+                <tr key={row.label} className="border-b border-border last:border-0">
+                  <td className="px-5 py-3.5 text-sm font-semibold">{row.label}</td>
+                  {(["free", "pro", "lifetime"] as const).map((key) => {
+                    const v = row[key];
+                    return (
+                      <td key={key} className="px-5 py-3.5 text-center text-sm">
+                        {v === true ? (
+                          <Check className="mx-auto size-4 text-brand" />
+                        ) : v === false ? (
+                          <Minus className="mx-auto size-4 text-chalk/40" />
+                        ) : (
+                          <span className="text-chalk">{v}</span>
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="mt-12 grid gap-5 md:grid-cols-2">
+        {[
+          {
+            q: "Is the free plan time-limited?",
+            a: "No. It's feature-limited, not trial-limited. You can stay on it indefinitely and still keep your streak, XP and community access.",
+          },
+          {
+            q: "What does the AI mentor actually do?",
+            a: "It reads your submitted code, points at the line that's wrong and asks you a question about it. It won't hand you the answer — that's the point.",
+          },
+          {
+            q: "Do I keep my certificates if I downgrade?",
+            a: "Yes. Certificates are issued against lessons you completed, and completed lessons don't expire.",
+          },
+          {
+            q: "Is Lifetime really lifetime?",
+            a: "For as long as Ascent runs, including paths we haven't built yet. It's the right call if you expect to be learning here for more than two years.",
+          },
+        ].map((item) => (
+          <div key={item.q} className="card-surface p-6">
+            <h3 className="font-display text-lg font-bold">{item.q}</h3>
+            <p className="mt-2 text-sm leading-relaxed text-chalk">{item.a}</p>
+          </div>
+        ))}
+      </section>
+
+      {/* Mock checkout */}
+      <Dialog
+        open={Boolean(checkout)}
+        onOpenChange={(open) => {
+          if (!open) setCheckout(null);
+        }}
+      >
+        <DialogContent>
+          {stage === "done" ? (
+            <div className="py-4 text-center">
+              <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-brand/12 text-brand">
+                <Check className="size-6" />
+              </div>
+              <DialogHeader className="mt-4">
+                <DialogTitle className="text-center">You're on {checkout?.name}</DialogTitle>
+                <DialogDescription className="text-center">
+                  Nothing was charged — this is a demo checkout. Every course, project and the AI
+                  mentor are unlocked on your account.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="mt-6 flex justify-center gap-2">
+                <Button asChild>
+                  <Link to="/dashboard">Back to dashboard</Link>
+                </Button>
+                <Button variant="outline" onClick={() => setCheckout(null)}>
+                  Close
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <DialogHeader>
+                <DialogTitle>Checkout — {checkout?.name}</DialogTitle>
+                <DialogDescription>
+                  This is a mock checkout. No payment is processed and no card details are stored or
+                  sent anywhere.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="rounded-xl bg-secondary p-4 ring-1 ring-border">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-chalk">
+                    {checkout?.name}
+                    {checkout?.once ? " · one-time" : yearly ? " · yearly" : " · monthly"}
+                  </span>
+                  <span className="font-display text-lg font-bold">
+                    ${checkout?.once ?? (yearly ? checkout?.yearly : checkout?.monthly)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <Label htmlFor="card">Card number</Label>
+                  <div className="relative mt-1.5">
+                    <CreditCard className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-chalk" />
+                    <Input
+                      id="card"
+                      className="pl-9"
+                      placeholder="4242 4242 4242 4242"
+                      disabled={stage === "processing"}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="exp">Expiry</Label>
+                    <Input
+                      id="exp"
+                      className="mt-1.5"
+                      placeholder="12 / 30"
+                      disabled={stage === "processing"}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="cvc">CVC</Label>
+                    <Input
+                      id="cvc"
+                      className="mt-1.5"
+                      placeholder="123"
+                      disabled={stage === "processing"}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <Button
+                size="lg"
+                className="w-full"
+                onClick={confirmCheckout}
+                disabled={stage === "processing"}
+              >
+                {stage === "processing" ? (
+                  <>
+                    <Loader2 className="mr-2 size-4 animate-spin" /> Processing…
+                  </>
+                ) : (
+                  <>
+                    <Lock className="mr-2 size-4" /> Complete demo purchase
+                  </>
+                )}
+              </Button>
+              <p className="text-center text-xs text-chalk">
+                Demo only — type anything you like in the fields above.
+              </p>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </AppShell>

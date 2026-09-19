@@ -1,12 +1,18 @@
 /**
- * Mock AI mentor service.
+ * Mentor types, prompts, and the scripted fallback.
  *
- * Deliberately Socratic: it nudges with questions before it hands over answers.
- * Replace `askMentor` with a call to a real LLM endpoint later — the
- * MentorContext in, string out contract is what the UI depends on.
+ * The real mentor lives in src/lib/mentor.functions.ts and runs server-side
+ * against a configured model. `scriptedMentorReply` below is what answers when
+ * MENTOR_PROVIDER is unset — deliberately Socratic, but a keyword router, not a
+ * model. It keeps the feature usable in a demo without an API key.
  */
 
 export interface MentorContext {
+  /** Ids the server needs to rebuild lesson context and meter usage. */
+  courseId?: string | undefined;
+  lessonId?: string | undefined;
+  /** Failed challenge runs this sitting — drives the answer-reveal policy. */
+  failedAttempts?: number | undefined;
   lessonTitle?: string | undefined;
   courseTitle?: string | undefined;
   code?: string | undefined;
@@ -47,7 +53,7 @@ function analyseCode(ctx: MentorContext): string | null {
   return null;
 }
 
-export async function askMentor(
+export async function scriptedMentorReply(
   question: string,
   ctx: MentorContext,
   history: MentorMessage[] = [],
@@ -94,7 +100,9 @@ export async function askMentor(
 
 export const suggestedPrompts = (ctx: MentorContext) =>
   [
-    ctx.lessonTitle ? `Explain ${ctx.lessonTitle.toLowerCase()} simply` : "Explain this concept simply",
+    ctx.lessonTitle
+      ? `Explain ${ctx.lessonTitle.toLowerCase()} simply`
+      : "Explain this concept simply",
     "Give me a hint",
     "Review my code",
     "What should I study next?",
