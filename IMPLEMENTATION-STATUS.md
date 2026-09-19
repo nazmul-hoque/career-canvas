@@ -10,7 +10,20 @@ per item is enough — the code is the detail.
 
 ## Blocked on you (nothing ships correctly until these are done)
 
-- [ ] **Apply the nine migrations** in `supabase/migrations/`:
+Two facts shape every item below:
+
+- **The database is on Lovable Cloud** (project `deazbmtlzyvhvrtqetls`), not in
+  your own Supabase account, so the Supabase CLI can't reach it. Migrations and
+  type generation go through Lovable.
+- **`.env` is committed to GitHub.** Every secret below — service-role key, model
+  and Stripe keys, `CRON_SECRET`, `CERTIFICATE_SIGNING_SECRET`,
+  `VAPID_PRIVATE_KEY`, `RESEND_API_KEY` — goes in Lovable's secrets (or the
+  host's environment settings), never in `.env`. Only public values with a
+  `VITE_` prefix belong there.
+
+- [ ] **Apply the nine migrations** through Lovable — checked 2026-09-18: none
+      are applied yet (the live database has none of the tables they create).
+      In order, from `supabase/migrations/`:
       `20260916120000_server_authored_xp`, `20260916140000_persist_milestones_and_likes`,
       `20260916160000_analytics_events`, `20260916180000_mentor_conversations`,
       `20260916200000_entitlements_and_trial`, `20260916220000_certificate_signatures`,
@@ -18,15 +31,19 @@ per item is enough — the code is the detail.
       `20260917120000_push_notifications`. Until then the client keeps the write
       grants the first migration revokes, and the
       milestone/like/analytics/review/email/push tables don't exist — those features
-      error, analytics silently no-ops.
-- [ ] **Add `SUPABASE_SERVICE_ROLE_KEY` to `.env`** (server-only, never `VITE_`).
-      Lesson completion runs through the service-role client and fails loudly
-      without it.
-- [ ] **Regenerate `src/integrations/supabase/types.ts`** from Supabase after the
-      migrations land. `analytics_events`, `post_likes`, `project_milestones`,
+      error, analytics silently no-ops. Run them in one transaction so a failure
+      leaves nothing half-applied; `push_notifications` alters a table
+      `reengagement` creates, so none of them can be skipped. Lovable saves its
+      own copy of each migration it runs — delete those duplicates once it syncs.
+- [ ] **Set `SUPABASE_SERVICE_ROLE_KEY` as a secret** (server-only, never `VITE_`,
+      never `.env` — it bypasses every RLS policy). Do this first: lesson
+      completion runs through the service-role client, so without it no learner
+      can earn XP.
+- [ ] **Regenerate `src/integrations/supabase/types.ts`** through Lovable after
+      the migrations land. `analytics_events`, `post_likes`, `project_milestones`,
       `reengagement_sends` (incl. `channel`), `review_items`, `push_subscriptions`,
       `issued_certificates.signature` and `profiles.email_optin` are currently hand-written into that generated file.
-- [ ] **Set `MENTOR_PROVIDER` and the matching API key** in `.env` (see
+- [ ] **Set `MENTOR_PROVIDER` and the matching API key** as secrets (see
       `.env.example`). Unset, the mentor falls back to the old scripted replies —
       the feature looks alive but isn't real.
 - [ ] **Confirm mentor monthly caps** — Free 10 / Pro 500 / Lifetime 500, now in
@@ -39,8 +56,6 @@ per item is enough — the code is the detail.
       register `https://<your-domain>/api/webhooks/stripe` in the Stripe
       dashboard for `checkout.session.completed` and
       `customer.subscription.deleted`.
-- [ ] ~~**Decide: marketplace template or real learners?**~~ This is the fork that
-      unblocks #2 and #3 — see "Blocked on a decision" below.
 - [ ] **Set `CRON_SECRET` and schedule the re-engagement job** — any cron that can
       `POST /api/cron/reengagement` with `Authorization: Bearer $CRON_SECRET`, once
       a day. Without it the emails exist but nothing ever sends them. Add
@@ -53,7 +68,8 @@ per item is enough — the code is the detail.
       verifying (the issuing record stays valid, the page says "not confirmed").
 - [ ] **Generate VAPID keys for push** — `bun run push:keys` prints
       `VITE_VAPID_PUBLIC_KEY`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` and
-      `VAPID_SUBJECT`; put them in `.env` (set the subject to a real contact).
+      `VAPID_SUBJECT`. `VITE_VAPID_PUBLIC_KEY` is public and can go in `.env`;
+      the other three are secrets (set the subject to a real contact).
       Unset, the profile toggle stays hidden and every nudge goes by email.
       Generate once and keep them: a new pair drops every browser subscription.
 - [ ] **Decide whether to self-host Pyodide.** Python challenges fetch ~10MB of
@@ -66,6 +82,25 @@ per item is enough — the code is the detail.
       deliberately *outside* `migrations/` so `db push` can't run it by accident.
       It ends in `ROLLBACK;`: read the numbers it prints, then change that to
       `COMMIT;`. Skip it entirely if this database has no real users.
+
+---
+
+## Decisions
+
+- **Real learners, not a marketplace template** (confirmed 2026-09-18). This is
+  why the mentor calls real models, plans are enforceable, payments are real
+  behind a flag, and seeded data is labelled wherever it meets live rows.
+
+## Incidents
+
+- **2026-09-17 — Lovable merge deleted the local work.** Lovable built the
+  "remaining pages" from the old `5743488` snapshot, and its merge `a35636a` kept
+  Lovable's tree wholesale, deleting server-authored XP, review, entitlements,
+  certificates, their migrations and the tests. Restored 2026-09-18 by `5dd429f`,
+  a forward merge (not a force push — `AGENTS.md` forbids rewriting history
+  Lovable has synced). Lovable's pages were earlier drafts of routes that already
+  existed, so none were kept. Before editing in Lovable, make sure it has synced
+  past `5dd429f`.
 
 ---
 
