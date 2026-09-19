@@ -35,9 +35,11 @@ export type LessonBlock =
       id: string;
       title: string;
       prompt: string;
-      language: "javascript" | "python" | "sql" | "react" | "excel" | "web";
+      language: "javascript" | "python" | "sql" | "react" | "excel" | "web" | "dom";
       /** Excel challenges only: which sheet in datasets/sheets.ts to start from. */
       sheet?: string | undefined;
+      /** DOM challenges only: the fixed page markup the learner's script works on. */
+      html?: string | undefined;
       starter: string;
       hint: string;
       solution: string;

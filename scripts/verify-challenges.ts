@@ -1,5 +1,5 @@
 /**
- * Runs every SQL, Python, React, Excel and HTML & CSS challenge the way the browser does: SQL and
+ * Runs every challenge — JavaScript, DOM, SQL, Python, React, Excel, HTML & CSS — the way the browser does: SQL and
  * Python on the local python3 (the same program Pyodide runs; its sqlite3 is
  * the same engine), React through react-runtime.ts itself in a simulated DOM:
  *
@@ -13,12 +13,13 @@
  */
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
 import { bodies } from "../src/content/lesson-bodies.server";
-import { sqlProgram } from "../src/lib/code-runner";
+import { runJavaScript, sqlProgram } from "../src/lib/code-runner";
 import { runSheetChallenge } from "../src/lib/sheet-runtime";
 
 GlobalRegistrator.register();
 const { runReactChallenge } = await import("../src/lib/react-runtime");
 const { runWebChallenge } = await import("../src/lib/web-runtime");
+const { runDomChallenge } = await import("../src/lib/dom-runtime");
 
 async function reactResults(code: string, tests: { name: string; expression: string }[]) {
   const run = await runReactChallenge(code, tests);
@@ -31,12 +32,29 @@ async function reactResults(code: string, tests: { name: string; expression: str
 let failures = 0;
 for (const [id, body] of Object.entries(bodies)) {
   for (const block of body.blocks) {
-    if (block.kind !== "challenge" || block.language === "javascript") continue;
+    if (block.kind !== "challenge") continue;
     const expressions = JSON.stringify(block.tests.map((t) => t.expression));
     for (const [label, code, shouldPass] of [
       ["solution", block.solution, true],
       ["starter", block.starter, false],
     ] as const) {
+      if (block.language === "javascript" || block.language === "dom") {
+        const run =
+          block.language === "dom"
+            ? await runDomChallenge(code, block.html ?? "", block.tests)
+            : await runJavaScript(code, block.tests);
+        const results =
+          "tests" in run ? run.tests.map((r) => r.passed) : run.results.map((r) => r.passed);
+        const details =
+          "tests" in run ? run.tests.map((r) => r.detail) : run.results.map((r) => r.detail);
+        const ok = (results.length > 0 && results.every(Boolean) && !run.error) === shouldPass;
+        if (!ok) failures++;
+        const why = run.error ?? details.find(Boolean) ?? "";
+        console.log(
+          `${ok ? "ok  " : "FAIL"} ${id} ${label} ${results.map((r) => (r ? "✓" : "✗")).join("")}${!ok && why ? `  ${why}` : ""}`,
+        );
+        continue;
+      }
       if (block.language === "web") {
         const run = runWebChallenge(code, block.tests);
         const results = run.results.map((r) => r.passed);

@@ -10,19 +10,122 @@ import type { LessonBody } from "./lessons";
  * `bun run lessons:manifest` after adding or removing a body here.
  */
 export const bodies: Record<string, LessonBody> = {
+  "js-basics.values": {
+    summary:
+      "Store values with const and let, know their types, and avoid the coercion traps that cause most beginner bugs.",
+    xp: 100,
+    blocks: [
+      {
+        kind: "text",
+        body: "`const` names a value that won't be reassigned; `let` names one that will. Use `const` by default and `let` only when you need to reassign. (You'll see `var` in old code; its scoping rules are confusing, so don't write new code with it.)",
+      },
+      {
+        kind: "code",
+        language: "javascript",
+        code: `const name = "Ada";        // string
+let count = 3;             // number (integers and decimals are both "number")
+const inStock = true;      // boolean
+let coupon = null;         // "deliberately nothing"
+let note;                  // undefined: declared, never given a value
+
+typeof count               // "number"
+typeof null                // "object", a famous historical mistake
+Array.isArray([1, 2])      // true (typeof [] is also "object")`,
+      },
+      {
+        kind: "text",
+        body: '**JavaScript converts types silently, and that\'s where the bugs live.** `"5" + 1` is `"51"` (the `+` joins strings), but `"5" - 1` is `4`. `==` converts before comparing (`0 == ""` is `true`), so always compare with `===`, which doesn\'t. Form fields always give you strings, so convert them on purpose with `Number(text)`, and watch out: `Number("")` is `0`, not "nothing".',
+      },
+      {
+        kind: "text",
+        body: '**Truthy and falsy.** In an `if`, these count as false: `false`, `0`, `""`, `null`, `undefined` and `NaN`. Everything else is true, including `"0"`, `[]` and `{}`. So `if (quantity)` treats a genuine quantity of 0 as missing. And decimals are approximate: `0.1 + 0.2` is `0.30000000000000004`, so round money for display with `toFixed(2)`.',
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question: 'A form gives you `const qty = "2"`. What\'s `qty + 1`?',
+        options: ["3", '"21"', '"3"', "NaN"],
+        answer: 1,
+        explanation:
+          "With a string on either side, `+` joins text. Convert first: `Number(qty) + 1` is 3.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question: "Which of these values is truthy?",
+        options: ["`0`", '`""`', '`"0"`', "`null`"],
+        answer: 2,
+        explanation:
+          'Any non-empty string is truthy, including "0" and "false". Only the empty string is falsy.',
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Numbers from a form",
+        prompt:
+          'Write `toNumber(input)`: trim the text, return `null` if it\'s empty or isn\'t a number, and the number otherwise. Watch the traps: `Number("")` is `0`, and `"0"` is a real answer. Then write `formatPrice(amount)`, which returns text like `$12.00`.',
+        language: "javascript",
+        starter: `function toNumber(input) {
+  // your code here
+}
+
+function formatPrice(amount) {
+  // your code here
+}
+
+console.log(toNumber(" 3.5 "), formatPrice(0.1 + 0.2));`,
+        hint: 'Trim with `String(input).trim()` and return `null` straight away if the result is `""`. Then `Number(text)`, checking `Number.isNaN(...)`. For the price: `"$" + amount.toFixed(2)`.',
+        solution: `function toNumber(input) {
+  const text = String(input).trim();
+  if (text === "") return null;
+  const n = Number(text);
+  return Number.isNaN(n) ? null : n;
+}
+
+function formatPrice(amount) {
+  return "$" + amount.toFixed(2);
+}`,
+        tests: [
+          { name: "Reads a whole number", expression: `toNumber("12") === 12` },
+          { name: "Trims spaces and reads decimals", expression: `toNumber(" 3.5 ") === 3.5` },
+          {
+            name: "Empty input is null, not 0",
+            expression: `toNumber("") === null && toNumber("   ") === null`,
+          },
+          {
+            name: "Text that isn't a number is null",
+            expression: `toNumber("12 apples") === null`,
+          },
+          { name: '"0" is a real zero', expression: `toNumber("0") === 0` },
+          {
+            name: "Formats prices to two decimals",
+            expression: `formatPrice(12) === "$12.00" && formatPrice(0.1 + 0.2) === "$0.30"`,
+          },
+        ],
+      },
+    ],
+  },
   "js-basics.functions": {
     summary: "Functions package a job so you can run it whenever you need it.",
     xp: 120,
     blocks: [
       {
         kind: "text",
-        body: 'A function is a named recipe. You hand it ingredients (arguments), it does its work, and it hands something back (the return value). If a function does not return anything, calling it gives you `undefined` — one of the most common sources of the dreaded "why is my value empty?" bug.',
+        body: 'A function is a named recipe. You hand it ingredients (arguments), it does its work, and it hands something back (the return value). If a function does not return anything, calling it gives you `undefined`, one of the most common sources of the dreaded "why is my value empty?" bug.',
       },
       {
         kind: "code",
         language: "javascript",
         caption: "A function with an explicit return",
-        code: `function total(price, quantity) {\n  return price * quantity;\n}\n\nconsole.log(total(12, 3)); // 36`,
+        code: `function total(price, quantity) {
+  return price * quantity;
+}
+
+console.log(total(12, 3)); // 36`,
+      },
+      {
+        kind: "text",
+        body: '**Arrow functions** are a shorter way to write the same thing, and you\'ll see them everywhere: `const total = (price, quantity) => price * quantity;`. With a single expression after the arrow and no braces, its value is returned automatically. Add braces and you need `return` again. **Default parameters** fill in a missing argument: `function greet(name = "there")`.',
       },
       {
         kind: "callout",
@@ -48,19 +151,596 @@ export const bodies: Record<string, LessonBody> = {
         explanation: "An arrow function with a single expression body returns that expression.",
       },
       {
+        kind: "mcq",
+        id: "q2",
+        question: "`const add = (a, b) => { a + b; };` What does `add(2, 3)` return?",
+        options: ["5", "undefined", '"23"', "An error"],
+        answer: 1,
+        explanation:
+          "The braces make it a block body, and a block needs an explicit `return`. Write `(a, b) => a + b` or `{ return a + b; }`.",
+      },
+      {
         kind: "challenge",
         id: "c1",
         title: "Write a discount helper",
         prompt:
-          "Write a function `applyDiscount(price, percent)` that returns the price after the discount. `applyDiscount(200, 25)` should return 150.",
+          "Write a function `applyDiscount(price, percent)` that returns the price after the discount. `applyDiscount(200, 25)` should return 150. When no percent is given, apply the standard 10%.",
         language: "javascript",
-        starter: `function applyDiscount(price, percent) {\n  // your code here\n}\n\nconsole.log(applyDiscount(200, 25));`,
-        hint: "A 25% discount means you keep 75% — multiply by (100 - percent) / 100.",
-        solution: `function applyDiscount(price, percent) {\n  return price * (100 - percent) / 100;\n}`,
+        starter: `function applyDiscount(price, percent) {
+  // your code here
+}
+
+console.log(applyDiscount(200, 25));`,
+        hint: "A 25% discount means you keep 75%: multiply by (100 - percent) / 100. A default parameter looks like `percent = 10`.",
+        solution: `function applyDiscount(price, percent = 10) {
+  return (price * (100 - percent)) / 100;
+}`,
         tests: [
           { name: "applyDiscount(200, 25) === 150", expression: "applyDiscount(200, 25) === 150" },
           { name: "applyDiscount(80, 0) === 80", expression: "applyDiscount(80, 0) === 80" },
           { name: "applyDiscount(50, 100) === 0", expression: "applyDiscount(50, 100) === 0" },
+          { name: "No percent means the standard 10%", expression: "applyDiscount(100) === 90" },
+        ],
+      },
+    ],
+  },
+  "js-basics.conditionals": {
+    summary:
+      "Branch with if and the ternary, exit early with guard clauses, and choose ?? over || when 0 is a real value.",
+    xp: 120,
+    blocks: [
+      {
+        kind: "text",
+        body: '`if` / `else if` / `else` choose what runs, checking from the top and taking the first branch that\'s true. For choosing between two *values*, the ternary is tidier: `const label = inStock ? "In stock" : "Sold out";`.',
+      },
+      {
+        kind: "text",
+        body: "**Guard clauses** handle the odd cases first and leave the function early, so the main logic isn't buried three `if`s deep. Deal with bad input and exit, then write the normal path as if nothing can go wrong, because by then nothing can.",
+      },
+      {
+        kind: "code",
+        language: "javascript",
+        code: `function shippingLabel(order) {
+  if (!order) return "No order";                 // guard
+  if (order.items.length === 0) return "Empty";  // guard
+
+  return order.express ? "Express" : "Standard"; // the real work
+}`,
+      },
+      {
+        kind: "text",
+        body: '`&&` and `||` return one of their operands, not just `true`/`false`, so they\'re often used for defaults: `const name = input || "Guest";`. But `||` falls through on **any** falsy value, including `0` and `""`. When 0 is a legitimate value (a quantity, a price, a volume), use `??`, which only falls through on `null` or `undefined`: `const qty = input ?? 1;`.',
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          "A customer sets a quantity of 0 to remove an item. The code says `const qty = input || 1;`. What's `qty`?",
+        options: ["0", "1", "undefined", "null"],
+        answer: 1,
+        explanation:
+          "0 is falsy, so `||` swaps in the default, and the item stays in the cart. `input ?? 1` keeps the 0.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question: "Why prefer guard clauses to one large nested `if`?",
+        options: [
+          "They run faster",
+          "Each odd case is handled and finished at the top, so the main logic reads straight down without nesting",
+          "JavaScript limits how deep `if`s can nest",
+          "They avoid needing `else`",
+        ],
+        answer: 1,
+        explanation:
+          "Code that reads top to bottom, with the exceptions dealt with first, is easier to read and to change.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Shipping rules with guard clauses",
+        prompt:
+          "Write `shippingCost(order)`. It returns `null` if the order is missing or `order.total` isn't a number (use guard clauses). Otherwise shipping is free from a total of 50 and costs 5 below that, and `express: true` adds 10. Then write `quantityOrDefault(qty)`, which returns `qty`, or 1 when it's `null` or `undefined`, keeping 0 as 0.",
+        language: "javascript",
+        starter: `function shippingCost(order) {
+  // your code here
+}
+
+function quantityOrDefault(qty) {
+  // your code here
+}
+
+console.log(shippingCost({ total: 30 }), shippingCost({ total: 80, express: true }));`,
+        hint: 'Start with `if (!order || typeof order.total !== "number") return null;`. Then `let cost = order.total >= 50 ? 0 : 5;` and add 10 for express. For the default: `qty ?? 1`.',
+        solution: `function shippingCost(order) {
+  if (!order || typeof order.total !== "number") return null;
+  let cost = order.total >= 50 ? 0 : 5;
+  if (order.express) cost += 10;
+  return cost;
+}
+
+function quantityOrDefault(qty) {
+  return qty ?? 1;
+}`,
+        tests: [
+          { name: "Under 50 costs 5", expression: `shippingCost({ total: 30 }) === 5` },
+          { name: "Free from 50", expression: `shippingCost({ total: 50 }) === 0` },
+          {
+            name: "Express adds 10",
+            expression: `shippingCost({ total: 80, express: true }) === 10 && shippingCost({ total: 20, express: true }) === 15`,
+          },
+          {
+            name: "Bad input returns null instead of crashing",
+            expression: `shippingCost(null) === null && shippingCost({}) === null && shippingCost({ total: "50" }) === null`,
+          },
+          {
+            name: "0 stays 0; only missing becomes 1",
+            expression: `quantityOrDefault(0) === 0 && quantityOrDefault(undefined) === 1 && quantityOrDefault(null) === 1 && quantityOrDefault(3) === 3`,
+          },
+        ],
+      },
+    ],
+  },
+  "js-data.arrays": {
+    summary:
+      "Store lists, loop over them, and know which methods change the original array and which return a new one.",
+    xp: 130,
+    blocks: [
+      {
+        kind: "text",
+        body: "An array is an ordered list: `const prices = [120, 35, 20];`. Positions start at 0, so `prices[0]` is 120, and `prices.length` is 3. Loop with `for (const price of prices)` when you just need each item, and `prices.forEach((price, i) => …)` when you also need the position.",
+      },
+      {
+        kind: "code",
+        language: "javascript",
+        code: `const cart = ["tent", "stove"];
+cart.push("map");            // add to the end (changes cart)
+cart.includes("stove");      // true
+cart.indexOf("map");         // 2 (or -1 if not found)
+const firstTwo = cart.slice(0, 2);   // a NEW array; cart is unchanged
+const copy = [...cart];      // a shallow copy`,
+      },
+      {
+        kind: "text",
+        body: "**Know which methods mutate.** `push`, `pop`, `splice`, `reverse` and `sort` change the array in place, and every part of your code holding that array sees the change. `slice`, `map`, `filter`, `concat` and spread (`[...a]`) return a new one. Copy before mutating when the array isn't yours to change, like a function's argument or data from React state.",
+      },
+      {
+        kind: "text",
+        body: '**`sort()` sorts as text by default.** `[120, 9, 35].sort()` gives `[120, 35, 9]`, because "1" comes before "3" and "9" in the alphabet. Pass a comparison function for numbers: `sort((a, b) => a - b)`. Because `sort` also mutates, the usual safe version is `[...prices].sort((a, b) => a - b)`, or `prices.toSorted(…)` in modern browsers.',
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question: "What does `[10, 9, 1].sort()` return?",
+        options: ["[1, 9, 10]", "[10, 9, 1]", "[1, 10, 9]", "[9, 10, 1]"],
+        answer: 2,
+        explanation:
+          'Without a comparison function, items are compared as strings: "1" < "10" < "9". Use `(a, b) => a - b` for numbers.',
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          "A function does `items.sort(…)` on the array it was given, and returns it. What's the side effect?",
+        options: [
+          "None, because sort returns a copy",
+          "The caller's array is reordered too, because `sort` changes the array in place and returns that same array",
+          "The function returns undefined",
+          "It throws on the caller's array",
+        ],
+        answer: 1,
+        explanation:
+          "Sort a copy, `[...items].sort(…)`, so calling the function never changes data it doesn't own.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Arrays without side effects",
+        prompt:
+          "Write `sortPrices(prices)`, which returns the prices sorted from lowest to highest *as numbers*, without changing the array passed in. Write `lastN(items, n)`, which returns the last `n` items as a new array. And write `unique(items)`, which drops repeats and keeps first appearances in order.",
+        language: "javascript",
+        starter: `function sortPrices(prices) {
+  // your code here
+}
+
+function lastN(items, n) {
+  // your code here
+}
+
+function unique(items) {
+  // your code here
+}
+
+console.log(sortPrices([120, 9, 35]));`,
+        hint: "`[...prices].sort((a, b) => a - b)` sorts a copy numerically. `items.slice(-n)` takes from the end. `[...new Set(items)]` removes repeats and keeps order.",
+        solution: `function sortPrices(prices) {
+  return [...prices].sort((a, b) => a - b);
+}
+
+function lastN(items, n) {
+  return items.slice(-n);
+}
+
+function unique(items) {
+  return [...new Set(items)];
+}`,
+        tests: [
+          {
+            name: "Sorts numerically",
+            expression: `sortPrices([120, 9, 35]).join() === "9,35,120"`,
+          },
+          {
+            name: "Leaves the original array alone",
+            expression: `(() => { const p = [3, 1, 2]; sortPrices(p); return p.join() === "3,1,2"; })()`,
+          },
+          {
+            name: "Takes the last n items",
+            expression: `lastN(["a", "b", "c", "d"], 2).join() === "c,d" && lastN(["a"], 3).join() === "a"`,
+          },
+          {
+            name: "Removes repeats, keeping order",
+            expression: `unique(["tent", "stove", "tent", "map"]).join() === "tent,stove,map"`,
+          },
+        ],
+      },
+    ],
+  },
+  "js-data.objects": {
+    summary:
+      "Group data in objects, read nested values safely, and update them without changing the original.",
+    xp: 130,
+    blocks: [
+      {
+        kind: "text",
+        body: 'An object groups named values: `const item = { id: "headlamp", price: 35, qty: 1 };`. Read with a dot (`item.price`) or brackets when the name is in a variable (`item[field]`). A property that doesn\'t exist is `undefined`, and reading a property *of* `undefined` throws, which is the most common error in JavaScript.',
+      },
+      {
+        kind: "code",
+        language: "javascript",
+        code: `const customer = { name: "Ada", address: { city: "Oslo" } };
+
+customer.address.city            // "Oslo"
+customer.billing?.city           // undefined (optional chaining: no crash)
+const { name, address: { city } } = customer;   // destructuring
+const { phone = "none" } = customer;             // with a default`,
+      },
+      {
+        kind: "text",
+        body: "**Objects are passed by reference.** `const b = a` doesn't copy anything; both names point to the same object, so changing `b.qty` changes `a.qty` too. To update something without changing the original (which React state requires), build a new object with spread: `{ ...item, qty: 3 }`. Spread copies only one level deep, so update nested parts with spread too.",
+      },
+      {
+        kind: "code",
+        language: "javascript",
+        code: `const cart = { owner: "Ada", items: [{ id: "a", qty: 1 }, { id: "b", qty: 2 }] };
+
+const updated = {
+  ...cart,
+  items: cart.items.map((item) => (item.id === "a" ? { ...item, qty: 5 } : item)),
+};
+// cart is unchanged; updated has a new items array with a new "a" object`,
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question: "`const copy = original; copy.qty = 5;` What's `original.qty` now?",
+        options: ["Its old value", "5", "undefined", "It throws"],
+        answer: 1,
+        explanation:
+          "There's only one object, with two names. `{ ...original, qty: 5 }` makes a new one.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          "`order.customer.address.city` throws \"Cannot read properties of undefined (reading 'city')\" for guest orders. What's the safe read?",
+        options: [
+          '`order.customer.address.city || ""`',
+          "`order?.customer?.address?.city`",
+          '`order.customer.address["city"]`',
+          "Wrap the whole page in try/catch",
+        ],
+        answer: 1,
+        explanation:
+          "`?.` stops and gives `undefined` as soon as a link in the chain is missing. The `||` version still crashes first, because the crash happens on the read itself.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Update a cart without mutating it",
+        prompt:
+          'Write `updateQuantity(cart, id, quantity)`, which returns a new cart where only the item with that `id` has the new quantity. The original cart must stay exactly as it was. Then write `describeCustomer(customer)`, which returns `"Ada (Oslo)"`, or `"Ada (no city)"` when there\'s no address. Use destructuring with defaults.',
+        language: "javascript",
+        starter: `const CART = {
+  owner: "Ada",
+  items: [
+    { id: "headlamp", qty: 1 },
+    { id: "bottle", qty: 2 },
+  ],
+};
+
+function updateQuantity(cart, id, quantity) {
+  // your code here
+}
+
+function describeCustomer(customer) {
+  // your code here
+}
+
+console.log(updateQuantity(CART, "headlamp", 3));`,
+        hint: '`{ ...cart, items: cart.items.map((item) => item.id === id ? { ...item, qty: quantity } : item) }`. For the customer: `const { name, address: { city = "no city" } = {} } = customer;`.',
+        solution: `const CART = {
+  owner: "Ada",
+  items: [
+    { id: "headlamp", qty: 1 },
+    { id: "bottle", qty: 2 },
+  ],
+};
+
+function updateQuantity(cart, id, quantity) {
+  return {
+    ...cart,
+    items: cart.items.map((item) => (item.id === id ? { ...item, qty: quantity } : item)),
+  };
+}
+
+function describeCustomer(customer) {
+  const { name, address: { city = "no city" } = {} } = customer;
+  return name + " (" + city + ")";
+}`,
+        tests: [
+          {
+            name: "Updates the right item",
+            expression: `updateQuantity(CART, "headlamp", 3).items.find((i) => i.id === "headlamp").qty === 3`,
+          },
+          {
+            name: "Leaves the other items as they were",
+            expression: `(() => { const next = updateQuantity(CART, "headlamp", 3); return next.items.length === 2 && next.items.find((i) => i.id === "bottle").qty === 2 && next.owner === "Ada"; })()`,
+          },
+          {
+            name: "The original cart is unchanged",
+            expression: `(() => { updateQuantity(CART, "headlamp", 3); return CART.items[0].qty === 1; })()`,
+          },
+          {
+            name: "Describes a customer with a city",
+            expression: `describeCustomer({ name: "Ada", address: { city: "Oslo" } }) === "Ada (Oslo)"`,
+          },
+          {
+            name: "…and one without an address",
+            expression: `describeCustomer({ name: "Ada" }) === "Ada (no city)"`,
+          },
+        ],
+      },
+    ],
+  },
+  "js-data.transform": {
+    summary:
+      "Answer questions about data with map, filter and reduce, and chain them into readable pipelines.",
+    xp: 150,
+    blocks: [
+      {
+        kind: "text",
+        body: "Most everyday data work is three moves. **`filter`** keeps the items that pass a test. **`map`** turns each item into something else. **`reduce`** folds the whole list into one value: a total, a count, an object of groups. Each returns something new and leaves the original array alone.",
+      },
+      {
+        kind: "code",
+        language: "javascript",
+        code: `const paid = orders.filter((o) => o.status === "paid");
+const totals = paid.map((o) => o.total);
+const revenue = totals.reduce((sum, t) => sum + t, 0);
+
+// or as one pipeline
+const revenue2 = orders
+  .filter((o) => o.status === "paid")
+  .reduce((sum, o) => sum + o.total, 0);`,
+      },
+      {
+        kind: "text",
+        body: "**Always give `reduce` a starting value** (the `0` above). Without one, `reduce` starts from the first item, which breaks when the items are objects, and it **throws on an empty array**: the day there are no orders, the page crashes. Relatives worth knowing: `find` (the first match), `some` and `every` (true/false answers), and `includes`.",
+      },
+      {
+        kind: "code",
+        language: "javascript",
+        caption: "reduce into an object: totals per group",
+        code: `const byCategory = paid.reduce((acc, o) => {
+  acc[o.category] = (acc[o.category] ?? 0) + o.total;
+  return acc;
+}, {});`,
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question: "`[].reduce((sum, x) => sum + x)` (no starting value). What happens?",
+        options: ["It returns 0", "It returns undefined", "It throws a TypeError", "It returns []"],
+        answer: 2,
+        explanation:
+          '"Reduce of empty array with no initial value." Pass the starting value, `reduce(fn, 0)`, and an empty list gives 0.',
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question: "You need the first order over 100, not all of them. Which method?",
+        options: ["`filter`", "`find`", "`map`", "`some`"],
+        answer: 1,
+        explanation:
+          "`find` returns the first match (or `undefined`) and stops looking. `some` would only tell you whether one exists.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Questions about orders",
+        prompt:
+          "Using `ORDERS`, write `paidRevenue(orders)`, the sum of `total` for paid orders (an empty list gives 0). Write `bigSpenders(orders, min)`, the customer names of paid orders with a total of at least `min`, in order. And write `revenueByCategory(orders)`, an object of paid revenue per category.",
+        language: "javascript",
+        starter: `const ORDERS = [
+  { id: 101, customer: "Maja Berg", category: "Apparel", total: 168, status: "paid" },
+  { id: 102, customer: "Liam Walsh", category: "Apparel", total: 180, status: "paid" },
+  { id: 103, customer: "Maja Berg", category: "Apparel", total: 65, status: "refunded" },
+  { id: 104, customer: "Sofia Rossi", category: "Gear", total: 195, status: "paid" },
+  { id: 105, customer: "Noah Keller", category: "Gear", total: 90, status: "paid" },
+  { id: 106, customer: "Aisha Khan", category: "Apparel", total: 154, status: "paid" },
+];
+
+function paidRevenue(orders) {
+  // your code here
+}
+
+function bigSpenders(orders, min) {
+  // your code here
+}
+
+function revenueByCategory(orders) {
+  // your code here
+}
+
+console.log(paidRevenue(ORDERS), revenueByCategory(ORDERS));`,
+        hint: "Filter to paid first in each one. Revenue: `.reduce((sum, o) => sum + o.total, 0)`. Names: `.filter(…).map((o) => o.customer)`. Groups: reduce into `{}` with `acc[o.category] = (acc[o.category] ?? 0) + o.total`.",
+        solution: `const ORDERS = [
+  { id: 101, customer: "Maja Berg", category: "Apparel", total: 168, status: "paid" },
+  { id: 102, customer: "Liam Walsh", category: "Apparel", total: 180, status: "paid" },
+  { id: 103, customer: "Maja Berg", category: "Apparel", total: 65, status: "refunded" },
+  { id: 104, customer: "Sofia Rossi", category: "Gear", total: 195, status: "paid" },
+  { id: 105, customer: "Noah Keller", category: "Gear", total: 90, status: "paid" },
+  { id: 106, customer: "Aisha Khan", category: "Apparel", total: 154, status: "paid" },
+];
+
+const paidOnly = (orders) => orders.filter((o) => o.status === "paid");
+
+function paidRevenue(orders) {
+  return paidOnly(orders).reduce((sum, o) => sum + o.total, 0);
+}
+
+function bigSpenders(orders, min) {
+  return paidOnly(orders)
+    .filter((o) => o.total >= min)
+    .map((o) => o.customer);
+}
+
+function revenueByCategory(orders) {
+  return paidOnly(orders).reduce((acc, o) => {
+    acc[o.category] = (acc[o.category] ?? 0) + o.total;
+    return acc;
+  }, {});
+}`,
+        tests: [
+          { name: "Paid revenue", expression: `paidRevenue(ORDERS) === 787` },
+          { name: "An empty list gives 0, not a crash", expression: `paidRevenue([]) === 0` },
+          {
+            name: "Big spenders, paid orders only, in order",
+            expression: `bigSpenders(ORDERS, 170).join() === "Liam Walsh,Sofia Rossi"`,
+          },
+          {
+            name: "Revenue per category",
+            expression: `JSON.stringify(revenueByCategory(ORDERS)) === JSON.stringify({ Apparel: 502, Gear: 285 })`,
+          },
+        ],
+      },
+    ],
+  },
+  "js-debug.errors": {
+    summary:
+      "Read an error message and stack trace to find the line, then throw errors that tell the next person what went wrong.",
+    xp: 120,
+    blocks: [
+      {
+        kind: "text",
+        body: "When JavaScript hits a problem, it throws an **error** with a type, a message and a **stack trace**: the chain of function calls that led there. The first line says *what*; the top frame of the trace says *where*. Open the browser console (F12), click the file link, and you're on the line.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "A stack trace, as Chrome shows it",
+        code: `Uncaught TypeError: Cannot read properties of undefined (reading 'price')
+    at lineTotal (cart.js:4:30)
+    at Array.reduce (<anonymous>)
+    at orderTotal (cart.js:8:22)
+    at HTMLButtonElement.<anonymous> (checkout.js:15:18)`,
+      },
+      {
+        kind: "text",
+        body: "Read that as a sentence: *on line 4 of cart.js, inside `lineTotal`, something was `undefined` and we tried to read `.price` from it*. Here, one line item has no product (it was deleted from the catalogue). The common types: **TypeError** (using a value the wrong way, like reading from `undefined` or calling something that isn't a function), **ReferenceError** (a name that doesn't exist, usually a typo), **SyntaxError** (the code can't even be parsed; nothing in the file runs).",
+      },
+      {
+        kind: "text",
+        body: "When *your* code finds a problem it can't handle, **throw an error that says what's wrong**: `throw new Error(\"Line 2 has no product\")`. That beats a TypeError from deep inside, because it names the actual problem. Where you can recover (show a message, skip the item), catch it with `try { … } catch (error) { … }`. Don't catch and ignore, though: an empty `catch` turns a clear error into a mystery.",
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          "\"TypeError: Cannot read properties of undefined (reading 'price')\". What is undefined?",
+        options: [
+          "`price`",
+          "The object you tried to read `.price` *from*",
+          "The function that was called",
+          "The whole file",
+        ],
+        answer: 1,
+        explanation:
+          "The message names the property being read. The thing to the *left* of `.price` was undefined, so look at where that value came from.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question: '"ReferenceError: totl is not defined". What\'s the most likely cause?',
+        options: [
+          "A network failure",
+          "A typo: `totl` instead of `total`, or a variable used outside the scope where it was declared",
+          "`totl` is null",
+          "The browser is out of date",
+        ],
+        answer: 1,
+        explanation:
+          "A ReferenceError means the name itself doesn't exist where it's used, which is almost always spelling or scope.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Fail with a useful message",
+        prompt:
+          "`orderTotal` crashes with a TypeError when a line has no product. Make it throw a plain `Error` naming the line instead, such as `Line 2 has no product`, counting lines from 1. Then write `safeTotal(order)`, which returns `{ total, error }`: the total and `null` when it works, `null` and the error's message when it doesn't.",
+        language: "javascript",
+        starter: `function orderTotal(order) {
+  return order.items.reduce((sum, line) => sum + line.product.price * line.qty, 0);
+}
+
+function safeTotal(order) {
+  // your code here
+}
+
+const broken = { items: [{ product: { name: "Headlamp", price: 35 }, qty: 1 }, { qty: 2 }] };
+console.log(safeTotal(broken));`,
+        hint: 'Replace the reduce\'s arrow with a function body: `(sum, line, i) => { if (!line.product) throw new Error("Line " + (i + 1) + " has no product"); return sum + …; }`. In `safeTotal`, use `try` and `catch (error)`.',
+        solution: `function orderTotal(order) {
+  return order.items.reduce((sum, line, i) => {
+    if (!line.product) throw new Error("Line " + (i + 1) + " has no product");
+    return sum + line.product.price * line.qty;
+  }, 0);
+}
+
+function safeTotal(order) {
+  try {
+    return { total: orderTotal(order), error: null };
+  } catch (error) {
+    return { total: null, error: error.message };
+  }
+}`,
+        tests: [
+          {
+            name: "Totals a good order",
+            expression: `orderTotal({ items: [{ product: { name: "Headlamp", price: 35 }, qty: 2 }] }) === 70 && orderTotal({ items: [] }) === 0`,
+          },
+          {
+            name: "A missing product throws an Error naming the line, not a TypeError",
+            expression: `(() => { try { orderTotal({ items: [{ product: { name: "Headlamp", price: 35 }, qty: 1 }, { qty: 2 }] }); return false; } catch (e) { return !(e instanceof TypeError) && /line 2/i.test(e.message); } })()`,
+          },
+          {
+            name: "safeTotal returns the total when it works",
+            expression: `JSON.stringify(safeTotal({ items: [{ product: { name: "Bottle", price: 20 }, qty: 3 }] })) === JSON.stringify({ total: 60, error: null })`,
+          },
+          {
+            name: "safeTotal reports the problem when it doesn't",
+            expression: `(() => { const r = safeTotal({ items: [{ qty: 1 }] }); return r.total === null && /line 1/i.test(r.error); })()`,
+          },
         ],
       },
     ],
@@ -74,10 +754,16 @@ export const bodies: Record<string, LessonBody> = {
         body: "A shopper reports that their cart total is wrong. Before changing a single character, form a theory: what would you *expect* each line to produce, and where does reality first disagree?",
       },
       {
+        kind: "text",
+        body: "That's the whole method, and it works on bugs of any size. **Reproduce** the bug reliably. **Read** what you've got (the error, the wrong value). **Guess** one specific cause. **Test** the guess with the smallest possible check: a `console.log` of the value you're unsure about, or a breakpoint in DevTools (click a line number in the Sources panel) so you can inspect every variable at that moment. Change one thing at a time; changing three at once teaches you nothing.",
+      },
+      {
         kind: "code",
         language: "javascript",
         caption: "The bug report",
-        code: `Cart: 2 x 9.99, 1 x 24.50\nExpected total: 44.48\nActual total: 0`,
+        code: `Cart: 2 x 9.99, 1 x 24.50
+Expected total: 44.48
+Actual total: 0`,
       },
       {
         kind: "mcq",
@@ -94,15 +780,43 @@ export const bodies: Record<string, LessonBody> = {
           "If the callback forgets to return, the accumulator becomes undefined and the result collapses.",
       },
       {
+        kind: "mcq",
+        id: "q2",
+        question:
+          "You add `console.log(sum)` as the first line inside the reduce callback. It prints `0`, then `undefined`, `undefined`. What does that prove?",
+        options: [
+          "The prices are wrong",
+          "The first call gets the starting value, but every call after that receives `undefined`, so the callback isn't returning anything",
+          "`console.log` broke the reduce",
+          "There are too many items",
+        ],
+        answer: 1,
+        explanation:
+          "Each call's return value becomes the next call's `sum`. `undefined` after the first call points straight at a missing `return`.",
+      },
+      {
         kind: "challenge",
         id: "c1",
         title: "Fix the cart total",
         prompt:
           "`cartTotal` should multiply each item's price by its quantity and sum the results. Fix it so `cartTotal(items)` returns 44.48.",
         language: "javascript",
-        starter: `function cartTotal(items) {\n  return items.reduce((sum, item) => {\n    sum + item.price * item.quantity;\n  }, 0);\n}\n\nconst items = [\n  { price: 9.99, quantity: 2 },\n  { price: 24.5, quantity: 1 },\n];\n\nconsole.log(cartTotal(items));`,
+        starter: `function cartTotal(items) {
+  return items.reduce((sum, item) => {
+    sum + item.price * item.quantity;
+  }, 0);
+}
+
+const items = [
+  { price: 9.99, quantity: 2 },
+  { price: 24.5, quantity: 1 },
+];
+
+console.log(cartTotal(items));`,
         hint: "Look at the arrow function body. Is anything actually returned from it?",
-        solution: `return items.reduce((sum, item) => sum + item.price * item.quantity, 0);`,
+        solution: `function cartTotal(items) {
+  return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+}`,
         tests: [
           {
             name: "Totals a two-line cart correctly",
@@ -110,6 +824,402 @@ export const bodies: Record<string, LessonBody> = {
               "Math.abs(cartTotal([{price:9.99,quantity:2},{price:24.5,quantity:1}]) - 44.48) < 0.001",
           },
           { name: "An empty cart totals 0", expression: "cartTotal([]) === 0" },
+          {
+            name: "A single item is price × quantity",
+            expression: "cartTotal([{ price: 20, quantity: 3 }]) === 60",
+          },
+        ],
+      },
+    ],
+  },
+  "js-dom.select": {
+    summary: "Find elements on the page, change their text and classes, and build new ones safely.",
+    xp: 130,
+    blocks: [
+      {
+        kind: "text",
+        body: 'The **DOM** is the page as JavaScript sees it: a tree of element objects you can find and change, and the browser updates the screen to match. `document.querySelector("#total")` finds the first element matching a CSS selector; `querySelectorAll(".item")` finds them all.',
+      },
+      {
+        kind: "code",
+        language: "javascript",
+        code: `const total = document.querySelector("#total");
+total.textContent = "Total: $90.00";      // set text
+total.classList.add("highlight");         // add / remove / toggle classes
+total.classList.toggle("empty", false);
+
+const li = document.createElement("li");  // build an element
+li.textContent = "Headlamp × 2";
+document.querySelector("#cart").append(li);`,
+      },
+      {
+        kind: "text",
+        body: "**Use `textContent` for text, not `innerHTML`.** `innerHTML` parses its value as HTML, so a product name that happens to contain `<img src=x onerror=…>` becomes a real element that runs code. That's cross-site scripting (XSS), one of the most common security holes on the web. `textContent` always treats the value as plain text.",
+      },
+      {
+        kind: "text",
+        body: "A reliable pattern for lists: keep the data in an array, and write one `render` function that **clears the container and rebuilds it** from that array. `list.replaceChildren()` empties an element. Rendering from data every time is simpler than patching the page by hand, and it's the idea React is built on.",
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          "A review shows the customer's name with `el.innerHTML = review.name`. Why is that dangerous?",
+        options: [
+          "It's slower than textContent",
+          'A "name" containing HTML becomes real elements, and scripts in it can run on every visitor\'s page (XSS)',
+          "innerHTML strips spaces",
+          "It only works in Chrome",
+        ],
+        answer: 1,
+        explanation:
+          "Anything a user typed must be inserted as text. `el.textContent = review.name` shows the characters exactly as typed.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question: "Calling `renderCart()` twice doubles every item on the page. What's missing?",
+        options: [
+          "A `return` statement",
+          "Clearing the list before adding the items again",
+          "A second list",
+          "`defer` on the script tag",
+        ],
+        answer: 1,
+        explanation:
+          "Render should produce the same page for the same data, however often it runs. Empty the container first.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Render the cart",
+        prompt:
+          "Write `renderCart(items)`. Clear `#cart`, then add one `li` per item reading `Headlamp × 2` (name, ×, quantity). Set `#total` to `Total: $90.00`. With no items, show `Your cart is empty` and add the class `empty` to `#cart`; remove that class when there are items. Use text, never HTML, for anything that came from data.",
+        language: "dom",
+        html: `<h2>Your cart</h2>
+<ul id="cart"></ul>
+<p id="total"></p>`,
+        starter: `const CART = [
+  { name: "Headlamp", price: 35, qty: 2 },
+  { name: "Water Bottle", price: 20, qty: 1 },
+];
+
+function renderCart(items) {
+  // your code here
+}
+
+renderCart(CART);`,
+        hint: 'Find `#cart` and `#total`, then call `list.replaceChildren()`. For each item, `document.createElement("li")`, set its `textContent` to `item.name + " × " + item.qty`, and `append` it. Use `list.classList.toggle("empty", items.length === 0)`.',
+        solution: `const CART = [
+  { name: "Headlamp", price: 35, qty: 2 },
+  { name: "Water Bottle", price: 20, qty: 1 },
+];
+
+function renderCart(items) {
+  const list = document.querySelector("#cart");
+  const total = document.querySelector("#total");
+  list.replaceChildren();
+  for (const item of items) {
+    const li = document.createElement("li");
+    li.textContent = item.name + " × " + item.qty;
+    list.append(li);
+  }
+  list.classList.toggle("empty", items.length === 0);
+  const sum = items.reduce((s, item) => s + item.price * item.qty, 0);
+  total.textContent = items.length ? "Total: $" + sum.toFixed(2) : "Your cart is empty";
+}
+
+renderCart(CART);`,
+        tests: [
+          {
+            name: "One line per item",
+            expression: `$$("#cart li").length === 2 && text($$("#cart li")[0]) === "Headlamp × 2"`,
+          },
+          { name: "Shows the total", expression: `text("#total") === "Total: $90.00"` },
+          {
+            name: "Rendering again doesn't duplicate",
+            expression: `(renderCart(CART), renderCart(CART), $$("#cart li").length === 2)`,
+          },
+          {
+            name: "An empty cart says so",
+            expression: `(renderCart([]), $$("#cart li").length === 0 && $("#cart").classList.contains("empty") && text("#total") === "Your cart is empty")`,
+          },
+          {
+            name: "…and recovers when items come back",
+            expression: `(renderCart([]), renderCart(CART), !$("#cart").classList.contains("empty"))`,
+          },
+          {
+            name: "Data is shown as text, never as HTML",
+            expression: `(renderCart([{ name: '<img src=x onerror="alert(1)">', price: 1, qty: 1 }]), $("#cart img") === null && text("#cart li").startsWith("<img"))`,
+          },
+        ],
+      },
+    ],
+  },
+  "js-dom.events": {
+    summary: "Respond to clicks and form input, keep state in one place, and re-render from it.",
+    xp: 150,
+    blocks: [
+      {
+        kind: "text",
+        body: '`element.addEventListener("click", handler)` runs `handler` every time the element is clicked. The handler receives an **event** object: `event.target` is the element that was clicked, and `event.preventDefault()` stops the browser\'s default action, such as a form submission reloading the page.',
+      },
+      {
+        kind: "code",
+        language: "javascript",
+        code: `let quantity = 1;                       // the state: one source of truth
+
+function render() {                     // the page, derived from state
+  document.querySelector("#qty").textContent = String(quantity);
+}
+
+document.querySelector("#plus").addEventListener("click", () => {
+  quantity += 1;                        // change state…
+  render();                             // …then re-render
+});
+
+render();                               // and render once at the start`,
+      },
+      {
+        kind: "text",
+        body: '**Keep state in variables, not in the page.** Reading the current number back out of `#qty.textContent` and parsing it works until the text changes format. Store the number in a variable, change the variable in your handlers, and have one `render` function update the page from it. Rules like "between 1 and 10" then live in one place, and the page can never disagree with your data.',
+      },
+      {
+        kind: "text",
+        body: "Disable controls that can't do anything (`button.disabled = true`) rather than ignoring clicks silently; that's clearer, and assistive tech announces it. For lists that change, attach **one** listener to the container and check `event.target.closest(\"button\")`. This is called **event delegation**: it keeps working for items added later.",
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          'A newsletter form reloads the page on submit, wiping the "Thanks!" message your handler shows. What\'s missing?',
+        options: [
+          "`return false` at the end of the file",
+          "`event.preventDefault()` in the submit handler",
+          "A `click` listener on the button instead",
+          "`async` on the handler",
+        ],
+        answer: 1,
+        explanation:
+          "A form's default action is to submit and navigate. `preventDefault()` keeps the page so your code can handle it.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          "Rows are added to a list after the page loads, and their Delete buttons don't respond. Why?",
+        options: [
+          "The buttons are disabled",
+          'Listeners were attached to the buttons that existed at load time. Put one listener on the list and use `event.target.closest("button")`',
+          "Click events don't work on new elements",
+          'The list needs `role="list"`',
+        ],
+        answer: 1,
+        explanation:
+          "A listener belongs to the element it was added to. Delegation listens on the container, which never changes.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "A quantity stepper",
+        prompt:
+          'Make the stepper work. `+` and `−` change the quantity, which stays between 1 and 10. Each button is disabled when it can\'t go any further, including on first load. "Add to cart" sets `#status` to `Added 3 to your cart` (with the current quantity). Keep the quantity in a variable and update the page from one `render` function.',
+        language: "dom",
+        html: `<div class="stepper">
+  <button id="minus" aria-label="Decrease">−</button>
+  <output id="qty">1</output>
+  <button id="plus" aria-label="Increase">+</button>
+</div>
+<button id="add">Add to cart</button>
+<p id="status" role="status"></p>`,
+        starter: `let quantity = 1;
+
+// Wire up #plus, #minus and #add, and keep the page in step with quantity.`,
+        hint: "Write `render()` to set `#qty`'s text and each button's `.disabled` (`quantity <= 1`, `quantity >= 10`). In the click handlers, change `quantity` with `Math.min`/`Math.max`, then call `render()`. Call `render()` once at the end too.",
+        solution: `let quantity = 1;
+const MIN = 1;
+const MAX = 10;
+
+function render() {
+  document.querySelector("#qty").textContent = String(quantity);
+  document.querySelector("#minus").disabled = quantity <= MIN;
+  document.querySelector("#plus").disabled = quantity >= MAX;
+}
+
+document.querySelector("#plus").addEventListener("click", () => {
+  quantity = Math.min(MAX, quantity + 1);
+  render();
+});
+
+document.querySelector("#minus").addEventListener("click", () => {
+  quantity = Math.max(MIN, quantity - 1);
+  render();
+});
+
+document.querySelector("#add").addEventListener("click", () => {
+  document.querySelector("#status").textContent = "Added " + quantity + " to your cart";
+});
+
+render();`,
+        tests: [
+          {
+            name: "Starts at 1 with − disabled",
+            expression: `text("#qty") === "1" && $("#minus").disabled === true && $("#plus").disabled === false`,
+          },
+          {
+            name: "+ increases the quantity",
+            expression: `(click($("#plus")), click($("#plus")), text("#qty") === "3" && $("#minus").disabled === false)`,
+          },
+          {
+            name: "Never goes below 1",
+            expression: `(click($("#plus")), click($("#minus")), click($("#minus")), text("#qty") === "1")`,
+          },
+          {
+            name: "Stops at 10, with + disabled",
+            expression: `(Array.from({ length: 12 }).forEach(() => click($("#plus"))), text("#qty") === "10" && $("#plus").disabled === true)`,
+          },
+          {
+            name: "Add to cart reports the quantity",
+            expression: `(click($("#plus")), click($("#plus")), click($("#add")), text("#status") === "Added 3 to your cart")`,
+          },
+        ],
+      },
+    ],
+  },
+  "js-async.async": {
+    summary:
+      "Work with values that arrive later: promises, async/await, errors, and doing several things at once.",
+    xp: 160,
+    blocks: [
+      {
+        kind: "text",
+        body: "Some work takes time: a network request, reading a file, a timer. JavaScript doesn't stop and wait; the call returns a **promise**, an object standing in for a value that will arrive (or fail) later. Inside an `async` function, `await` pauses *that function* until the promise settles, while the rest of the page carries on.",
+      },
+      {
+        kind: "code",
+        language: "javascript",
+        code: `async function loadPrice(id) {
+  const response = await fetch("/api/prices/" + id);   // wait for the network
+  if (!response.ok) throw new Error("Price " + id + " not found");
+  const data = await response.json();                  // wait for the body
+  return data.price;
+}
+
+try {
+  const price = await loadPrice(7);
+} catch (error) {
+  showMessage(error.message);          // a rejected promise lands here
+}`,
+      },
+      {
+        kind: "text",
+        body: "**Forgetting `await`** is the classic bug: you get the promise itself, not its value. `console.log` shows `Promise { <pending> }`, and `price * 2` is `NaN`. An `async` function *always* returns a promise, so whoever calls it has to `await` it too.",
+      },
+      {
+        kind: "text",
+        body: "**Independent requests shouldn't wait for each other.** Two `await`s in a row run one after the other: two 50ms requests take 100ms. Start both, then wait for both with `Promise.all([a(), b()])`, and they overlap: 50ms. `Promise.all` rejects as soon as any one of them fails. Use `Promise.allSettled` when you want every result regardless.",
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question: "`const price = loadPrice(7); console.log(price * 2);` prints `NaN`. Why?",
+        options: [
+          "The price is missing",
+          "`loadPrice` is async, so it returns a promise; without `await`, `price` is the promise, not the number",
+          "`console.log` can't print numbers",
+          "`fetch` isn't allowed",
+        ],
+        answer: 1,
+        explanation:
+          "`const price = await loadPrice(7);`, inside an async function, gives you the number.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          "A product page needs the price and the stock level, from two separate requests of about 200ms each. What's the faster way to get both?",
+        options: [
+          "`const p = await getPrice(); const s = await getStock();`, about 400ms",
+          "`const [p, s] = await Promise.all([getPrice(), getStock()]);`, about 200ms",
+          "Put both in `setTimeout`",
+          "It makes no difference",
+        ],
+        answer: 1,
+        explanation:
+          "The requests don't depend on each other, so start both before waiting. `Promise.all` waits for the slower one, not the sum.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Load a product, fast and safely",
+        prompt:
+          "`fetchPrice` and `fetchStock` stand in for real requests, each taking about 50ms. Write `productInfo(id)`, which returns `{ id, price, inStock }` with `inStock` true when the stock is above 0, fetching the price and stock **at the same time**. Then write `safePrice(id)`, which returns the price, or `null` if the request fails.",
+        language: "javascript",
+        starter: `const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function fetchPrice(id) {
+  await wait(50);
+  if (id === 999) throw new Error("Product 999 not found");
+  return { 1: 35, 2: 20 }[id];
+}
+
+async function fetchStock(id) {
+  await wait(50);
+  return { 1: 4, 2: 0 }[id] ?? 0;
+}
+
+async function productInfo(id) {
+  // your code here
+}
+
+async function safePrice(id) {
+  // your code here
+}
+
+console.log(await productInfo(1));`,
+        hint: "`const [price, stock] = await Promise.all([fetchPrice(id), fetchStock(id)]);` then return the object. For `safePrice`, put the `await fetchPrice(id)` in `try` and return `null` from `catch`.",
+        solution: `const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function fetchPrice(id) {
+  await wait(50);
+  if (id === 999) throw new Error("Product 999 not found");
+  return { 1: 35, 2: 20 }[id];
+}
+
+async function fetchStock(id) {
+  await wait(50);
+  return { 1: 4, 2: 0 }[id] ?? 0;
+}
+
+async function productInfo(id) {
+  const [price, stock] = await Promise.all([fetchPrice(id), fetchStock(id)]);
+  return { id, price, inStock: stock > 0 };
+}
+
+async function safePrice(id) {
+  try {
+    return await fetchPrice(id);
+  } catch {
+    return null;
+  }
+}`,
+        tests: [
+          {
+            name: "Returns the product's details",
+            expression: `JSON.stringify(await productInfo(1)) === JSON.stringify({ id: 1, price: 35, inStock: true })`,
+          },
+          {
+            name: "Zero stock isn't in stock",
+            expression: `(await productInfo(2)).inStock === false`,
+          },
+          {
+            name: "Fetches both at the same time",
+            expression: `await (async () => { const started = Date.now(); await productInfo(1); return Date.now() - started < 90; })()`,
+          },
+          {
+            name: "A failed request gives null, not a crash",
+            expression: `(await safePrice(999)) === null && (await safePrice(1)) === 35`,
+          },
         ],
       },
     ],

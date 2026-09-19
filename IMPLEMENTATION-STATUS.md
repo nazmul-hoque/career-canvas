@@ -106,6 +106,20 @@ Two facts shape every item below:
 
 ## Done
 
+- [x] **JavaScript From Zero, complete** (2026-09-19) — nine new lessons and the
+      two existing ones rewritten in place: values and coercion traps, functions
+      and arrow bodies, guard clauses and `??` vs `||`, arrays (mutating vs not,
+      `sort()` sorting as text), objects and immutable updates, map/filter/reduce
+      (reduce's initial value), reading stack traces and throwing useful errors,
+      the debugging method, DOM rendering with `textContent` (an XSS test),
+      events with state + one render function, and a new async module (forgotten
+      `await`, `Promise.all` for parallel requests — timed). Runner changes: the
+      JavaScript runner is now async (tests may `await`) and reports why a test
+      failed; a new `dom` language runs the learner's script against fixed markup
+      in a fresh inert document per test, with a scripts-enabled Preview in an
+      opaque-origin sandbox. `lessons:verify` now checks JavaScript challenges
+      too — it used to skip them.
+
 - [x] **HTML & CSS Foundations, complete** (2026-09-19) — ten lessons (the one
       existing lesson, `layout.responsive`, rewritten in place): the page
       skeleton, semantic landmarks and headings, accessible forms, the cascade,
@@ -388,18 +402,18 @@ Two facts shape every item below:
 
 ## The constraint that outranks this whole list
 
-**65 of 89 lessons are written** (the roadmap in `src/content/curriculum.ts` has
-89 slots). Nine courses are complete, all written 2026-09-19: Git & GitHub (7 of
+**74 of 90 lessons are written** (the roadmap in `src/content/curriculum.ts` has
+90 slots). Ten courses are complete, all written 2026-09-19: Git & GitHub (7 of
 7), SQL for Analysis (5 of 5), Generative AI Engineering (6 of 6), Machine
 Learning Basics (6 of 6), React in Practice (8 of 8), Python Essentials (9 of 9),
-Excel for Analysts (6 of 6), Data Analytics Toolkit (6 of 6) and HTML & CSS
-Foundations (10 of 10). **Three paths can issue a certificate: Python Developer,
-Data Analyst and AI / GenAI Developer.** Issuing one still needs
-`SUPABASE_SERVICE_ROLE_KEY` set (see "Blocked on you"). Next closest: Frontend
-(JavaScript 8, TypeScript 4) and Full-Stack (JavaScript 8, Node 4) — both wait on
-the JavaScript course.
+Excel for Analysts (6 of 6), Data Analytics Toolkit (6 of 6), HTML & CSS
+Foundations (10 of 10) and JavaScript From Zero (11 of 11). **Three paths can
+issue a certificate: Python Developer, Data Analyst and AI / GenAI Developer.**
+Issuing one still needs `SUPABASE_SERVICE_ROLE_KEY` set (see "Blocked on you").
+Next closest: Frontend (needs only TypeScript, 4 lessons) and Full-Stack (needs
+only Node.js & APIs, 4 lessons).
 Every item on the review's ranked list is now closed, which changes nothing about
 this: the platform tells the truth, measures itself, remembers what you learned
-and can prove what you finished — about sixty-five lessons. Nothing above changes the
+and can prove what you finished — about seventy-four lessons. Nothing above changes the
 product's value until one whole path is written. The engineering here was about making sure the platform tells the truth
 while the content gets written — it is not a substitute for writing it.

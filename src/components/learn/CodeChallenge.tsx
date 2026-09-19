@@ -23,6 +23,8 @@ interface Props {
   language: ChallengeLanguage;
   /** Excel challenges: the sheet the formulas are written into. */
   sheet?: string | undefined;
+  /** DOM challenges: the page markup the script runs against. */
+  html?: string | undefined;
   starter: string;
   hint: string;
   tests: { name: string; expression: string }[];
@@ -38,6 +40,7 @@ export function CodeChallenge({
   prompt,
   language,
   sheet,
+  html,
   starter,
   hint,
   tests,
@@ -55,8 +58,8 @@ export function CodeChallenge({
 
   async function handleRun(submit: boolean) {
     setRunning(true);
-    if (language === "react" || language === "web") setPreviewCode(code);
-    const res = await runCode(language, code, tests, { sheet });
+    if (language === "react" || language === "web" || language === "dom") setPreviewCode(code);
+    const res = await runCode(language, code, tests, { sheet, html });
     setResult(res);
     onResult(res);
     setRunning(false);
@@ -81,6 +84,14 @@ export function CodeChallenge({
           <InlineText text={prompt} />
         </p>
         {language === "excel" && sheet ? <SheetPreview name={sheet} /> : null}
+        {language === "dom" && html ? (
+          <div className="mt-3">
+            <p className="text-xs font-semibold text-chalk">The page your script works on</p>
+            <pre className="mt-1.5 max-h-48 overflow-auto rounded-lg bg-background px-3 py-2 font-mono text-[12px] leading-5 text-chalk">
+              {html}
+            </pre>
+          </div>
+        ) : null}
         {language === "sql" ? (
           <pre className="mt-3 overflow-x-auto rounded-lg bg-background px-3 py-2 font-mono text-[12px] leading-5 text-chalk">
             {SHOP_SCHEMA}
@@ -127,6 +138,9 @@ export function CodeChallenge({
             <ReactPreview code={previewCode} />
           ) : null}
           {language === "web" && previewCode !== null ? <PagePreview html={previewCode} /> : null}
+          {language === "dom" && previewCode !== null ? (
+            <DomPreview code={previewCode} html={html ?? ""} />
+          ) : null}
           <div className="flex items-center gap-2 border-b border-border px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-chalk">
             <Terminal className="size-3.5" /> Output
           </div>
@@ -345,6 +359,44 @@ function PagePreview({ html }: { html: string }) {
           className="h-72 rounded-md border border-border bg-background"
           style={{ width: width === "phone" ? 375 : "100%" }}
         />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The page with the learner's script running, to try by hand. `allow-scripts`
+ * without `allow-same-origin` gives the frame an opaque origin: the script
+ * runs, but it can't read the app, its storage or its cookies.
+ */
+function DomPreview({ code, html }: { code: string; html: string }) {
+  const [doc, setDoc] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    import("@/lib/dom-runtime")
+      .then(({ previewDocument }) => {
+        if (!cancelled) setDoc(previewDocument(code, html));
+      })
+      .catch(() => setDoc(null));
+    return () => {
+      cancelled = true;
+    };
+  }, [code, html]);
+
+  return (
+    <div className="border-b border-border">
+      <div className="flex items-center gap-2 border-b border-border px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-chalk">
+        <Eye className="size-3.5" /> Preview · try it
+      </div>
+      <div className="bg-secondary/40 p-2">
+        {doc ? (
+          <iframe
+            title="Page preview"
+            sandbox="allow-scripts"
+            srcDoc={doc}
+            className="h-56 w-full rounded-md border border-border bg-background"
+          />
+        ) : null}
       </div>
     </div>
   );

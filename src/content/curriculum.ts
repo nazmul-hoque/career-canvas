@@ -116,22 +116,25 @@ export const courses: Course[] = [
     instructor: { name: "Diego Salas", role: "Staff Engineer, ex-Shopify", initials: "DS" },
     modules: [
       m("js-basics", "Values and logic", "The building blocks you will use every day.", [
-        ["values", "Variables, types and truthiness", 10, "concept"],
+        ["values", "Variables, types and truthiness", 11, "practice"],
         ["functions", "Functions and return values", 12, "practice"],
-        ["conditionals", "Conditionals and guard clauses", 10, "challenge"],
+        ["conditionals", "Conditionals and guard clauses", 11, "challenge"],
       ]),
       m("js-data", "Working with data", "Arrays and objects, the workhorses of JS.", [
         ["arrays", "Arrays and iteration", 13, "practice"],
-        ["objects", "Objects and destructuring", 12, "practice"],
+        ["objects", "Objects and destructuring", 13, "practice"],
         ["transform", "map, filter, reduce", 15, "challenge"],
       ]),
       m("js-debug", "Debugging like a professional", "Read the error, form a theory, test it.", [
-        ["errors", "Reading stack traces", 9, "concept"],
+        ["errors", "Reading stack traces", 11, "challenge"],
         ["fixit", "Debug the cart total", 14, "challenge"],
       ]),
       m("js-dom", "The DOM", "Make the page respond to people.", [
-        ["select", "Selecting and updating elements", 11, "practice"],
-        ["events", "Events and state", 13, "challenge"],
+        ["select", "Selecting and updating elements", 12, "practice"],
+        ["events", "Events and state", 14, "challenge"],
+      ]),
+      m("js-async", "Asynchronous code", "Promises, async/await and waiting well.", [
+        ["async", "Promises and async/await", 14, "challenge"],
       ]),
     ],
   },

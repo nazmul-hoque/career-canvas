@@ -666,6 +666,7 @@ function Block({
       prompt={block.prompt}
       language={block.language}
       sheet={block.sheet}
+      html={block.html}
       starter={block.starter}
       hint={block.hint}
       tests={block.tests}
