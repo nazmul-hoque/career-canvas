@@ -14,36 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      analytics_events: {
-        Row: {
-          anon_id: string | null
-          created_at: string
-          id: string
-          name: string
-          path: string | null
-          props: Json
-          user_id: string | null
-        }
-        Insert: {
-          anon_id?: string | null
-          created_at?: string
-          id?: string
-          name: string
-          path?: string | null
-          props?: Json
-          user_id?: string | null
-        }
-        Update: {
-          anon_id?: string | null
-          created_at?: string
-          id?: string
-          name?: string
-          path?: string | null
-          props?: Json
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       community_posts: {
         Row: {
           body: string
@@ -95,33 +65,6 @@ export type Database = {
         }
         Relationships: []
       }
-      issued_certificates: {
-        Row: {
-          certificate_id: string
-          issued_at: string
-          path_id: string
-          plan_at_issue: string
-          signature: string | null
-          user_id: string
-        }
-        Insert: {
-          certificate_id: string
-          issued_at?: string
-          path_id: string
-          plan_at_issue: string
-          signature?: string | null
-          user_id: string
-        }
-        Update: {
-          certificate_id?: string
-          issued_at?: string
-          path_id?: string
-          plan_at_issue?: string
-          signature?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       lesson_progress: {
         Row: {
           completed_at: string
@@ -149,42 +92,6 @@ export type Database = {
           status?: string
           user_id?: string
           xp_earned?: number
-        }
-        Relationships: []
-      }
-      mentor_messages: {
-        Row: {
-          content: string
-          course_id: string
-          created_at: string
-          id: string
-          lesson_id: string
-          model: string | null
-          provider: string | null
-          role: string
-          user_id: string
-        }
-        Insert: {
-          content: string
-          course_id: string
-          created_at?: string
-          id?: string
-          lesson_id: string
-          model?: string | null
-          provider?: string | null
-          role: string
-          user_id: string
-        }
-        Update: {
-          content?: string
-          course_id?: string
-          created_at?: string
-          id?: string
-          lesson_id?: string
-          model?: string | null
-          provider?: string | null
-          role?: string
-          user_id?: string
         }
         Relationships: []
       }
@@ -220,32 +127,6 @@ export type Database = {
           },
         ]
       }
-      post_likes: {
-        Row: {
-          created_at: string
-          post_id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          post_id: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          post_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "post_likes_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "community_posts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -253,7 +134,6 @@ export type Database = {
           career_path: string | null
           created_at: string
           display_name: string
-          email_optin: boolean
           experience: string | null
           goal: string | null
           hours_per_week: number | null
@@ -264,7 +144,6 @@ export type Database = {
           plan: string
           streak_best: number
           streak_current: number
-          trial_ends_at: string | null
           updated_at: string
           xp: number
         }
@@ -274,7 +153,6 @@ export type Database = {
           career_path?: string | null
           created_at?: string
           display_name?: string
-          email_optin?: boolean
           experience?: string | null
           goal?: string | null
           hours_per_week?: number | null
@@ -285,7 +163,6 @@ export type Database = {
           plan?: string
           streak_best?: number
           streak_current?: number
-          trial_ends_at?: string | null
           updated_at?: string
           xp?: number
         }
@@ -295,7 +172,6 @@ export type Database = {
           career_path?: string | null
           created_at?: string
           display_name?: string
-          email_optin?: boolean
           experience?: string | null
           goal?: string | null
           hours_per_week?: number | null
@@ -306,132 +182,8 @@ export type Database = {
           plan?: string
           streak_best?: number
           streak_current?: number
-          trial_ends_at?: string | null
           updated_at?: string
           xp?: number
-        }
-        Relationships: []
-      }
-      push_subscriptions: {
-        Row: {
-          auth: string
-          created_at: string
-          endpoint: string
-          id: string
-          last_success_at: string | null
-          p256dh: string
-          user_agent: string | null
-          user_id: string
-        }
-        Insert: {
-          auth: string
-          created_at?: string
-          endpoint: string
-          id?: string
-          last_success_at?: string | null
-          p256dh: string
-          user_agent?: string | null
-          user_id: string
-        }
-        Update: {
-          auth?: string
-          created_at?: string
-          endpoint?: string
-          id?: string
-          last_success_at?: string | null
-          p256dh?: string
-          user_agent?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      reengagement_sends: {
-        Row: {
-          channel: string
-          created_at: string
-          day: string
-          id: string
-          kind: string
-          provider: string
-          user_id: string
-        }
-        Insert: {
-          channel?: string
-          created_at?: string
-          day?: string
-          id?: string
-          kind: string
-          provider?: string
-          user_id: string
-        }
-        Update: {
-          channel?: string
-          created_at?: string
-          day?: string
-          id?: string
-          kind?: string
-          provider?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      review_items: {
-        Row: {
-          course_id: string
-          created_at: string
-          due_on: string
-          id: string
-          interval_days: number
-          lapses: number
-          last_reviewed_at: string | null
-          lesson_id: string
-          streak: number
-          user_id: string
-        }
-        Insert: {
-          course_id: string
-          created_at?: string
-          due_on?: string
-          id?: string
-          interval_days?: number
-          lapses?: number
-          last_reviewed_at?: string | null
-          lesson_id: string
-          streak?: number
-          user_id: string
-        }
-        Update: {
-          course_id?: string
-          created_at?: string
-          due_on?: string
-          id?: string
-          interval_days?: number
-          lapses?: number
-          last_reviewed_at?: string | null
-          lesson_id?: string
-          streak?: number
-          user_id?: string
-        }
-        Relationships: []
-      }
-      project_milestones: {
-        Row: {
-          checked_at: string
-          milestone_index: number
-          project_id: string
-          user_id: string
-        }
-        Insert: {
-          checked_at?: string
-          milestone_index: number
-          project_id: string
-          user_id: string
-        }
-        Update: {
-          checked_at?: string
-          milestone_index?: number
-          project_id?: string
-          user_id?: string
         }
         Relationships: []
       }
