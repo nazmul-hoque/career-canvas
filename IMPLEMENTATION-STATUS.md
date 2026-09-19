@@ -100,6 +100,16 @@ Two facts shape every item below:
 
 ## Done
 
+- [x] **Machine Learning Basics, complete** (2026-09-19) — six lessons: fitting
+      a line and beating a baseline, precision/recall against the cost of a
+      mistake, held-out sets and preprocessing leakage, overfitting with
+      k-nearest neighbours, feature encoding and target leakage, and production
+      (training/serving skew, drift, fallbacks). Evaluation, overfitting, features
+      and deployment were advertised with no lesson; they now have two modules.
+      Challenges build each mechanism in plain Python; scikit-learn equivalents
+      are shown but not run (30 MB+ in the browser). Relabelled Intermediate from
+      "Advanced" — it's the basics and assumes only Python.
+
 - [x] **Generative AI Engineering, complete** (2026-09-19) — six lessons: prompt
       specs and keeping user text as data, validating structured output, embeddings
       and cosine similarity, chunking and grounded RAG prompts, tool calling and a
@@ -307,12 +317,14 @@ Two facts shape every item below:
 
 ## The constraint that outranks this whole list
 
-**23 of 78 lessons are written** (the roadmap in `src/content/curriculum.ts` has
-78 slots). Three courses are complete, all written 2026-09-19: Git & GitHub (7
-of 7, including "Git from zero"), SQL for Analysis (5 of 5) and Generative AI
-Engineering (6 of 6), the last two with a real, checked challenge in every lesson.
+**29 of 82 lessons are written** (the roadmap in `src/content/curriculum.ts` has
+82 slots). Four courses are complete, all written 2026-09-19: Git & GitHub (7 of
+7), SQL for Analysis (5 of 5), Generative AI Engineering (6 of 6) and Machine
+Learning Basics (6 of 6). **No path can issue a certificate yet.** The nearest is
+AI / GenAI Developer, which needs only the Python course (2 of 9): writing those
+7 lessons also brings the Python Developer path to within Python alone.
 Every item on the review's ranked list is now closed, which changes nothing about
 this: the platform tells the truth, measures itself, remembers what you learned
-and can prove what you finished — about twenty-three lessons. Nothing above changes the
+and can prove what you finished — about twenty-nine lessons. Nothing above changes the
 product's value until one whole path is written. The engineering here was about making sure the platform tells the truth
 while the content gets written — it is not a substitute for writing it.

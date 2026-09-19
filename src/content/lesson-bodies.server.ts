@@ -246,6 +246,756 @@ export const bodies: Record<string, LessonBody> = {
       },
     ],
   },
+  "ml-core.fit": {
+    summary: "What training actually does, fitting a line by hand, and why a baseline comes first.",
+    xp: 150,
+    blocks: [
+      {
+        kind: "text",
+        body: "Supervised learning means learning from examples that come with the answer. Each example has **features**, the things you know in advance (how far a parcel travels), and a **label**, the thing you want to predict (how many days it takes). Training searches for the model parameters that make the predictions on those examples as good as possible. Prediction applies them to new cases.",
+      },
+      {
+        kind: "text",
+        body: "The simplest model is a straight line: `days = w × distance + b`. Training picks the `w` (slope) and `b` (intercept) that minimise the squared errors. For a single feature there's a closed-form answer, and it's all the maths this lesson needs:",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "Least squares for one feature",
+        code: `w = Σ (x − mean(x)) × (y − mean(y))  /  Σ (x − mean(x))²
+b = mean(y) − w × mean(x)`,
+      },
+      {
+        kind: "text",
+        body: '**Always build a baseline first**: the dumbest reasonable prediction, such as "every parcel takes the average number of days". A model is only worth having by the margin it beats that. It sounds obvious, but plenty of production models turn out to barely beat the average once someone checks.',
+      },
+      {
+        kind: "text",
+        body: "Measure error with a metric people can read. **Mean absolute error (MAE)** is the average size of a miss, in the label's own units: an MAE of 0.2 means predictions are off by about a fifth of a day on average.",
+      },
+      {
+        kind: "code",
+        language: "python",
+        caption: "The same thing with scikit-learn, which is what you'd use at work (not run here)",
+        code: `from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_absolute_error
+
+X = [[50], [120], [200], [310], [400], [520]]   # one row per parcel, one column per feature
+y = [1, 2, 2, 3, 4, 5]
+model = LinearRegression().fit(X, y)
+mean_absolute_error(y, model.predict(X))`,
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          "Predicting delivery days, your model's MAE is 1.9 days. Predicting the average for every parcel gives an MAE of 2.0. What does that tell you?",
+        options: [
+          "The model is good, because an MAE under 2 is low",
+          "The model barely beats guessing the average, so find out why before using it",
+          "The baseline must be wrong",
+          "You need more decimal places",
+        ],
+        answer: 1,
+        explanation:
+          "Whether an error is good or bad depends on what it's compared with. A tenth of a day better than the dumbest possible guess means the features carry little signal, or the model isn't using them.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          "You want to predict whether a customer will return an item. Which of these is the label?",
+        options: [
+          "Whether the item was returned",
+          "The item's price",
+          "The customer's number of past orders",
+          "The product category",
+        ],
+        answer: 0,
+        explanation:
+          "The label is the outcome you want to predict. The other three are known at the time of purchase, so they're candidate features.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Fit a line and beat the baseline",
+        prompt:
+          "Write `fit_line(xs, ys)`, which returns `(w, b)` using the least-squares formulas above; `predict(model, x)`, which returns `w * x + b`; and `mae(actual, predicted)`. The tests check your model against the average-guess baseline on the delivery data.",
+        language: "python",
+        starter: `DISTANCE = [50, 120, 200, 310, 400, 520]   # km
+DAYS = [1, 2, 2, 3, 4, 5]
+
+def fit_line(xs, ys):
+    # your code here
+    pass
+
+def predict(model, x):
+    # your code here
+    pass
+
+def mae(actual, predicted):
+    # your code here
+    pass
+
+model = fit_line(DISTANCE, DAYS)
+print(model)`,
+        hint: "Work out `mx` and `my` (the means) first. `w` is the sum of `(x - mx) * (y - my)` divided by the sum of `(x - mx) ** 2`, and `b = my - w * mx`. For `mae`, average `abs(a - p)` over the pairs.",
+        solution: `DISTANCE = [50, 120, 200, 310, 400, 520]
+DAYS = [1, 2, 2, 3, 4, 5]
+
+def fit_line(xs, ys):
+    mx, my = sum(xs) / len(xs), sum(ys) / len(ys)
+    w = sum((x - mx) * (y - my) for x, y in zip(xs, ys)) / sum((x - mx) ** 2 for x in xs)
+    return w, my - w * mx
+
+def predict(model, x):
+    w, b = model
+    return w * x + b
+
+def mae(actual, predicted):
+    return sum(abs(a - p) for a, p in zip(actual, predicted)) / len(actual)`,
+        tests: [
+          {
+            name: "Recovers an exact line",
+            expression:
+              "all(abs(a - e) < 1e-9 for a, e in zip(fit_line([1, 2, 3], [3, 5, 7]), (2.0, 1.0)))",
+          },
+          { name: "predict applies w and b", expression: "predict((2.0, 1.0), 10) == 21.0" },
+          {
+            name: "mae is the average size of a miss",
+            expression: "mae([1, 2, 3], [1, 3, 5]) == 1.0",
+          },
+          {
+            name: "The model beats the average-guess baseline",
+            expression:
+              "mae(DAYS, [predict(fit_line(DISTANCE, DAYS), x) for x in DISTANCE]) < mae(DAYS, [sum(DAYS) / len(DAYS)] * len(DAYS))",
+          },
+        ],
+      },
+    ],
+  },
+  "ml-core.evaluate": {
+    summary:
+      "Accuracy, precision and recall, and picking the one that matches the cost of a mistake.",
+    xp: 160,
+    blocks: [
+      {
+        kind: "text",
+        body: 'For classification, **accuracy** (the share of predictions that are right) is the first number everyone reaches for, and often the wrong one. If 5 in 100 orders are fraudulent, a model that says "never fraud" is 95% accurate and catches nothing.',
+      },
+      {
+        kind: "text",
+        body: "Count the four outcomes instead. This table is called the **confusion matrix**. For the positive class (fraud):",
+      },
+      {
+        kind: "code",
+        language: "text",
+        code: `                  predicted fraud   predicted fine
+actually fraud    true positive     false negative   ← missed fraud
+actually fine     false positive    true negative
+                  ↑ blocked a good customer`,
+      },
+      {
+        kind: "text",
+        body: "**Precision** = TP / (TP + FP): of the orders you flagged, how many were really fraud? **Recall** = TP / (TP + FN): of the real fraud, how much did you catch? Most models output a score, and you choose the threshold. Raising it trades recall for precision, and lowering it does the opposite.",
+      },
+      {
+        kind: "text",
+        body: "Choose by the cost of each mistake. If missing a case is expensive (fraud, a disease screen), favour recall. If a false alarm is expensive (sending a real customer's email to spam, blocking a card at the till), favour precision. Say the choice out loud, because it's a product decision as much as a technical one.",
+      },
+      {
+        kind: "code",
+        language: "python",
+        caption: "With scikit-learn (not run here)",
+        code: `from sklearn.metrics import confusion_matrix, precision_score, recall_score
+
+precision_score(y_true, y_pred)   # labels: 1 = fraud, 0 = fine
+recall_score(y_true, y_pred)
+confusion_matrix(y_true, y_pred)`,
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          "A spam filter's worst failure is hiding a real email from a customer. Which metric do you protect first?",
+        options: [
+          "Recall on spam",
+          "Accuracy",
+          "Precision on spam: when it says spam, it had better be spam",
+          "Training speed",
+        ],
+        answer: 2,
+        explanation:
+          "A false positive (a real email marked as spam) is the costly mistake, and precision is the metric that counts false positives. Some spam will get through as a result, and that's the price.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          "Out of 1,000 orders, 20 are fraudulent. A model flags 10 orders, and 8 of them are fraud. What are its precision and recall?",
+        options: [
+          "Precision 0.8, recall 0.4",
+          "Precision 0.4, recall 0.8",
+          "Precision 0.8, recall 0.8",
+          "Precision 0.99, recall 0.4",
+        ],
+        answer: 0,
+        explanation:
+          "Precision is 8 correct out of 10 flagged, which is 0.8. Recall is 8 caught out of 20 real cases, which is 0.4. Accuracy would be (1000 − 2 − 12) / 1000 = 98.6%, which sounds great and says nothing about the 12 missed frauds.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Metrics that don't lie",
+        prompt:
+          "Write `confusion(y_true, y_pred)`, which returns a dict with the counts `tp`, `fp`, `fn` and `tn` (labels are 1 for positive, 0 for negative). Then write `precision(c)` and `recall(c)`, which take that dict and return `0.0` when the denominator is zero, rather than crashing.",
+        language: "python",
+        starter: `def confusion(y_true, y_pred):
+    # your code here
+    pass
+
+def precision(c):
+    # your code here
+    pass
+
+def recall(c):
+    # your code here
+    pass
+
+# 100 orders, 5 of them fraud, and a model that never says "fraud"
+Y_TRUE = [1] * 5 + [0] * 95
+LAZY = [0] * 100
+print(confusion(Y_TRUE, LAZY))`,
+        hint: "Loop over `zip(y_true, y_pred)` and count each of the four combinations. Precision is `tp / (tp + fp)` and recall is `tp / (tp + fn)`, each guarded with `if ... == 0: return 0.0`.",
+        solution: `def confusion(y_true, y_pred):
+    c = {"tp": 0, "fp": 0, "fn": 0, "tn": 0}
+    for t, p in zip(y_true, y_pred):
+        if t == 1 and p == 1:
+            c["tp"] += 1
+        elif t == 0 and p == 1:
+            c["fp"] += 1
+        elif t == 1 and p == 0:
+            c["fn"] += 1
+        else:
+            c["tn"] += 1
+    return c
+
+def precision(c):
+    flagged = c["tp"] + c["fp"]
+    return c["tp"] / flagged if flagged else 0.0
+
+def recall(c):
+    actual = c["tp"] + c["fn"]
+    return c["tp"] / actual if actual else 0.0
+
+Y_TRUE = [1] * 5 + [0] * 95
+LAZY = [0] * 100`,
+        tests: [
+          {
+            name: "Counts all four outcomes",
+            expression:
+              'confusion([1, 1, 0, 0, 1], [1, 0, 1, 0, 1]) == {"tp": 2, "fp": 1, "fn": 1, "tn": 1}',
+          },
+          {
+            name: "Precision is tp / (tp + fp)",
+            expression: 'abs(precision({"tp": 8, "fp": 2, "fn": 12, "tn": 978}) - 0.8) < 1e-9',
+          },
+          {
+            name: "Recall is tp / (tp + fn)",
+            expression: 'abs(recall({"tp": 8, "fp": 2, "fn": 12, "tn": 978}) - 0.4) < 1e-9',
+          },
+          {
+            name: "The 95%-accurate lazy model has zero recall",
+            expression: "recall(confusion(Y_TRUE, LAZY)) == 0.0",
+          },
+          {
+            name: "No crash when nothing is flagged",
+            expression: "precision(confusion(Y_TRUE, LAZY)) == 0.0",
+          },
+        ],
+      },
+    ],
+  },
+  "ml-honest.split": {
+    summary: "Hold data back, keep it untouched, and stop information leaking from test to train.",
+    xp: 160,
+    blocks: [
+      {
+        kind: "text",
+        body: "A model's score on the data it was trained on tells you almost nothing, because it has seen the answers. To estimate how it will do on new cases, you hold data back. The **training set** fits the model. The **validation set** compares models and settings. The **test set** is used once, at the end, as the honest estimate. Every time you look at the test score and change something, it becomes a little less honest.",
+      },
+      {
+        kind: "text",
+        body: "**Leakage** is information from the held-out data reaching training by the back door, and it produces scores that collapse in production. The classic case is preprocessing: if you compute the mean and standard deviation for scaling over *all* the data before splitting, the training set has already been shaped by the test set. Fit every preprocessing step on the training set only, then apply it unchanged to validation, test and production.",
+      },
+      {
+        kind: "text",
+        body: "Two more leaks to watch for. **Duplicates**: the same customer or near-identical rows on both sides of the split, so the model is tested on things it has memorised; split by customer, not by row. **Time**: if you're predicting the future, train on the past and test on the later period. A random split lets the model peek at next month.",
+      },
+      {
+        kind: "code",
+        language: "python",
+        caption: "With scikit-learn (not run here): the scaler is fitted on the training data only",
+        code: `from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
+scaler = StandardScaler().fit(X_train)      # learns mean and std from training data
+X_train_s = scaler.transform(X_train)
+X_test_s = scaler.transform(X_test)          # reuses the training mean and std`,
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          "A churn model scored 94% on the test set and 81% in its first month live. The notebook scaled the whole dataset, then split it. What's the most likely culprit?",
+        options: [
+          "The production servers are slower",
+          "81% is just bad luck",
+          "The model needs more layers",
+          "Leakage: the test set shaped the preprocessing, so the test score was optimistic",
+        ],
+        answer: 3,
+        explanation:
+          "Scaling before splitting lets test-set statistics into training. It's rarely the whole gap, but it's the first thing to fix, because the reported 94% was never an honest number.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          "You're predicting next month's sales per store from two years of history. How should you split?",
+        options: [
+          "Randomly, 80/20",
+          "By time: train on the earlier months and test on the most recent ones",
+          "Put each store's data in a random half",
+          "No split is needed for a time series",
+        ],
+        answer: 1,
+        explanation:
+          "In production the model only ever knows the past. A time split recreates that, while a random split lets it learn from months that come after the ones it's tested on.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Scale without leaking",
+        prompt:
+          "Write `fit_scaler(values)`, which returns `(mean, std)` using the population standard deviation (divide by n); `scale(values, scaler)`, which returns `(v - mean) / std` for each value; and `split_then_scale(train, test)`, which returns `(scaled_train, scaled_test)` with **both** scaled by statistics fitted on `train` alone. The training values are never all equal.",
+        language: "python",
+        starter: `import math
+
+def fit_scaler(values):
+    # your code here
+    pass
+
+def scale(values, scaler):
+    # your code here
+    pass
+
+def split_then_scale(train, test):
+    # your code here
+    pass
+
+print(split_then_scale([1, 2, 3], [4]))`,
+        hint: "`mean = sum(values) / len(values)`, and `std = math.sqrt(sum((v - mean) ** 2 for v in values) / len(values))`. In `split_then_scale`, call `fit_scaler(train)` once and use that result for both lists.",
+        solution: `import math
+
+def fit_scaler(values):
+    mean = sum(values) / len(values)
+    std = math.sqrt(sum((v - mean) ** 2 for v in values) / len(values))
+    return mean, std
+
+def scale(values, scaler):
+    mean, std = scaler
+    return [(v - mean) / std for v in values]
+
+def split_then_scale(train, test):
+    scaler = fit_scaler(train)
+    return scale(train, scaler), scale(test, scaler)`,
+        tests: [
+          {
+            name: "fit_scaler returns mean and population std",
+            expression:
+              "all(abs(a - e) < 1e-4 for a, e in zip(fit_scaler([1, 2, 3]), (2.0, 0.8165)))",
+          },
+          {
+            name: "Scaled training data has mean 0",
+            expression: "abs(sum(split_then_scale([1, 2, 3], [4])[0])) < 1e-9",
+          },
+          {
+            name: "The test set is scaled with the training statistics",
+            expression: "abs(split_then_scale([1, 2, 3], [4])[1][0] - 2.4495) < 1e-4",
+          },
+          {
+            name: "Test values never change the scaler",
+            expression:
+              "split_then_scale([1, 2, 3], [4])[0] == split_then_scale([1, 2, 3], [400, -7])[0]",
+          },
+        ],
+      },
+    ],
+  },
+  "ml-honest.overfitting": {
+    summary: "Recognise a model that memorised its training data, and dial its flexibility back.",
+    xp: 170,
+    blocks: [
+      {
+        kind: "text",
+        body: "A model **overfits** when it learns the training data too well: noise, typos and one-off flukes included. The telltale sign is the gap between scores. Excellent on the training set, noticeably worse on validation. A model that's bad on both is **underfitting**: too simple, or missing the features that matter.",
+      },
+      {
+        kind: "text",
+        body: "**k-nearest neighbours** makes this easy to see. To classify a new point, find the `k` closest training points and take a majority vote. With `k = 1` every training point is its own nearest neighbour, so training accuracy is always 100%, and a single mislabelled point carves out a little region of wrong answers around itself. A larger `k` outvotes the noise, and past a point it starts to blur real boundaries.",
+      },
+      {
+        kind: "text",
+        body: "Every model family has a dial like `k`: tree depth, the number of features, regularisation strength. Choose it on **validation** data, never training data. With little data, use **cross-validation**: split into, say, 5 folds, validate on each fold in turn, and average the scores, so one lucky split doesn't decide.",
+      },
+      {
+        kind: "code",
+        language: "python",
+        caption: "With scikit-learn (not run here)",
+        code: `from sklearn.model_selection import cross_val_score
+from sklearn.neighbors import KNeighborsClassifier
+
+for k in (1, 3, 5, 9):
+    scores = cross_val_score(KNeighborsClassifier(n_neighbors=k), X, y, cv=5)
+    print(k, scores.mean())`,
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "Scenario",
+        code: `model            train accuracy   validation accuracy
+deep tree        99%              71%
+shallow tree     84%              82%`,
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question: "Which model should you prefer, and why?",
+        options: [
+          "The deep tree: 99% is the best number",
+          "The shallow tree: its validation score is higher and close to its training score, so it generalises",
+          "Neither: 84% is too low",
+          "Average the two",
+        ],
+        answer: 1,
+        explanation:
+          "The deep tree's 28-point gap is overfitting. What you care about is performance on data the model hasn't seen, and the shallow tree wins there.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question: "Which change is most likely to help an overfitting model?",
+        options: [
+          "Add more features",
+          "Train for longer",
+          "Tune it until the training score reaches 100%",
+          "Get more training data, or make the model simpler (for example a larger k or a shallower tree)",
+        ],
+        answer: 3,
+        explanation:
+          "More data makes noise harder to memorise, and a simpler model has less capacity to memorise it. The other three give the model more room to overfit.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Watch k-nearest neighbours overfit",
+        prompt:
+          "Write `knn_predict(train, point, k)`, where `train` is a list of `((x, y), label)` pairs: find the `k` training points closest to `point` (straight-line distance) and return the most common label among them. Then write `accuracy(train, data, k)`, the share of `data` that `knn_predict` gets right. `TRAIN` contains one mislabelled point. The tests show what it does to `k = 1`.",
+        language: "python",
+        starter: `import math
+from collections import Counter
+
+TRAIN = [
+    ((1.0, 1.0), "A"), ((1.5, 1.2), "A"), ((0.8, 1.6), "A"), ((1.3, 0.7), "A"),
+    ((5.0, 5.0), "B"), ((5.5, 4.6), "B"), ((4.7, 5.3), "B"), ((5.2, 5.6), "B"),
+    ((1.15, 1.05), "B"),   # mislabelled: it sits in the middle of the A points
+]
+VALID = [
+    ((1.1, 1.0), "A"), ((1.25, 1.1), "A"), ((0.9, 1.3), "A"),
+    ((5.1, 5.0), "B"), ((4.9, 4.8), "B"),
+]
+
+def knn_predict(train, point, k):
+    # your code here
+    pass
+
+def accuracy(train, data, k):
+    # your code here
+    pass
+
+print(accuracy(TRAIN, TRAIN, 1), accuracy(TRAIN, VALID, 1), accuracy(TRAIN, VALID, 3))`,
+        hint: "`sorted(train, key=lambda item: math.dist(item[0], point))[:k]` gives the neighbours, and `Counter(label for _, label in neighbours).most_common(1)[0][0]` gives the vote.",
+        solution: `import math
+from collections import Counter
+
+TRAIN = [
+    ((1.0, 1.0), "A"), ((1.5, 1.2), "A"), ((0.8, 1.6), "A"), ((1.3, 0.7), "A"),
+    ((5.0, 5.0), "B"), ((5.5, 4.6), "B"), ((4.7, 5.3), "B"), ((5.2, 5.6), "B"),
+    ((1.15, 1.05), "B"),
+]
+VALID = [
+    ((1.1, 1.0), "A"), ((1.25, 1.1), "A"), ((0.9, 1.3), "A"),
+    ((5.1, 5.0), "B"), ((4.9, 4.8), "B"),
+]
+
+def knn_predict(train, point, k):
+    neighbours = sorted(train, key=lambda item: math.dist(item[0], point))[:k]
+    return Counter(label for _, label in neighbours).most_common(1)[0][0]
+
+def accuracy(train, data, k):
+    return sum(knn_predict(train, p, k) == label for p, label in data) / len(data)`,
+        tests: [
+          {
+            name: "k = 1 copies its nearest neighbour, noise included",
+            expression: 'knn_predict(TRAIN, (1.1, 1.0), 1) == "B"',
+          },
+          {
+            name: "k = 3 outvotes the noise",
+            expression: 'knn_predict(TRAIN, (1.1, 1.0), 3) == "A"',
+          },
+          {
+            name: "k = 1 scores 100% on its own training data",
+            expression: "accuracy(TRAIN, TRAIN, 1) == 1.0",
+          },
+          {
+            name: "…but k = 3 does better on validation data",
+            expression: "accuracy(TRAIN, VALID, 3) > accuracy(TRAIN, VALID, 1)",
+          },
+        ],
+      },
+    ],
+  },
+  "ml-ship.features": {
+    summary:
+      "Turn raw columns into features a model can use, without leaking the answer into them.",
+    xp: 160,
+    blocks: [
+      {
+        kind: "text",
+        body: "Models only see numbers, and the way you turn raw columns into numbers usually matters more than which algorithm you choose. Three jobs come up every time: encoding categories, handling missing values, and making sure no feature secretly contains the label.",
+      },
+      {
+        kind: "text",
+        body: '**Categories.** Turning `city` into Oslo = 1, Dublin = 2, Milan = 3 tells a linear model that Milan is "three times" Oslo, which is nonsense. **One-hot encoding** gives each category its own 0/1 column instead. Learn the list of categories from the training data, and decide what an unseen category does in production. The usual answer is all zeros, meaning "none of the ones I know".',
+      },
+      {
+        kind: "text",
+        body: "**Missing values.** Fill them in (with the training mean, for example) *and* add a column that says the value was missing. Missingness is often signal in its own right: a customer who never entered a phone number behaves differently from one who did.",
+      },
+      {
+        kind: "text",
+        body: "**Target leakage** is a feature that wouldn't exist at prediction time, or that exists only because of the outcome. To predict whether a customer will churn next month, `cancellation_reason` is a perfect predictor, and it's useless, because you only have it after they've churned. For every feature, ask: would I know this at the moment I need to make the prediction?",
+      },
+      {
+        kind: "code",
+        language: "python",
+        caption: "With scikit-learn (not run here)",
+        code: `from sklearn.preprocessing import OneHotEncoder
+from sklearn.impute import SimpleImputer
+
+encoder = OneHotEncoder(handle_unknown="ignore").fit(train[["city"]])   # unseen → all zeros
+imputer = SimpleImputer(strategy="mean", add_indicator=True).fit(train[["age"]])`,
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          "You're predicting at checkout whether an order will be returned. Which feature is target leakage?",
+        options: [
+          "The product category",
+          "Whether the customer has returned anything before",
+          "The order total",
+          "Whether a refund was issued for the order",
+        ],
+        answer: 3,
+        explanation:
+          "A refund happens after the return, so the feature is the label in disguise. The other three are all known at checkout.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          "Your model was trained on orders from five countries. An order arrives from a sixth. What should the country encoding do?",
+        options: [
+          "Crash, so someone notices",
+          "Give it a new number, 6",
+          "Map it to an all-zeros one-hot vector, and log it so you can see how often it happens",
+          "Assign it to the most common country",
+        ],
+        answer: 2,
+        explanation:
+          'All zeros honestly says "not one I know" and lets the other features do the work. Logging it tells you when a new market is big enough to retrain for.',
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Encode categories and missing values",
+        prompt:
+          "Write `fit_categories(values)`, which returns the sorted distinct values from training, ignoring `None`. Write `one_hot(value, categories)`, which returns a list of 0/1 with a 1 in that category's position, or all zeros for `None` or an unseen value. Then write `impute(values, fill)`, which returns `(filled, was_missing)`: `None` replaced by `fill`, and a 0/1 list marking where it was.",
+        language: "python",
+        starter: `TRAIN_CITIES = ["Oslo", "Dublin", None, "Oslo", "Milan"]
+
+def fit_categories(values):
+    # your code here
+    pass
+
+def one_hot(value, categories):
+    # your code here
+    pass
+
+def impute(values, fill):
+    # your code here
+    pass
+
+cats = fit_categories(TRAIN_CITIES)
+print(cats, one_hot("Oslo", cats), one_hot("Lisbon", cats))`,
+        hint: "`sorted({v for v in values if v is not None})` gives the categories, and `[1 if value == c else 0 for c in categories]` gives the encoding.",
+        solution: `TRAIN_CITIES = ["Oslo", "Dublin", None, "Oslo", "Milan"]
+
+def fit_categories(values):
+    return sorted({v for v in values if v is not None})
+
+def one_hot(value, categories):
+    return [1 if value == c else 0 for c in categories]
+
+def impute(values, fill):
+    return [fill if v is None else v for v in values], [1 if v is None else 0 for v in values]`,
+        tests: [
+          {
+            name: "Learns sorted categories, ignoring None",
+            expression: 'fit_categories(TRAIN_CITIES) == ["Dublin", "Milan", "Oslo"]',
+          },
+          {
+            name: "One column per category",
+            expression: 'one_hot("Oslo", ["Dublin", "Milan", "Oslo"]) == [0, 0, 1]',
+          },
+          {
+            name: "An unseen category is all zeros",
+            expression: 'one_hot("Lisbon", ["Dublin", "Milan", "Oslo"]) == [0, 0, 0]',
+          },
+          {
+            name: "Missing values are filled and flagged",
+            expression: "impute([30, None, 50], 40) == ([30, 40, 50], [0, 1, 0])",
+          },
+        ],
+      },
+    ],
+  },
+  "ml-ship.deploy": {
+    summary:
+      "Ship a model with its preprocessing, watch its inputs drift, and know when to retrain.",
+    xp: 170,
+    blocks: [
+      {
+        kind: "text",
+        body: "A model in a notebook is a finding. A model in production is a system, and most of what goes wrong happens around the model rather than inside it.",
+      },
+      {
+        kind: "text",
+        body: "**Training/serving skew.** Production must transform inputs exactly the way training did: the same scaler, the same category list, the same fill values, the same units. Save the preprocessing and the model together as one versioned artifact (a scikit-learn `Pipeline` does this), and never re-implement the preprocessing by hand in the serving code.",
+      },
+      {
+        kind: "text",
+        body: "**Monitoring.** Labels often arrive late (you learn whether an order was returned weeks afterwards), so watch the **inputs** as well as the accuracy. If a feature's live average moves several training standard deviations away from what the model was trained on, the model is being asked about a world it hasn't seen. That's a signal to investigate and perhaps retrain.",
+      },
+      {
+        kind: "text",
+        body: "**Have a fallback.** Keep the baseline from the first lesson running. If the model's service fails, or its inputs look broken, serve the baseline and raise an alert. A slightly worse answer beats a crash or a confident wrong one.",
+      },
+      {
+        kind: "code",
+        language: "python",
+        caption: "With scikit-learn (not run here): one artifact, preprocessing included",
+        code: `from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+import joblib
+
+pipeline = make_pipeline(StandardScaler(), LogisticRegression()).fit(X_train, y_train)
+joblib.dump(pipeline, "returns-model-v3.joblib")   # the same file is loaded by the service`,
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          "A delivery-time model was trained with distances in kilometres. The new mobile app sends miles. What happens?",
+        options: [
+          "The model adapts automatically",
+          "Nothing: the distance is still a number",
+          "An error is raised",
+          "Predictions quietly shift, with no error. That's training/serving skew, and it's caught by input monitoring or by shipping preprocessing with the model",
+        ],
+        answer: 3,
+        explanation:
+          "Every distance is now about 0.62 of what the model expects, so every prediction is too short and nothing crashes. Silent failures like this are why production monitoring watches the inputs.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          "Whether an order is returned is only known 30 days later. What can you watch in the meantime to catch a problem early?",
+        options: [
+          "Nothing: wait for the labels",
+          "The input features' distributions compared with training, and the spread of the model's predictions",
+          "The server's CPU usage",
+          "The number of deployments",
+        ],
+        answer: 1,
+        explanation:
+          "Input drift and a sudden change in what the model predicts both show up the same day. Accuracy confirms the problem a month later.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Check for drift",
+        prompt:
+          "Write `drift_report(train_stats, live, threshold)`. `train_stats` maps each feature to `(mean, std)` from training, and `live` maps each feature to a list of recent values. Return the sorted names of the features whose live mean is more than `threshold` training standard deviations away from the training mean. Skip features that have no live values.",
+        language: "python",
+        starter: `TRAIN_STATS = {"distance_km": (240.0, 150.0), "items": (2.1, 1.2), "age": (40.0, 10.0)}
+LIVE = {"distance_km": [210, 260, 250], "items": [2, 3, 1], "age": [62, 70, 66]}
+
+def drift_report(train_stats, live, threshold):
+    # your code here
+    pass
+
+print(drift_report(TRAIN_STATS, LIVE, 2.0))`,
+        hint: "For each feature with live values, compute `abs(live_mean - mean) / std` and keep the feature if that's above `threshold`. `sorted(...)` the result.",
+        solution: `TRAIN_STATS = {"distance_km": (240.0, 150.0), "items": (2.1, 1.2), "age": (40.0, 10.0)}
+LIVE = {"distance_km": [210, 260, 250], "items": [2, 3, 1], "age": [62, 70, 66]}
+
+def drift_report(train_stats, live, threshold):
+    drifted = []
+    for feature, (mean, std) in train_stats.items():
+        values = live.get(feature) or []
+        if not values:
+            continue
+        if abs(sum(values) / len(values) - mean) / std > threshold:
+            drifted.append(feature)
+    return sorted(drifted)`,
+        tests: [
+          {
+            name: "Flags the feature that moved",
+            expression: 'drift_report(TRAIN_STATS, LIVE, 2.0) == ["age"]',
+          },
+          {
+            name: "A higher threshold tolerates more",
+            expression: "drift_report(TRAIN_STATS, LIVE, 3.0) == []",
+          },
+          {
+            name: "Measures in training standard deviations",
+            expression: 'drift_report({"x": (0.0, 1.0)}, {"x": [1.5]}, 1.0) == ["x"]',
+          },
+          {
+            name: "Skips features with no live values",
+            expression:
+              'drift_report({"x": (0.0, 1.0), "y": (0.0, 1.0)}, {"x": [9]}, 1.0) == ["x"]',
+          },
+        ],
+      },
+    ],
+  },
   "ai-prompt.prompts": {
     summary: "Write prompts as specs you can review and test, and keep user text in its place.",
     xp: 130,

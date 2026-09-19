@@ -415,7 +415,7 @@ export const courses: Course[] = [
     id: "ml",
     title: "Machine Learning Basics",
     skill: "Machine Learning",
-    level: "Advanced",
+    level: "Intermediate",
     recommended: false,
     summary: "Models, features and honest evaluation.",
     description: "Supervised learning end to end, with the maths kept to what you need.",
@@ -426,6 +426,14 @@ export const courses: Course[] = [
       m("ml-core", "Supervised learning", "Fit, evaluate, improve.", [
         ["fit", "Training your first model", 15, "practice"],
         ["evaluate", "Metrics that do not lie", 14, "challenge"],
+      ]),
+      m("ml-honest", "Honest evaluation", "Held-out data, leakage and overfitting.", [
+        ["split", "Train, validation and test sets", 14, "challenge"],
+        ["overfitting", "Overfitting and how to spot it", 15, "challenge"],
+      ]),
+      m("ml-ship", "Features and deployment", "From raw columns to a model in production.", [
+        ["features", "Features that carry signal", 14, "challenge"],
+        ["deploy", "From notebook to production", 14, "challenge"],
       ]),
     ],
   },
