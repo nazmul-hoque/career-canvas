@@ -12,37 +12,26 @@ per item is enough — the code is the detail.
 
 Two facts shape every item below:
 
-- **The database is on Lovable Cloud** (project `deazbmtlzyvhvrtqetls`), not in
-  your own Supabase account, so the Supabase CLI can't reach it. Migrations and
-  type generation go through Lovable.
+- **The database is your own Supabase project** `nqudmlzugtssfqaebaqb` (moved off
+  Lovable Cloud's `deazbmtlzyvhvrtqetls` on 2026-09-19). The repo is linked to it,
+  so `supabase db push` applies new migrations and
+  `supabase gen types typescript --linked` regenerates `types.ts`. Lovable still
+  syncs code from GitHub; if it regenerates `types.ts` from its old database it
+  will strip tables — restore the file from `--linked` rather than accept that.
 - **`.env` is committed to GitHub.** Every secret below — service-role key, model
   and Stripe keys, `CRON_SECRET`, `CERTIFICATE_SIGNING_SECRET`,
-  `VAPID_PRIVATE_KEY`, `RESEND_API_KEY` — goes in Lovable's secrets (or the
-  host's environment settings), never in `.env`. Only public values with a
-  `VITE_` prefix belong there.
+  `VAPID_PRIVATE_KEY`, `RESEND_API_KEY` — goes in the host's environment
+  settings, never in `.env`. Only public values with a `VITE_` prefix belong
+  there.
 
-- [ ] **Apply the nine migrations** through Lovable — checked 2026-09-18: none
-      are applied yet (the live database has none of the tables they create).
-      In order, from `supabase/migrations/`:
-      `20260916120000_server_authored_xp`, `20260916140000_persist_milestones_and_likes`,
-      `20260916160000_analytics_events`, `20260916180000_mentor_conversations`,
-      `20260916200000_entitlements_and_trial`, `20260916220000_certificate_signatures`,
-      `20260916240000_reengagement`, `20260916260000_spaced_review`,
-      `20260917120000_push_notifications`. Until then the client keeps the write
-      grants the first migration revokes, and the
-      milestone/like/analytics/review/email/push tables don't exist — those features
-      error, analytics silently no-ops. Run them in one transaction so a failure
-      leaves nothing half-applied; `push_notifications` alters a table
-      `reengagement` creates, so none of them can be skipped. Lovable saves its
-      own copy of each migration it runs — delete those duplicates once it syncs.
-- [ ] **Set `SUPABASE_SERVICE_ROLE_KEY` as a secret** (server-only, never `VITE_`,
-      never `.env` — it bypasses every RLS policy). Do this first: lesson
-      completion runs through the service-role client, so without it no learner
-      can earn XP.
-- [ ] **Regenerate `src/integrations/supabase/types.ts`** through Lovable after
-      the migrations land. `analytics_events`, `post_likes`, `project_milestones`,
-      `reengagement_sends` (incl. `channel`), `review_items`, `push_subscriptions`,
-      `issued_certificates.signature` and `profiles.email_optin` are currently hand-written into that generated file.
+- [ ] **Set `SUPABASE_SERVICE_ROLE_KEY` as a secret** for `nqudmlzugtssfqaebaqb`
+      (server-only, never `VITE_`, never `.env` — it bypasses every RLS policy).
+      Do this first: lesson completion runs through the service-role client, so
+      without it no learner can earn XP.
+- [ ] **Switch OAuth off the Lovable helper.** Social sign-in goes through
+      `src/integrations/lovable`, which is tied to Lovable Cloud; on your own
+      project it needs Supabase's `signInWithOAuth` and the providers enabled in
+      the dashboard. Email/password sign-in is unaffected.
 - [ ] **Set `MENTOR_PROVIDER` and the matching API key** as secrets (see
       `.env.example`). Unset, the mentor falls back to the old scripted replies —
       the feature looks alive but isn't real.
@@ -75,13 +64,10 @@ Two facts shape every item below:
 - [ ] **Decide whether to self-host Pyodide.** Python challenges fetch ~10MB of
       WebAssembly from jsDelivr on first run. `VITE_PYODIDE_URL` points it at
       your own copy if you would rather not depend on a CDN.
-- [ ] **Historical filler XP cleanup** — old `lesson_progress` rows for lessons
-      that no longer exist still count toward `profiles.xp` and leaderboard rank.
-      The cleanup (delete non-live rows, recompute xp/level/daily_activity) is
-      written and waiting at `supabase/maintenance/backfill-filler-xp.sql` —
-      deliberately *outside* `migrations/` so `db push` can't run it by accident.
-      It ends in `ROLLBACK;`: read the numbers it prints, then change that to
-      `COMMIT;`. Skip it entirely if this database has no real users.
+- [x] ~~**Historical filler XP cleanup**~~ — not needed: the new database
+      started empty on 2026-09-19, so it holds no rows for unwritten lessons.
+      `supabase/maintenance/backfill-filler-xp.sql` stays for the old Lovable
+      Cloud database only.
 
 ---
 
@@ -105,6 +91,12 @@ Two facts shape every item below:
 ---
 
 ## Done
+
+- [x] **Database set up** (2026-09-19) — all 11 migrations applied to
+      `nqudmlzugtssfqaebaqb` with `supabase db push` and recorded in its migration
+      history; all 15 tables answer, and an anonymous write to `lesson_progress`
+      is refused. `types.ts` regenerated from the live schema, replacing the
+      hand-written tables; `tsc` is clean against it.
 
 - [x] **#1 Filler lessons** — `fallbackBody()` deleted. A lesson exists only if it
       has an authored body; everything else is a visible "coming soon" slot that
