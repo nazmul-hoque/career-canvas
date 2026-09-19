@@ -153,18 +153,228 @@ export const bodies: Record<string, LessonBody> = {
       },
     ],
   },
-  "py-basics.flow": {
-    summary: "Branch your program with if, elif and else.",
-    xp: 110,
+  "py-basics.hello": {
+    summary: "Run your first lines of Python, print output, and store values in variables.",
+    xp: 80,
     blocks: [
       {
         kind: "text",
-        body: "Python reads conditions top to bottom and stops at the first branch that is true. Order matters: put the most specific condition first, or it will never be reached.",
+        body: "A Python program is a list of instructions that runs from top to bottom, one line at a time. The first instruction most people learn is `print`, which shows a value on screen. Text goes in quotes, and anything after a `#` is a **comment**: a note for humans that Python ignores.",
       },
       {
         kind: "code",
         language: "python",
-        code: `score = 87\n\nif score >= 90:\n    grade = "A"\nelif score >= 80:\n    grade = "B"\nelse:\n    grade = "C"\n\nprint(grade)  # B`,
+        code: `# This line is a comment
+print("Hello, Python!")
+print(2 + 3)        # 5: without quotes, Python calculates
+print("2 + 3")      # 2 + 3: in quotes, it's just text`,
+      },
+      {
+        kind: "text",
+        body: 'A **variable** is a name for a value, so you can use it again later. `name = "Ada"` means *let `name` refer to "Ada"*. The `=` sign assigns; it isn\'t the equals from maths, so `count = count + 1` is perfectly sensible: work out `count + 1`, then store the result back in `count`.',
+      },
+      {
+        kind: "code",
+        language: "python",
+        code: `name = "Ada"
+city = "Oslo"
+print("Hello, " + name + "!")   # + joins pieces of text
+print(name, "lives in", city)   # print adds a space between items`,
+      },
+      {
+        kind: "text",
+        body: "Names are case-sensitive (`City` and `city` are different), and Python style writes them in `snake_case`. When you misspell one, Python stops with a `NameError` saying which name it doesn't know. Errors are normal and useful: read the **last line** first, because it says what went wrong.",
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question: 'What do `print("7 * 6")` and `print(7 * 6)` show?',
+        options: [
+          "42 and 42",
+          "7 * 6 and 42",
+          "7 * 6 and 7 * 6",
+          "An error, because you can't multiply in print",
+        ],
+        answer: 1,
+        explanation:
+          "Quotes make text, shown exactly as written. Without quotes, Python evaluates the expression first.",
+      },
+      {
+        kind: "code",
+        language: "python",
+        caption: "Scenario",
+        code: `points = 10
+points = points + 5
+print(points)`,
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question: "What does this print?",
+        options: ["10", "15", "points + 5", "An error, because points can't equal points + 5"],
+        answer: 1,
+        explanation:
+          "The right-hand side is worked out first (10 + 5), and then the name `points` is pointed at the result. `=` stores a value; it doesn't state that two things are equal.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Greet yourself",
+        prompt:
+          "Put your own name and city into the variables `name` and `city`, then print exactly `Hello, <name> from <city>!`, for example `Hello, Ada from Oslo!`. Build the message from the variables rather than typing it out.",
+        language: "python",
+        starter: `name = ""
+city = ""
+
+print("Hello!")`,
+        hint: 'Fill in both strings, then join the pieces with `+`: `"Hello, " + name + " from " + city + "!"`.',
+        solution: `name = "Ada"
+city = "Oslo"
+
+print("Hello, " + name + " from " + city + "!")`,
+        tests: [
+          {
+            name: "name and city are filled in",
+            expression:
+              'isinstance(name, str) and isinstance(city, str) and name.strip() != "" and city.strip() != ""',
+          },
+          {
+            name: "Prints the greeting built from them",
+            expression: '__stdout__.strip() == "Hello, " + name + " from " + city + "!"',
+          },
+        ],
+      },
+    ],
+  },
+  "py-basics.types": {
+    summary:
+      "Numbers and text behave differently. Convert between them, and format output with f-strings.",
+    xp: 100,
+    blocks: [
+      {
+        kind: "text",
+        body: 'Every value has a **type**. The ones you\'ll use constantly are `int` (whole numbers, like `3`), `float` (decimals, like `24.5`), `str` (text, like `"socks"`) and `bool` (`True` or `False`). `type(x)` tells you which one you have. Most beginner bugs are a value of one type where another was expected.',
+      },
+      {
+        kind: "code",
+        language: "python",
+        code: `7 / 2      # 3.5   / always gives a float
+7 // 2     # 3     // divides and rounds down
+7 % 2      # 1     % is the remainder
+2 ** 3     # 8     ** is power
+0.1 + 0.2  # 0.30000000000000004: floats are approximations`,
+      },
+      {
+        kind: "text",
+        body: '**Text isn\'t a number, even when it looks like one.** `"3" + "4"` is `"34"`, because `+` joins strings. Data from forms, files and web requests almost always arrives as text, so convert it first: `int("3")`, `float("24.50")`, and `str(3)` to go the other way. Converting text that isn\'t a number raises a `ValueError`.',
+      },
+      {
+        kind: "text",
+        body: 'Strings come with methods: `.strip()` trims spaces from both ends, `.lower()` and `.upper()` change case, `.replace(",", "")` swaps text, and `len(s)` counts characters. They return a *new* string. Strings never change in place, so keep the result: `s = s.strip()`.',
+      },
+      {
+        kind: "code",
+        language: "python",
+        caption: "f-strings: the readable way to build text",
+        code: `item, qty, price = "Wool Socks", 3, 24
+print(f"{qty} x {item} costs \${qty * price:.2f}")
+# 3 x Wool Socks costs $72.00   (.2f = two decimal places)`,
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question: 'A form gives you `qty = "2"` and `extra = "3"`. What is `qty + extra`?',
+        options: ["5", '"23"', '"5"', "An error"],
+        answer: 1,
+        explanation:
+          "Both are strings, so `+` joins them. Use `int(qty) + int(extra)` to get 5, and convert as soon as the data comes in.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          "Which expression gives the number of whole boxes of 6 you can fill with 20 items?",
+        options: ["20 / 6", "20 % 6", "20 // 6", "round(20 / 6)"],
+        answer: 2,
+        explanation:
+          "`//` divides and rounds down: 3 full boxes. `%` gives what's left over (2), and `round` would give 3 here but rounds up past .5.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Prices in, receipt out",
+        prompt:
+          'Write `parse_price(text)`, which turns price text like `"$1,299.50"` or `" 20 "` into a float, ignoring spaces, `$` and commas. Then write `receipt_line(item, qty, unit_price)`, which returns a line like `3 x Wool Socks @ $24.00 = $72.00`, with both amounts to two decimal places.',
+        language: "python",
+        starter: `def parse_price(text):
+    # your code here
+    pass
+
+def receipt_line(item, qty, unit_price):
+    # your code here
+    pass
+
+print(receipt_line("Wool Socks", 3, parse_price("$24")))`,
+        hint: 'Chain the string methods: `text.strip().replace("$", "").replace(",", "")`, then `float(...)`. For the line, use an f-string with `:.2f` on both amounts.',
+        solution: `def parse_price(text):
+    return float(text.strip().replace("$", "").replace(",", ""))
+
+def receipt_line(item, qty, unit_price):
+    return f"{qty} x {item} @ \${unit_price:.2f} = \${qty * unit_price:.2f}"`,
+        tests: [
+          {
+            name: "Reads a price with $ and commas",
+            expression: 'parse_price("$1,299.50") == 1299.5',
+          },
+          {
+            name: "Ignores surrounding spaces and returns a float",
+            expression: 'parse_price(" 20 ") == 20.0 and isinstance(parse_price("20"), float)',
+          },
+          {
+            name: "Builds the receipt line",
+            expression: 'receipt_line("Wool Socks", 3, 24) == "3 x Wool Socks @ $24.00 = $72.00"',
+          },
+          {
+            name: "Rounds to two decimal places",
+            expression: 'receipt_line("Headlamp", 1, 34.999) == "1 x Headlamp @ $35.00 = $35.00"',
+          },
+        ],
+      },
+    ],
+  },
+  "py-basics.flow": {
+    summary: "Make decisions with if, elif and else, and know what Python counts as true.",
+    xp: 110,
+    blocks: [
+      {
+        kind: "text",
+        body: "`if` runs a block of code only when a condition is true. The block is whatever is **indented** underneath; indentation isn't decoration in Python, it's how the language knows what belongs to the `if`. Add `elif` for more cases and `else` for everything left over.",
+      },
+      {
+        kind: "code",
+        language: "python",
+        code: `score = 87
+
+if score >= 90:
+    grade = "A"
+elif score >= 80:
+    grade = "B"
+else:
+    grade = "C"
+
+print(grade)  # B`,
+      },
+      {
+        kind: "text",
+        body: "Python checks the conditions from top to bottom and runs **only the first** true branch. Order matters: put the strictest condition first, or it will never be reached.",
+      },
+      {
+        kind: "text",
+        body: 'Comparisons give `True` or `False`: `==` (equal; a single `=` assigns, and `if x = 5:` is a syntax error), `!=`, `<`, `<=`, `>`, `>=`. Combine them with `and`, `or` and `not`, and test membership with `in`: `if country in ("NO", "SE", "DK"):`.',
+      },
+      {
+        kind: "text",
+        body: "Any value can stand in for a condition. **Empty and zero values count as false**: `\"\"`, `0`, `0.0`, `[]`, `{}` and `None`. Everything else counts as true. That's why `if name:` means *if name isn't empty*.",
       },
       {
         kind: "mcq",
@@ -180,36 +390,336 @@ export const bodies: Record<string, LessonBody> = {
         explanation: "Only the first matching branch runs, so looser conditions must come last.",
       },
       {
+        kind: "code",
+        language: "python",
+        caption: "Scenario: the user typed only spaces",
+        code: `name = "   ".strip()
+
+if name:
+    print("Hi", name)
+else:
+    print("Please enter your name")`,
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question: "What does this print?",
+        options: [
+          "Hi",
+          "Hi followed by three spaces",
+          "An error, because a string isn't a condition",
+          "Please enter your name",
+        ],
+        answer: 3,
+        explanation:
+          "`.strip()` leaves an empty string, and an empty string counts as false, so the `else` branch runs.",
+      },
+      {
         kind: "challenge",
         id: "c1",
         title: "Grade the score",
         prompt:
           "Write a function `grade(score)` returning 'A' for 90+, 'B' for 80-89, and 'C' below 80.",
         language: "python",
-        starter: `def grade(score):\n    # your code here\n    pass\n\nprint(grade(87))`,
-        hint: "Use if / elif / else and return inside each branch.",
-        solution: `def grade(score):\n    if score >= 90:\n        return "A"\n    elif score >= 80:\n        return "B"\n    return "C"`,
+        starter: `def grade(score):
+    # your code here
+    pass
+
+print(grade(87))`,
+        hint: "Use if / elif / else and `return` inside each branch, strictest condition first.",
+        solution: `def grade(score):
+    if score >= 90:
+        return "A"
+    elif score >= 80:
+        return "B"
+    return "C"`,
         tests: [
           { name: "95 scores an A", expression: 'grade(95) == "A"' },
           { name: "90 is the boundary for an A", expression: 'grade(90) == "A"' },
           { name: "87 scores a B", expression: 'grade(87) == "B"' },
+          { name: "80 is the boundary for a B", expression: 'grade(80) == "B"' },
           { name: "Anything under 80 scores a C", expression: 'grade(41) == "C"' },
         ],
       },
     ],
   },
-  "py-collections.comprehensions": {
-    summary: "Build new lists in one readable line.",
-    xp: 140,
+  "py-collections.lists": {
+    summary:
+      "Store many values in a list, loop over them, and avoid the two classic list surprises.",
+    xp: 120,
     blocks: [
       {
         kind: "text",
-        body: "A comprehension is a loop that produces a list. Read it out loud: 'the square of n, for every n in numbers, where n is even'.",
+        body: "A **list** holds values in order: `temps = [12, 15, 9]`. Positions (indexes) start at **0**, so `temps[0]` is 12 and `temps[-1]` is the last item. `len(temps)` is 3. Slices take a range: `temps[0:2]` is `[12, 15]`, and the end index isn't included.",
       },
       {
         kind: "code",
         language: "python",
-        code: `numbers = [1, 2, 3, 4, 5, 6]\nsquares = [n * n for n in numbers if n % 2 == 0]\nprint(squares)  # [4, 16, 36]`,
+        code: `basket = ["tent", "stove"]
+basket.append("headlamp")     # add to the end
+basket.insert(0, "map")       # add at a position
+basket.remove("stove")        # remove the first match
+last = basket.pop()           # remove and return the last item
+print(basket, last)           # ['map', 'tent'] headlamp`,
+      },
+      {
+        kind: "text",
+        body: "`for` runs a block once for each item: `for t in temps:`. When you also need the position, use `enumerate`, which gives you both: `for i, t in enumerate(temps):`. Beginners often write `for i in range(len(temps))`; it works, but it's harder to read. `range(1, 5)` counts 1, 2, 3, 4, stopping *before* the end.",
+      },
+      {
+        kind: "code",
+        language: "python",
+        caption: "The accumulator pattern: start empty, add as you go",
+        code: `total = 0
+for t in [12, 15, 9]:
+    total = total + t
+print(total / 3)   # 12.0`,
+      },
+      {
+        kind: "text",
+        body: "**Two classic surprises.** First, `b = a` doesn't copy a list; it gives the *same* list a second name, so changing `b` changes `a` too. Copy with `a.copy()` or `list(a)`. Second, don't add or remove items from a list while looping over it, because items get skipped. Build a new list instead.",
+      },
+      {
+        kind: "code",
+        language: "python",
+        caption: "Scenario",
+        code: `packed = ["tent", "stove"]
+checklist = packed
+checklist.append("water")
+print(packed)`,
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question: "What does this print?",
+        options: [
+          "['tent', 'stove']",
+          "['water']",
+          "['tent', 'stove', 'water']",
+          "An error, because packed wasn't changed",
+        ],
+        answer: 2,
+        explanation:
+          "`checklist = packed` gives one list two names, so appending through either name changes that one list. Use `checklist = packed.copy()` for an independent list.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question: "Which numbers does `for i in range(1, 5): print(i)` print?",
+        options: ["1 2 3 4", "1 2 3 4 5", "0 1 2 3 4", "0 1 2 3 4 5"],
+        answer: 0,
+        explanation:
+          "`range` starts at the first number and stops *before* the second. That's the same rule as slicing, and it's why `range(len(items))` gives exactly the valid indexes.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Loops over readings",
+        prompt:
+          "Write three functions using loops. `running_totals(values)` returns a list of the running sum (`[3, 1, 4]` gives `[3, 4, 8]`). `count_above(values, threshold)` counts the values strictly greater than `threshold`. `positions(items, target)` returns every index where `target` appears.",
+        language: "python",
+        starter: `def running_totals(values):
+    # your code here
+    pass
+
+def count_above(values, threshold):
+    # your code here
+    pass
+
+def positions(items, target):
+    # your code here
+    pass
+
+print(running_totals([3, 1, 4]))`,
+        hint: "Each one follows the accumulator pattern: start with `0` or `[]` before the loop, and update it inside. For `positions`, `for i, item in enumerate(items):` gives you the index.",
+        solution: `def running_totals(values):
+    totals = []
+    total = 0
+    for v in values:
+        total += v
+        totals.append(total)
+    return totals
+
+def count_above(values, threshold):
+    count = 0
+    for v in values:
+        if v > threshold:
+            count += 1
+    return count
+
+def positions(items, target):
+    found = []
+    for i, item in enumerate(items):
+        if item == target:
+            found.append(i)
+    return found`,
+        tests: [
+          { name: "Running totals", expression: "running_totals([3, 1, 4]) == [3, 4, 8]" },
+          { name: "An empty list gives an empty list", expression: "running_totals([]) == []" },
+          {
+            name: "Counts values strictly above the threshold",
+            expression: "count_above([5, 12, 9, 20, 10], 10) == 2",
+          },
+          {
+            name: "Finds every position",
+            expression: 'positions(["a", "b", "a", "c"], "a") == [0, 2]',
+          },
+          { name: "No matches gives an empty list", expression: 'positions(["a"], "z") == []' },
+        ],
+      },
+    ],
+  },
+  "py-collections.dicts": {
+    summary: "Look values up by key, count things, and handle keys that aren't there.",
+    xp: 130,
+    blocks: [
+      {
+        kind: "text",
+        body: 'A **dictionary** maps keys to values: `prices = {"tent": 180, "stove": 75}`. You look a value up by its key, `prices["tent"]`, instead of by position. Keys are unique, and they\'re usually strings or numbers. Dictionaries remember the order items were added.',
+      },
+      {
+        kind: "code",
+        language: "python",
+        code: `prices = {"tent": 180, "stove": 75}
+prices["headlamp"] = 35          # add or update
+"tent" in prices                 # True: checks the keys
+prices.get("map")                # None: no error if missing
+prices.get("map", 0)             # 0: a default you choose
+for item, price in prices.items():
+    print(f"{item}: \${price}")`,
+      },
+      {
+        kind: "text",
+        body: "`prices[\"map\"]` raises a `KeyError` when the key isn't there. That's the right behaviour when a missing key really is a bug. When missing is normal, use `.get(key, default)` or check with `in` first.",
+      },
+      {
+        kind: "code",
+        language: "python",
+        caption: "The counting pattern",
+        code: `counts = {}
+for word in ["tent", "stove", "tent"]:
+    counts[word] = counts.get(word, 0) + 1
+print(counts)   # {'tent': 2, 'stove': 1}`,
+      },
+      {
+        kind: "text",
+        body: 'Real data is often a **list of dictionaries**, one per record: `[{"name": "Tent", "price": 180}, …]`. Loop over the list, and read each record\'s fields by key.',
+      },
+      {
+        kind: "code",
+        language: "python",
+        caption: "Scenario",
+        code: `stock = {"tent": 4, "stove": 0}
+print(stock["headlamp"])`,
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question: "What happens?",
+        options: [
+          "It prints 0",
+          "It prints None",
+          "A `KeyError: 'headlamp'` stops the program",
+          "It adds headlamp with value 0",
+        ],
+        answer: 2,
+        explanation:
+          'Square brackets require the key to exist. Use `stock.get("headlamp", 0)` when a missing item simply means none in stock.',
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          "Which line correctly counts `word` in a `counts` dictionary, whether or not it's been seen before?",
+        options: [
+          "`counts[word] = counts.get(word, 0) + 1`",
+          "`counts[word] += 1`",
+          "`counts.append(word)`",
+          "`counts[word] = 1`",
+        ],
+        answer: 0,
+        explanation:
+          "`+= 1` raises a `KeyError` the first time a word appears, and `= 1` resets the count. `.get(word, 0)` starts new words at zero.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Count the words",
+        prompt:
+          "Write `count_words(text)`, which returns a dictionary of how often each word appears. Ignore letter case, and ignore the punctuation `.,!?` at the ends of words. Then write `top_word(counts)`, which returns the most frequent word. On a tie, return the one that comes first alphabetically.",
+        language: "python",
+        starter: `def count_words(text):
+    # your code here
+    pass
+
+def top_word(counts):
+    # your code here
+    pass
+
+print(count_words("The tent, the stove. THE end!"))`,
+        hint: '`text.lower().split()` gives the words, and `word.strip(".,!?")` cleans each one. For `top_word`, loop over `sorted(counts)` (which sorts the keys alphabetically) and keep the first word with the highest count.',
+        solution: `def count_words(text):
+    counts = {}
+    for word in text.lower().split():
+        word = word.strip(".,!?")
+        if word:
+            counts[word] = counts.get(word, 0) + 1
+    return counts
+
+def top_word(counts):
+    best = None
+    for word in sorted(counts):
+        if best is None or counts[word] > counts[best]:
+            best = word
+    return best`,
+        tests: [
+          {
+            name: "Counts words, ignoring case and punctuation",
+            expression:
+              'count_words("The tent, the stove. THE end!") == {"the": 3, "tent": 1, "stove": 1, "end": 1}',
+          },
+          { name: "Empty text gives an empty dictionary", expression: 'count_words("") == {}' },
+          {
+            name: "Finds the most common word",
+            expression: 'top_word({"a": 2, "b": 3, "c": 1}) == "b"',
+          },
+          {
+            name: "A tie goes to the first word alphabetically",
+            expression: 'top_word({"pear": 2, "apple": 2}) == "apple"',
+          },
+        ],
+      },
+    ],
+  },
+  "py-collections.comprehensions": {
+    summary:
+      "Build lists and dictionaries in one readable line, and know when a loop reads better.",
+    xp: 140,
+    blocks: [
+      {
+        kind: "text",
+        body: "A **list comprehension** is a loop that builds a list, written in a single expression. Read it aloud: *the square of n, for every n in numbers, if n is even*.",
+      },
+      {
+        kind: "code",
+        language: "python",
+        code: `numbers = [1, 2, 3, 4, 5, 6]
+squares = [n * n for n in numbers if n % 2 == 0]
+print(squares)  # [4, 16, 36]
+
+# The loop it replaces:
+squares = []
+for n in numbers:
+    if n % 2 == 0:
+        squares.append(n * n)`,
+      },
+      {
+        kind: "text",
+        body: 'The same shape builds a **dictionary**, `{p["name"]: p["price"] for p in products}`, or feeds a function directly without making a list: `sum(p["price"] for p in products)`.',
+      },
+      {
+        kind: "text",
+        body: "**Use one when it reads more clearly than the loop, and not otherwise.** A comprehension is for *building a value*. If the loop exists to do something (print, save, send), write a loop. If you need two `if`s and a nested `for` to squeeze it into one line, a loop will be easier to read and to debug.",
       },
       {
         kind: "fill",
@@ -221,27 +731,472 @@ export const bodies: Record<string, LessonBody> = {
         explanation: "The filter clause comes after the for clause.",
       },
       {
+        kind: "mcq",
+        id: "q1",
+        question: "What is `[n for n in range(10) if n % 3 == 0]`?",
+        options: ["[3, 6, 9]", "[0, 3, 6, 9]", "[0, 3, 6, 9, 10]", "[1, 4, 7]"],
+        answer: 1,
+        explanation:
+          "`range(10)` starts at 0, and 0 % 3 is 0, so 0 is kept. The range stops before 10.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question: "Why is `[print(order) for order in orders]` poor style?",
+        options: [
+          "It's slower than a loop",
+          "Comprehensions can't call functions",
+          "It prints in reverse order",
+          "It builds a list of `None`s nobody wants, just to print. Printing is an action, so write a `for` loop",
+        ],
+        answer: 3,
+        explanation:
+          'A comprehension tells the reader "I\'m making a list". Using one for its side effects misleads them and throws the list away.',
+      },
+      {
         kind: "challenge",
         id: "c1",
         title: "Only the paid orders",
         prompt:
-          "Write `paid_totals(orders)` that returns a list of the `total` of every order whose `status` is 'paid'.",
+          "Write `paid_totals(orders)`, which returns a list of the `total` of every order whose `status` is 'paid', in the original order. Then write `total_by_id(orders)`, which returns a dictionary mapping each paid order's `id` to its `total`. Use comprehensions for both.",
         language: "python",
-        starter: `def paid_totals(orders):\n    # your code here\n    pass`,
-        hint: 'orders is a list of dicts — loop over it inside square brackets and filter on o["status"].',
-        solution: `def paid_totals(orders):\n    return [o["total"] for o in orders if o["status"] == "paid"]`,
+        starter: `def paid_totals(orders):
+    # your code here
+    pass
+
+def total_by_id(orders):
+    # your code here
+    pass`,
+        hint: 'Loop over `orders` inside square brackets (a list) or curly brackets with `key: value` (a dict), and filter with `if o["status"] == "paid"`.',
+        solution: `def paid_totals(orders):
+    return [o["total"] for o in orders if o["status"] == "paid"]
+
+def total_by_id(orders):
+    return {o["id"]: o["total"] for o in orders if o["status"] == "paid"}`,
         tests: [
           {
             name: "Keeps only the paid orders",
             expression:
-              'paid_totals([{"total": 10, "status": "paid"}, {"total": 99, "status": "pending"}]) == [10]',
+              'paid_totals([{"id": 1, "total": 10, "status": "paid"}, {"id": 2, "total": 99, "status": "pending"}]) == [10]',
           },
           {
             name: "Keeps the original order",
             expression:
-              'paid_totals([{"total": 5, "status": "paid"}, {"total": 7, "status": "paid"}]) == [5, 7]',
+              'paid_totals([{"id": 1, "total": 5, "status": "paid"}, {"id": 2, "total": 7, "status": "paid"}]) == [5, 7]',
           },
           { name: "An empty list gives an empty list", expression: "paid_totals([]) == []" },
+          {
+            name: "Maps paid order ids to totals",
+            expression:
+              'total_by_id([{"id": 1, "total": 10, "status": "paid"}, {"id": 2, "total": 99, "status": "refunded"}, {"id": 3, "total": 4, "status": "paid"}]) == {1: 10, 3: 4}',
+          },
+        ],
+      },
+    ],
+  },
+  "py-functions.define": {
+    summary:
+      "Package code into functions, return results instead of printing them, and avoid the default-argument trap.",
+    xp: 130,
+    blocks: [
+      {
+        kind: "text",
+        body: "A **function** packages a job under a name, so you can run it whenever you need it and test it on its own. `def` defines it, **parameters** are its inputs, and `return` hands a result back to whoever called it.",
+      },
+      {
+        kind: "code",
+        language: "python",
+        code: `def shipping_cost(total, express=False):
+    """What shipping costs for an order of this total."""
+    cost = 0 if total >= 50 else 5
+    if express:
+        cost += 10
+    return cost
+
+shipping_cost(30)                 # 5
+shipping_cost(80, express=True)   # 10: named (keyword) arguments read clearly`,
+      },
+      {
+        kind: "text",
+        body: "**Return, don't print.** `print` shows a value to a human and then it's gone. `return` gives it to the code that called the function, which can store it, test it or pass it on. A function with no `return` returns `None`, and that is the source of many *why is my variable None?* bugs.",
+      },
+      {
+        kind: "text",
+        body: "Variables created inside a function are **local**: they exist only while the function runs. Pass in what a function needs and return what it produces. Don't reach out to change variables outside it.",
+      },
+      {
+        kind: "text",
+        body: "**The default-argument trap.** A default value is created *once*, when the function is defined, not on every call. `def add(item, basket=[])` therefore shares one list between every call that uses the default, and items pile up from earlier calls. Use `None` as the default and create the list inside the function.",
+      },
+      {
+        kind: "code",
+        language: "python",
+        caption: "Scenario",
+        code: `def greet(name):
+    print("Hello, " + name)
+
+message = greet("Ada")
+print(message)`,
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question: "What does the last line print?",
+        options: ["Hello, Ada", "message", "Nothing at all", "None"],
+        answer: 3,
+        explanation:
+          '`greet` prints its greeting, but it returns nothing, so `message` is `None`. Change the function to `return "Hello, " + name` and do the printing outside it.',
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          '`def add(item, basket=[]): basket.append(item); return basket`. You call `add("tent")` and then `add("stove")`. What does the second call return?',
+        options: ["['stove']", "['tent', 'stove']", "['stove', 'tent']", "An error"],
+        answer: 1,
+        explanation:
+          "Both calls share the single default list that was created with the function. Write `basket=None` and `if basket is None: basket = []`.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Shipping rules as functions",
+        prompt:
+          'Write `shipping_cost(total, country="NO", express=False)`. Domestic (`"NO"`) orders ship free from 50 and cost 5 below that. Other countries ship free from 150 and cost 15 below that. Express adds 10 either way. Then write `add_item(item, basket=None)`, which returns the basket with the item appended, where calls without a basket never share one.',
+        language: "python",
+        starter: `def shipping_cost(total, country="NO", express=False):
+    # your code here
+    pass
+
+def add_item(item, basket=None):
+    # your code here
+    pass
+
+print(shipping_cost(40), shipping_cost(200, country="DE", express=True))`,
+        hint: "Choose the threshold and fee from `country` first, work out the cost, then add 10 if `express`. In `add_item`: `if basket is None: basket = []`.",
+        solution: `def shipping_cost(total, country="NO", express=False):
+    if country == "NO":
+        cost = 0 if total >= 50 else 5
+    else:
+        cost = 0 if total >= 150 else 15
+    if express:
+        cost += 10
+    return cost
+
+def add_item(item, basket=None):
+    if basket is None:
+        basket = []
+    basket.append(item)
+    return basket`,
+        tests: [
+          { name: "Domestic orders under 50 cost 5", expression: "shipping_cost(40) == 5" },
+          { name: "Domestic orders ship free from 50", expression: "shipping_cost(50) == 0" },
+          {
+            name: "Other countries: 15, free from 150",
+            expression:
+              'shipping_cost(100, country="DE") == 15 and shipping_cost(150, country="DE") == 0',
+          },
+          {
+            name: "Express adds 10",
+            expression:
+              'shipping_cost(200, country="DE", express=True) == 10 and shipping_cost(20, express=True) == 15',
+          },
+          {
+            name: "add_item calls don't share a basket",
+            expression: 'add_item("tent") == ["tent"] and add_item("stove") == ["stove"]',
+          },
+          {
+            name: "add_item adds to a basket you pass in",
+            expression: 'add_item("map", ["tent"]) == ["tent", "map"]',
+          },
+        ],
+      },
+    ],
+  },
+  "py-functions.errors": {
+    summary:
+      "Read a traceback from the bottom up, catch only what you expect, and raise clear errors yourself.",
+    xp: 120,
+    blocks: [
+      {
+        kind: "text",
+        body: "When something goes wrong, Python stops and prints a **traceback**. Read it from the **bottom up**. The last line gives the error's type and message, and the lines just above it show the file, line number and code where it happened. Everything higher up is the chain of calls that led there.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "A traceback",
+        code: `Traceback (most recent call last):
+  File "report.py", line 12, in <module>
+    total = order_total(lines)
+  File "report.py", line 5, in order_total
+    total += int(line["qty"])
+ValueError: invalid literal for int() with base 10: 'two'`,
+      },
+      {
+        kind: "text",
+        body: 'The usual suspects: `NameError` (a misspelled name), `TypeError` (the wrong type, like `"3" + 4`), `ValueError` (the right type but a bad value, like `int("two")`), `KeyError` and `IndexError` (something that isn\'t there), `ZeroDivisionError`, and `AttributeError: \'NoneType\' …`, which usually means a function returned `None` when you expected a value.',
+      },
+      {
+        kind: "code",
+        language: "python",
+        caption: "Handle the errors you expect, and raise clear ones yourself",
+        code: `def parse_age(text):
+    try:
+        age = int(text)
+    except ValueError:
+        raise ValueError(f"Age must be a whole number, not {text!r}")
+    if age < 0:
+        raise ValueError("Age can't be negative")
+    return age`,
+      },
+      {
+        kind: "text",
+        body: "**Catch narrowly.** `except ValueError:` handles the problem you anticipated. A bare `except:`, or `except Exception: pass`, also swallows the typos and bugs you *didn't* anticipate, and the program carries on with bad data and no clue why. When your own function gets bad input, `raise` an error whose message says what was wrong.",
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question: "In the traceback above, where do you look first, and what's wrong?",
+        options: [
+          "Line 12: `order_total` doesn't exist",
+          "The top line: the traceback started",
+          "The last lines: in `order_total` on line 5, a quantity was the text 'two', which `int` can't convert",
+          "Line 5 is fine; the bug must be in `int`",
+        ],
+        answer: 2,
+        explanation:
+          "The bottom says what happened and where. The data has a quantity written out in words, so either clean the data or handle that `ValueError` deliberately.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question: "What's wrong with wrapping a whole script in `try: … except Exception: pass`?",
+        options: [
+          "Nothing, because the script never crashes",
+          "It makes the script slower",
+          "It hides every error, bugs included, so the script carries on with bad results and no way to see why",
+          "`Exception` doesn't catch `ValueError`",
+        ],
+        answer: 2,
+        explanation:
+          "A crash with a traceback is information. Catch the specific error you can actually handle, and let everything else surface.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Quantities you can trust",
+        prompt:
+          'Write `parse_quantity(text)`, which returns the whole number in `text` (spaces allowed). It raises `ValueError("Quantity must be a whole number")` for anything that isn\'t one, and `ValueError("Quantity must be at least 1")` for 0 or less. Then write `safe_total(lines)`, which adds up the valid quantities in a list of strings and returns `(total, bad_lines)`, where `bad_lines` lists the rejected strings. Don\'t change `error_of`; the tests use it.',
+        language: "python",
+        starter: `def parse_quantity(text):
+    # your code here
+    pass
+
+def safe_total(lines):
+    # your code here
+    pass
+
+def error_of(fn):
+    """Used by the tests: the (type, message) a call raises, or None."""
+    try:
+        fn()
+    except Exception as exc:
+        return (type(exc).__name__, str(exc))
+    return None
+
+print(safe_total(["2", "x", "3", "-1"]))`,
+        hint: "In `parse_quantity`, wrap `int(text)` in `try` / `except ValueError:` and raise your own message from there, then check `< 1`. In `safe_total`, call it inside `try` and, in `except ValueError:`, append the line to `bad_lines`.",
+        solution: `def parse_quantity(text):
+    try:
+        qty = int(text)
+    except ValueError:
+        raise ValueError("Quantity must be a whole number")
+    if qty < 1:
+        raise ValueError("Quantity must be at least 1")
+    return qty
+
+def safe_total(lines):
+    total = 0
+    bad_lines = []
+    for line in lines:
+        try:
+            total += parse_quantity(line)
+        except ValueError:
+            bad_lines.append(line)
+    return total, bad_lines
+
+def error_of(fn):
+    """Used by the tests: the (type, message) a call raises, or None."""
+    try:
+        fn()
+    except Exception as exc:
+        return (type(exc).__name__, str(exc))
+    return None`,
+        tests: [
+          { name: "Reads a quantity, ignoring spaces", expression: 'parse_quantity(" 3 ") == 3' },
+          {
+            name: "Rejects text that isn't a whole number",
+            expression:
+              'error_of(lambda: parse_quantity("three")) == ("ValueError", "Quantity must be a whole number") and error_of(lambda: parse_quantity("2.5")) == ("ValueError", "Quantity must be a whole number")',
+          },
+          {
+            name: "Rejects zero and negatives",
+            expression:
+              'error_of(lambda: parse_quantity("0")) == ("ValueError", "Quantity must be at least 1") and error_of(lambda: parse_quantity("-4")) == ("ValueError", "Quantity must be at least 1")',
+          },
+          {
+            name: "safe_total adds the good lines and reports the bad ones",
+            expression: 'safe_total(["2", "x", "3", "-1"]) == (5, ["x", "-1"])',
+          },
+        ],
+      },
+    ],
+  },
+  "py-functions.automate": {
+    summary:
+      "Read a CSV file, total it up, and write a report, like a script you'd actually run on Monday morning.",
+    xp: 180,
+    blocks: [
+      {
+        kind: "text",
+        body: "This is where Python pays for itself: a task you'd otherwise do by hand every week, done in a few seconds. Most of these tasks have the same shape. **Read** a file, **clean and total** the data, and **write** the result somewhere.",
+      },
+      {
+        kind: "text",
+        body: 'Open files with `with`, which closes them for you even if an error happens halfway through. Pass `encoding="utf-8"` so accented names survive, and for CSV files also pass `newline=""` (the `csv` module handles line endings itself).',
+      },
+      {
+        kind: "code",
+        language: "python",
+        code: `import csv
+
+with open("sales.csv", encoding="utf-8", newline="") as f:
+    for row in csv.DictReader(f):          # each row is a dict keyed by the header
+        print(row["category"], row["amount"])
+
+with open("summary.csv", "w", encoding="utf-8", newline="") as f:
+    writer = csv.writer(f)
+    writer.writerow(["category", "total"])
+    writer.writerow(["Gear", "55.00"])`,
+      },
+      {
+        kind: "text",
+        body: "**Real files are messy.** A row will have `n/a` where a number should be. Decide deliberately what happens: skip the row and **say so** (count it, print a warning), rather than crashing on row 3,000 or quietly producing a wrong total. That's the error-handling lesson doing real work.",
+      },
+      {
+        kind: "text",
+        body: "On your own computer, save the code as `report.py` and run `python report.py` in a terminal, in the same folder as the CSV. Once it works, you can schedule it or point it at a new file each week. The challenge below runs in your browser, which has a small file system of its own, so `open()` works there too.",
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question: "Why open files with `with open(...) as f:` rather than `f = open(...)`?",
+        options: [
+          "It reads the file faster",
+          "The file is closed automatically when the block ends, even if an error happens inside it",
+          "It's required for CSV files",
+          "It creates the file if it's missing",
+        ],
+        answer: 1,
+        explanation:
+          "Unclosed files can lose writes that haven't been flushed, and they hold the file open. `with` guarantees the file is closed.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          "A weekly sales file sometimes has `n/a` in the amount column. What should the script do?",
+        options: [
+          "Crash, so someone fixes the file",
+          "Count `n/a` as 0 without mentioning it",
+          "Skip those rows, count them, and report how many were skipped",
+          "Delete those rows from the source file",
+        ],
+        answer: 2,
+        explanation:
+          "The report stays useful and honest about what it left out. Silently treating bad data as 0 produces a total that looks right and isn't.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "The Monday sales report",
+        prompt:
+          "Write `summarise(in_path, out_path)`. Read the CSV at `in_path` (columns `date,category,amount`), total the `amount` per category, and write a CSV to `out_path` with the header `category,total` and one row per category: highest total first, totals with two decimals. Skip rows whose amount isn't a number, and return `(rows_used, rows_skipped)`. The starter creates `sales.csv` for you.",
+        language: "python",
+        starter: `import csv
+
+SALES = """date,category,amount
+2026-03-01,Apparel,65.00
+2026-03-01,Gear,35.00
+2026-03-02,Footwear,120.00
+2026-03-02,Apparel,24.00
+2026-03-03,Gear,n/a
+2026-03-03,Gear,20.00
+2026-03-04,Apparel,180.00
+"""
+with open("sales.csv", "w", encoding="utf-8", newline="") as f:
+    f.write(SALES)
+
+def summarise(in_path, out_path):
+    # your code here
+    pass
+
+print(summarise("sales.csv", "summary.csv"))
+print(open("summary.csv", encoding="utf-8").read())`,
+        hint: 'Loop over `csv.DictReader`. Inside `try`, add `float(row["amount"])` to `totals.get(category, 0)`, and on `ValueError` count a skipped row. Sort with `sorted(totals.items(), key=lambda kv: kv[1], reverse=True)`, then write each row with `f"{total:.2f}"`.',
+        solution: `import csv
+
+SALES = """date,category,amount
+2026-03-01,Apparel,65.00
+2026-03-01,Gear,35.00
+2026-03-02,Footwear,120.00
+2026-03-02,Apparel,24.00
+2026-03-03,Gear,n/a
+2026-03-03,Gear,20.00
+2026-03-04,Apparel,180.00
+"""
+with open("sales.csv", "w", encoding="utf-8", newline="") as f:
+    f.write(SALES)
+
+def summarise(in_path, out_path):
+    totals = {}
+    used = skipped = 0
+    with open(in_path, encoding="utf-8", newline="") as f:
+        for row in csv.DictReader(f):
+            try:
+                amount = float(row["amount"])
+            except ValueError:
+                skipped += 1
+                continue
+            totals[row["category"]] = totals.get(row["category"], 0) + amount
+            used += 1
+    with open(out_path, "w", encoding="utf-8", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["category", "total"])
+        for category, total in sorted(totals.items(), key=lambda kv: kv[1], reverse=True):
+            writer.writerow([category, f"{total:.2f}"])
+    return used, skipped`,
+        tests: [
+          {
+            name: "Returns how many rows were used and skipped",
+            expression: 'summarise("sales.csv", "summary.csv") == (6, 1)',
+          },
+          {
+            name: "Writes the header",
+            expression:
+              'summarise("sales.csv", "summary.csv") and open("summary.csv", encoding="utf-8").read().splitlines()[0] == "category,total"',
+          },
+          {
+            name: "Totals per category, highest first, two decimals",
+            expression:
+              'summarise("sales.csv", "summary.csv") and open("summary.csv", encoding="utf-8").read().splitlines()[1:] == ["Apparel,269.00", "Footwear,120.00", "Gear,55.00"]',
+          },
+          {
+            name: "Works on a different file",
+            expression:
+              '(open("other.csv", "w", encoding="utf-8", newline="").write("date,category,amount\\n2026-04-01,Gear,10\\n2026-04-02,Gear,oops\\n") > 0) and summarise("other.csv", "other-out.csv") == (1, 1) and open("other-out.csv", encoding="utf-8").read().splitlines() == ["category,total", "Gear,10.00"]',
+          },
         ],
       },
     ],

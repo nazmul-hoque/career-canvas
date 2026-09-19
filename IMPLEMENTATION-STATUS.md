@@ -102,6 +102,17 @@ Two facts shape every item below:
 
 ## Done
 
+- [x] **Python Essentials, complete** (2026-09-19) — seven new lessons and the two
+      existing ones rewritten (same ids, so progress stands): first program and
+      variables, types and f-strings, conditions and truthiness, lists and loops
+      (aliasing, range), dictionaries (KeyError, counting), comprehensions (and
+      when not to), functions (return vs print, the mutable-default trap), errors
+      (reading tracebacks, catching narrowly, raising your own), and a CSV report
+      that reads and writes real files in Pyodide's file system. Tests can now
+      check printed output: the Pyodide driver exposes it as `__stdout__`, and
+      `lessons:verify` mirrors the driver exactly. This completes the Python
+      Developer and AI / GenAI Developer paths.
+
 - [x] **React in Practice, complete, on a real React runner** (2026-09-19) —
       `src/lib/react-runtime.ts` compiles the learner's JSX with sucrase and
       renders it with the app's own React: hidden for the tests, visible in a
@@ -333,14 +344,17 @@ Two facts shape every item below:
 
 ## The constraint that outranks this whole list
 
-**37 of 83 lessons are written** (the roadmap in `src/content/curriculum.ts` has
-83 slots). Five courses are complete, all written 2026-09-19: Git & GitHub (7 of
+**44 of 83 lessons are written** (the roadmap in `src/content/curriculum.ts` has
+83 slots). Six courses are complete, all written 2026-09-19: Git & GitHub (7 of
 7), SQL for Analysis (5 of 5), Generative AI Engineering (6 of 6), Machine
-Learning Basics (6 of 6) and React in Practice (8 of 8). **No path can issue a
-certificate yet.** The nearest is AI / GenAI Developer, which needs only the
-Python course (2 of 9); Frontend needs HTML & CSS, JavaScript and TypeScript.
+Learning Basics (6 of 6), React in Practice (8 of 8) and Python Essentials (9 of
+9). **Two paths can now issue a certificate: Python Developer and AI / GenAI
+Developer** — the first on the platform. Issuing one still needs
+`SUPABASE_SERVICE_ROLE_KEY` set (see "Blocked on you"). Next closest: Data Analyst
+(needs Excel, 2 lessons, and Data Analytics, 4) and Full-Stack (JavaScript 8,
+Node 4).
 Every item on the review's ranked list is now closed, which changes nothing about
 this: the platform tells the truth, measures itself, remembers what you learned
-and can prove what you finished — about thirty-seven lessons. Nothing above changes the
+and can prove what you finished — about forty-four lessons. Nothing above changes the
 product's value until one whole path is written. The engineering here was about making sure the platform tells the truth
 while the content gets written — it is not a substitute for writing it.

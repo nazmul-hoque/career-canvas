@@ -45,13 +45,22 @@ for (const [id, body] of Object.entries(bodies)) {
         continue;
       }
       const program = block.language === "sql" ? sqlProgram(code) : code;
-      // A test that raises counts as failed, as it does in the browser runner.
+      // Mirrors the Pyodide driver: run in a fresh namespace with stdout
+      // captured into __stdout__, then evaluate each test in that namespace.
+      // A test that raises counts as failed, as it does in the browser.
       const wrapped = [
-        program,
-        "import json as _j",
+        "import io, sys, json as _j",
+        '_ns = {"__name__": "__main__"}',
+        "_buf = io.StringIO()",
+        "_real, sys.stdout = sys.stdout, _buf",
+        "try:",
+        `    exec(compile(_j.loads(${JSON.stringify(JSON.stringify(program))}), "<challenge>", "exec"), _ns)`,
+        "finally:",
+        "    sys.stdout = _real",
+        '_ns["__stdout__"] = _buf.getvalue()',
         "def _safe(e):",
         "    try:",
-        "        return bool(eval(e, globals()))",
+        "        return bool(eval(e, _ns))",
         "    except BaseException:",
         "        return False",
         `print("__RESULTS__" + _j.dumps([_safe(e) for e in ${expressions}]))`,

@@ -37,8 +37,9 @@ interface WorkerReply {
 }
 
 /**
- * The driver runs user code in its own namespace, captures stdout, then
- * evaluates each test as a Python expression against that namespace. A test
+ * The driver runs user code in its own namespace, captures stdout (exposed to
+ * tests as `__stdout__`), then evaluates each test as a Python expression
+ * against that namespace. A test
  * that raises counts as failed — the same contract the JavaScript runner uses.
  */
 const WORKER_SOURCE = String.raw`
@@ -67,6 +68,8 @@ const DRIVER = [
   '    error = lines[-1] if lines else "Your code raised an error."',
   'finally:',
   '    sys.stdout, sys.stderr = stdout, stderr',
+  '# What the program printed, so a test can check output as well as values.',
+  'namespace["__stdout__"] = buffer.getvalue()',
   'results = []',
   'for expression in payload["tests"]:',
   '    if error is not None:',
