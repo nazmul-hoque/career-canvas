@@ -1,5 +1,5 @@
 /**
- * Runs every SQL, Python and React challenge the way the browser does: SQL and
+ * Runs every SQL, Python, React and Excel challenge the way the browser does: SQL and
  * Python on the local python3 (the same program Pyodide runs; its sqlite3 is
  * the same engine), React through react-runtime.ts itself in a simulated DOM:
  *
@@ -14,6 +14,7 @@
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
 import { bodies } from "../src/content/lesson-bodies.server";
 import { sqlProgram } from "../src/lib/code-runner";
+import { runSheetChallenge } from "../src/lib/sheet-runtime";
 
 GlobalRegistrator.register();
 const { runReactChallenge } = await import("../src/lib/react-runtime");
@@ -35,6 +36,17 @@ for (const [id, body] of Object.entries(bodies)) {
       ["solution", block.solution, true],
       ["starter", block.starter, false],
     ] as const) {
+      if (block.language === "excel") {
+        const run = runSheetChallenge(code, block.sheet ?? "", block.tests);
+        const results = run.results.map((r) => r.passed);
+        const ok = (results.length > 0 && results.every(Boolean) && !run.error) === shouldPass;
+        if (!ok) failures++;
+        const why = run.error ?? run.results.find((r) => r.detail)?.detail ?? "";
+        console.log(
+          `${ok ? "ok  " : "FAIL"} ${id} ${label} ${results.map((r) => (r ? "✓" : "✗")).join("")}${!ok && why ? `  ${why}` : ""}`,
+        );
+        continue;
+      }
       if (block.language === "react") {
         const { results, error } = await reactResults(code, block.tests);
         const ok = (results.length > 0 && results.every(Boolean)) === shouldPass;

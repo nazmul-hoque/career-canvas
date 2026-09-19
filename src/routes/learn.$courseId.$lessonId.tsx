@@ -639,6 +639,7 @@ function Block({
       title={block.title}
       prompt={block.prompt}
       language={block.language}
+      sheet={block.sheet}
       starter={block.starter}
       hint={block.hint}
       tests={block.tests}

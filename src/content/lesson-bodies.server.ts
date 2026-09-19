@@ -153,6 +153,565 @@ export const bodies: Record<string, LessonBody> = {
       },
     ],
   },
+  "xl-core.formulas": {
+    summary:
+      "The anatomy of a formula, the functions you'll use daily, and the difference between a value and how it's shown.",
+    xp: 120,
+    blocks: [
+      {
+        kind: "text",
+        body: "A formula starts with `=` and calculates from other cells, so when an input changes, every result that depends on it updates. That's the whole point of a spreadsheet, and it only works if you **refer to cells rather than typing their numbers into formulas**. `=E2*F2` stays right when E2 changes; `=2*24` doesn't.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "The functions you'll use every day",
+        code: `=SUM(G2:G13)          add up a range
+=AVERAGE(G2:G13)      mean (blanks are skipped, zeros are not)
+=MIN(...)  =MAX(...)  smallest and largest
+=COUNT(A2:A20)        how many cells hold numbers
+=COUNTA(A2:A20)       how many cells aren't empty
+=ROUND(B2*1.25, 2)    round the value itself, to 2 decimals
+=IF(I2>=1000, "Target met", "Below target")
+=IFERROR(B2/C2, 0)    a fallback when the calculation errors`,
+      },
+      {
+        kind: "text",
+        body: "**How a number is shown isn't what it is.** Formatting a cell to two decimals changes the display, not the value: a cell showing 3.33 may hold 3.3333, and every formula that uses it sees 3.3333. When the rounded value is what should count (prices, tax), round it with `ROUND`.",
+      },
+      {
+        kind: "text",
+        body: "Read the error values rather than fearing them: `#DIV/0!` (divided by zero or an empty cell), `#VALUE!` (text where a number was expected), `#NAME?` (a misspelled function), `#REF!` (a reference to a cell that's gone) and `#N/A` (a lookup found nothing, which is the next lesson but two).",
+      },
+      {
+        kind: "callout",
+        body: "In these challenges you write one line per formula: a cell, then its formula, like `I2 =SUM(G2:G13)`. Give a range instead, like `G2:G13 =E2*F2`, and the formula is filled down it exactly as Excel's fill handle would do. The formulas run on a spreadsheet engine built for this course. It supports the everyday functions (SUM, AVERAGE, IF, SUMIFS, XLOOKUP, VLOOKUP, INDEX/MATCH and more) and behaves the way Excel does for them.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "Scenario",
+        code: `A1 holds =10/3 and is formatted to show 2 decimals: 3.33
+B1 holds =A1*3 and shows 10.00`,
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question: "Someone checks with a calculator: 3.33 × 3 = 9.99. Why does B1 say 10.00?",
+        options: [
+          "Excel has a rounding bug",
+          "B1 is formatted differently",
+          "A1 holds 3.3333…; the format only changes how it's shown. Use `=ROUND(10/3, 2)` if 3.33 is the value you mean",
+          "Multiplication rounds up",
+        ],
+        answer: 2,
+        explanation:
+          "Formatting is cosmetic. When a rounded figure is the one that should count (an invoice line, say), round the value itself.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          'Column A has 18 filled rows: 15 order ids, and 3 cells reading "pending". What do `=COUNT(A2:A19)` and `=COUNTA(A2:A19)` return?',
+        options: ["18 and 18", "15 and 18", "18 and 15", "15 and 15"],
+        answer: 1,
+        explanation:
+          "`COUNT` counts only numbers; `COUNTA` counts anything that isn't empty. A gap between the two is a quick way to spot text hiding in a numeric column.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Line totals and a summary",
+        prompt:
+          'Fill column G with each line\'s total (qty × unit price). Then, next to the labels in column H: **I2** total revenue, **I3** the average line total, **I4** the largest line, **I5** the number of lines, and **I6** "Target met" if revenue is at least 1,000, or "Below target" if not.',
+        language: "excel",
+        sheet: "lines",
+        starter: `# One line per formula: a cell (or a range to fill), then the formula.
+G2:G13  =
+I2      =
+I3      =
+I4      =
+I5      =
+I6      =`,
+        hint: '`G2:G13 =E2*F2` fills down. Then use `SUM`, `AVERAGE`, `MAX` and `COUNT` over `G2:G13`, and `=IF(I2>=1000,"Target met","Below target")`.',
+        solution: `G2:G13  =E2*F2
+I2      =SUM(G2:G13)
+I3      =AVERAGE(G2:G13)
+I4      =MAX(G2:G13)
+I5      =COUNT(G2:G13)
+I6      =IF(I2>=1000,"Target met","Below target")`,
+        tests: [
+          {
+            name: "Each line total is qty × unit price",
+            expression: `nearAll(values("G2:G13"), [120, 48, 180, 35, 40, 90, 130, 35, 108, 72, 162, 120])`,
+          },
+          {
+            name: "Totals follow the data, not typed-in numbers",
+            expression: `valueWith("G3", { E3: 5 }) === 120`,
+          },
+          {
+            name: "Revenue adds up the totals",
+            expression: `value("I2") === 1140 && valueWith("I2", { E2: 2 }) === 1260`,
+          },
+          {
+            name: "Average and largest line",
+            expression: `near(value("I3"), 95) && value("I4") === 180`,
+          },
+          { name: "Counts the lines", expression: `value("I5") === 12` },
+          {
+            name: "The target check responds to the data",
+            expression: `value("I6") === "Target met" && valueWith("I6", { F4: 1 }) === "Below target"`,
+          },
+        ],
+      },
+    ],
+  },
+  "xl-core.refs": {
+    summary:
+      "Relative, absolute and mixed references, and laying out a model that survives changes.",
+    xp: 150,
+    blocks: [
+      {
+        kind: "text",
+        body: "When you fill a formula down or across, Excel adjusts its references. A **relative** reference, `B2`, means *the cell this far away from me*, so filled one row down it becomes `B3`. An **absolute** reference, `$G$1`, means *exactly this cell*, and it never moves. That's how every row can use the same discount rate.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        code: `B2      relative: moves both ways when filled
+$G$1    absolute: never moves
+$A2     column fixed, row moves: filled across it stays in column A
+A$1     row fixed, column moves: filled down it stays in row 1
+
+Press F4 (Windows) or Cmd+T (Mac) while editing a reference to cycle through these.`,
+      },
+      {
+        kind: "text",
+        body: "The classic bug: `C2 =B2*(1-G1)` works in row 2, but filled down, row 3 becomes `=B3*(1-G2)` and quietly uses the wrong cell. Anchor anything every row shares: `=B2*(1-$G$1)`.",
+      },
+      {
+        kind: "text",
+        body: "**Models that don't break** follow a few habits. Put the **inputs** (rates, targets, assumptions) in their own labelled cells, never typed into formulas. Use **one consistent formula per column**, filled, so there's no row that was fixed by hand. Add a **check cell** that should always be TRUE or zero, such as the total of the summary equalling the total of the data. Then when someone changes the VAT rate next year, it's one cell, and everything follows.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "Scenario: C2 holds =B2*(1-G1), filled down to C7",
+        code: `C2  =B2*(1-G1)     → 108     correct
+C3  =B3*(1-G2)     → 135     wrong: uses the VAT cell
+C4  =B4*(1-G3)     → 65      wrong: G3 is empty`,
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question: "What's the fix?",
+        options: [
+          "Type the formula into each row by hand",
+          "Anchor the discount: `=B2*(1-$G$1)`, then fill down",
+          "Use `=B2*0.9` so there's no reference to go wrong",
+          "Move the discount into column C",
+        ],
+        answer: 1,
+        explanation:
+          "The `$` keeps every row pointing at G1. Typing 0.9 into the formula works today and silently breaks the day the discount changes.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          "A grid has categories down column I and months across row 1. One formula in J2 is filled across and down the whole grid. How should it refer to the category and the month?",
+        options: ["`I2` and `J1`", "`$I$2` and `$J$1`", "`$I2` and `J$1`", "`I$2` and `$J1`"],
+        answer: 2,
+        explanation:
+          "The category must stay in column I while its row changes (`$I2`). The month must stay in row 1 while its column changes (`J$1`). You'll build exactly this in the pivot lesson.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "A price list that follows its inputs",
+        prompt:
+          "The discount rate is in **G1** and VAT in **G2**. Fill **C2:C7** with each sale price (list price less the discount), and **D2:D7** with the sale price including VAT. Write one formula per column, and make sure that changing G1 or G2 updates every row.",
+        language: "excel",
+        sheet: "pricing",
+        starter: `# Discount is in G1, VAT in G2.
+C2:C7  =
+D2:D7  =`,
+        hint: "Sale price: `=B2*(1-$G$1)`. With VAT: `=C2*(1+$G$2)`. The `$` keeps every row pointing at the same input.",
+        solution: `C2:C7  =B2*(1-$G$1)
+D2:D7  =C2*(1+$G$2)`,
+        tests: [
+          {
+            name: "Sale prices",
+            expression: `nearAll(values("C2:C7"), [108, 162, 58.5, 31.5, 18, 81])`,
+          },
+          {
+            name: "Prices including VAT",
+            expression: `nearAll(values("D2:D7"), [135, 202.5, 73.125, 39.375, 22.5, 101.25])`,
+          },
+          {
+            name: "Every row follows the discount in G1",
+            expression: `near(valueWith("C7", { G1: 0.5 }), 45) && near(valueWith("C2", { G1: 0 }), 120)`,
+          },
+          {
+            name: "…and the VAT rate in G2",
+            expression: `near(valueWith("D5", { G2: 0 }), 31.5)`,
+          },
+        ],
+      },
+    ],
+  },
+  "xl-core.conditional": {
+    summary:
+      "Add up, count and average only the rows that match, including conditions you can change.",
+    xp: 150,
+    blocks: [
+      {
+        kind: "text",
+        body: "Most analysis questions sound like *the total of X where Y*. `SUMIFS` answers them: first the range to add up, then as many **range, criteria** pairs as you need. A row only counts if it meets every condition. `COUNTIFS` and `AVERAGEIFS` work the same way.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        code: `=SUMIFS(G2:G13, C2:C13, "Apparel")                  Apparel revenue
+=SUMIFS(G2:G13, C2:C13, "Apparel", B2:B13, "Mar")   Apparel revenue in March
+=COUNTIFS(B2:B13, "Feb")                            lines in February
+=AVERAGEIFS(G2:G13, C2:C13, "Gear")                 average Gear line`,
+      },
+      {
+        kind: "text",
+        body: 'Criteria are text with an optional operator: `">=100"`, `"<>Gear"`, and `"Wool*"` (where `*` matches anything and `?` matches one character). Text matching ignores case. To use a **cell** in a criterion, join the operator to it with `&`: `">="&J7`. Writing `">=J7"` compares against the letters *J7*.',
+      },
+      {
+        kind: "text",
+        body: 'Watch the argument order. `SUMIFS` puts the sum range **first**, but the older `SUMIF` puts it **last**: `=SUMIF(C2:C13, "Apparel", G2:G13)`. Every range in one `SUMIFS` must also be the same size, or you get `#VALUE!`. Put the conditions in labelled cells, as this challenge does, and one formula answers the question for any category.',
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          "The threshold is in J7. Which formula counts the lines with a total of at least that amount?",
+        options: [
+          '`=COUNTIFS(G2:G13, ">=J7")`',
+          "`=COUNTIFS(G2:G13, >=J7)`",
+          '`=COUNTIFS(G2:G13, ">="&J7)`',
+          "`=COUNTIFS(J7, G2:G13)`",
+        ],
+        answer: 2,
+        explanation:
+          'Inside quotes, J7 is just two letters. `&` builds the criterion text from the operator and the cell\'s value, for example ">=100".',
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question: "Which formula adds up column G for the Gear rows?",
+        options: [
+          '`=SUMIFS(C2:C13, "Gear", G2:G13)`',
+          '`=SUMIF(G2:G13, "Gear", C2:C13)`',
+          '`=SUMIFS(G2:G13, "Gear")`',
+          '`=SUMIFS(G2:G13, C2:C13, "Gear")`',
+        ],
+        answer: 3,
+        explanation:
+          'SUMIFS: what to add up, then where to look and what to look for. (The SUMIF equivalent is `=SUMIF(C2:C13, "Gear", G2:G13)`.)',
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Answer the questions",
+        prompt:
+          "Each question in column I gets its answer in column J. **J2** Apparel revenue. **J3** the number of lines in Feb. **J4** Apparel revenue in Mar. **J5** the number of lines whose total is at least the threshold in **J7**. **J6** revenue for the category named in **J8**. J5 and J6 must follow their input cells.",
+        language: "excel",
+        sheet: "conditional",
+        starter: `# Totals are in G2:G13, month in B, category in C.
+J2  =
+J3  =
+J4  =
+J5  =
+J6  =`,
+        hint: 'Build J5 from `">="&J7`, and use J8 directly as the criteria in J6: `=SUMIFS(G2:G13,C2:C13,J8)`.',
+        solution: `J2  =SUMIFS(G2:G13,C2:C13,"Apparel")
+J3  =COUNTIFS(B2:B13,"Feb")
+J4  =SUMIFS(G2:G13,C2:C13,"Apparel",B2:B13,"Mar")
+J5  =COUNTIFS(G2:G13,">="&J7)
+J6  =SUMIFS(G2:G13,C2:C13,J8)`,
+        tests: [
+          { name: "Apparel revenue", expression: `value("J2") === 592` },
+          { name: "Lines in February", expression: `value("J3") === 4` },
+          { name: "Apparel revenue in March", expression: `value("J4") === 234` },
+          {
+            name: "Uses the threshold in J7",
+            expression: `value("J5") === 6 && valueWith("J5", { J7: 150 }) === 2`,
+          },
+          {
+            name: "Uses the category in J8",
+            expression: `value("J6") === 348 && valueWith("J6", { J8: "Gear" }) === 200`,
+          },
+        ],
+      },
+    ],
+  },
+  "xl-core.lookups": {
+    summary:
+      "Pull a value from another table by its key, handle keys that aren't there, and avoid VLOOKUP's silent failures.",
+    xp: 160,
+    blocks: [
+      {
+        kind: "text",
+        body: "A **lookup** fetches a value from another table using a key: the price for a product code, or the region for a customer id. `XLOOKUP` (in Microsoft 365, Excel 2021 and later, and Google Sheets) takes what to find, where to find it, and what to return, and matches exactly by default.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        code: `=XLOOKUP(B2, $H$2:$H$7, $J$2:$J$7)                 the price for the code in B2
+=XLOOKUP(B2, $H$2:$H$7, $J$2:$J$7, "Not found")    …with a value for missing codes`,
+      },
+      {
+        kind: "text",
+        body: "When the key isn't in the table, a lookup returns `#N/A`. That's information, not noise: a product code that doesn't exist should be visible. Prefer XLOOKUP's own *if not found* argument to wrapping everything in `IFERROR`, because IFERROR also hides the typos and broken ranges you'd want to see.",
+      },
+      {
+        kind: "text",
+        body: "**Why VLOOKUP bites.** `=VLOOKUP(B2, H2:J7, 3, FALSE)` does the same job, with three traps. First, its last argument defaults to **approximate** match, so leaving off `FALSE` on an unsorted code list returns a *wrong* row with no error at all. Second, the column number `3` is typed in, so inserting a column in the table silently shifts the result. Third, it can only return columns to the right of the key. If you're stuck with an old Excel, `INDEX(J2:J7, MATCH(B2, H2:H7, 0))` avoids the last two.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "Scenario: product codes aren't sorted",
+        code: `=VLOOKUP("XXX-999", $H$2:$J$7, 3)     → 90
+There is no product XXX-999, and there's no error either.`,
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question: "Why did it return a price for a product that doesn't exist?",
+        options: [
+          "XXX-999 is hidden somewhere in the table",
+          "The fourth argument was left out, so VLOOKUP used approximate match: it assumes sorted keys and returns the last row that isn't greater than the code",
+          "Column 3 is the wrong column",
+          "VLOOKUP can't read text codes",
+        ],
+        answer: 1,
+        explanation:
+          "Approximate match is for bands, like tax brackets on sorted thresholds. For codes and ids, always match exactly: `FALSE` in VLOOKUP, or XLOOKUP, which is exact by default and returns #N/A (or your fallback) for a missing code.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          '`=VLOOKUP(B2, H2:J7, 3, FALSE)` worked. Then someone inserted a "Supplier" column between Category and Price. What does the formula return now?',
+        options: [
+          "The price, because Excel adjusts it",
+          "#REF!",
+          "The supplier: column 3 of the table is now Supplier, and there's no error to warn you",
+          "#N/A",
+        ],
+        answer: 2,
+        explanation:
+          "The range grows to H2:K7, but the typed-in 3 doesn't move. XLOOKUP's return range adjusts with the insertion, so it keeps returning the price.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Price the order lines",
+        prompt:
+          "The product table is in **H1:J7** (code, category, price). Fill **D2:D7** with each line's unit price and **E2:E7** with its category, looked up by the product code in column B. A code that isn't in the table should show \"Not found\" rather than #N/A. Line 6's code is lower-case; it should still match.",
+        language: "excel",
+        sheet: "lookup",
+        starter: `# Product table: codes H2:H7, categories I2:I7, prices J2:J7.
+D2:D7  =
+E2:E7  =`,
+        hint: '`=XLOOKUP(B2,$H$2:$H$7,$J$2:$J$7,"Not found")`. Anchor the table with `$`, because every row looks in the same place.',
+        solution: `D2:D7  =XLOOKUP(B2,$H$2:$H$7,$J$2:$J$7,"Not found")
+E2:E7  =XLOOKUP(B2,$H$2:$H$7,$I$2:$I$7,"Not found")`,
+        tests: [
+          {
+            name: "Unit prices",
+            expression: `nearAll(values("D2:D7"), [120, 24, 35, "Not found", 180, 20])`,
+          },
+          {
+            name: "Categories",
+            expression: `nearAll(values("E2:E7"), ["Footwear", "Apparel", "Gear", "Not found", "Apparel", "Gear"])`,
+          },
+          {
+            name: "An unknown code says so instead of #N/A",
+            expression: `value("D5") === "Not found" && value("E5") === "Not found"`,
+          },
+          {
+            name: "Prices follow the product table",
+            expression: `valueWith("D6", { J3: 199 }) === 199`,
+          },
+        ],
+      },
+    ],
+  },
+  "xl-analysis.pivots": {
+    summary:
+      "Summarise thousands of rows by dragging fields, and know exactly what the pivot is calculating.",
+    xp: 170,
+    blocks: [
+      {
+        kind: "text",
+        body: "A **pivot table** summarises a list without formulas. You drag fields into four areas: **Rows** (one row per category), **Columns** (one column per month), **Values** (what to calculate, such as the sum of Total) and **Filters** (which rows to include). To make one, click in your data, then Insert → PivotTable.",
+      },
+      {
+        kind: "text",
+        body: "Three things catch people out. First, **a pivot doesn't update itself**: after the data changes, right-click it and choose Refresh. Second, if the data isn't a **Table** (Ctrl+T), new rows added below it aren't included even after a refresh. Third, if a numbers column contains a single blank or text cell, the pivot defaults to **Count** instead of Sum, and the totals look plausible and are wrong. Always read the Values label: *Sum of Total*, not *Count of Total*.",
+      },
+      {
+        kind: "text",
+        body: "A pivot is a grid of `SUMIFS`, one per cell, and knowing that makes you better at both. When a report needs fixed layouts, labels and checks that survive other people's edits, analysts often build the grid with formulas instead. That's the challenge: build the pivot yourself with **one** formula filled across the grid, using the mixed references from two lessons ago.",
+      },
+      {
+        kind: "text",
+        body: "Whichever way you build it, **reconcile**: the grand total of the summary must equal the total of the source data. A check cell like `=M5=SUM(G2:G13)`, which should always say TRUE, catches a filter left on, a row outside the range, or a category spelled two ways.",
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          "You pasted April's orders under the March data, but the pivot still shows only Jan–Mar. What happened?",
+        options: [
+          "Pivots only handle three months",
+          "The pivot hasn't been refreshed, and if the source isn't a Table, its range doesn't include the new rows",
+          "April needs its own pivot",
+          "The Month field needs sorting",
+        ],
+        answer: 1,
+        explanation:
+          "Make the source a Table (Ctrl+T) so its range grows with the data, then Refresh. Both steps are needed.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          "A pivot's Values area says \"Count of Amount\" and shows small whole numbers. What's most likely?",
+        options: [
+          "Amount contains a blank or text cell, so Excel defaulted to Count. Fix the data and switch it to Sum",
+          "Every amount is 1",
+          "Count is the correct summary for money",
+          "The pivot is filtered",
+        ],
+        answer: 0,
+        explanation:
+          'One stray text cell ("n/a", a space) flips the default. Clean the column, then set Summarize Values By → Sum.',
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Build the pivot by hand",
+        prompt:
+          "Fill the grid with revenue by category (rows, **I2:I4**) and month (columns, **J1:L1**) using **one** formula entered for J2 and filled across **J2:L4**. Then add row totals in **M2:M4**, column totals and the grand total in **J5:M5**, and a check in **M7** that's TRUE when the grand total equals the total of G2:G13.",
+        language: "excel",
+        sheet: "pivot",
+        starter: `# One formula for J2, filled across the whole grid.
+J2:L4  =
+M2:M4  =
+J5:M5  =
+M7     =`,
+        hint: "`=SUMIFS($G$2:$G$13,$C$2:$C$13,$I2,$B$2:$B$13,J$1)`. The data ranges are fully anchored, the category column is fixed (`$I2`) and the month row is fixed (`J$1`).",
+        solution: `J2:L4  =SUMIFS($G$2:$G$13,$C$2:$C$13,$I2,$B$2:$B$13,J$1)
+M2:M4  =SUM(J2:L2)
+J5:M5  =SUM(J2:J4)
+M7     =M5=SUM(G2:G13)`,
+        tests: [
+          {
+            name: "Revenue by category and month",
+            expression: `nearAll(values("J2:L4"), [228, 130, 234, 120, 108, 120, 75, 125, 0])`,
+          },
+          { name: "Row totals", expression: `nearAll(values("M2:M4"), [592, 348, 200])` },
+          {
+            name: "Column totals and the grand total",
+            expression: `nearAll(values("J5:M5"), [423, 363, 354, 1140])`,
+          },
+          {
+            name: "The grid follows its labels (mixed references)",
+            expression: `valueWith("L4", { I4: "Apparel" }) === 234 && valueWith("K2", { K1: "Jan" }) === 228`,
+          },
+          { name: "The check cell reconciles with the source", expression: `value("M7") === true` },
+        ],
+      },
+    ],
+  },
+  "xl-analysis.charts": {
+    summary:
+      "Pick the chart that fits the question, and don't let the axis tell a different story from the data.",
+    xp: 100,
+    blocks: [
+      {
+        kind: "text",
+        body: 'A chart exists to make one comparison obvious. Decide what that comparison is *before* choosing the chart, and put it in the title as a finding ("Apparel drove Q1 revenue"), not as a label ("Revenue by category").',
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "Match the chart to the question",
+        code: `How does it change over time?       line chart (time on the horizontal axis)
+Which categories are biggest?       bar chart, sorted, largest first
+How is a whole split? (2–4 parts)   stacked bar; a pie only if there are very few slices
+How do two measures relate?         scatter plot`,
+      },
+      {
+        kind: "text",
+        body: "**Bars must start at zero.** A bar's length *is* the value, so starting the axis at 95 makes 96 look like half of 98. Line charts can zoom in on a range, as long as the axis is clearly labelled. Avoid 3-D effects (they distort sizes), dual axes (the reader can't tell which line belongs to which scale), and legends the eye has to hunt through. Label the series directly instead.",
+      },
+      {
+        kind: "text",
+        body: "Keep the chart honest to its source. Chart from the summary you've reconciled, include the units, and note what's excluded: *paid orders only; refunds excluded*.",
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          "You want to show how monthly revenue changed over the last 12 months. Which chart?",
+        options: [
+          "A pie with one slice per month",
+          "A line chart with months in order along the horizontal axis",
+          "A 3-D column chart",
+          "A scatter plot of revenue against order count",
+        ],
+        answer: 1,
+        explanation:
+          "Change over time is a line's job: the slope is the story. Twelve pie slices hide it completely.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "Scenario: a bar chart of satisfaction scores",
+        code: `Store A  98%   ████████████████████
+Store B  96%   ████████████
+axis starts at 95%`,
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question: "What's wrong with this chart?",
+        options: [
+          "Nothing: the difference is real",
+          "It should be a pie",
+          "The bars need 3-D shading",
+          "Bars that start at 95% make a 2-point gap look like a 2-to-1 gap. Start bars at zero, or show the numbers without bars",
+        ],
+        answer: 3,
+        explanation:
+          "A bar's length encodes its value. Cut the axis and the lengths lie, even though every number printed on the chart is correct.",
+      },
+      {
+        kind: "mcq",
+        id: "q3",
+        question:
+          "Revenue is split across nine product categories. What's the clearest way to show the split?",
+        options: [
+          "A bar chart sorted from largest to smallest",
+          "A pie chart with nine slices",
+          "A line chart of the categories",
+          "A pie chart with a legend",
+        ],
+        answer: 0,
+        explanation:
+          'People compare lengths far more accurately than angles, and sorting puts the answer ("which is biggest?") first.',
+      },
+    ],
+  },
   "py-basics.hello": {
     summary: "Run your first lines of Python, print output, and store values in variables.",
     xp: 80,

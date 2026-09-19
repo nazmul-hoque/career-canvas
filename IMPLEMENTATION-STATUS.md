@@ -102,6 +102,21 @@ Two facts shape every item below:
 
 ## Done
 
+- [x] **Excel for Analysts, complete, on a formula engine** (2026-09-19) —
+      `src/lib/sheet-engine.ts` is a dependency-free engine for the subset
+      analysts use (operators with Excel's precedence, SUM/AVERAGE/COUNT…,
+      IF/IFERROR, SUMIFS/COUNTIFS/AVERAGEIFS with criteria strings and
+      wildcards, XLOOKUP, VLOOKUP including its approximate default, INDEX/MATCH,
+      text functions) and Excel's fill semantics for relative, absolute and mixed
+      references. HyperFormula was ruled out: GPL. The UI labels it an
+      Excel-compatible subset; unsupported functions are #NAME?, not guesses.
+      Learners write `G2:G13 =E2*F2` lines; tests check behaviour with
+      `valueWith` (change an input, the result must follow), which catches both
+      hardcoded numbers and missing `$`. Six lessons: formulas, references and
+      model layout, conditional sums, lookups, pivot tables (built as one mixed-
+      reference SUMIFS grid with a reconciling check cell) and charts.
+      `tests/sheet-engine.test.ts` pins the engine to Excel's behaviour.
+
 - [x] **Python Essentials, complete** (2026-09-19) — seven new lessons and the two
       existing ones rewritten (same ids, so progress stands): first program and
       variables, types and f-strings, conditions and truthiness, lists and loops
@@ -344,17 +359,16 @@ Two facts shape every item below:
 
 ## The constraint that outranks this whole list
 
-**44 of 83 lessons are written** (the roadmap in `src/content/curriculum.ts` has
-83 slots). Six courses are complete, all written 2026-09-19: Git & GitHub (7 of
+**50 of 87 lessons are written** (the roadmap in `src/content/curriculum.ts` has
+87 slots). Seven courses are complete, all written 2026-09-19: Git & GitHub (7 of
 7), SQL for Analysis (5 of 5), Generative AI Engineering (6 of 6), Machine
-Learning Basics (6 of 6), React in Practice (8 of 8) and Python Essentials (9 of
-9). **Two paths can now issue a certificate: Python Developer and AI / GenAI
-Developer** — the first on the platform. Issuing one still needs
+Learning Basics (6 of 6), React in Practice (8 of 8), Python Essentials (9 of 9)
+and Excel for Analysts (6 of 6). **Two paths can issue a certificate: Python
+Developer and AI / GenAI Developer.** Issuing one still needs
 `SUPABASE_SERVICE_ROLE_KEY` set (see "Blocked on you"). Next closest: Data Analyst
-(needs Excel, 2 lessons, and Data Analytics, 4) and Full-Stack (JavaScript 8,
-Node 4).
+(needs only Data Analytics, 4 lessons).
 Every item on the review's ranked list is now closed, which changes nothing about
 this: the platform tells the truth, measures itself, remembers what you learned
-and can prove what you finished — about forty-four lessons. Nothing above changes the
+and can prove what you finished — about fifty lessons. Nothing above changes the
 product's value until one whole path is written. The engineering here was about making sure the platform tells the truth
 while the content gets written — it is not a substitute for writing it.

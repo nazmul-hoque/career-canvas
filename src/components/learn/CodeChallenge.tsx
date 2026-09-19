@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { runCode, type ChallengeLanguage, type RunResult } from "@/lib/code-runner";
 import { SHOP_SCHEMA } from "@/content/datasets/shop";
+import { SHEETS } from "@/content/datasets/sheets";
 import { InlineText } from "@/components/learn/InlineText";
 import { track } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,8 @@ interface Props {
   title: string;
   prompt: string;
   language: ChallengeLanguage;
+  /** Excel challenges: the sheet the formulas are written into. */
+  sheet?: string | undefined;
   starter: string;
   hint: string;
   tests: { name: string; expression: string }[];
@@ -34,6 +37,7 @@ export function CodeChallenge({
   title,
   prompt,
   language,
+  sheet,
   starter,
   hint,
   tests,
@@ -52,7 +56,7 @@ export function CodeChallenge({
   async function handleRun(submit: boolean) {
     setRunning(true);
     if (language === "react") setPreviewCode(code);
-    const res = await runCode(language, code, tests);
+    const res = await runCode(language, code, tests, { sheet });
     setResult(res);
     onResult(res);
     setRunning(false);
@@ -76,6 +80,7 @@ export function CodeChallenge({
         <p className="mt-1 text-sm text-chalk">
           <InlineText text={prompt} />
         </p>
+        {language === "excel" && sheet ? <SheetPreview name={sheet} /> : null}
         {language === "sql" ? (
           <pre className="mt-3 overflow-x-auto rounded-lg bg-background px-3 py-2 font-mono text-[12px] leading-5 text-chalk">
             {SHOP_SCHEMA}
@@ -164,6 +169,9 @@ export function CodeChallenge({
                   {result.engine === "python" ? " · CPython (WebAssembly)" : null}
                   {result.engine === "sql" ? " · SQLite (WebAssembly)" : null}
                   {result.engine === "react" ? " · React, rendered in this page" : null}
+                  {result.engine === "excel"
+                    ? " · Spreadsheet engine (an Excel-compatible subset)"
+                    : null}
                 </p>
                 {result.engine === "python-simulated" ? (
                   <p className="font-sans text-xs text-ember">
@@ -241,6 +249,58 @@ function ReactPreview({ code }: { code: string }) {
       </div>
       {error ? <p className="px-4 pt-3 font-mono text-[13px] text-destructive">{error}</p> : null}
       <div ref={host} className="challenge-preview max-h-72 overflow-y-auto p-4 text-sm" />
+    </div>
+  );
+}
+
+/** The starting sheet as a grid, with row numbers and column letters. */
+function SheetPreview({ name }: { name: string }) {
+  const data = SHEETS[name];
+  if (!data) return null;
+  const keys = Object.keys(data.cells);
+  const colOf = (key: string) => key.replace(/\d+$/, "");
+  const rowOf = (key: string) => Number(key.replace(/^[A-Z]+/, ""));
+  const toNumber = (letters: string) =>
+    [...letters].reduce((n, ch) => n * 26 + ch.charCodeAt(0) - 64, 0);
+  const maxCol = Math.max(...keys.map((k) => toNumber(colOf(k))));
+  const maxRow = Math.max(...keys.map(rowOf));
+  const letters = Array.from({ length: maxCol }, (_, i) => String.fromCharCode(65 + i));
+
+  return (
+    <div className="mt-3">
+      <p className="text-xs font-semibold text-chalk">{data.title}</p>
+      <div className="mt-1.5 max-h-64 overflow-auto rounded-lg border border-border bg-background">
+        <table className="w-max border-collapse font-mono text-[11px]">
+          <thead>
+            <tr>
+              <th className="sticky top-0 bg-secondary px-2 py-1" />
+              {letters.map((l) => (
+                <th
+                  key={l}
+                  className="sticky top-0 bg-secondary px-2 py-1 font-semibold text-chalk"
+                >
+                  {l}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from({ length: maxRow }, (_, r) => (
+              <tr key={r}>
+                <td className="bg-secondary px-2 py-0.5 text-right text-chalk">{r + 1}</td>
+                {letters.map((l) => {
+                  const v = data.cells[`${l}${r + 1}`];
+                  return (
+                    <td key={l} className="border-l border-t border-border px-2 py-0.5">
+                      {v === undefined || v === null ? "" : String(v)}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

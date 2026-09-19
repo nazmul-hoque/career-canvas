@@ -46,4 +46,10 @@ export const lessonManifest: Record<string, LessonManifestEntry> = {
   "sql-analysis.windows": { challenge: true, questions: 3 },
   "sql-core.joins": { challenge: true, questions: 3 },
   "sql-core.select": { challenge: true, questions: 3 },
+  "xl-analysis.charts": { challenge: false, questions: 3 },
+  "xl-analysis.pivots": { challenge: true, questions: 2 },
+  "xl-core.conditional": { challenge: true, questions: 2 },
+  "xl-core.formulas": { challenge: true, questions: 2 },
+  "xl-core.lookups": { challenge: true, questions: 2 },
+  "xl-core.refs": { challenge: true, questions: 2 },
 };

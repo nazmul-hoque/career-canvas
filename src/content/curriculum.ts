@@ -334,14 +334,21 @@ export const courses: Course[] = [
     level: "Beginner",
     recommended: false,
     summary: "Pivot tables, lookups and models that do not break.",
-    description: "The spreadsheet skills hiring managers still test for.",
-    skills: ["Formulas", "Pivot tables", "Lookups", "Charts"],
+    description:
+      "The spreadsheet skills hiring managers still test for, with formulas you write and check against real data.",
+    skills: ["Formulas", "References", "Conditional sums", "Lookups", "Pivot tables", "Charts"],
     careers: ["data", "product"],
     instructor: { name: "Nora Whitfield", role: "Analytics Manager", initials: "NW" },
     modules: [
-      m("xl-core", "Spreadsheet fluency", "Formulas and pivots.", [
-        ["formulas", "Formulas worth knowing", 10, "practice"],
-        ["pivots", "Pivot tables", 12, "challenge"],
+      m("xl-core", "Formulas that hold up", "Formulas, references, conditions and lookups.", [
+        ["formulas", "Formulas worth knowing", 12, "practice"],
+        ["refs", "References and models that don't break", 13, "challenge"],
+        ["conditional", "SUMIFS, COUNTIFS and friends", 13, "challenge"],
+        ["lookups", "Lookups: XLOOKUP, and why VLOOKUP bites", 14, "challenge"],
+      ]),
+      m("xl-analysis", "Analysis and presentation", "Summarise the data, then show it honestly.", [
+        ["pivots", "Pivot tables", 14, "challenge"],
+        ["charts", "Charts that tell the truth", 10, "concept"],
       ]),
     ],
   },

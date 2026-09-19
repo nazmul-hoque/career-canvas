@@ -22,9 +22,9 @@ export interface TestResult {
 }
 
 /** Which engine produced a result — the UI is honest about simulated runs. */
-export type RunEngine = "javascript" | "python" | "python-simulated" | "sql" | "react";
+export type RunEngine = "javascript" | "python" | "python-simulated" | "sql" | "react" | "excel";
 
-export type ChallengeLanguage = "javascript" | "python" | "sql" | "react";
+export type ChallengeLanguage = "javascript" | "python" | "sql" | "react" | "excel";
 
 export interface RunResult {
   logs: string[];
@@ -237,11 +237,36 @@ async function runReact(code: string, tests: TestSpec[]): Promise<RunResult> {
   };
 }
 
+/**
+ * Excel challenges run on the dependency-free formula engine in
+ * sheet-engine.ts, loaded on first use like the other engines.
+ */
+async function runExcel(code: string, tests: TestSpec[], sheet: string): Promise<RunResult> {
+  const started = performance.now();
+  const { runSheetChallenge } = await import("./sheet-runtime");
+  const outcome = runSheetChallenge(code, sheet, tests);
+  const results = tests.map((t, i) => ({
+    name: t.name,
+    passed: Boolean(outcome.results[i]?.passed),
+    detail: outcome.results[i]?.detail ?? undefined,
+  }));
+  return {
+    logs: outcome.logs,
+    error: outcome.error,
+    tests: results,
+    passed: results.length > 0 && results.every((r) => r.passed) && !outcome.error,
+    durationMs: Math.round(performance.now() - started),
+    engine: "excel",
+  };
+}
+
 export async function runCode(
   language: ChallengeLanguage,
   code: string,
   tests: TestSpec[],
+  options: { sheet?: string | undefined } = {},
 ): Promise<RunResult> {
+  if (language === "excel") return runExcel(code, tests, options.sheet ?? "");
   if (language === "python") return runPython(code, tests);
   if (language === "sql") return runSql(code, tests);
   if (language === "react") return runReact(code, tests);
