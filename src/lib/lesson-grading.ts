@@ -17,17 +17,29 @@ export type GradableBlock = Extract<LessonBlock, { kind: "mcq" } | { kind: "fill
 export const gradableBlocks = (body: LessonBody): GradableBlock[] =>
   body.blocks.filter((b): b is GradableBlock => b.kind === "mcq" || b.kind === "fill");
 
+/**
+ * Fill-in answers are code, and in code spacing around punctuation carries no
+ * meaning: `flex :1`, `flex:1` and `flex: 1` are the same declaration, and
+ * `n*2` is `n * 2`. So case and spacing are normalised away, except the single
+ * space that separates two words (`if len` must not become `iflen`). A trailing
+ * `;` is dropped because fill fields usually sit right before one.
+ */
+export function normaliseFill(text: string): string {
+  return text
+    .trim()
+    .toLowerCase()
+    .replace(/;+$/, "")
+    .replace(/\s+/g, " ")
+    .replace(/\s*([^\w\s])\s*/g, "$1")
+    .trim();
+}
+
 export function isBlockCorrect(block: GradableBlock, answers: Answers): boolean {
   const given = answers[block.id];
   if (block.kind === "mcq") return given === block.answer;
-  // Fill-in answers are compared loosely on case and surrounding space, and
-  // strictly on everything else — "N * 2" is the same answer as "n * 2", but
-  // "n*2" is a different string a learner did not type.
-  return (
-    String(given ?? "")
-      .trim()
-      .toLowerCase() === block.answer.trim().toLowerCase()
-  );
+  const typed = normaliseFill(String(given ?? ""));
+  if (!typed) return false;
+  return [block.answer, ...(block.accept ?? [])].some((ok) => normaliseFill(ok) === typed);
 }
 
 export interface GradeResult {

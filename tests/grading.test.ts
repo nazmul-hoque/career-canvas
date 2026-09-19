@@ -7,6 +7,7 @@ import {
   gradeReview,
   isBlockCorrect,
   isReviewable,
+  normaliseFill,
 } from "../src/lib/lesson-grading";
 
 /**
@@ -72,10 +73,13 @@ describe("gradeLesson", () => {
     expect(gradeLesson(body([mcq]), { q1: "1" }, false).ok).toBe(false);
   });
 
-  test("fill answers ignore case and outer space but nothing else", () => {
+  test("fill answers ignore case and spacing, but not what was written", () => {
     expect(gradeLesson(body([fill]), { f1: "  N * 2 " }, false).ok).toBe(true);
-    expect(gradeLesson(body([fill]), { f1: "n*2" }, false).ok).toBe(false);
+    expect(gradeLesson(body([fill]), { f1: "n*2" }, false).ok).toBe(true);
+    expect(gradeLesson(body([fill]), { f1: "n  *2;" }, false).ok).toBe(true);
     expect(gradeLesson(body([fill]), { f1: "n * 3" }, false).ok).toBe(false);
+    expect(gradeLesson(body([fill]), { f1: "n2" }, false).ok).toBe(false);
+    expect(gradeLesson(body([fill]), { f1: "  " }, false).ok).toBe(false);
   });
 
   test("a lesson with a challenge is not complete until the challenge passes", () => {
@@ -124,5 +128,20 @@ describe("isBlockCorrect", () => {
     const first = { ...mcq, answer: 0 };
     expect(isBlockCorrect(first, { q1: 0 })).toBe(true);
     expect(isBlockCorrect(first, {})).toBe(false);
+  });
+});
+
+describe("fill normalisation", () => {
+  test("spacing around punctuation never matters; a space between words does", () => {
+    expect(normaliseFill("flex :1")).toBe(normaliseFill("flex: 1"));
+    expect(normaliseFill("flex:1;")).toBe(normaliseFill("flex: 1"));
+    expect(normaliseFill("IF  LEN(name)>3")).toBe(normaliseFill("if len(name) > 3"));
+    expect(normaliseFill("iflen(name)>3")).not.toBe(normaliseFill("if len(name) > 3"));
+  });
+
+  test("a block can accept other equally right answers", () => {
+    const flex = { ...fill, answer: "flex: 1", accept: ["flex: 1 1 0%"] };
+    expect(gradeLesson(body([flex]), { f1: "flex:1 1 0%" }, false).ok).toBe(true);
+    expect(gradeLesson(body([flex]), { f1: "flex: 2" }, false).ok).toBe(false);
   });
 });

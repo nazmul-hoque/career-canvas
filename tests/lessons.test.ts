@@ -162,6 +162,7 @@ describe("answer key", () => {
       }
       for (const block of toPublicBody(body).blocks) {
         expect(block).not.toHaveProperty("answer");
+        expect(block).not.toHaveProperty("accept");
         expect(block).not.toHaveProperty("explanation");
         expect(block).not.toHaveProperty("solution");
       }

@@ -26,6 +26,8 @@ export type LessonBlock =
       before: string;
       after: string;
       answer: string;
+      /** Other answers that are equally right (spacing and case never matter). */
+      accept?: string[] | undefined;
       explanation: string;
     }
   | {
@@ -56,7 +58,7 @@ export interface LessonBody {
 export type PublicLessonBlock =
   | Extract<LessonBlock, { kind: "text" | "callout" | "code" }>
   | Omit<Extract<LessonBlock, { kind: "mcq" }>, "answer" | "explanation">
-  | Omit<Extract<LessonBlock, { kind: "fill" }>, "answer" | "explanation">
+  | Omit<Extract<LessonBlock, { kind: "fill" }>, "answer" | "accept" | "explanation">
   | Omit<Extract<LessonBlock, { kind: "challenge" }>, "solution">;
 
 /** A public question — what the learner answers, without what counts as right. */
@@ -75,7 +77,7 @@ export function toPublicBlock(block: LessonBlock): PublicLessonBlock {
       return rest;
     }
     case "fill": {
-      const { answer: _answer, explanation: _explanation, ...rest } = block;
+      const { answer: _answer, accept: _accept, explanation: _explanation, ...rest } = block;
       return rest;
     }
     case "challenge": {

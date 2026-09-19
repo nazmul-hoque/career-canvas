@@ -149,6 +149,7 @@ export const bodies: Record<string, LessonBody> = {
         before: ".card { ",
         after: "; }",
         answer: "flex: 1",
+        accept: ["flex: 1 1 0%", "flex: 1 1 0"],
         explanation: "flex: 1 is the shorthand for grow 1, shrink 1, basis 0%.",
       },
     ],
