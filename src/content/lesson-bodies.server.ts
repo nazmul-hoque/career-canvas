@@ -153,6 +153,920 @@ export const bodies: Record<string, LessonBody> = {
       },
     ],
   },
+  "da-clean.clean": {
+    summary:
+      "Load a messy export with pandas, find what's wrong with it, and fix it in code you can re-run.",
+    xp: 160,
+    blocks: [
+      {
+        kind: "text",
+        body: "Every analysis starts with data that's messier than it looks, and every conclusion inherits that mess. This course uses **pandas**, Python's table library. A **DataFrame** is a table, and each column is a **Series**. (The first run downloads pandas into your browser, which takes a few seconds; after that it's instant.)",
+      },
+      {
+        kind: "code",
+        language: "python",
+        caption: "First look: always these three",
+        code: `import io
+import pandas as pd
+
+df = pd.read_csv("orders.csv")      # or io.StringIO(text), as in the challenge
+df.head()                           # the first rows
+df.info()                           # column types and how many values are missing
+df.duplicated().sum()               # exact duplicate rows`,
+      },
+      {
+        kind: "text",
+        body: 'What to look for. **Numbers stored as text**: `"$1,173.00"` makes the whole column text (`object`), so it can\'t be summed. **Inconsistent labels**: `"apparel "`, `"APPAREL"` and `"Apparel"` are three categories to a computer. **Duplicates** from a double export. **Test data** that was never real. **Missing values**, where you have to decide whether the row is still usable.',
+      },
+      {
+        kind: "code",
+        language: "python",
+        code: `df["category"] = df["category"].str.strip().str.title()          # "apparel " → "Apparel"
+df["amount"] = pd.to_numeric(
+    df["amount"].astype(str).str.replace(r"[$,]", "", regex=True),
+    errors="coerce",                                              # unparseable → NaN
+)
+df = df.drop_duplicates()
+df = df[df["customer"] != "TEST"]
+df = df.dropna(subset=["amount"])                                 # can't use a row with no amount
+df["region"] = df["region"].fillna("Unknown")                     # but a missing region is fine`,
+      },
+      {
+        kind: "text",
+        body: "**Clean in code, never by hand in the raw file.** A function you can re-run on next month's export is the whole point, and it documents every decision you made. Keep the raw data untouched, and count the rows before and after each step, so you can say exactly what was removed and why.",
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          '`df["amount"].sum()` returns `"$168.00180195…"`, a long string, instead of a number. Why?',
+        options: [
+          "pandas can't add money",
+          "The column is text (`object`), because some values contain `$` and commas, so `sum` joins the strings together",
+          "There are missing values",
+          "The CSV has the wrong encoding",
+        ],
+        answer: 1,
+        explanation:
+          "One non-numeric value makes the whole column text. Strip the symbols and convert with `pd.to_numeric` before any arithmetic.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question: "A row has an amount but no region. What's the better default?",
+        options: [
+          "Drop the row, because incomplete data is bad data",
+          "Guess the region from the customer's name",
+          'Keep it and label the region "Unknown", so revenue totals stay complete and the gap stays visible',
+          "Fill it with the most common region",
+        ],
+        answer: 2,
+        explanation:
+          "Dropping it would silently understate revenue, and guessing invents data. Decide per column: an amount is essential, a region usually isn't.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Clean the export",
+        prompt:
+          'Write `clean(df)`, which returns a cleaned copy (leave `df` itself unchanged). It should: drop exact duplicate rows; drop the test order (customer `TEST`); tidy `category` (trim spaces, title case); turn `amount` into numbers, dropping rows that have none; and fill a missing `region` with `"Unknown"`.',
+        language: "python",
+        starter: `import io
+import pandas as pd
+
+RAW = """order_id,date,customer,region,category,amount,status
+1001,2026-01-05,Maja Berg,North,Apparel,$168.00,paid
+1002,2026-01-09,Liam Walsh,West,apparel ,180,paid
+1003,2026-01-15,Maja Berg,North,Apparel,65,refunded
+1004,2026-01-22,Sofia Rossi,South,Gear,195,paid
+1004,2026-01-22,Sofia Rossi,South,Gear,195,paid
+1005,2026-02-02,Noah Keller,,Gear,90,paid
+1006,2026-02-06,Aisha Khan,West,APPAREL,154,paid
+1007,2026-02-11,Liam Walsh,West,Footwear,,pending
+1008,2026-02-19,Maja Berg,North,Gear,55,paid
+1009,2026-02-25,Lucas Silva,South,Footwear,"$1,173.00",paid
+1010,2026-03-03,Sofia Rossi,South,Apparel,72,paid
+9999,2026-03-05,TEST,North,Gear,1,paid
+1011,2026-03-08,Aisha Khan,West,Gear,90,refunded
+1012,2026-03-12,Emma Novak,East,Apparel,197,paid
+1013,2026-03-18,Noah Keller,North,gear,20,paid
+1014,2026-03-24,Maja Berg,North,Footwear,324,paid
+"""
+
+def load():
+    return pd.read_csv(io.StringIO(RAW))
+
+def clean(df):
+    # your code here
+    return df
+
+raw = load()
+print(len(raw), "rows before")
+print(clean(raw))`,
+        hint: 'Start with `df = df.drop_duplicates().copy()` so you never modify the original. Then filter out `TEST`, use `.str.strip().str.title()`, `pd.to_numeric(..., errors="coerce")` and `dropna(subset=["amount"])`, and `fillna("Unknown")`.',
+        solution: `import io
+import pandas as pd
+
+RAW = """order_id,date,customer,region,category,amount,status
+1001,2026-01-05,Maja Berg,North,Apparel,$168.00,paid
+1002,2026-01-09,Liam Walsh,West,apparel ,180,paid
+1003,2026-01-15,Maja Berg,North,Apparel,65,refunded
+1004,2026-01-22,Sofia Rossi,South,Gear,195,paid
+1004,2026-01-22,Sofia Rossi,South,Gear,195,paid
+1005,2026-02-02,Noah Keller,,Gear,90,paid
+1006,2026-02-06,Aisha Khan,West,APPAREL,154,paid
+1007,2026-02-11,Liam Walsh,West,Footwear,,pending
+1008,2026-02-19,Maja Berg,North,Gear,55,paid
+1009,2026-02-25,Lucas Silva,South,Footwear,"$1,173.00",paid
+1010,2026-03-03,Sofia Rossi,South,Apparel,72,paid
+9999,2026-03-05,TEST,North,Gear,1,paid
+1011,2026-03-08,Aisha Khan,West,Gear,90,refunded
+1012,2026-03-12,Emma Novak,East,Apparel,197,paid
+1013,2026-03-18,Noah Keller,North,gear,20,paid
+1014,2026-03-24,Maja Berg,North,Footwear,324,paid
+"""
+
+def load():
+    return pd.read_csv(io.StringIO(RAW))
+
+def clean(df):
+    df = df.drop_duplicates().copy()
+    df = df[df["customer"] != "TEST"]
+    df["category"] = df["category"].str.strip().str.title()
+    df["amount"] = pd.to_numeric(
+        df["amount"].astype(str).str.replace(r"[$,]", "", regex=True), errors="coerce"
+    )
+    df = df.dropna(subset=["amount"])
+    df["region"] = df["region"].fillna("Unknown")
+    return df.reset_index(drop=True)`,
+        tests: [
+          {
+            name: "Removes the duplicate, the test order and the row with no amount",
+            expression: "len(clean(load())) == 13",
+          },
+          {
+            name: "Amounts are numbers, and add up",
+            expression:
+              'clean(load())["amount"].dtype.kind == "f" and clean(load())["amount"].sum() == 2783',
+          },
+          {
+            name: "Categories are consistent",
+            expression:
+              'sorted(clean(load())["category"].unique()) == ["Apparel", "Footwear", "Gear"]',
+          },
+          {
+            name: "A missing region is labelled, not dropped",
+            expression: '(clean(load())["region"] == "Unknown").sum() == 1',
+          },
+          {
+            name: "The raw data is left unchanged",
+            expression:
+              '(lambda raw: (clean(raw), len(raw) == 16 and raw["amount"].iloc[0] == "$168.00")[1])(load())',
+          },
+        ],
+      },
+    ],
+  },
+  "da-clean.eda": {
+    summary:
+      "Summarise by group, look at who and what drives the totals, and notice when one row is doing the talking.",
+    xp: 160,
+    blocks: [
+      {
+        kind: "text",
+        body: "**Exploratory analysis** means asking the data simple questions before you commit to a story. How many of each thing? What drives the total? What looks odd? Most of it is one pattern: **split** the rows into groups, **apply** a calculation to each, and **combine** the results into a table.",
+      },
+      {
+        kind: "code",
+        language: "python",
+        code: `paid = df[df["status"] == "paid"]                    # decide what counts first
+paid["category"].value_counts()                     # how many of each
+paid.groupby("category").agg(
+    orders=("order_id", "count"),
+    revenue=("amount", "sum"),
+    avg_order=("amount", "mean"),
+).sort_values("revenue", ascending=False)`,
+      },
+      {
+        kind: "text",
+        body: "**Decide what counts before you count.** Refunds and pending orders aren't revenue. Filtering them out first, and saying so in the output, is the difference between a number people can trust and one they have to question.",
+      },
+      {
+        kind: "text",
+        body: 'Then look for **concentration**. When one group or one customer makes up a big share of a total, check how many rows that is. A category that leads on revenue with two orders is a very different story from one that leads with two hundred. `df.sort_values("amount", ascending=False).head()` shows the biggest rows, and they\'re often the story, or the error.',
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "Scenario: the paid-order summary",
+        code: `category   orders  revenue  avg_order
+Footwear        2   1497.0      748.5
+Apparel         5    771.0      154.2
+Gear            4    360.0       90.0`,
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          'Someone concludes "Footwear is our strongest category". What should you check first?',
+        options: [
+          "Nothing, because the revenue is highest",
+          "Whether Footwear's two orders include an unusual one: one order of 1,173 accounts for most of it",
+          "Whether the average order value is rounded",
+          "Whether Gear has more products",
+        ],
+        answer: 1,
+        explanation:
+          'With two orders, one large B2B sale decides the ranking. Without it, Footwear would be 324, the smallest of the three. Report it as "driven by one large order", or show the ranking with and without it.',
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question: "Why filter to paid orders *before* grouping, rather than after?",
+        options: [
+          "It's faster",
+          "`groupby` can't handle text columns",
+          "Every figure in the summary (counts, sums and averages) should describe the same set of orders; refunds would inflate all three",
+          "It doesn't matter",
+        ],
+        answer: 2,
+        explanation:
+          "Filter first, then group, and say in the table's title what was included. Apparel would read 836 with its refund left in, not 771.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "What drives the revenue?",
+        prompt:
+          "Using the cleaned data, write `summary_by_category(df)`: **paid orders only**, one row per category (as the index) with the columns `orders`, `revenue` and `avg_order`, sorted by revenue, highest first. Then write `top_customers(df, n)`, which returns the names of the `n` customers with the most paid revenue, as a list, highest first.",
+        language: "python",
+        starter: `import io
+import pandas as pd
+
+CLEAN = """order_id,date,customer,region,category,amount,status
+1001,2026-01-05,Maja Berg,North,Apparel,168.0,paid
+1002,2026-01-09,Liam Walsh,West,Apparel,180.0,paid
+1003,2026-01-15,Maja Berg,North,Apparel,65.0,refunded
+1004,2026-01-22,Sofia Rossi,South,Gear,195.0,paid
+1005,2026-02-02,Noah Keller,Unknown,Gear,90.0,paid
+1006,2026-02-06,Aisha Khan,West,Apparel,154.0,paid
+1008,2026-02-19,Maja Berg,North,Gear,55.0,paid
+1009,2026-02-25,Lucas Silva,South,Footwear,1173.0,paid
+1010,2026-03-03,Sofia Rossi,South,Apparel,72.0,paid
+1011,2026-03-08,Aisha Khan,West,Gear,90.0,refunded
+1012,2026-03-12,Emma Novak,East,Apparel,197.0,paid
+1013,2026-03-18,Noah Keller,North,Gear,20.0,paid
+1014,2026-03-24,Maja Berg,North,Footwear,324.0,paid
+"""
+
+def load():
+    return pd.read_csv(io.StringIO(CLEAN))
+
+def summary_by_category(df):
+    # your code here
+    pass
+
+def top_customers(df, n):
+    # your code here
+    pass
+
+print(summary_by_category(load()))`,
+        hint: '`paid = df[df["status"] == "paid"]`, then `paid.groupby("category").agg(orders=("order_id", "count"), revenue=("amount", "sum"), avg_order=("amount", "mean"))` and `.sort_values("revenue", ascending=False)`. For customers: `groupby("customer")["amount"].sum()`, sort, then `.head(n).index.tolist()`.',
+        solution: `import io
+import pandas as pd
+
+CLEAN = """order_id,date,customer,region,category,amount,status
+1001,2026-01-05,Maja Berg,North,Apparel,168.0,paid
+1002,2026-01-09,Liam Walsh,West,Apparel,180.0,paid
+1003,2026-01-15,Maja Berg,North,Apparel,65.0,refunded
+1004,2026-01-22,Sofia Rossi,South,Gear,195.0,paid
+1005,2026-02-02,Noah Keller,Unknown,Gear,90.0,paid
+1006,2026-02-06,Aisha Khan,West,Apparel,154.0,paid
+1008,2026-02-19,Maja Berg,North,Gear,55.0,paid
+1009,2026-02-25,Lucas Silva,South,Footwear,1173.0,paid
+1010,2026-03-03,Sofia Rossi,South,Apparel,72.0,paid
+1011,2026-03-08,Aisha Khan,West,Gear,90.0,refunded
+1012,2026-03-12,Emma Novak,East,Apparel,197.0,paid
+1013,2026-03-18,Noah Keller,North,Gear,20.0,paid
+1014,2026-03-24,Maja Berg,North,Footwear,324.0,paid
+"""
+
+def load():
+    return pd.read_csv(io.StringIO(CLEAN))
+
+def summary_by_category(df):
+    paid = df[df["status"] == "paid"]
+    return paid.groupby("category").agg(
+        orders=("order_id", "count"),
+        revenue=("amount", "sum"),
+        avg_order=("amount", "mean"),
+    ).sort_values("revenue", ascending=False)
+
+def top_customers(df, n):
+    paid = df[df["status"] == "paid"]
+    return paid.groupby("customer")["amount"].sum().sort_values(ascending=False).head(n).index.tolist()`,
+        tests: [
+          {
+            name: "One row per category, highest revenue first",
+            expression:
+              'list(summary_by_category(load()).index) == ["Footwear", "Apparel", "Gear"]',
+          },
+          {
+            name: "Only paid orders count",
+            expression:
+              'summary_by_category(load())["revenue"].sum() == 2628 and summary_by_category(load()).loc["Apparel", "revenue"] == 771',
+          },
+          {
+            name: "Counts orders and averages them",
+            expression:
+              'summary_by_category(load()).loc["Apparel", "orders"] == 5 and abs(summary_by_category(load()).loc["Footwear", "avg_order"] - 748.5) < 1e-9',
+          },
+          {
+            name: "Top customers by paid revenue",
+            expression: 'top_customers(load(), 3) == ["Lucas Silva", "Maja Berg", "Sofia Rossi"]',
+          },
+        ],
+      },
+    ],
+  },
+  "da-reason.stats": {
+    summary:
+      "Mean or median, what spread tells you, and a principled way to flag outliers instead of guessing.",
+    xp: 150,
+    blocks: [
+      {
+        kind: "text",
+        body: "\"The average order is 239\" sounds like a fact about a typical customer. It isn't. Nine of the shop's eleven paid orders are under 200, and one is a B2B order of 1,173. The **mean** (the sum divided by the count) is pulled up by that one order to 238.9. The **median** (the middle value when sorted) is 168, which is much closer to what a typical order looks like.",
+      },
+      {
+        kind: "text",
+        body: 'Use the **median** for "typical" whenever the data is skewed (order values, salaries, house prices, response times), where a few large values stretch one side. Use the **mean** when you need totals to add up: *mean × count = total*, which is what planning and budgets need. Often the honest answer is to report both.',
+      },
+      {
+        kind: "text",
+        body: "**Outliers**: don't eyeball them, and don't delete them quietly. A standard rule uses the **interquartile range** (IQR). Q1 is the value a quarter of the way up the sorted data and Q3 is three quarters of the way; IQR = Q3 − Q1. Anything below Q1 − 1.5×IQR or above Q3 + 1.5×IQR gets flagged. A flag means *look at it*: it might be an error, or it might be your most important customer.",
+      },
+      {
+        kind: "code",
+        language: "python",
+        code: `s = pd.Series(amounts)
+s.mean(), s.median()
+q1, q3 = s.quantile(0.25), s.quantile(0.75)
+iqr = q3 - q1
+flagged = s[(s < q1 - 1.5 * iqr) | (s > q3 + 1.5 * iqr)]
+s.describe()      # count, mean, std, min, quartiles, max in one go`,
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          'Finance asks for next quarter\'s revenue forecast: expected orders × a typical order value. Which "typical" value should the forecast use?',
+        options: [
+          "The median, because it's more representative",
+          "The mean, because mean × count reproduces the total, including the big orders that do happen",
+          "The mode",
+          "The largest order",
+        ],
+        answer: 1,
+        explanation:
+          "For totals, the mean is the right tool; the median would understate revenue whenever large orders are part of the business. For describing a typical customer, it's the other way round.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question: "Your IQR rule flags one order of 1,173. What do you do?",
+        options: [
+          "Delete it, since outliers distort the analysis",
+          "Nothing, since it's a real order",
+          "Replace it with the median",
+          'Check it\'s genuine, then report with it and note its effect ("median 168; one B2B order of 1,173 lifts the mean to 239")',
+        ],
+        answer: 3,
+        explanation:
+          "Flagging is for investigating, not deleting. If it's real, it belongs in revenue. The reader needs to know it's there so they don't mistake one order for a trend.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Describe the order values honestly",
+        prompt:
+          "Write `describe_amounts(amounts)`, which returns a dict with the `mean`, the `median`, and the sorted list of `outliers` by the 1.5 × IQR rule. Use pandas' `quantile` for Q1 and Q3.",
+        language: "python",
+        starter: `import pandas as pd
+
+AMOUNTS = [168, 180, 195, 90, 154, 55, 1173, 72, 197, 20, 324]   # paid orders
+
+def describe_amounts(amounts):
+    # your code here
+    pass
+
+print(describe_amounts(AMOUNTS))`,
+        hint: "Make a `pd.Series(amounts)`. Take `q1 = s.quantile(0.25)` and `q3 = s.quantile(0.75)`, compute the two fences, and return `sorted(s[(s < low) | (s > high)].tolist())`.",
+        solution: `import pandas as pd
+
+AMOUNTS = [168, 180, 195, 90, 154, 55, 1173, 72, 197, 20, 324]
+
+def describe_amounts(amounts):
+    s = pd.Series(amounts, dtype=float)
+    q1, q3 = s.quantile(0.25), s.quantile(0.75)
+    iqr = q3 - q1
+    low, high = q1 - 1.5 * iqr, q3 + 1.5 * iqr
+    return {
+        "mean": s.mean(),
+        "median": s.median(),
+        "outliers": sorted(s[(s < low) | (s > high)].tolist()),
+    }`,
+        tests: [
+          { name: "The median is 168", expression: 'describe_amounts(AMOUNTS)["median"] == 168' },
+          {
+            name: "The mean is pulled up to about 238.9",
+            expression: 'abs(describe_amounts(AMOUNTS)["mean"] - 238.9090909) < 1e-6',
+          },
+          {
+            name: "Flags the B2B order",
+            expression: 'describe_amounts(AMOUNTS)["outliers"] == [1173]',
+          },
+          {
+            name: "Flags low outliers too",
+            expression: 'describe_amounts([10, 11, 12, 13, 14, -40])["outliers"] == [-40]',
+          },
+          {
+            name: "Even data has no outliers",
+            expression: 'describe_amounts([1, 2, 3, 4, 5])["outliers"] == []',
+          },
+        ],
+      },
+    ],
+  },
+  "da-reason.compare": {
+    summary:
+      "Compare rates rather than counts, spot when the mix of groups flips a result, and don't read causes into correlations.",
+    xp: 170,
+    blocks: [
+      {
+        kind: "text",
+        body: '"Region North had 50 refunds and South had 20" says nothing until you know how many orders each had. Compare **rates** (refunds ÷ orders), not raw **counts**, whenever the groups differ in size. Show the base alongside the rate, because 50% of 4 orders isn\'t the same evidence as 50% of 4,000.',
+      },
+      {
+        kind: "text",
+        body: "Say whether a change is in **percentage points** or **percent**. A conversion rate going from 10% to 12% is **+2 points**, or **+20%**. Both are true, and they sound very different; writing the wrong one is a common way to exaggerate a result by accident.",
+      },
+      {
+        kind: "text",
+        body: "**Simpson's paradox**: a comparison can point one way inside every group and the opposite way overall, when the groups are mixed in different proportions. In an A/B test, variant B can win on mobile *and* on desktop yet lose overall, simply because B happened to get most of the mobile traffic, which converts worse for everyone. The fix is to compare like with like, within segments, and to check that the groups were comparable in the first place.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "The A/B test in this lesson's challenge",
+        code: `variant  device   visitors  conversions   rate
+A        mobile        200           10     5%
+A        desktop       800           80    10%
+B        mobile        800           48     6%
+B        desktop       200           22    11%
+
+Overall: A 90 / 1000 = 9%     B 70 / 1000 = 7%`,
+      },
+      {
+        kind: "text",
+        body: 'Finally, **correlation isn\'t causation**. Customers who use the mobile app spend more, but maybe your biggest spenders are the ones who bother to install the app. Before saying "X causes Y", ask what else could explain both. The reliable way to establish cause is a controlled experiment: randomise who gets X.',
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question: "Based on the table above, which variant is better?",
+        options: [
+          "A, since it converts 9% against B's 7% overall",
+          "B converts better on both devices. A only wins overall because B got most of the mobile traffic, so check why the split was uneven before deciding",
+          "Neither, because the difference is too small",
+          "A, because it had more desktop visitors",
+        ],
+        answer: 1,
+        explanation:
+          "Within each device B is ahead (6% vs 5%, 11% vs 10%). The overall numbers compare different traffic mixes. An uneven split in a randomised test is itself a bug worth finding.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question: "Checkout conversion went from 4% to 5%. Which statement is accurate?",
+        options: [
+          "Conversion rose by 1%",
+          "Conversion rose by 1 percentage point, a 25% relative increase",
+          "Conversion rose by 5%",
+          "Conversion doubled",
+        ],
+        answer: 1,
+        explanation:
+          "5 − 4 = 1 point; 1 ÷ 4 = 25%. Say which one you mean, and when it matters, give both.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Find the paradox",
+        prompt:
+          "Write `overall_rates(df)`, a Series of conversion rate by variant (total conversions ÷ total visitors, not an average of rates). Write `segment_rates(df)`, a DataFrame of rates with devices as the index and variants as the columns. Then write `better_in_every_segment(df)`, which returns the variant that has the higher rate in every device, or `None` if no variant does.",
+        language: "python",
+        starter: `import pandas as pd
+
+TEST = pd.DataFrame({
+    "variant": ["A", "A", "B", "B"],
+    "device": ["mobile", "desktop", "mobile", "desktop"],
+    "visitors": [200, 800, 800, 200],
+    "conversions": [10, 80, 48, 22],
+})
+
+def overall_rates(df):
+    # your code here
+    pass
+
+def segment_rates(df):
+    # your code here
+    pass
+
+def better_in_every_segment(df):
+    # your code here
+    pass
+
+print(overall_rates(TEST))
+print(segment_rates(TEST))`,
+        hint: 'Overall: `g = df.groupby("variant")[["conversions", "visitors"]].sum()`, then `g["conversions"] / g["visitors"]`. Segments: add a `rate` column, then `df.pivot(index="device", columns="variant", values="rate")`. For the winner, check each variant: `(table[v] >= table.max(axis=1)).all()`, and make sure the other variant isn\'t tied everywhere.',
+        solution: `import pandas as pd
+
+TEST = pd.DataFrame({
+    "variant": ["A", "A", "B", "B"],
+    "device": ["mobile", "desktop", "mobile", "desktop"],
+    "visitors": [200, 800, 800, 200],
+    "conversions": [10, 80, 48, 22],
+})
+
+def overall_rates(df):
+    totals = df.groupby("variant")[["conversions", "visitors"]].sum()
+    return totals["conversions"] / totals["visitors"]
+
+def segment_rates(df):
+    df = df.assign(rate=df["conversions"] / df["visitors"])
+    return df.pivot(index="device", columns="variant", values="rate")
+
+def better_in_every_segment(df):
+    table = segment_rates(df)
+    for variant in table.columns:
+        others = table.drop(columns=variant)
+        if (table[variant].values[:, None] > others.values).all():
+            return variant
+    return None`,
+        tests: [
+          {
+            name: "Overall rates pool the visitors",
+            expression:
+              'abs(overall_rates(TEST)["A"] - 0.09) < 1e-9 and abs(overall_rates(TEST)["B"] - 0.07) < 1e-9',
+          },
+          {
+            name: "Rates per device and variant",
+            expression:
+              'abs(segment_rates(TEST).loc["mobile", "B"] - 0.06) < 1e-9 and abs(segment_rates(TEST).loc["desktop", "A"] - 0.10) < 1e-9',
+          },
+          { name: "B wins in every segment", expression: 'better_in_every_segment(TEST) == "B"' },
+          {
+            name: "No winner when the segments disagree",
+            expression:
+              'better_in_every_segment(pd.DataFrame({"variant": ["A", "A", "B", "B"], "device": ["m", "d", "m", "d"], "visitors": [100, 100, 100, 100], "conversions": [5, 20, 6, 10]})) is None',
+          },
+        ],
+      },
+    ],
+  },
+  "da-tell.charts": {
+    summary:
+      "Get the table into the shape a chart needs: aggregated, ordered, gaps filled, and shares when shares are the point.",
+    xp: 150,
+    blocks: [
+      {
+        kind: "text",
+        body: "Choosing the chart type is the easy part (the Excel course covers it: lines for change over time, sorted bars for ranking). Most charting pain comes from **data in the wrong shape**. A chart wants one row per point on the x-axis and one column per series, already aggregated, in the right order, with no gaps.",
+      },
+      {
+        kind: "code",
+        language: "python",
+        caption: "Long rows → a wide table, one column per series",
+        code: `df["month"] = df["date"].str[:7]                    # "2026-02-25" → "2026-02"
+table = df[df["status"] == "paid"].pivot_table(
+    index="month", columns="category", values="amount",
+    aggfunc="sum", fill_value=0,
+).sort_index()
+table.plot()      # in a notebook: a line per category, months in order`,
+      },
+      {
+        kind: "text",
+        body: 'Three details decide whether the chart is honest. **Fill the gaps with 0** when "no sales" is the truth: a missing value draws a broken line or quietly skips a month. **Order the x-axis** by time, not alphabetically, and not by how the data happened to arrive. And ask whether the story is *amounts* or *shares*: "Footwear was 80% of February" needs each row divided by its total, shown as a 100% stacked bar.',
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "Paid revenue by month (the challenge's result)",
+        code: `category  Apparel  Footwear    Gear
+month
+2026-01     348.0       0.0   195.0
+2026-02     154.0    1173.0   145.0
+2026-03     269.0     324.0    20.0`,
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          "January had no Footwear sales. Without `fill_value=0`, that cell is NaN. What does a line chart of Footwear show?",
+        options: [
+          "A line starting at 0 in January",
+          "An error",
+          "A line that starts in February, as if Footwear didn't exist yet, instead of showing zero sales in January",
+          "Nothing different",
+        ],
+        answer: 2,
+        explanation:
+          'NaN means "unknown" and is skipped; 0 means "none". They tell different stories, so fill only when zero is the truth.',
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          'The message is "Footwear\'s share of revenue jumped in February". Which chart makes that clear?',
+        options: [
+          "A 100% stacked bar per month, each row divided by its month's total",
+          "A pie chart of the whole quarter",
+          "A line chart of raw revenue for each category",
+          "A table of the raw orders",
+        ],
+        answer: 0,
+        explanation:
+          'Shares need a common base. Raw amounts mix the question "how big was February" with "how was it split".',
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Chart-ready tables",
+        prompt:
+          "Write `monthly_by_category(df)`: paid revenue with months (`YYYY-MM`, taken from `date`) as the index in time order, categories as the columns, and 0 where a category had no sales. Then write `share_by_month(table)`, which divides each row by that row's total, so every month adds up to 1.",
+        language: "python",
+        starter: `import io
+import pandas as pd
+
+CLEAN = """order_id,date,customer,region,category,amount,status
+1001,2026-01-05,Maja Berg,North,Apparel,168.0,paid
+1002,2026-01-09,Liam Walsh,West,Apparel,180.0,paid
+1003,2026-01-15,Maja Berg,North,Apparel,65.0,refunded
+1004,2026-01-22,Sofia Rossi,South,Gear,195.0,paid
+1005,2026-02-02,Noah Keller,Unknown,Gear,90.0,paid
+1006,2026-02-06,Aisha Khan,West,Apparel,154.0,paid
+1008,2026-02-19,Maja Berg,North,Gear,55.0,paid
+1009,2026-02-25,Lucas Silva,South,Footwear,1173.0,paid
+1010,2026-03-03,Sofia Rossi,South,Apparel,72.0,paid
+1011,2026-03-08,Aisha Khan,West,Gear,90.0,refunded
+1012,2026-03-12,Emma Novak,East,Apparel,197.0,paid
+1013,2026-03-18,Noah Keller,North,Gear,20.0,paid
+1014,2026-03-24,Maja Berg,North,Footwear,324.0,paid
+"""
+
+def load():
+    return pd.read_csv(io.StringIO(CLEAN))
+
+def monthly_by_category(df):
+    # your code here
+    pass
+
+def share_by_month(table):
+    # your code here
+    pass
+
+print(monthly_by_category(load()))`,
+        hint: 'Add the month with `df["date"].str[:7]` (use `df.assign(...)` to avoid changing the input). Then `pivot_table(..., aggfunc="sum", fill_value=0).sort_index()`. For shares: `table.div(table.sum(axis=1), axis=0)`.',
+        solution: `import io
+import pandas as pd
+
+CLEAN = """order_id,date,customer,region,category,amount,status
+1001,2026-01-05,Maja Berg,North,Apparel,168.0,paid
+1002,2026-01-09,Liam Walsh,West,Apparel,180.0,paid
+1003,2026-01-15,Maja Berg,North,Apparel,65.0,refunded
+1004,2026-01-22,Sofia Rossi,South,Gear,195.0,paid
+1005,2026-02-02,Noah Keller,Unknown,Gear,90.0,paid
+1006,2026-02-06,Aisha Khan,West,Apparel,154.0,paid
+1008,2026-02-19,Maja Berg,North,Gear,55.0,paid
+1009,2026-02-25,Lucas Silva,South,Footwear,1173.0,paid
+1010,2026-03-03,Sofia Rossi,South,Apparel,72.0,paid
+1011,2026-03-08,Aisha Khan,West,Gear,90.0,refunded
+1012,2026-03-12,Emma Novak,East,Apparel,197.0,paid
+1013,2026-03-18,Noah Keller,North,Gear,20.0,paid
+1014,2026-03-24,Maja Berg,North,Footwear,324.0,paid
+"""
+
+def load():
+    return pd.read_csv(io.StringIO(CLEAN))
+
+def monthly_by_category(df):
+    paid = df[df["status"] == "paid"].assign(month=lambda d: d["date"].str[:7])
+    return paid.pivot_table(
+        index="month", columns="category", values="amount", aggfunc="sum", fill_value=0
+    ).sort_index()
+
+def share_by_month(table):
+    return table.div(table.sum(axis=1), axis=0)`,
+        tests: [
+          {
+            name: "Months in time order",
+            expression:
+              'list(monthly_by_category(load()).index) == ["2026-01", "2026-02", "2026-03"]',
+          },
+          {
+            name: "One column per category",
+            expression:
+              'list(monthly_by_category(load()).columns) == ["Apparel", "Footwear", "Gear"]',
+          },
+          {
+            name: "Paid revenue per cell, with 0 for no sales",
+            expression:
+              'monthly_by_category(load()).loc["2026-02", "Footwear"] == 1173 and monthly_by_category(load()).loc["2026-01", "Footwear"] == 0 and monthly_by_category(load()).loc["2026-01", "Apparel"] == 348',
+          },
+          {
+            name: "Shares add up to 1 each month",
+            expression:
+              '(abs(share_by_month(monthly_by_category(load())).sum(axis=1) - 1) < 1e-9).all() and abs(share_by_month(monthly_by_category(load())).loc["2026-03", "Apparel"] - 269 / 613) < 1e-9',
+          },
+        ],
+      },
+    ],
+  },
+  "da-tell.dashboard": {
+    summary:
+      "Pick a few metrics that drive decisions, define them precisely, and give every number something to compare against.",
+    xp: 180,
+    blocks: [
+      {
+        kind: "text",
+        body: "A dashboard is for a **decision** someone makes regularly: who looks at it, how often, and what will they do differently depending on what they see? If nobody can answer that, you're building a report nobody reads. Start with 3 to 5 headline metrics (KPIs) and put the most important one where the eye lands first, at the top left.",
+      },
+      {
+        kind: "text",
+        body: '**Define every metric in writing**, because "revenue" means three things to three people. *Revenue*: the sum of paid order amounts in the month; refunds and pending orders excluded. *Orders*: the count of paid orders. *Average order value (AOV)*: revenue ÷ orders. *Refund rate*: refunded orders ÷ (paid + refunded) orders. Put the definitions on the dashboard itself, or one click away.',
+      },
+      {
+        kind: "text",
+        body: '**A number alone means nothing.** Revenue 613 — is that good? Give every tile a comparison: the previous period, the same month last year, or a target. Show amounts as a **% change** and rates as a **change in points** (refund rate 0% → 20% is +20 points; "+∞%" helps nobody). When there\'s nothing to divide by, show a dash rather than an error or a zero.',
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "March vs February, as tiles",
+        code: `Revenue   613     ▼ 58% vs Feb (1,472)   ← Feb included one B2B order of 1,173
+Orders    4       — flat
+AOV       153.25  ▼ 58%
+Refunds   20%     ▲ 20 pts (from 0%)`,
+      },
+      {
+        kind: "text",
+        body: "Look at that revenue tile: down 58%, but almost entirely because February had one unusual order. A good dashboard **annotates** a movement like that, so nobody launches a rescue plan for a problem that isn't there. Avoid **vanity metrics** (page views, total sign-ups ever) that only go up and never change a decision, and show when the data was last refreshed.",
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          "Refund rate went from 0% last month to 20% this month. How should the tile show the change?",
+        options: [
+          "+∞%",
+          "+20 percentage points, alongside the counts (1 refund in 5 orders)",
+          "+20%",
+          "Leave the change blank",
+        ],
+        answer: 1,
+        explanation:
+          "Rates change in points. The counts show how little evidence one refund in five orders is, which stops people over-reacting.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question: "Which of these makes the best headline KPI for a shop's weekly trading meeting?",
+        options: [
+          "Total registered users since launch",
+          "Page views",
+          "Paid revenue this week against the same week last year, with the definition shown",
+          "Number of products in the catalogue",
+        ],
+        answer: 2,
+        explanation:
+          "It's defined, it's compared against something meaningful, and it moves in response to things the team can act on. The others only grow, or don't connect to a decision.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "KPI tiles",
+        prompt:
+          'Write `kpis(df, month)`, which returns a dict with `revenue`, `orders`, `aov` and `refund_rate` for a `YYYY-MM` month, using the definitions above. `aov` and `refund_rate` are `None` when there\'s nothing to divide by. Then write `tiles(df, month, previous)`, which returns, for each KPI, `{"value", "previous", "change"}`. `change` is the relative change for revenue, orders and AOV (`None` if previous is 0 or None), and the difference in points for `refund_rate` (`None` if either value is None).',
+        language: "python",
+        starter: `import io
+import pandas as pd
+
+CLEAN = """order_id,date,customer,region,category,amount,status
+1001,2026-01-05,Maja Berg,North,Apparel,168.0,paid
+1002,2026-01-09,Liam Walsh,West,Apparel,180.0,paid
+1003,2026-01-15,Maja Berg,North,Apparel,65.0,refunded
+1004,2026-01-22,Sofia Rossi,South,Gear,195.0,paid
+1005,2026-02-02,Noah Keller,Unknown,Gear,90.0,paid
+1006,2026-02-06,Aisha Khan,West,Apparel,154.0,paid
+1008,2026-02-19,Maja Berg,North,Gear,55.0,paid
+1009,2026-02-25,Lucas Silva,South,Footwear,1173.0,paid
+1010,2026-03-03,Sofia Rossi,South,Apparel,72.0,paid
+1011,2026-03-08,Aisha Khan,West,Gear,90.0,refunded
+1012,2026-03-12,Emma Novak,East,Apparel,197.0,paid
+1013,2026-03-18,Noah Keller,North,Gear,20.0,paid
+1014,2026-03-24,Maja Berg,North,Footwear,324.0,paid
+"""
+
+def load():
+    return pd.read_csv(io.StringIO(CLEAN))
+
+def kpis(df, month):
+    # your code here
+    pass
+
+def tiles(df, month, previous):
+    # your code here
+    pass
+
+print(tiles(load(), "2026-03", "2026-02"))`,
+        hint: 'Filter with `df["date"].str.startswith(month)`. Count the paid and refunded orders separately; guard both divisions with `if ... else None`. In `tiles`, compute each KPI for both months and pick the right kind of change per metric.',
+        solution: `import io
+import pandas as pd
+
+CLEAN = """order_id,date,customer,region,category,amount,status
+1001,2026-01-05,Maja Berg,North,Apparel,168.0,paid
+1002,2026-01-09,Liam Walsh,West,Apparel,180.0,paid
+1003,2026-01-15,Maja Berg,North,Apparel,65.0,refunded
+1004,2026-01-22,Sofia Rossi,South,Gear,195.0,paid
+1005,2026-02-02,Noah Keller,Unknown,Gear,90.0,paid
+1006,2026-02-06,Aisha Khan,West,Apparel,154.0,paid
+1008,2026-02-19,Maja Berg,North,Gear,55.0,paid
+1009,2026-02-25,Lucas Silva,South,Footwear,1173.0,paid
+1010,2026-03-03,Sofia Rossi,South,Apparel,72.0,paid
+1011,2026-03-08,Aisha Khan,West,Gear,90.0,refunded
+1012,2026-03-12,Emma Novak,East,Apparel,197.0,paid
+1013,2026-03-18,Noah Keller,North,Gear,20.0,paid
+1014,2026-03-24,Maja Berg,North,Footwear,324.0,paid
+"""
+
+def load():
+    return pd.read_csv(io.StringIO(CLEAN))
+
+def kpis(df, month):
+    in_month = df[df["date"].str.startswith(month)]
+    paid = in_month[in_month["status"] == "paid"]
+    refunded = in_month[in_month["status"] == "refunded"]
+    revenue = float(paid["amount"].sum())
+    orders = len(paid)
+    settled = orders + len(refunded)
+    return {
+        "revenue": revenue,
+        "orders": orders,
+        "aov": revenue / orders if orders else None,
+        "refund_rate": len(refunded) / settled if settled else None,
+    }
+
+def tiles(df, month, previous):
+    now, before = kpis(df, month), kpis(df, previous)
+    out = {}
+    for name in now:
+        value, prev = now[name], before[name]
+        if name == "refund_rate":
+            change = value - prev if value is not None and prev is not None else None
+        else:
+            change = (value - prev) / prev if value is not None and prev else None
+        out[name] = {"value": value, "previous": prev, "change": change}
+    return out`,
+        tests: [
+          {
+            name: "March's KPIs match the definitions",
+            expression:
+              'kpis(load(), "2026-03") == {"revenue": 613, "orders": 4, "aov": 153.25, "refund_rate": 0.2}',
+          },
+          {
+            name: "January's refund rate counts refunded against settled orders",
+            expression: 'kpis(load(), "2026-01")["refund_rate"] == 0.25',
+          },
+          {
+            name: "Revenue change is relative",
+            expression:
+              '(lambda t: t["revenue"]["value"] == 613 and t["revenue"]["previous"] == 1472 and abs(t["revenue"]["change"] - (613 / 1472 - 1)) < 1e-9)(tiles(load(), "2026-03", "2026-02"))',
+          },
+          {
+            name: "Refund rate change is in points",
+            expression:
+              'abs(tiles(load(), "2026-03", "2026-02")["refund_rate"]["change"] - 0.2) < 1e-9',
+          },
+          {
+            name: "A month with no orders doesn't crash",
+            expression:
+              'kpis(load(), "2026-04") == {"revenue": 0, "orders": 0, "aov": None, "refund_rate": None} and tiles(load(), "2026-04", "2026-03")["revenue"]["change"] == -1',
+          },
+        ],
+      },
+    ],
+  },
   "xl-core.formulas": {
     summary:
       "The anatomy of a formula, the functions you'll use daily, and the difference between a value and how it's shown.",

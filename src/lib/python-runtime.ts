@@ -113,15 +113,25 @@ function ensureWorker(): Worker {
   return worker;
 }
 
+let booted = false;
+/**
+ * pandas and numpy are ~8 MB fetched the first time code imports them, which
+ * can outlast a warm run's timeout on a slow connection.
+ */
+let dataPackagesLoaded = false;
+const IMPORTS_DATA_PACKAGES = /^\s*(?:import|from)\s+(?:pandas|numpy)\b/m;
+
 /** A worker that has gone wrong is never reused — Pyodide state may be torn. */
 function killWorker() {
   worker?.terminate();
   worker = null;
+  // A fresh worker boots Pyodide and loads packages again, so the next run
+  // needs the long timeout.
+  booted = false;
+  dataPackagesLoaded = false;
   if (workerUrl) URL.revokeObjectURL(workerUrl);
   workerUrl = null;
 }
-
-let booted = false;
 
 export function pythonRuntimeAvailable(): boolean {
   return (
@@ -145,7 +155,8 @@ export async function runPythonInPyodide(
   if (!pythonRuntimeAvailable()) return null;
 
   const id = nextId++;
-  const timeoutMs = booted ? RUN_TIMEOUT_MS : BOOT_TIMEOUT_MS;
+  const loadsPackages = !dataPackagesLoaded && IMPORTS_DATA_PACKAGES.test(code);
+  const timeoutMs = booted && !loadsPackages ? RUN_TIMEOUT_MS : BOOT_TIMEOUT_MS;
 
   try {
     const instance = ensureWorker();
@@ -174,6 +185,7 @@ export async function runPythonInPyodide(
         cleanup();
         if (event.data.ok && event.data.outcome) {
           booted = true;
+          if (loadsPackages) dataPackagesLoaded = true;
           resolve(event.data.outcome);
         } else {
           killWorker();

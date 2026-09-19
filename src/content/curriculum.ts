@@ -312,18 +312,23 @@ export const courses: Course[] = [
     level: "Intermediate",
     recommended: true,
     summary: "Turn messy tables into decisions people act on.",
-    description: "Cleaning, exploring, visualising and telling the story behind the numbers.",
-    skills: ["Data cleaning", "EDA", "Visualisation", "Storytelling", "Dashboards"],
+    description:
+      "Cleaning, exploring, reasoning about and presenting data with pandas, on one messy export the whole way through.",
+    skills: ["Data cleaning", "EDA", "Statistics", "Visualisation", "Dashboards", "Storytelling"],
     careers: ["data"],
     instructor: { name: "Ingrid Solheim", role: "Data Engineer, ex-Spotify", initials: "IS" },
     modules: [
       m("da-clean", "Clean and explore", "Get the data trustworthy first.", [
-        ["clean", "Cleaning real-world data", 13, "practice"],
+        ["clean", "Cleaning real-world data", 14, "challenge"],
         ["eda", "Exploratory analysis", 14, "challenge"],
       ]),
-      m("da-tell", "Communicate", "Charts that answer a question.", [
-        ["charts", "Choosing the right chart", 10, "concept"],
-        ["dashboard", "Designing a dashboard", 15, "practice"],
+      m("da-reason", "Reason with numbers", "The statistics that change a conclusion.", [
+        ["stats", "Averages, spread and outliers", 13, "challenge"],
+        ["compare", "Comparisons that hold up", 14, "challenge"],
+      ]),
+      m("da-tell", "Communicate", "Charts and dashboards that answer a question.", [
+        ["charts", "Shaping data for a chart", 12, "challenge"],
+        ["dashboard", "Designing a dashboard", 15, "challenge"],
       ]),
     ],
   },

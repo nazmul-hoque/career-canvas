@@ -102,6 +102,18 @@ Two facts shape every item below:
 
 ## Done
 
+- [x] **Data Analytics Toolkit, complete, with pandas** (2026-09-19) — six
+      lessons on one messy export (duplicates, "$1,173.00" as text, "apparel "
+      vs "APPAREL", a test order, a missing amount): cleaning in code, EDA that
+      notices one B2B order making Footwear look like the top category, mean vs
+      median and the IQR outlier rule, rates vs counts and Simpson's paradox in
+      an A/B test, shaping data for charts, and KPI tiles with written
+      definitions, % change for amounts and points for rates. A new "Reason with
+      numbers" module covers the Statistics skill the Data Analyst path promised.
+      pandas (~8 MB) loads on first import; the first run that imports it now
+      gets the boot timeout, and a killed worker resets it (it previously kept
+      the short timeout after a restart). This completes the Data Analyst path.
+
 - [x] **Excel for Analysts, complete, on a formula engine** (2026-09-19) —
       `src/lib/sheet-engine.ts` is a dependency-free engine for the subset
       analysts use (operators with Excel's precedence, SUM/AVERAGE/COUNT…,
@@ -359,16 +371,17 @@ Two facts shape every item below:
 
 ## The constraint that outranks this whole list
 
-**50 of 87 lessons are written** (the roadmap in `src/content/curriculum.ts` has
-87 slots). Seven courses are complete, all written 2026-09-19: Git & GitHub (7 of
+**56 of 89 lessons are written** (the roadmap in `src/content/curriculum.ts` has
+89 slots). Eight courses are complete, all written 2026-09-19: Git & GitHub (7 of
 7), SQL for Analysis (5 of 5), Generative AI Engineering (6 of 6), Machine
-Learning Basics (6 of 6), React in Practice (8 of 8), Python Essentials (9 of 9)
-and Excel for Analysts (6 of 6). **Two paths can issue a certificate: Python
-Developer and AI / GenAI Developer.** Issuing one still needs
-`SUPABASE_SERVICE_ROLE_KEY` set (see "Blocked on you"). Next closest: Data Analyst
-(needs only Data Analytics, 4 lessons).
+Learning Basics (6 of 6), React in Practice (8 of 8), Python Essentials (9 of 9),
+Excel for Analysts (6 of 6) and Data Analytics Toolkit (6 of 6). **Three paths can
+issue a certificate: Python Developer, Data Analyst and AI / GenAI Developer.**
+Issuing one still needs `SUPABASE_SERVICE_ROLE_KEY` set (see "Blocked on you").
+Next closest: Full-Stack (JavaScript 8, Node 4) and Frontend (HTML & CSS 9,
+JavaScript 8, TypeScript 4).
 Every item on the review's ranked list is now closed, which changes nothing about
 this: the platform tells the truth, measures itself, remembers what you learned
-and can prove what you finished — about fifty lessons. Nothing above changes the
+and can prove what you finished — about fifty-six lessons. Nothing above changes the
 product's value until one whole path is written. The engineering here was about making sure the platform tells the truth
 while the content gets written — it is not a substitute for writing it.
