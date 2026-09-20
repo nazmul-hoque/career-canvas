@@ -1,3 +1,4 @@
+import { seoHead } from "@/lib/seo";
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CheckCircle2, Clock, FolderGit2, Loader2 } from "lucide-react";
@@ -9,21 +10,13 @@ import { projects } from "@/content/projects";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/projects/")({
-  head: () => ({
-    meta: [
-      { title: "Portfolio projects — Ascent" },
-      {
-        name: "description",
-        content:
-          "Eight real project briefs — landing page, e-commerce storefront, analytics dashboard, 2048, weather app, AI assistant and more — with requirements, milestones and feedback.",
-      },
-      { property: "og:title", content: "Portfolio projects — Ascent" },
-      {
-        property: "og:description",
-        content: "Build work you can show, with a brief and requirements like a real ticket.",
-      },
-    ],
-  }),
+  head: () =>
+    seoHead({
+      path: "/projects",
+      title: "Hands-on Portfolio Project Briefs \u2014 Ascent",
+      description:
+        "Build your portfolio with practical project briefs in software, data, design and AI. Follow requirements and milestones to create work you can share.",
+    }),
   component: Projects,
 });
 

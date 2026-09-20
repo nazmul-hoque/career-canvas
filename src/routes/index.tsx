@@ -1,3 +1,5 @@
+import { seoHead, SITE_URL, SITE_DESCRIPTION } from "@/lib/seo";
+import { AuthLink } from "@/components/common/AuthLink";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowRight,
@@ -14,28 +16,28 @@ import {
 import { AppHeader, Wordmark } from "@/components/layout/AppShell";
 import { StatPill } from "@/components/common/StatPill";
 import { Button } from "@/components/ui/button";
-import { careerPaths, courses, pathCourses } from "@/content/curriculum";
+import { careerPaths, courses, pathCourses, pathWeeks } from "@/content/curriculum";
 import { liveLessonCount, pathLiveLessonCount } from "@/content/lessons";
 import { projects } from "@/content/projects";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "Ascent — Become job-ready by building, not watching" },
-      {
-        name: "description",
-        content:
-          "Interactive career paths in frontend, full-stack, Python, data, design, product and AI. Write real code, get AI mentor feedback, ship portfolio projects and earn a certificate.",
-      },
-      { property: "og:title", content: "Ascent — Become job-ready by building, not watching" },
-      {
-        property: "og:description",
-        content:
-          "Structured roadmaps, hands-on challenges, an AI mentor and a portfolio you can send to recruiters.",
-      },
-    ],
-  }),
+  head: () =>
+    seoHead({
+      path: "/",
+      title: "Ascent \u2014 Learn Coding, Data, Design & AI",
+      description:
+        "Learn coding, data, design and AI through interactive career paths. Practice with hands-on challenges, get AI mentor feedback and build portfolio projects.",
+      schema: [
+        {
+          "@type": "Organization",
+          "@id": `${SITE_URL}/#organization`,
+          name: "Ascent",
+          url: SITE_URL,
+        },
+        { "@type": "WebSite", name: "Ascent", url: SITE_URL, description: SITE_DESCRIPTION },
+      ],
+    }),
   component: Landing,
 });
 
@@ -66,7 +68,7 @@ const steps = [
   {
     n: "01",
     title: "Pick a destination",
-    body: "Seven career paths, each with a week-by-week roadmap and a clear finish line.",
+    body: `${careerPaths.length} career paths, each with a week-by-week roadmap and a clear finish line.`,
   },
   {
     n: "02",
@@ -115,9 +117,9 @@ function Landing() {
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button asChild size="lg" className="h-12 px-6 text-base">
-                <Link to="/auth">
+                <AuthLink mode="signup">
                   Start free <ArrowRight className="ml-1 size-4" />
-                </Link>
+                </AuthLink>
               </Button>
               <Button asChild size="lg" variant="outline" className="h-12 px-6 text-base">
                 <Link to="/learn">
@@ -206,7 +208,7 @@ function Landing() {
           <div className="max-w-xl">
             <p className="eyebrow">Career paths</p>
             <h2 className="mt-1 font-display text-3xl font-bold tracking-tight sm:text-4xl">
-              Seven destinations. One roadmap each.
+              {careerPaths.length} destinations. One roadmap each.
             </h2>
             <p className="mt-2 text-chalk">
               Every path bundles the courses, the practice and the portfolio pieces a hiring manager
@@ -230,7 +232,7 @@ function Landing() {
             >
               <div className="flex items-center justify-between">
                 <StatPill tone="brand">{path.difficulty}</StatPill>
-                <span className="text-xs font-semibold text-chalk">{path.weeks} weeks</span>
+                <span className="text-xs font-semibold text-chalk">~{pathWeeks(path)} weeks</span>
               </div>
               <h3 className="mt-4 font-display text-xl font-bold">{path.name}</h3>
               <p className="mt-0.5 text-sm font-medium text-brand">{path.tagline}</p>
@@ -253,7 +255,7 @@ function Landing() {
             How it works
           </p>
           <h2 className="mt-1 max-w-2xl font-display text-3xl font-bold tracking-tight text-white sm:text-4xl">
-            Four steps between today and your first offer.
+            Four steps toward skills you can demonstrate.
           </h2>
           <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {steps.map((s) => (
@@ -361,9 +363,9 @@ function Landing() {
           </p>
           <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
             <Button asChild size="lg" className="h-12 px-7 text-base">
-              <Link to="/auth">
+              <AuthLink mode="signup">
                 Create a free account <ArrowRight className="ml-1 size-4" />
-              </Link>
+              </AuthLink>
             </Button>
             <Button asChild size="lg" variant="outline" className="h-12 px-7 text-base">
               <Link to="/pricing">Compare plans</Link>

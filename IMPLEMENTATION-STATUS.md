@@ -62,7 +62,7 @@ Two facts shape every item below:
 - [ ] **Set `CRON_SECRET` and schedule the re-engagement job** — any cron that can
       `POST /api/cron/reengagement` with `Authorization: Bearer $CRON_SECRET`, once
       a day. Without it the emails exist but nothing ever sends them. Add
-      `?dry=1` first: it reports who *would* be mailed and sends nothing.
+      `?dry=1` first: it reports who _would_ be mailed and sends nothing.
       For real delivery also set `EMAIL_PROVIDER=resend`, `RESEND_API_KEY`,
       `EMAIL_FROM` (a verified sender) and `APP_URL`.
 - [ ] **Set `CERTIFICATE_SIGNING_SECRET`** before the first certificate is issued.
@@ -105,6 +105,69 @@ Two facts shape every item below:
 ---
 
 ## Done
+
+- [x] **Path duration is computed, and the invented instructors are gone**
+      (2026-09-20) — `CareerPath.weeks` was a hardcoded number shown as
+      "~N weeks" on three surfaces and it described no pace at all: Full-stack
+      claimed 30 weeks for 63 hours while Claude Operator claimed 12 for 37, a
+      sevenfold spread between two numbers in the same typeface. `pathHours()`
+      and `pathWeeks()` in `curriculum.ts` replace it, counting the portfolio
+      projects as well as the lessons — projects are most of the work, 40 of
+      Frontend's 63 hours — and dividing by the learner's own
+      `profile.hours_per_week`, which onboarding already collects. The default
+      for a signed-out visitor is `DEFAULT_HOURS_PER_WEEK` in
+      `gamification.ts`, derived from `WEEKLY_XP_GOAL` so a path card and the
+      dashboard can never describe different weeks. In the same pass the
+      `instructor` field and its card went: sixteen courses named people who do
+      not exist, under the heading "Your instructor", in a product that badges
+      its sample leaderboard rows and labels its mock project reviewer.
+- [x] **Lesson icons follow the body, not the declared type** (2026-09-20) —
+      `LessonMeta.type` is authored intent and had drifted from the bodies on
+      131 of 301 lessons, including all 172 Claude Operator tasks, which are
+      typed `"challenge"` and run no code. The course page therefore drew a
+      wrench on lessons that open an editor and an editor on lessons that ask
+      you to go and work in your own terminal. `lessonShape()` in `lessons.ts`
+      reads the manifest instead and returns what the learner is actually
+      handed; `type` is kept for analytics and no longer decides anything a
+      reader sees. 237 of 301 icons changed.
+- [x] **Generative AI Engineering re-timed and re-scoped** (2026-09-20) — the
+      course carried the catalog's densest prose and mid-pack challenges at its
+      lowest per-lesson minutes (13.8), so six durations went from 83 minutes
+      total to 139. Its description claimed "Work with LLM APIs" and "ship a
+      chat feature", neither of which it did; `ai-prompt.api` now covers the
+      request and response shape, message roles, `stop_reason`, tokens and the
+      context window, verified against the live docs rather than recalled. The
+      unbacked `"APIs"` skill came off the `ai` and `python` paths.
+- [x] **Claude Operator examples: the renderer, and the Level 5 permissions and
+      hooks clusters** (2026-09-20) — `ClaudeTaskSpec` gained
+      `exampleLanguage`, because the old sniff asked whether an example started
+      with `claude` and so rendered every settings, skill and hook snippet as
+      plain text. Eleven worked examples followed on Level 5, each checked
+      against `code.claude.com` rather than memory, which caught three things
+      training would have got wrong: Bash rules are `Bash(git status *)` with a
+      space (the colon form is only a trailing shorthand), `Write(path)` rules
+      are accepted and never consulted so path rules must use `Edit(...)`, and
+      deny beats allow regardless of specificity — which inverts the obvious
+      way to write the "protect .env but keep .env.example" rule.
+
+- [x] **Claude course made honest: self-attested, not fake-graded** (2026-09-19)
+      — the 172 tasks carried a generated MCQ whose right answer was always the
+      first option, paying 70–145 XP each (~17k, dwarfing the catalog), filing
+      172 review items that asked one repeated question, and making
+      `claude-operator` certificate-eligible for template content. The question
+      is gone: the tasks ask nothing and run nothing, which is what they always
+      were. `isLessonAssessed()` in `src/content/lessons.ts` derives that from
+      the manifest rather than a flag, `pathCompletion().eligible` now requires
+      at least one assessed lesson, and XP is a flat 15 — enough to hold a
+      streak, ~2.6k across the course. `/paths/$pathId` and
+      `/certificates/$pathId` say plainly why the path issues no certificate.
+- [x] **Claude task prose off the client bundle** (2026-09-19) — the authored
+      missions, evidence, guides and safety notes were in `claude-course.ts`,
+      which `curriculum.ts` imports, so 28.3 KB of server-only prose (and every
+      MCQ's answer) sat in the main chunk on the first-paint path. Specs moved
+      to `claude-levels.server.ts`; the client-safe skeleton is generated into
+      `claude-course.gen.ts` by `bun run lessons:manifest`, and a test asserts
+      the committed file matches the levels and contains no prose.
 
 - [x] **JavaScript From Zero, complete** (2026-09-19) — nine new lessons and the
       two existing ones rewritten in place: values and coercion traps, functions
@@ -390,30 +453,63 @@ Two facts shape every item below:
 
 ### Left to implement
 
-- [ ] **Instructors are invented people.** Every course names an instructor
-      ("Tomas Beck, Platform Engineer") who doesn't exist. Replace with real
-      authors or drop the card.
 - [ ] **Component and integration tests** — the unit layer is covered, and
       happy-dom now runs React in tests (`tests/react-runtime.test.ts`), so
       component tests for the app itself are unblocked; none exist yet, and
-      nothing exercises a route end to end.
+      nothing exercises a route end to end. This is where a defect would now
+      hide: `pathCompletion()`'s four credential states, signed-out visibility
+      and the entitlement gates all branch in route code that nothing runs.
+
+- [ ] **Worked examples for Claude Operator Levels 1, 3, 4 and 6** — Level 2 is
+      finished (17 of 32 tasks) and Level 5 is now 11 of 35. The rest are bare:
+      Level 1 has 1 of 20, Level 3 has 1 of 35, Levels 4 and 6 have none. Not
+      every task wants one — a judgement task like "Spot a delegable task" is
+      spoiled by a worked answer — so the scope is ~23 more, not 129. Clusters
+      left: subagent definitions (6), skills format (5), autonomy artifacts (8),
+      CLI bounding flags (3), worktrees (1).
+
+- [ ] **Make `bun run lint` able to go green** (2026-09-20: 129 errors → 4).
+      `eslint --fix` cleared the 128-error prettier backlog across ten files.
+      What is left cannot be auto-fixed and keeps the gate red, so a genuine
+      regression would be invisible in the noise: - 3 prettier errors in `src/integrations/supabase/types.ts`, deliberately
+      unformatted because it is generated from the database. Adding it to the
+      eslint ignore list is the real fix. - 1 `prefer-const` at `previewAuthStorage.ts:54`. Not auto-fixable because
+      the declaration and assignment are split; safe to collapse, since
+      `finish` only reads `timer` when invoked and neither caller can run
+      before the assignment. It is a Lovable-synced file, so expect it back. - 6 `react-refresh/only-export-components` warnings in shadcn `ui/`
+      primitives, which are regenerated through the CLI.
+      Separately, `prettier --check` flags four files eslint does not cover:
+      `AGENTS.md`, `CLAUDE.md`, `src/routes/README.md`, `src/styles.css`.
+
+- [ ] **Claude Operator assesses nothing.** 172 tasks, 37 hours, zero graded
+      questions, so the path is permanently `self-directed`. That is the correct
+      mechanical outcome for work done in the learner's own terminal, but it
+      means the single largest commitment in the catalog yields no credential
+      while a 34-hour path does. A product decision, not a bug.
 
 ---
 
-## The constraint that outranks this whole list
+## The constraint that outranks this whole list — now lifted
 
-**74 of 90 lessons are written** (the roadmap in `src/content/curriculum.ts` has
-90 slots). Ten courses are complete, all written 2026-09-19: Git & GitHub (7 of
-7), SQL for Analysis (5 of 5), Generative AI Engineering (6 of 6), Machine
-Learning Basics (6 of 6), React in Practice (8 of 8), Python Essentials (9 of 9),
-Excel for Analysts (6 of 6), Data Analytics Toolkit (6 of 6), HTML & CSS
-Foundations (10 of 10) and JavaScript From Zero (11 of 11). **Three paths can
-issue a certificate: Python Developer, Data Analyst and AI / GenAI Developer.**
-Issuing one still needs `SUPABASE_SERVICE_ROLE_KEY` set (see "Blocked on you").
-Next closest: Frontend (needs only TypeScript, 4 lessons) and Full-Stack (needs
-only Node.js & APIs, 4 lessons).
-Every item on the review's ranked list is now closed, which changes nothing about
-this: the platform tells the truth, measures itself, remembers what you learned
-and can prove what you finished — about seventy-four lessons. Nothing above changes the
-product's value until one whole path is written. The engineering here was about making sure the platform tells the truth
-while the content gets written — it is not a substitute for writing it.
+**129 of 129 lessons are written.** Every course in `src/content/curriculum.ts`
+is published (the Claude Operator course's 172 self-attested tasks are counted
+separately). UX Design Fundamentals (3) and Product Management Craft (3) landed
+together on 2026-09-20; `ai-prompt.api` followed, after a review found the
+Generative AI course used `{"role": "user", …}` and `call_model(prompt)` in
+three lessons without ever saying what a model API is.
+
+**Seven of the eight paths can issue a certificate:** Frontend Developer,
+Full-stack Developer, Python Developer, Data Analyst, AI / GenAI Developer,
+UX/UI Designer and Product Manager. Issuing one still needs
+`SUPABASE_SERVICE_ROLE_KEY` set (see "Blocked on you") — that is now the only
+thing between a finishing learner and a certificate.
+
+Claude Operator is the eighth, and it is deliberately `self-directed`: every
+task on it is self-attested, so it never certifies. The same applies to one
+lesson inside Figma for Product Teams (`fig-handoff.capstone`) — the work
+happens in the learner's own file, so it pays `ATTESTED_XP` and is excluded from
+the certificate denominator.
+
+What this changes: the honest answer to "is there enough here to learn from" is
+now yes for every path in the product. The engineering was about making the
+platform tell the truth while the content got written; the content is written.

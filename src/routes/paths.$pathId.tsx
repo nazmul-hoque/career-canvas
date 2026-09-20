@@ -1,3 +1,5 @@
+import { seoHead, breadcrumbs } from "@/lib/seo";
+import { useMemo } from "react";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import {
   Award,
@@ -21,11 +23,18 @@ import {
   useUpdateProfile,
   useUnlockAchievement,
 } from "@/hooks/useLearner";
-import { courseLessons, pathById, pathCourses, type LessonMeta } from "@/content/curriculum";
+import {
+  courseLessons,
+  pathById,
+  pathCourses,
+  pathWeeks,
+  unitWordsForCourses,
+  type LessonMeta,
+} from "@/content/curriculum";
 import { experienceShape } from "@/content/personalisation";
 import { formatMinutes, isLessonLive, liveLessons, liveMinutes } from "@/content/lessons";
 import { projectById } from "@/content/projects";
-import { pathCompletion } from "@/lib/certificates";
+import { pathCompletion, type CredentialState } from "@/lib/certificates";
 import { track } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
@@ -42,14 +51,18 @@ export const Route = createFileRoute("/paths/$pathId")({
       };
     }
     const { path } = loaderData;
-    return {
-      meta: [
-        { title: `${path.name} path — Ascent` },
-        { name: "description", content: path.overview },
-        { property: "og:title", content: `${path.name} path — Ascent` },
-        { property: "og:description", content: path.overview },
+    return seoHead({
+      path: `/paths/${path.id}`,
+      title: `${path.name} career path — Ascent`,
+      description: path.overview,
+      schema: [
+        breadcrumbs([
+          { name: "Home", path: "/" },
+          { name: "Career paths", path: "/paths" },
+          { name: path.name, path: `/paths/${path.id}` },
+        ]),
       ],
-    };
+    });
   },
   notFoundComponent: PathMissing,
   errorComponent: PathMissing,
@@ -85,15 +98,45 @@ function PathDetail() {
   const updateProfile = useUpdateProfile();
   const unlock = useUnlockAchievement();
 
-  const done = new Set(progress.map((p) => p.lesson_id));
+  const done = useMemo(() => new Set(progress.map((p) => p.lesson_id)), [progress]);
   const courses = pathCourses(path);
-  const { total, live, completed, percent, eligible, published } = pathCompletion(path, done);
+  const words = unitWordsForCourses(courses);
+  const { total, live, completed, percent, credential } = pathCompletion(path, done);
+
+  // One paragraph and one caption per credential state; the bar is the same in
+  // every arm, so it is rendered once below rather than copied into each.
+  const certificateCopy: Record<CredentialState, { blurb: string; caption: string }> = {
+    eligible: {
+      blurb: `Every ${words.singular} on this path is complete. Your certificate is ready.`,
+      caption: "",
+    },
+    "self-directed": {
+      blurb: `This path is self-directed: the work happens in your own tools and nothing on it is marked, so it doesn't carry a certificate. A credential we can't check isn't worth carrying. Your progress still builds your streak and XP.`,
+      caption: `${completed} of ${live} ${words.plural} done`,
+    },
+    unwritten: {
+      blurb: `This path is still being written — ${live} of its ${total} ${words.plural} are live. No certificate is issued for a roadmap that isn't finished, so keep going and we'll open this the moment the last one lands.`,
+      caption: `${completed} of ${live} live ${words.plural} done`,
+    },
+    "in-progress": {
+      blurb: `Finish all ${total} ${words.plural} to unlock a certificate with a verifiable ID you can put on LinkedIn.`,
+      caption: `${live - completed} ${words.plural} remaining`,
+    },
+  };
+  const certificate = certificateCopy[credential];
   const isCurrent = profile?.career_path === path.id;
   const experience = experienceShape(profile?.experience);
 
-  const nextLesson = courses
-    .flatMap((c) => liveLessons(c).map((l) => ({ course: c, lesson: l })))
-    .find(({ lesson }) => !done.has(lesson.id));
+  // Early exit rather than building a wrapper for every live lesson on the path
+  // (172 of them on claude-operator) to return the first one.
+  const nextLesson = useMemo(() => {
+    for (const course of courses) {
+      for (const lesson of liveLessons(course)) {
+        if (!done.has(lesson.id)) return { course, lesson };
+      }
+    }
+    return undefined;
+  }, [courses, done]);
 
   function choosePath() {
     if (!user) return;
@@ -135,10 +178,10 @@ function PathDetail() {
                 <Layers className="size-3.5" /> {courses.length} courses
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/80">
-                <BookOpen className="size-3.5" /> {live} of {total} lessons live
+                <BookOpen className="size-3.5" /> {live} of {total} {words.plural} live
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/80">
-                <Clock className="size-3.5" /> ~{path.weeks} weeks
+                <Clock className="size-3.5" /> ~{pathWeeks(path, profile?.hours_per_week)} weeks
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/80">
                 {path.difficulty}
@@ -342,47 +385,22 @@ function PathDetail() {
             </ul>
           </section>
 
-          <section className={cn("card-surface p-5", eligible && "ring-2 ring-brand")}>
+          <section
+            className={cn("card-surface p-5", credential === "eligible" && "ring-2 ring-brand")}
+          >
             <h2 className="flex items-center gap-2 font-display text-lg font-bold">
               <Award className="size-4 text-ember" /> Certificate
             </h2>
-            {eligible ? (
-              <>
-                <p className="mt-1 text-sm text-chalk">
-                  Every lesson on this path is complete. Your certificate is ready.
-                </p>
-                <Button asChild className="mt-4 w-full">
-                  <Link to="/certificates/$pathId" params={{ pathId: path.id }}>
-                    Open certificate
-                  </Link>
-                </Button>
-              </>
-            ) : !published ? (
-              <>
-                <p className="mt-1 text-sm text-chalk">
-                  This path is still being written — {live} of its {total} lessons are live. No
-                  certificate is issued for a roadmap that isn't finished, so keep going and we'll
-                  open this the moment the last lesson lands.
-                </p>
-                <div className="mt-4 text-sm font-semibold text-chalk">
-                  {completed} of {live} live lessons done
-                </div>
-                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-secondary">
-                  <div
-                    className="h-full rounded-full bg-ember transition-all duration-700"
-                    style={{ width: `${percent}%` }}
-                  />
-                </div>
-              </>
+            <p className="mt-1 text-sm text-chalk">{certificate.blurb}</p>
+            {credential === "eligible" ? (
+              <Button asChild className="mt-4 w-full">
+                <Link to="/certificates/$pathId" params={{ pathId: path.id }}>
+                  Open certificate
+                </Link>
+              </Button>
             ) : (
               <>
-                <p className="mt-1 text-sm text-chalk">
-                  Finish all {total} lessons to unlock a certificate with a verifiable ID you can
-                  put on LinkedIn.
-                </p>
-                <div className="mt-4 text-sm font-semibold text-chalk">
-                  {live - completed} lessons remaining
-                </div>
+                <div className="mt-4 text-sm font-semibold text-chalk">{certificate.caption}</div>
                 <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-secondary">
                   <div
                     className="h-full rounded-full bg-ember transition-all duration-700"

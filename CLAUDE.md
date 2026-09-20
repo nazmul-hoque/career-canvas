@@ -80,7 +80,10 @@ XP, it is excluded from every progress denominator (`liveLessons`,
 `pathLiveLessonCount`), and it blocks its path's certificate
 (`pathCompletion().published`). Never generate filler to fill those slots — that
 is exactly what this replaced. To make a lesson live: add its body to `bodies`,
-then run `bun run lessons:manifest` (a test fails until you do). For a
+then run `bun run lessons:manifest` (a test fails until you do; it regenerates
+both `lesson-manifest.gen.ts` and `claude-course.gen.ts`). New bodies go in a
+per-course `<course>-lessons.server.ts` — `lesson-bodies.server.ts` is the merge
+point plus the not-yet-extracted backlog, and it throws on a duplicate id. For a
 Python or SQL challenge, `bun run lessons:verify` checks the reference solution
 passes every test and the starter fails one; SQL runs against the shop dataset
 in `src/content/datasets/shop.ts`, whose numbers the SQL lessons quote.
@@ -94,7 +97,29 @@ lesson through `getLessonFn` as `toPublicBody()` (no `answer`, `explanation` or
 explanation comes back only when it is. Review feedback arrives with the grade
 from `submitReviewFn`; placement is graded by `gradePlacementFn`. Never import
 the bodies from a route, hook or component, and never reveal the right option on
-a wrong answer.
+a wrong answer. The same rule covers bulk, not just secrecy: the Claude course's
+authored task prose lives in `claude-levels.server.ts` and only its skeleton
+(ids, titles, lengths, types) is generated into `claude-course.gen.ts` for the
+client, because `curriculum.ts` is on every route's first-paint path.
+
+**Assessed vs. self-attested lessons.** A lesson whose work happens in the
+learner's own tools sets `attested: true` on its body. It is **declared, not
+inferred**: a lesson that asks nothing because its author forgot the question
+looks identical to one that asks nothing on purpose, and `tests/lessons.test.ts`
+fails on the first rather than letting it slip out of the certificate
+denominator. `manifestEntry` carries the flag into `lesson-manifest.gen.ts`, so
+`isLessonAssessed()` is a manifest read. Attested lessons are still live and
+still count for progress and streak, but they file no review item, are capped at
+`ATTESTED_XP` (`src/content/gamification.ts`) **in `completeLessonFn`**, not
+merely by convention in the body, and earn no certificate. Never give one a
+generated question so it looks graded — a template that marks itself certifies
+nothing, which is what the Claude course's 172 identical MCQs did.
+
+**One credential state, not three booleans.** `pathCompletion()` returns
+`credential: "eligible" | "self-directed" | "unwritten" | "in-progress"`, and the
+routes switch on that name. Don't re-derive the rule from `published`/`completed`
+in a view: a new state should fail to compile, not fall through to the wrong
+paragraph.
 
 **Content vs. data.** Curriculum, lessons, projects and community seeds are
 static TypeScript in `src/content/`; per-user state (profile, XP, progress,

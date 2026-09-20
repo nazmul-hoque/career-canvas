@@ -1,29 +1,29 @@
+import { seoHead } from "@/lib/seo";
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Clock, Layers, Sparkles } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { StatPill } from "@/components/common/StatPill";
 import { useProfile, useProgress } from "@/hooks/useLearner";
-import { careerPaths, pathCourses, pathLessonCount, type SkillLevel } from "@/content/curriculum";
+import {
+  careerPaths,
+  pathCourses,
+  pathLessonCount,
+  pathWeeks,
+  unitWordsForCourses,
+  type SkillLevel,
+} from "@/content/curriculum";
 import { liveLessons, pathLiveLessonCount } from "@/content/lessons";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/paths/")({
-  head: () => ({
-    meta: [
-      { title: "Career paths — Ascent" },
-      {
-        name: "description",
-        content:
-          "Seven structured career paths: frontend, full-stack, Python, data analyst, UX/UI, product management and AI. Each with a roadmap, projects and a certificate.",
-      },
-      { property: "og:title", content: "Career paths — Ascent" },
-      {
-        property: "og:description",
-        content: "Roadmaps that bundle the courses, practice and portfolio work each role expects.",
-      },
-    ],
-  }),
+  head: () =>
+    seoHead({
+      path: "/paths",
+      title: "Tech Career Paths & Learning Roadmaps \u2014 Ascent",
+      description:
+        "Explore career roadmaps in software development, data, design, product and AI. Build skills with ordered courses, hands-on practice and portfolio projects.",
+    }),
   component: Paths,
 });
 
@@ -80,6 +80,7 @@ function Paths() {
           );
           const percent = total ? Math.round((completed / total) * 100) : 0;
           const current = profile?.career_path === path.id;
+          const words = unitWordsForCourses(pCourses);
 
           return (
             <Link
@@ -144,10 +145,10 @@ function Paths() {
                     <Layers className="size-3.5" /> {pCourses.length} courses
                   </span>
                   <span className="inline-flex items-center gap-1">
-                    <Clock className="size-3.5" /> {path.weeks}w
+                    <Clock className="size-3.5" /> ~{pathWeeks(path, profile?.hours_per_week)}w
                   </span>
                   <span className={cn(total < planned && "text-ember")}>
-                    {total} / {planned} lessons live
+                    {total} / {planned} {words.plural} live
                   </span>
                 </span>
                 <ArrowRight className="size-4 text-brand transition-transform group-hover:translate-x-1" />

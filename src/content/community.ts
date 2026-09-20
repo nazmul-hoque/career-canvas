@@ -25,8 +25,18 @@ export const seedPosts: SeedPost[] = [
     ago: "2h",
     trending: true,
     comments: [
-      { author: "Diego Salas", initials: "DS", body: "That is the whole skill: read the evidence before you edit.", ago: "1h" },
-      { author: "Tomas Beck", initials: "TB", body: "Same. The implicit vs explicit return thing catches everyone once.", ago: "40m" },
+      {
+        author: "Diego Salas",
+        initials: "DS",
+        body: "That is the whole skill: read the evidence before you edit.",
+        ago: "1h",
+      },
+      {
+        author: "Tomas Beck",
+        initials: "TB",
+        body: "Same. The implicit vs explicit return thing catches everyone once.",
+        ago: "40m",
+      },
     ],
   },
   {
@@ -41,7 +51,12 @@ export const seedPosts: SeedPost[] = [
     ago: "5h",
     trending: true,
     comments: [
-      { author: "Priya Raghunathan", initials: "PR", body: "Reasoning beats screenshots every time. Congrats.", ago: "3h" },
+      {
+        author: "Priya Raghunathan",
+        initials: "PR",
+        body: "Reasoning beats screenshots every time. Congrats.",
+        ago: "3h",
+      },
     ],
   },
   {
@@ -55,8 +70,18 @@ export const seedPosts: SeedPost[] = [
     likes: 54,
     ago: "9h",
     comments: [
-      { author: "Ingrid Solheim", initials: "IS", body: "If you cannot read it out loud in one breath, use a loop.", ago: "7h" },
-      { author: "Kenji Aoyama", initials: "KA", body: "Also: any side effect at all means loop, not comprehension.", ago: "6h" },
+      {
+        author: "Ingrid Solheim",
+        initials: "IS",
+        body: "If you cannot read it out loud in one breath, use a loop.",
+        ago: "7h",
+      },
+      {
+        author: "Kenji Aoyama",
+        initials: "KA",
+        body: "Also: any side effect at all means loop, not comprehension.",
+        ago: "6h",
+      },
     ],
   },
   {
@@ -98,13 +123,48 @@ export interface LeaderboardEntry {
 }
 
 export const leaderboardSeed: LeaderboardEntry[] = [
-  { name: "Noah Fitzgerald", initials: "NF", xp: 18420, level: 15, streak: 64, path: "Frontend Developer" },
-  { name: "Amara Nwosu", initials: "AN", xp: 14980, level: 12, streak: 41, path: "Full-stack Developer" },
+  {
+    name: "Noah Fitzgerald",
+    initials: "NF",
+    xp: 18420,
+    level: 15,
+    streak: 64,
+    path: "Frontend Developer",
+  },
+  {
+    name: "Amara Nwosu",
+    initials: "AN",
+    xp: 14980,
+    level: 12,
+    streak: 41,
+    path: "Full-stack Developer",
+  },
   { name: "Yara Haddad", initials: "YH", xp: 12310, level: 10, streak: 28, path: "UX/UI Designer" },
-  { name: "Mateo Rivas", initials: "MR", xp: 10870, level: 10, streak: 19, path: "Python Developer" },
+  {
+    name: "Mateo Rivas",
+    initials: "MR",
+    xp: 10870,
+    level: 10,
+    streak: 19,
+    path: "Python Developer",
+  },
   { name: "Lukas Brenner", initials: "LB", xp: 8640, level: 8, streak: 12, path: "Data Analyst" },
-  { name: "Sofia Marchetti", initials: "SM", xp: 6120, level: 6, streak: 9, path: "Python Developer" },
-  { name: "Hana Kobayashi", initials: "HK", xp: 4980, level: 6, streak: 22, path: "AI / GenAI Developer" },
+  {
+    name: "Sofia Marchetti",
+    initials: "SM",
+    xp: 6120,
+    level: 6,
+    streak: 9,
+    path: "Python Developer",
+  },
+  {
+    name: "Hana Kobayashi",
+    initials: "HK",
+    xp: 4980,
+    level: 6,
+    streak: 22,
+    path: "AI / GenAI Developer",
+  },
   { name: "Ravi Desai", initials: "RD", xp: 3760, level: 5, streak: 7, path: "Frontend Developer" },
 ];
 

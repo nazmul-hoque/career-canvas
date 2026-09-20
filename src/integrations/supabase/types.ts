@@ -7,12 +7,8 @@ export type Database = {
     PostgrestVersion: "14.5";
   };
   graphql_public: {
-    Tables: {
-      [_ in never]: never;
-    };
-    Views: {
-      [_ in never]: never;
-    };
+    Tables: { [_ in never]: never };
+    Views: { [_ in never]: never };
     Functions: {
       graphql: {
         Args: {
@@ -33,6 +29,12 @@ export type Database = {
   };
   public: {
     Tables: {
+      community_reports: {
+        Row: { id: string; post_id: string; reporter_id: string; reason: string; status: string; created_at: string };
+        Insert: { id?: string; post_id: string; reporter_id: string; reason: string; status?: string; created_at?: string };
+        Update: { status?: string };
+        Relationships: [];
+      };
       analytics_events: {
         Row: {
           anon_id: string | null;
@@ -354,6 +356,8 @@ export type Database = {
       };
       project_submissions: {
         Row: {
+          is_published: boolean;
+          public_summary: string;
           created_at: string;
           feedback: string | null;
           id: string;
@@ -365,6 +369,8 @@ export type Database = {
           user_id: string;
         };
         Insert: {
+          is_published?: boolean;
+          public_summary?: string;
           created_at?: string;
           feedback?: string | null;
           id?: string;
@@ -376,6 +382,8 @@ export type Database = {
           user_id: string;
         };
         Update: {
+          is_published?: boolean;
+          public_summary?: string;
           created_at?: string;
           feedback?: string | null;
           id?: string;
@@ -513,7 +521,10 @@ export type Database = {
       };
     };
     Views: {
-      [_ in never]: never;
+      public_portfolio_projects: {
+        Row: { user_id: string; project_id: string; status: string; repo_url: string | null; live_url: string | null; public_summary: string; is_published: boolean };
+        Relationships: [];
+      };
     };
     Functions: {
       [_ in never]: never;

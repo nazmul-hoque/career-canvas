@@ -14,7 +14,10 @@ export const Route = createFileRoute("/reset-password")({
       { title: "Choose a new password — Ascent" },
       { name: "description", content: "Set a new password for your Ascent learning account." },
       { property: "og:title", content: "Choose a new password — Ascent" },
-      { property: "og:description", content: "Set a new password for your Ascent learning account." },
+      {
+        property: "og:description",
+        content: "Set a new password for your Ascent learning account.",
+      },
       { name: "robots", content: "noindex" },
     ],
   }),

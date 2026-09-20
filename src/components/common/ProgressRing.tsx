@@ -8,7 +8,13 @@ interface ProgressRingProps {
   className?: string;
 }
 
-export function ProgressRing({ percent, size = 176, label, sublabel, className }: ProgressRingProps) {
+export function ProgressRing({
+  percent,
+  size = 176,
+  label,
+  sublabel,
+  className,
+}: ProgressRingProps) {
   const clamped = Math.max(0, Math.min(100, Math.round(percent)));
   return (
     <div className={cn("relative", className)} style={{ width: size, height: size }}>

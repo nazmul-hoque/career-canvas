@@ -58,8 +58,8 @@ export const achievements: Achievement[] = [
   },
   {
     key: "project-complete",
-    name: "Project Completed",
-    description: "A real project submitted to your portfolio.",
+    name: "Project Submitted",
+    description: "You submitted a project write-up for automated feedback.",
     icon: "Trophy",
     xp: 250,
   },
@@ -112,6 +112,15 @@ export const levelTitle = (level: number) => {
  * Anyone who did gets `dailyXpGoal()` instead — onboarding promises "we size
  * your daily goal from this", and a hardcoded number makes that a lie.
  */
+/**
+ * What a lesson pays when nobody checked the work — the learner did it in their
+ * own tools and told us so. Enough to hold a streak, far below a lesson whose
+ * answers are marked, so a long self-directed course can't outweigh the
+ * assessed catalog. `completeLessonFn` caps unassessed bodies at this, so the
+ * rule holds for any future course without a per-course constant.
+ */
+export const ATTESTED_XP = 15;
+
 export const DAILY_XP_GOAL = 150;
 export const WEEKLY_XP_GOAL = 800;
 
@@ -122,6 +131,14 @@ export const WEEKLY_XP_GOAL = 800;
  * that assumes weekdays only is the one people fail on a Sunday.
  */
 const XP_PER_STUDY_HOUR = 250;
+
+/**
+ * The pace to assume for someone we haven't asked yet — a signed-out visitor on
+ * the landing page, or a learner who skipped the hours question. Derived from
+ * the weekly goal rather than written down twice, so the "~N weeks" on a path
+ * card and the XP target on the dashboard can never describe different weeks.
+ */
+export const DEFAULT_HOURS_PER_WEEK = WEEKLY_XP_GOAL / XP_PER_STUDY_HOUR;
 
 export function weeklyXpGoal(hoursPerWeek: number | null | undefined): number {
   if (!hoursPerWeek || hoursPerWeek <= 0) return WEEKLY_XP_GOAL;

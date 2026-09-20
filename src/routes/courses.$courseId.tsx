@@ -1,14 +1,26 @@
+import { seoHead, breadcrumbs, canonicalUrl, SITE_URL } from "@/lib/seo";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { Clock, CheckCircle2, PlayCircle, Code2, Wrench, BookOpen, Lock } from "lucide-react";
+import {
+  Clock,
+  CheckCircle2,
+  Code2,
+  ListChecks,
+  SquareArrowOutUpRight,
+  BookOpen,
+  Lock,
+  ChevronDown,
+} from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
-import { courseById, courseLessons } from "@/content/curriculum";
+import { courseById, courseLessons, unitWords } from "@/content/curriculum";
 import {
   formatMinutes,
   isLessonLive,
+  lessonShape,
   liveChallengeCount,
   liveLessons,
   liveMinutes,
   nextLiveLesson,
+  type LessonShape,
 } from "@/content/lessons";
 import { isLessonUnlocked } from "@/lib/entitlements";
 import { useEntitlements } from "@/hooks/useEntitlements";
@@ -29,14 +41,25 @@ export const Route = createFileRoute("/courses/$courseId")({
       };
     }
     const { course } = loaderData;
-    return {
-      meta: [
-        { title: `${course.title} — Ascent` },
-        { name: "description", content: course.summary },
-        { property: "og:title", content: `${course.title} — Ascent` },
-        { property: "og:description", content: course.summary },
+    return seoHead({
+      path: `/courses/${course.id}`,
+      title: `${course.title} — Ascent`,
+      description: course.summary,
+      schema: [
+        breadcrumbs([
+          { name: "Home", path: "/" },
+          { name: "Courses", path: "/learn" },
+          { name: course.title, path: `/courses/${course.id}` },
+        ]),
+        {
+          "@type": "Course",
+          name: course.title,
+          description: course.summary,
+          url: canonicalUrl(`/courses/${course.id}`),
+          provider: { "@type": "Organization", name: "Ascent", url: SITE_URL },
+        },
       ],
-    };
+    });
   },
   notFoundComponent: CourseMissing,
   errorComponent: CourseMissing,
@@ -59,12 +82,26 @@ function CourseMissing() {
   );
 }
 
-const typeIcon = {
-  concept: BookOpen,
-  practice: Wrench,
+/**
+ * Keyed on what the lesson body actually holds, not on its declared `type`.
+ * See `lessonShape` for why: the declared type is intent and had drifted on 131
+ * lessons, so this icon used to promise an editor to readers who would get a
+ * checklist, and a checklist to readers who would get an editor.
+ */
+const shapeIcon = {
   challenge: Code2,
-  project: PlayCircle,
-} as const;
+  questions: ListChecks,
+  attested: SquareArrowOutUpRight,
+  reading: BookOpen,
+  unwritten: BookOpen,
+} as const satisfies Record<LessonShape, unknown>;
+
+/**
+ * Modules longer than this start collapsed. Keyed on size, not on what the
+ * course calls its units: a 20-item module is a wall of links whether it holds
+ * lessons or tasks, and a short one is worth showing open either way.
+ */
+const COLLAPSE_ABOVE = 12;
 
 function CourseDetail() {
   const { course } = Route.useLoaderData();
@@ -79,6 +116,7 @@ function CourseDetail() {
   const completed = written.filter((l) => done.has(l.id)).length;
   const percent = written.length ? Math.round((completed / written.length) * 100) : 0;
   const next = nextLiveLesson(course, done) ?? written[0] ?? null;
+  const words = unitWords(course);
 
   return (
     <AppShell>
@@ -98,7 +136,7 @@ function CourseDetail() {
               </span>
             ) : null}
             <span>
-              {written.length} of {lessons.length} lessons live
+              {written.length} of {lessons.length} {words.plural} live
             </span>
             {challenges ? (
               <span>
@@ -125,7 +163,7 @@ function CourseDetail() {
             )}
             {completed > 0 ? (
               <span className="text-sm text-white/70">
-                {completed}/{written.length} lessons · {percent}% complete
+                {completed}/{written.length} {words.plural} · {percent}% complete
               </span>
             ) : null}
           </div>
@@ -137,23 +175,34 @@ function CourseDetail() {
           <section className="card-surface p-6 sm:p-8">
             <h2 className="font-display text-xl font-bold">Curriculum</h2>
             <p className="mt-1 text-sm text-chalk">
-              {course.modules.length} modules, built to be done in order.
+              {course.modules.length} {words.sections}, {lessons.length} {words.plural}, built to be
+              done in order.
             </p>
             <div className="mt-6 space-y-6">
               {course.modules.map((mod, i) => (
-                <div key={mod.id}>
-                  <div className="flex items-baseline gap-3">
+                <details
+                  key={mod.id}
+                  className="group rounded-2xl border border-border bg-card px-4 sm:px-5"
+                  open={mod.lessons.length <= COLLAPSE_ABOVE}
+                >
+                  <summary className="flex cursor-pointer list-none items-center gap-3 py-4 [&::-webkit-details-marker]:hidden">
                     <span className="font-display text-sm font-bold text-brand">
                       {String(i + 1).padStart(2, "0")}
                     </span>
-                    <div>
-                      <h3 className="font-display text-base font-semibold">{mod.title}</h3>
-                      <p className="text-sm text-chalk">{mod.summary}</p>
-                    </div>
-                  </div>
-                  <ul className="mt-3 divide-y divide-border border-y border-border">
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-display text-base font-semibold">
+                        {mod.title}
+                      </span>
+                      <span className="block text-sm text-chalk">{mod.summary}</span>
+                    </span>
+                    <span className="rounded-full bg-secondary px-2.5 py-1 text-xs font-semibold text-chalk">
+                      {mod.lessons.length} {words.plural}
+                    </span>
+                    <ChevronDown className="size-4 shrink-0 text-chalk transition-transform group-open:rotate-180" />
+                  </summary>
+                  <ul className="divide-y divide-border border-t border-border pb-2">
                     {mod.lessons.map((l) => {
-                      const Icon = typeIcon[l.type];
+                      const Icon = shapeIcon[lessonShape(l.id)];
                       const isDone = done.has(l.id);
                       if (isLessonLive(l.id) && !isLessonUnlocked(course, l.id, entitlements)) {
                         return (
@@ -214,7 +263,7 @@ function CourseDetail() {
                       );
                     })}
                   </ul>
-                </div>
+                </details>
               ))}
             </div>
           </section>
@@ -234,19 +283,6 @@ function CourseDetail() {
           </section>
 
           <section className="card-surface p-6">
-            <p className="eyebrow">Your instructor</p>
-            <div className="mt-3 flex items-center gap-3">
-              <span className="grid size-11 place-items-center rounded-full bg-ink font-display text-sm font-bold text-white">
-                {course.instructor.initials}
-              </span>
-              <span>
-                <span className="block text-sm font-semibold">{course.instructor.name}</span>
-                <span className="block text-xs text-chalk">{course.instructor.role}</span>
-              </span>
-            </div>
-          </section>
-
-          <section className="card-surface p-6">
             <p className="eyebrow">Progress</p>
             <div className="mt-3 h-2 overflow-hidden rounded-full bg-line">
               <div
@@ -255,10 +291,10 @@ function CourseDetail() {
               />
             </div>
             <p className="mt-2 text-sm text-chalk">
-              {completed} of {written.length} live lessons complete
+              {completed} of {written.length} live {words.plural} complete
               {written.length < lessons.length ? (
                 <span className="block text-xs text-chalk/70">
-                  {lessons.length - written.length} more lessons are still being written.
+                  {lessons.length - written.length} more {words.plural} are still being written.
                 </span>
               ) : null}
             </p>
