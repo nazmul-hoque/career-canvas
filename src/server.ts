@@ -66,6 +66,22 @@ export default {
     try {
       const url = new URL(request.url);
       const { pathname } = url;
+      if (pathname === "/sitemap.xml") {
+        if (request.method !== "GET" && request.method !== "HEAD") {
+          return new Response("Method not allowed", {
+            status: 405,
+            headers: { Allow: "GET, HEAD" },
+          });
+        }
+        const { renderSitemap } = await import("./lib/sitemap");
+        return new Response(request.method === "HEAD" ? null : renderSitemap(), {
+          headers: {
+            "content-type": "application/xml; charset=utf-8",
+            "cache-control": "public, max-age=3600",
+          },
+        });
+      }
+
       if (WEBHOOK_PATHS.has(pathname)) {
         if (request.method !== "POST") {
           return new Response("Method not allowed", { status: 405 });
