@@ -28,6 +28,7 @@ import {
   captureConsole,
   collapseWhitespace as normalise,
   errorMessage as message,
+  stripModuleSyntax,
   withTimeout,
   type EngineOutcome,
   type TestSpec,
@@ -53,26 +54,13 @@ const REACT_GLOBALS = {
   useDeferredValue: React.useDeferredValue,
 };
 
-/**
- * Learners write ordinary module code. React is provided, so imports of it are
- * dropped and `export` keywords are removed rather than resolved; any other
- * import is an error, because there is nothing to resolve it against.
- */
+/** React is provided, so importing it is a no-op; anything else is unresolvable. */
 export function prepareSource(code: string): string {
-  const withoutReactImports = code.replace(
-    /^\s*import\s[^;]*?\sfrom\s+["'](react|react-dom|react-dom\/client)["'];?[ \t]*$/gm,
-    "",
-  );
-  const otherImport = withoutReactImports.match(/^\s*import\s.*$/m);
-  if (otherImport) {
-    throw new Error(
-      `Only React is available in challenges, so this import can't work: ${otherImport[0].trim()}`,
-    );
-  }
-  return withoutReactImports
-    .replace(/^\s*export\s+default\s+[A-Za-z_$][\w$]*\s*;?[ \t]*$/gm, "")
-    .replace(/^(\s*)export\s+default\s+(?=(async\s+)?function|class)/gm, "$1")
-    .replace(/^(\s*)export\s+(?=(const|let|var|function|class|async)\b)/gm, "$1");
+  return stripModuleSyntax(code, {
+    allowImportsFrom: ["react", "react-dom", "react-dom/client"],
+    importError: (statement) =>
+      `Only React is available in challenges, so this import can't work: ${statement}`,
+  });
 }
 
 function compile(source: string): string {

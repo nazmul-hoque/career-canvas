@@ -50,6 +50,13 @@ export type LessonBlock =
 export interface LessonBody {
   summary: string;
   xp: number;
+  /**
+   * The learner does this one in their own tools and tells us it's done. Must
+   * be declared, not inferred: a lesson that asks nothing because its author
+   * forgot the question looks identical to one that asks nothing on purpose,
+   * and only the second should quietly stop counting towards a certificate.
+   */
+  attested?: true;
   blocks: LessonBlock[];
 }
 
@@ -70,6 +77,7 @@ export type PublicGradableBlock = Extract<PublicLessonBlock, { kind: "mcq" | "fi
 export interface PublicLessonBody {
   summary: string;
   xp: number;
+  attested?: true;
   blocks: PublicLessonBlock[];
 }
 
@@ -95,6 +103,7 @@ export function toPublicBlock(block: LessonBlock): PublicLessonBlock {
 export const toPublicBody = (body: LessonBody): PublicLessonBody => ({
   summary: body.summary,
   xp: body.xp,
+  ...(body.attested ? { attested: true as const } : {}),
   blocks: body.blocks.map(toPublicBlock),
 });
 
@@ -107,11 +116,14 @@ export const isQuestion = <B extends { kind: string }>(
 export interface LessonManifestEntry {
   challenge: boolean;
   questions: number;
+  /** Present only when true, to keep the generated file readable. */
+  attested?: true;
 }
 
 export const manifestEntry = (body: LessonBody): LessonManifestEntry => ({
   challenge: body.blocks.some((b) => b.kind === "challenge"),
   questions: body.blocks.filter(isQuestion).length,
+  ...(body.attested ? { attested: true as const } : {}),
 });
 
 /**
@@ -127,8 +139,57 @@ export const isLessonLive = (lessonId: string) => lessonId in lessonManifest;
 /** How many questions a lesson asks — 0 for an unwritten one, which can't be reviewed. */
 export const lessonQuestionCount = (lessonId: string) => lessonManifest[lessonId]?.questions ?? 0;
 
-export const liveLessons = (course: Course): LessonMeta[] =>
-  courseLessons(course).filter((l) => isLessonLive(l.id));
+/**
+ * Whether anything a learner does in this lesson is actually checked. A lesson
+ * marked `attested` is not: the work happens in the learner's own tools and the
+ * platform only has their word for it. That is a fine way to teach, but it is
+ * not evidence, so it earns no certificate — see `pathCompletion`.
+ *
+ * A lesson that asks nothing and declares nothing is an authoring mistake, not
+ * a third category; `tests/lessons.test.ts` fails on it rather than letting it
+ * slip silently out of the certificate denominator.
+ */
+export const isLessonAssessed = (lessonId: string) => {
+  const entry = lessonManifest[lessonId];
+  return Boolean(entry && !entry.attested);
+};
+
+/**
+ * What the learner is actually handed when they open this lesson.
+ *
+ * Read from the manifest, never from `LessonMeta.type`. The declared type is
+ * authored intent and drifts: 131 of the catalog's lessons disagree with their
+ * own body, including every Claude Operator task, which is typed `"challenge"`
+ * and has no code runner at all. A `type` that decided an icon put a wrench on
+ * a lesson with an editor and an editor on a lesson that asks you to go and do
+ * something in your own terminal. `type` still describes the lesson for
+ * analytics; it no longer decides what the reader is promised.
+ */
+export type LessonShape = "unwritten" | "attested" | "challenge" | "questions" | "reading";
+
+export const lessonShape = (lessonId: string): LessonShape => {
+  const entry = lessonManifest[lessonId];
+  if (!entry) return "unwritten";
+  if (entry.attested) return "attested";
+  if (entry.challenge) return "challenge";
+  if (entry.questions > 0) return "questions";
+  return "reading";
+};
+
+/**
+ * Cached per course: the curriculum and the manifest are both static, and the
+ * catalog re-derives this on every keystroke for every course — which now means
+ * walking a 172-lesson course to render one badge.
+ */
+const liveLessonCache = new WeakMap<Course, LessonMeta[]>();
+
+export const liveLessons = (course: Course): LessonMeta[] => {
+  const cached = liveLessonCache.get(course);
+  if (cached) return cached;
+  const live = courseLessons(course).filter((l) => isLessonLive(l.id));
+  liveLessonCache.set(course, live);
+  return live;
+};
 
 export const liveLessonCount = (course: Course) => liveLessons(course).length;
 

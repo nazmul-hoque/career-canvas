@@ -32,6 +32,7 @@ export interface TestResult {
 
 export const CHALLENGE_LANGUAGES = [
   "javascript",
+  "typescript",
   "python",
   "sql",
   "react",
@@ -92,6 +93,11 @@ const JS_TEST_TIMEOUT_MS = 3_000;
  */
 export async function runJavaScript(code: string, tests: TestSpec[]): Promise<RunResult> {
   const started = performance.now();
+  return toRunResult("javascript", tests, await runJavaScriptOutcome(code, tests), started);
+}
+
+/** The JavaScript core, shared with any engine that compiles down to JavaScript. */
+async function runJavaScriptOutcome(code: string, tests: TestSpec[]): Promise<EngineOutcome> {
   const logs: string[] = [];
   const checks = tests
     .map(
@@ -119,14 +125,9 @@ export async function runJavaScript(code: string, tests: TestSpec[]): Promise<Ru
       }));
       results.push({ passed: outcome.ok, detail: outcome.detail ?? null });
     }
-    return toRunResult("javascript", tests, { logs, error: null, results }, started);
+    return { logs, error: null, results };
   } catch (e) {
-    return toRunResult(
-      "javascript",
-      tests,
-      { ...failedOutcome(tests, errorMessage(e, true)), logs },
-      started,
-    );
+    return { ...failedOutcome(tests, errorMessage(e, true)), logs };
   }
 }
 
@@ -263,9 +264,17 @@ type EngineRun = (
 /**
  * The engines that load on first use, so a page without that kind of challenge
  * never downloads its runtime (the JSX compiler, the formula engine…). Each
- * entry only loads; `runCode` handles a failed load the same way for all.
+ * entry only loads and runs; `runCode` handles a failed load, and anything the
+ * engine throws, the same way for all of them.
  */
-const LAZY_ENGINES: Record<"react" | "excel" | "web" | "dom", () => Promise<EngineRun>> = {
+const LAZY_ENGINES: Record<
+  "typescript" | "react" | "excel" | "web" | "dom",
+  () => Promise<EngineRun>
+> = {
+  typescript: async () => {
+    const { compileTypeScript } = await import("./typescript-runtime");
+    return (code, tests) => runJavaScriptOutcome(compileTypeScript(code), tests);
+  },
   react: async () => {
     const { runReactChallenge } = await import("./react-runtime");
     return (code, tests) => runReactChallenge(code, tests);
@@ -306,5 +315,11 @@ export async function runCode(
       started,
     );
   }
-  return toRunResult(language, tests, await run(code, tests, context), started);
+  try {
+    return toRunResult(language, tests, await run(code, tests, context), started);
+  } catch (e) {
+    // Whatever the engine threw — a compile error in the learner's source, a
+    // runtime that fell over — is the learner's result, not a crash.
+    return toRunResult(language, tests, failedOutcome(tests, errorMessage(e, true)), started);
+  }
 }

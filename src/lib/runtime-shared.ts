@@ -139,3 +139,43 @@ export function accessibleName(el: Element, fallbackToText: boolean): string | n
   }
   return collapseWhitespace(el.textContent);
 }
+
+const escapeForRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/**
+ * Learners write ordinary module code, but a challenge has no module loader.
+ * Imports the engine pre-supplies are dropped, any other import is an error
+ * (there is nothing to resolve it against), and `export` keywords are removed
+ * rather than resolved. Stripping the `export default` prefix before deleting
+ * bare `export default X;` lines keeps `export default function …` declarations
+ * intact instead of eating the line they start on.
+ */
+export function stripModuleSyntax(
+  code: string,
+  options: {
+    /** Modules the engine already provides, so importing them is a no-op. */
+    allowImportsFrom?: readonly string[];
+    /** The message a learner sees for an import that cannot be resolved. */
+    importError: (statement: string) => string;
+  },
+): string {
+  let source = code;
+  const allowed = options.allowImportsFrom ?? [];
+  if (allowed.length > 0) {
+    source = source.replace(
+      new RegExp(
+        `^\\s*import\\s[^;]*?\\sfrom\\s+["'](${allowed.map(escapeForRegExp).join("|")})["'];?[ \\t]*$`,
+        "gm",
+      ),
+      "",
+    );
+  }
+
+  const unresolvable = source.match(/^\s*import\s.*$/m);
+  if (unresolvable) throw new Error(options.importError(unresolvable[0].trim()));
+
+  return source
+    .replace(/^(\s*)export\s+default\s+(?=(async\s+)?function|class)/gm, "$1")
+    .replace(/^\s*export\s+default\s+[^;]+;?[ \t]*$/gm, "")
+    .replace(/^(\s*)export\s+/gm, "$1");
+}

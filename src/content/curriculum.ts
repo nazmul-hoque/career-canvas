@@ -1,3 +1,7 @@
+import { claudeCourse } from "./claude-course";
+import { DEFAULT_HOURS_PER_WEEK } from "./gamification";
+import { projectById } from "./projects";
+
 export type SkillLevel = "Beginner" | "Intermediate" | "Advanced";
 
 export interface LessonMeta {
@@ -20,11 +24,11 @@ export interface Course {
   skill: string;
   level: SkillLevel;
   recommended: boolean;
+  unitLabel?: "lessons" | "tasks";
   summary: string;
   description: string;
   skills: string[];
   careers: string[];
-  instructor: { name: string; role: string; initials: string };
   modules: ModuleMeta[];
 }
 
@@ -34,7 +38,6 @@ export interface CareerPath {
   tagline: string;
   overview: string;
   difficulty: SkillLevel;
-  weeks: number;
   skills: string[];
   courseIds: string[];
   projectIds: string[];
@@ -59,6 +62,7 @@ const m = (
 });
 
 export const courses: Course[] = [
+  claudeCourse,
   {
     id: "html-css",
     title: "HTML & CSS Foundations",
@@ -67,31 +71,44 @@ export const courses: Course[] = [
     recommended: true,
     summary: "Structure and style real pages from the very first lesson.",
     description:
-      "Start where every interface starts. You will write semantic markup, build layouts with flexbox and grid, and ship a responsive page that holds up on a phone and a 27-inch monitor.",
-    skills: ["Semantic HTML", "Flexbox", "CSS Grid", "Responsive design", "Accessibility basics"],
+      "Start where every interface starts. Learn one layer at a time, prove it in low-scaffold checkpoints, then ship an accessible responsive page that holds up on a phone and a 27-inch monitor.",
+    skills: [
+      "Semantic HTML",
+      "CSS selectors",
+      "Flexbox",
+      "CSS Grid",
+      "Responsive design",
+      "Accessible interaction",
+    ],
     careers: ["frontend", "fullstack", "uxui"],
-    instructor: { name: "Mara Oyelaran", role: "Design Engineer, ex-Figma", initials: "MO" },
     modules: [
       m(
         "html-basics",
         "Markup that means something",
         "Tags, structure, and why semantics matter.",
         [
-          ["intro", "How a browser reads your page", 10, "practice"],
-          ["tags", "Semantic tags in practice", 12, "practice"],
-          ["forms", "Forms and inputs", 13, "challenge"],
+          ["intro", "How a browser reads your page", 15, "practice"],
+          ["tags", "Semantic tags in practice", 16, "practice"],
+          ["forms", "Forms and inputs", 18, "challenge"],
+          ["checkpoint", "Checkpoint: accessible event page", 25, "challenge"],
         ],
       ),
       m("css-core", "Styling fundamentals", "The cascade, the box model, and modern units.", [
-        ["cascade", "The cascade without the mystery", 12, "challenge"],
-        ["boxmodel", "Box model and spacing", 12, "practice"],
-        ["units", "rem, em, and fluid units", 11, "challenge"],
+        ["selectors", "Write and target CSS rules", 16, "practice"],
+        ["cascade", "The cascade without the mystery", 18, "challenge"],
+        ["boxmodel", "Box model and spacing", 16, "practice"],
+        ["units", "rem, em, and fluid units", 16, "challenge"],
+        ["accessibility", "Focus, contrast and motion", 20, "practice"],
+        ["checkpoint", "Checkpoint: accessible product card", 25, "challenge"],
       ]),
       m("layout", "Layout systems", "Flexbox and grid, side by side.", [
-        ["flexbox", "Flexbox basics", 13, "practice"],
-        ["grid", "Grid vs flex", 13, "challenge"],
-        ["responsive", "Responsive layouts", 14, "challenge"],
-        ["media", "Media queries", 12, "challenge"],
+        ["flexbox", "Flexbox basics", 18, "practice"],
+        ["grid", "Grid vs flex", 18, "challenge"],
+        ["responsive", "Responsive layouts", 18, "challenge"],
+        ["media", "Media queries", 18, "challenge"],
+      ]),
+      m("html-project", "Independent project", "Combine every layer in one real page.", [
+        ["trail-guide", "Capstone: responsive trail guide", 45, "challenge"],
       ]),
     ],
   },
@@ -103,7 +120,7 @@ export const courses: Course[] = [
     recommended: true,
     summary: "Write real logic: values, functions, arrays, objects, and the DOM.",
     description:
-      "The language of the web, taught by writing it. Every concept lands in a code editor with tests, hints and an AI mentor watching your back.",
+      "The language of the web, taught by writing it. Learn each layer in tested exercises, prove it in low-scaffold checkpoints, then build an asynchronous browser interface from a fresh brief.",
     skills: [
       "Variables & types",
       "Functions",
@@ -111,30 +128,39 @@ export const courses: Course[] = [
       "DOM",
       "Debugging",
       "Async basics",
+      "Browser workflow",
     ],
     careers: ["frontend", "fullstack", "ai"],
-    instructor: { name: "Diego Salas", role: "Staff Engineer, ex-Shopify", initials: "DS" },
     modules: [
       m("js-basics", "Values and logic", "The building blocks you will use every day.", [
-        ["values", "Variables, types and truthiness", 11, "practice"],
-        ["functions", "Functions and return values", 12, "practice"],
-        ["conditionals", "Conditionals and guard clauses", 11, "challenge"],
+        ["values", "Variables, types and truthiness", 15, "practice"],
+        ["functions", "Functions and return values", 16, "practice"],
+        ["conditionals", "Conditionals and guard clauses", 16, "challenge"],
+        ["checkpoint", "Checkpoint: checkout calculator", 22, "challenge"],
       ]),
       m("js-data", "Working with data", "Arrays and objects, the workhorses of JS.", [
-        ["arrays", "Arrays and iteration", 13, "practice"],
-        ["objects", "Objects and destructuring", 13, "practice"],
-        ["transform", "map, filter, reduce", 15, "challenge"],
+        ["arrays", "Arrays and iteration", 18, "practice"],
+        ["objects", "Objects and destructuring", 18, "practice"],
+        ["transform", "map, filter, reduce", 20, "challenge"],
+        ["checkpoint", "Checkpoint: order summary", 25, "challenge"],
       ]),
       m("js-debug", "Debugging like a professional", "Read the error, form a theory, test it.", [
-        ["errors", "Reading stack traces", 11, "challenge"],
-        ["fixit", "Debug the cart total", 14, "challenge"],
+        ["errors", "Reading stack traces", 16, "challenge"],
+        ["fixit", "Debug the cart total", 20, "challenge"],
+      ]),
+      m("js-browser", "Inside the browser", "Load scripts deliberately and debug the real page.", [
+        ["run", "Run JavaScript in a browser", 18, "practice"],
       ]),
       m("js-dom", "The DOM", "Make the page respond to people.", [
-        ["select", "Selecting and updating elements", 12, "practice"],
-        ["events", "Events and state", 14, "challenge"],
+        ["select", "Selecting and updating elements", 18, "practice"],
+        ["events", "Events and state", 22, "challenge"],
+        ["checkpoint", "Checkpoint: packing list", 30, "challenge"],
       ]),
       m("js-async", "Asynchronous code", "Promises, async/await and waiting well.", [
-        ["async", "Promises and async/await", 14, "challenge"],
+        ["async", "Promises and async/await", 20, "challenge"],
+      ]),
+      m("js-project", "Independent project", "Combine state, the DOM and asynchronous work.", [
+        ["catalog", "Capstone: product search", 45, "challenge"],
       ]),
     ],
   },
@@ -146,7 +172,7 @@ export const courses: Course[] = [
     recommended: true,
     summary: "Components, state and data fetching, built the way teams actually build.",
     description:
-      "Move from page-level thinking to component thinking. You will build a dashboard, a form-heavy flow and a data view with loading and error states.",
+      "Move from page-level thinking to component thinking. Practise each layer, prove it in low-scaffold checkpoints, then ship an accessible asynchronous support interface from a fresh brief.",
     skills: [
       "Components",
       "Props & state",
@@ -154,24 +180,44 @@ export const courses: Course[] = [
       "Lists & keys",
       "Data fetching",
       "Composition",
+      "Reducers",
+      "Accessibility",
+      "Component testing",
     ],
     careers: ["frontend", "fullstack"],
-    instructor: { name: "Priya Raghunathan", role: "Frontend Lead, ex-Linear", initials: "PR" },
     modules: [
       m("react-core", "Thinking in components", "Split a screen into parts that compose.", [
-        ["first", "Your first component", 12, "practice"],
-        ["props", "Props and composition", 12, "practice"],
-        ["state", "State and re-renders", 15, "challenge"],
+        ["first", "Your first component", 18, "practice"],
+        ["props", "Props and composition", 18, "practice"],
+        ["state", "State and re-renders", 22, "challenge"],
+        ["checkpoint", "Checkpoint: inventory explorer", 30, "challenge"],
       ]),
-      m("react-hooks", "Hooks", "Effects, refs and custom hooks.", [
-        ["effect", "useEffect without the footguns", 14, "challenge"],
-        ["custom", "Writing a custom hook", 14, "challenge"],
+      m("react-hooks", "Hooks", "Effects, custom hooks and explicit state transitions.", [
+        ["effect", "useEffect without the footguns", 22, "challenge"],
+        ["custom", "Writing a custom hook", 22, "challenge"],
+        ["reducer", "State transitions with useReducer", 26, "challenge"],
       ]),
       m("react-data", "Data on screen", "Lists, forms, loading, empty and error states.", [
-        ["lists", "Rendering lists and keys", 12, "practice"],
-        ["forms", "Forms that behave", 15, "challenge"],
-        ["fetch", "Fetching and loading states", 16, "challenge"],
+        ["lists", "Rendering lists and keys", 20, "practice"],
+        ["forms", "Forms that behave", 26, "challenge"],
+        ["fetch", "Fetching and loading states", 26, "challenge"],
+        ["checkpoint", "Checkpoint: order dashboard", 32, "challenge"],
       ]),
+      m(
+        "react-quality",
+        "Interfaces people can trust",
+        "Accessibility and tests as design tools.",
+        [
+          ["accessibility", "Accessible interaction", 22, "practice"],
+          ["testing", "Test behavior, not implementation", 22, "challenge"],
+        ],
+      ),
+      m(
+        "react-project",
+        "Independent project",
+        "Combine components, data and state under pressure.",
+        [["support", "Capstone: support queue", 55, "challenge"]],
+      ),
     ],
   },
   {
@@ -182,19 +228,50 @@ export const courses: Course[] = [
     recommended: false,
     summary: "Types that catch bugs before your users do.",
     description:
-      "Add types to JavaScript you already understand. Interfaces, unions, generics and the handful of patterns that cover 90% of app code.",
-    skills: ["Types & interfaces", "Unions", "Generics", "Narrowing", "Typing React props"],
+      "Turn familiar JavaScript into dependable application code. Model valid states, preserve types through reusable helpers, validate external data and build an independent typed release planner. Includes two checkpoints and a local compiler workflow.",
+    skills: [
+      "Types & interfaces",
+      "Unions",
+      "Generics",
+      "Runtime validation",
+      "Typing React props",
+      "Strict compiler checks",
+    ],
     careers: ["frontend", "fullstack"],
-    instructor: { name: "Diego Salas", role: "Staff Engineer, ex-Shopify", initials: "DS" },
     modules: [
-      m("ts-core", "Types you will actually write", "Annotations, inference and unions.", [
-        ["annotate", "Annotations and inference", 10, "concept"],
-        ["unions", "Unions and narrowing", 12, "challenge"],
+      m("ts-core", "Types you will actually write", "Inference, missing values and valid states.", [
+        ["annotate", "Annotations and inference", 18, "concept"],
+        ["nullable", "Missing values without assertions", 22, "practice"],
+        ["unions", "Unions and narrowing", 24, "challenge"],
+        ["checkpoint", "Checkpoint: shipment decisions", 30, "challenge"],
       ]),
-      m("ts-apps", "Types in an app", "Props, API payloads and generics.", [
-        ["props", "Typing component props", 11, "practice"],
-        ["generics", "Generics without the headache", 14, "challenge"],
+      m(
+        "ts-apps",
+        "Reusable application contracts",
+        "Generics, derived types and component APIs.",
+        [
+          ["generics", "Generics without the headache", 26, "challenge"],
+          ["utilities", "Derive types and safe updates", 24, "practice"],
+          ["props", "Typing component props", 24, "practice"],
+        ],
+      ),
+      m("ts-boundaries", "Data you can trust", "Validate unknown input and model async outcomes.", [
+        ["unknown", "Validate before you trust", 28, "practice"],
+        ["async", "Typed async results", 28, "practice"],
+        ["checkpoint", "Checkpoint: account importer", 35, "challenge"],
       ]),
+      m(
+        "ts-quality",
+        "Compiler and behavior checks",
+        "Use both kinds of evidence before shipping.",
+        [["contracts", "Strict checks and type regression tests", 26, "practice"]],
+      ),
+      m(
+        "ts-project",
+        "Independent project",
+        "Combine validation, state models and typed transformations.",
+        [["release", "Capstone: release planner", 45, "challenge"]],
+      ),
     ],
   },
   {
@@ -203,27 +280,44 @@ export const courses: Course[] = [
     skill: "Python",
     level: "Beginner",
     recommended: true,
-    summary: "From your first print to functions, files and small automations.",
+    summary: "From your first print to functions, local files and a useful automation.",
     description:
-      "Python by writing Python. Short explanations, then immediate practice: loops, collections, functions and a script that does something useful.",
-    skills: ["Syntax", "Collections", "Functions", "Loops", "Files", "Error handling"],
+      "Python by writing Python. Learn one idea, use it immediately, then prove it in low-scaffold checkpoints and a practical file-processing project.",
+    skills: [
+      "Syntax",
+      "Collections",
+      "Functions",
+      "Loops",
+      "Terminal workflow",
+      "Files",
+      "Error handling",
+    ],
     careers: ["python", "data", "ai"],
-    instructor: { name: "Ingrid Solheim", role: "Data Engineer, ex-Spotify", initials: "IS" },
     modules: [
-      m("py-basics", "First steps", "Values, printing and control flow.", [
-        ["hello", "Your first Python program", 8, "concept"],
-        ["types", "Numbers, strings and f-strings", 10, "practice"],
-        ["flow", "if, elif and else", 11, "challenge"],
+      m("py-basics", "First steps", "Values, functions and control flow.", [
+        ["hello", "Your first Python program", 12, "concept"],
+        ["types", "Numbers, strings and f-strings", 15, "practice"],
+        ["functions", "Functions, parameters and return", 14, "practice"],
+        ["flow", "if, elif and else", 15, "challenge"],
+        ["checkpoint", "Checkpoint: fare calculator", 18, "challenge"],
       ]),
-      m("py-collections", "Collections", "Lists, dicts and comprehensions.", [
-        ["lists", "Lists and loops", 12, "practice"],
-        ["dicts", "Dictionaries", 12, "practice"],
-        ["comprehensions", "List comprehensions", 13, "challenge"],
+      m("py-collections", "Collections", "Lists, loops, dictionaries and comprehensions.", [
+        ["lists", "Lists without surprises", 16, "practice"],
+        ["loops", "Loops and accumulators", 18, "practice"],
+        ["dicts", "Dictionaries", 16, "practice"],
+        ["comprehensions", "List comprehensions", 16, "challenge"],
+        ["checkpoint", "Checkpoint: order summary", 22, "challenge"],
+      ]),
+      m("py-tools", "Work on your computer", "Run scripts and work with reliable paths.", [
+        ["local", "Run Python outside this course", 18, "practice"],
       ]),
       m("py-functions", "Functions and structure", "Reusable, testable code.", [
-        ["define", "Defining functions", 11, "practice"],
-        ["errors", "Errors and tracebacks", 10, "concept"],
-        ["automate", "Automate a boring task", 16, "challenge"],
+        ["define", "Designing reliable functions", 18, "practice"],
+        ["errors", "Errors and tracebacks", 16, "concept"],
+        ["automate", "Guided lab: sales report", 30, "challenge"],
+      ]),
+      m("py-project", "Independent project", "Prove you can transfer the patterns.", [
+        ["inventory", "Capstone: inventory report", 35, "challenge"],
       ]),
     ],
   },
@@ -238,7 +332,6 @@ export const courses: Course[] = [
       "SELECT to window functions, run for real against one small shop's orders the whole way through.",
     skills: ["SELECT", "Joins", "Aggregation", "CTEs", "Window functions"],
     careers: ["data", "fullstack", "python"],
-    instructor: { name: "Ingrid Solheim", role: "Data Engineer, ex-Spotify", initials: "IS" },
     modules: [
       m("sql-core", "Querying", "Filter, sort and join rows.", [
         ["select", "SELECT and WHERE", 12, "practice"],
@@ -271,7 +364,6 @@ export const courses: Course[] = [
       "Undoing mistakes",
     ],
     careers: ["frontend", "fullstack", "python", "data"],
-    instructor: { name: "Tomas Beck", role: "Platform Engineer", initials: "TB" },
     modules: [
       m("git-start", "Git from zero", "What version control is, and your first repository.", [
         ["why", "Why version control", 8, "concept"],
@@ -296,7 +388,6 @@ export const courses: Course[] = [
     description: "HTTP, routing, validation, persistence and the security basics that matter.",
     skills: ["HTTP", "Routing", "Validation", "Auth", "Databases"],
     careers: ["fullstack"],
-    instructor: { name: "Tomas Beck", role: "Platform Engineer", initials: "TB" },
     modules: [
       m("node-core", "Server fundamentals", "Requests, responses and routing.", [
         ["http", "How an HTTP request travels", 10, "concept"],
@@ -319,7 +410,6 @@ export const courses: Course[] = [
       "Cleaning, exploring, reasoning about and presenting data with pandas, on one messy export the whole way through.",
     skills: ["Data cleaning", "EDA", "Statistics", "Visualisation", "Dashboards", "Storytelling"],
     careers: ["data"],
-    instructor: { name: "Ingrid Solheim", role: "Data Engineer, ex-Spotify", initials: "IS" },
     modules: [
       m("da-clean", "Clean and explore", "Get the data trustworthy first.", [
         ["clean", "Cleaning real-world data", 14, "challenge"],
@@ -346,7 +436,6 @@ export const courses: Course[] = [
       "The spreadsheet skills hiring managers still test for, with formulas you write and check against real data.",
     skills: ["Formulas", "References", "Conditional sums", "Lookups", "Pivot tables", "Charts"],
     careers: ["data", "product"],
-    instructor: { name: "Nora Whitfield", role: "Analytics Manager", initials: "NW" },
     modules: [
       m("xl-core", "Formulas that hold up", "Formulas, references, conditions and lookups.", [
         ["formulas", "Formulas worth knowing", 12, "practice"],
@@ -367,14 +456,33 @@ export const courses: Course[] = [
     level: "Beginner",
     recommended: false,
     summary: "Design files that engineers can actually build from.",
-    description: "Auto layout, components, variables and handoff.",
+    description:
+      "Learn the parts of Figma a product team argues about: layouts that survive real content, components nobody has to detach, variables that theme a whole file, and a handoff that answers the questions engineers would otherwise ask in Slack.",
     skills: ["Auto layout", "Components", "Variables", "Prototyping", "Handoff"],
     careers: ["uxui", "product"],
-    instructor: { name: "Mara Oyelaran", role: "Design Engineer, ex-Figma", initials: "MO" },
     modules: [
-      m("fig-core", "Build a design system", "Reusable, responsive pieces.", [
-        ["autolayout", "Auto layout that behaves", 12, "practice"],
-        ["components", "Components and variants", 13, "challenge"],
+      m("fig-core", "Layout that survives real content", "Frames, constraints and auto layout.", [
+        ["frames", "Frames, groups and constraints", 16, "practice"],
+        ["autolayout", "Auto layout that behaves", 20, "practice"],
+        ["checkpoint", "Checkpoint: a card that holds any content", 22, "practice"],
+      ]),
+      m(
+        "fig-system",
+        "Build it once, change it everywhere",
+        "Components, properties and variables.",
+        [
+          ["components", "Components and variants", 20, "practice"],
+          ["properties", "Component properties and slots", 18, "practice"],
+          ["variables", "Variables, modes and themes", 20, "practice"],
+        ],
+      ),
+      m("fig-proto", "Prototypes that answer questions", "Test a flow before anyone builds it.", [
+        ["prototype", "Prototype a real flow", 18, "practice"],
+        ["testing", "Test it with five people", 16, "concept"],
+      ]),
+      m("fig-handoff", "Handoff engineers can build from", "The file is a spec, not a picture.", [
+        ["devmode", "Dev Mode, specs and every state", 22, "practice"],
+        ["capstone", "Capstone: hand off a feature", 40, "project"],
       ]),
     ],
   },
@@ -389,14 +497,13 @@ export const courses: Course[] = [
       "From problem framing to usability testing, with a portfolio case study at the end.",
     skills: ["Research", "Flows", "Wireframes", "Usability testing", "Case studies"],
     careers: ["uxui", "product"],
-    instructor: { name: "Mara Oyelaran", role: "Design Engineer, ex-Figma", initials: "MO" },
     modules: [
       m("ux-core", "Understand the problem", "Research without a lab.", [
-        ["interviews", "Interviews that reveal something", 12, "concept"],
-        ["flows", "Mapping user flows", 13, "practice"],
+        ["interviews", "Interviews that reveal something", 18, "concept"],
+        ["flows", "Mapping user flows", 18, "practice"],
       ]),
       m("ux-test", "Test and iterate", "Evidence over opinion.", [
-        ["usability", "Running a usability test", 14, "challenge"],
+        ["usability", "Running a usability test", 20, "practice"],
       ]),
     ],
   },
@@ -406,24 +513,28 @@ export const courses: Course[] = [
     skill: "Generative AI",
     level: "Intermediate",
     recommended: true,
-    summary: "Prompts, retrieval and agents, built into real products.",
+    summary: "Prompts, retrieval and tool calling, with the checks that keep them safe.",
     description:
-      "Work with LLM APIs, ground answers in your own data and ship a chat feature that behaves.",
+      "The engineering around the model call: prompts written as specs, replies you validate before acting, retrieval that grounds answers in your documents, a tool-calling loop with its limits in code, and evals that catch regressions.",
     skills: ["Prompting", "Embeddings", "RAG", "Tool calling", "Evaluation"],
     careers: ["ai", "fullstack", "python"],
-    instructor: { name: "Kenji Aoyama", role: "AI Engineer", initials: "KA" },
     modules: [
+      // Timed against the challenge, not the prose. Each of these six lessons is
+      // ~300 words to read and then a parser, a ranker or an agent loop to write
+      // from an empty function — html-css-weight work that used to carry
+      // sql-weight minutes, so a learner budgeting their evening was told half.
       m("ai-prompt", "Prompting as engineering", "Specs, not incantations.", [
-        ["prompts", "Writing a prompt spec", 12, "practice"],
-        ["structured", "Structured outputs", 13, "challenge"],
+        ["api", "Talking to a model API", 25, "challenge"],
+        ["prompts", "Writing a prompt spec", 20, "practice"],
+        ["structured", "Structured outputs", 22, "challenge"],
       ]),
       m("ai-rag", "Grounding answers", "Embeddings and retrieval.", [
-        ["embeddings", "Embeddings explained", 12, "practice"],
-        ["rag", "Build a retrieval step", 16, "challenge"],
+        ["embeddings", "Embeddings explained", 20, "practice"],
+        ["rag", "Build a retrieval step", 25, "challenge"],
       ]),
       m("ai-ship", "Shipping it", "Tools, agents and evaluation.", [
-        ["tools", "Tool calling and the agent loop", 16, "challenge"],
-        ["evals", "Evaluate before you ship", 14, "challenge"],
+        ["tools", "Tool calling and the agent loop", 28, "challenge"],
+        ["evals", "Evaluate before you ship", 24, "challenge"],
       ]),
     ],
   },
@@ -437,7 +548,6 @@ export const courses: Course[] = [
     description: "Supervised learning end to end, with the maths kept to what you need.",
     skills: ["Features", "Training", "Evaluation", "Overfitting", "Deployment"],
     careers: ["ai", "data"],
-    instructor: { name: "Kenji Aoyama", role: "AI Engineer", initials: "KA" },
     modules: [
       m("ml-core", "Supervised learning", "Fit, evaluate, improve.", [
         ["fit", "Training your first model", 15, "practice"],
@@ -463,14 +573,13 @@ export const courses: Course[] = [
     description: "Write specs people read, prioritise honestly and measure what shipped.",
     skills: ["Discovery", "Specs", "Prioritisation", "Metrics", "Stakeholders"],
     careers: ["product"],
-    instructor: { name: "Nora Whitfield", role: "Analytics Manager", initials: "NW" },
     modules: [
       m("pm-core", "From problem to spec", "Decide what is worth building.", [
-        ["discovery", "Discovery in two weeks", 12, "concept"],
-        ["spec", "Writing a one-page spec", 13, "practice"],
+        ["discovery", "Discovery in two weeks", 18, "concept"],
+        ["spec", "Writing a one-page spec", 18, "practice"],
       ]),
       m("pm-ship", "Ship and measure", "Launch, learn, iterate.", [
-        ["metrics", "Choosing a success metric", 12, "challenge"],
+        ["metrics", "Choosing a success metric", 20, "practice"],
       ]),
     ],
   },
@@ -478,13 +587,24 @@ export const courses: Course[] = [
 
 export const careerPaths: CareerPath[] = [
   {
+    id: "claude-operator",
+    name: "Claude Operator",
+    tagline: "Prompts · Tools · Agents · Autonomy",
+    overview:
+      "Go from asking Claude useful questions to running bounded, observable AI workflows—with permissions, verification and human approval built in.",
+    difficulty: "Beginner",
+    skills: ["Prompting", "Claude Code", "MCP", "Subagents", "Skills", "Safety", "Autonomy"],
+    courseIds: ["claude-operator"],
+    projectIds: [],
+    popular: true,
+  },
+  {
     id: "frontend",
     name: "Frontend Developer",
     tagline: "HTML · CSS · JS · React",
     overview:
       "Build the interfaces people touch. You will move from your first HTML tag to a React app with real data, shipping four portfolio pieces along the way.",
     difficulty: "Beginner",
-    weeks: 24,
     skills: ["HTML", "CSS", "JavaScript", "React", "TypeScript", "Git", "Accessibility"],
     courseIds: ["html-css", "javascript", "react", "typescript", "git"],
     projectIds: ["landing-page", "dashboard-ui", "weather-app", "game-2048"],
@@ -496,7 +616,6 @@ export const careerPaths: CareerPath[] = [
     tagline: "Frontend · APIs · Databases",
     overview: "Own a feature end to end: the screen, the endpoint and the table behind it.",
     difficulty: "Intermediate",
-    weeks: 30,
     skills: ["JavaScript", "React", "Node.js", "SQL", "Auth", "Deployment"],
     courseIds: ["javascript", "react", "node", "sql", "git"],
     projectIds: ["ecommerce-site", "dashboard-ui", "ai-chatbot"],
@@ -504,12 +623,11 @@ export const careerPaths: CareerPath[] = [
   {
     id: "python",
     name: "Python Developer",
-    tagline: "Python · APIs · Automation",
+    tagline: "Python · Automation · Data",
     overview:
       "Learn the language that runs scripts, servers and models — then use it to automate real work.",
     difficulty: "Beginner",
-    weeks: 18,
-    skills: ["Python", "Collections", "APIs", "Automation", "SQL", "Testing"],
+    skills: ["Python", "Collections", "Automation", "SQL", "Testing"],
     courseIds: ["python", "sql", "git", "genai"],
     projectIds: ["weather-app", "data-dashboard", "ai-chatbot"],
     popular: true,
@@ -520,7 +638,6 @@ export const careerPaths: CareerPath[] = [
     tagline: "SQL · Python · Visualisation",
     overview: "Answer business questions with data people trust, and present them clearly.",
     difficulty: "Intermediate",
-    weeks: 20,
     skills: ["SQL", "Excel", "Python", "Statistics", "Dashboards", "Storytelling"],
     courseIds: ["sql", "excel", "python", "data-analytics"],
     projectIds: ["data-dashboard", "dashboard-ui"],
@@ -531,7 +648,6 @@ export const careerPaths: CareerPath[] = [
     tagline: "Research · Figma · Systems",
     overview: "Design interfaces grounded in research and build a case-study portfolio.",
     difficulty: "Beginner",
-    weeks: 18,
     skills: ["Research", "Figma", "Design systems", "Prototyping", "Usability testing"],
     courseIds: ["ux-design", "figma", "html-css"],
     projectIds: ["mobile-app-design", "landing-page"],
@@ -542,9 +658,8 @@ export const careerPaths: CareerPath[] = [
     tagline: "Discovery · Specs · Metrics",
     overview: "Decide what to build, write it down clearly and measure whether it worked.",
     difficulty: "Intermediate",
-    weeks: 16,
-    skills: ["Discovery", "Prioritisation", "Specs", "Analytics", "Stakeholders"],
-    courseIds: ["product", "excel", "ux-design"],
+    skills: ["Discovery", "Prioritisation", "Specs", "Analytics", "Stakeholders", "Figma"],
+    courseIds: ["product", "excel", "ux-design", "figma"],
     projectIds: ["mobile-app-design", "data-dashboard"],
   },
   {
@@ -554,15 +669,19 @@ export const careerPaths: CareerPath[] = [
     overview:
       "Build features on top of language models: prompting, retrieval, tools and evaluation.",
     difficulty: "Intermediate",
-    weeks: 16,
-    skills: ["Python", "Prompting", "Embeddings", "RAG", "Evaluation", "APIs"],
+    skills: ["Python", "Prompting", "Embeddings", "RAG", "Evaluation", "Tool calling"],
     courseIds: ["python", "genai", "ml"],
     projectIds: ["ai-chatbot", "data-dashboard"],
   },
 ];
 
-export const courseById = (id: string) => courses.find((c) => c.id === id);
-export const pathById = (id: string) => careerPaths.find((p) => p.id === id);
+// Indexed once rather than scanned: these run per card on the catalog and per
+// request on the lesson RPCs, over data that never changes after module eval.
+const coursesById = new Map(courses.map((c) => [c.id, c]));
+const pathsById = new Map(careerPaths.map((p) => [p.id, p]));
+
+export const courseById = (id: string) => coursesById.get(id);
+export const pathById = (id: string) => pathsById.get(id);
 
 export const courseLessons = (course: Course): LessonMeta[] =>
   course.modules.flatMap((mod) => mod.lessons);
@@ -582,5 +701,70 @@ export const findLesson = (courseId: string, lessonId: string) => {
 export const pathCourses = (path: CareerPath) =>
   path.courseIds.map(courseById).filter((c): c is Course => Boolean(c));
 
+/**
+ * Every hour a path asks for: its lessons plus the portfolio projects it sets.
+ * The projects are most of it — Frontend is 23 hours of lessons and 40 hours of
+ * building — so a duration that counted only lessons would understate the
+ * commitment by more than half.
+ */
+export function pathHours(path: CareerPath): number {
+  const lessonMinutes = pathCourses(path)
+    .flatMap((course) => course.modules)
+    .flatMap((mod) => mod.lessons)
+    .reduce((sum, lesson) => sum + lesson.minutes, 0);
+  const projectHours = path.projectIds.reduce((sum, id) => sum + (projectById(id)?.hours ?? 0), 0);
+  return lessonMinutes / 60 + projectHours;
+}
+
+/**
+ * How long this path takes at the learner's own stated pace.
+ *
+ * Computed rather than authored: the hardcoded `weeks` this replaced had drifted
+ * to describe no pace at all — Full-stack claimed 30 weeks for 63 hours while
+ * Claude Operator claimed 12 for 37, a spread of seven times between two
+ * numbers shown in the same typeface on the same card. A figure the catalog
+ * can't derive is a figure that goes stale the first time a lesson is added,
+ * and every one of them had.
+ */
+export function pathWeeks(path: CareerPath, hoursPerWeek?: number | null): number {
+  const pace = hoursPerWeek && hoursPerWeek > 0 ? hoursPerWeek : DEFAULT_HOURS_PER_WEEK;
+  return Math.max(1, Math.ceil(pathHours(path) / pace));
+}
+
 export const pathLessonCount = (path: CareerPath) =>
   pathCourses(path).reduce((sum, c) => sum + courseLessonCount(c), 0);
+
+/**
+ * What a course calls the things inside it. One definition, so adding a label
+ * (or renaming one) is a change here rather than a ternary hunt through every
+ * route that prints a count. A path only speaks its courses' vocabulary when
+ * they all agree — a mixed path falls back to lessons.
+ */
+export interface UnitWords {
+  singular: string;
+  plural: string;
+  /** Sentence-initial, as in "Task 3 of 12". */
+  singularTitle: string;
+  /** What the course calls a group of them. */
+  sections: string;
+}
+
+const LESSON_WORDS: UnitWords = {
+  singular: "lesson",
+  plural: "lessons",
+  singularTitle: "Lesson",
+  sections: "modules",
+};
+
+const TASK_WORDS: UnitWords = {
+  singular: "task",
+  plural: "tasks",
+  singularTitle: "Task",
+  sections: "levels",
+};
+
+export const unitWords = (course: Course): UnitWords =>
+  course.unitLabel === "tasks" ? TASK_WORDS : LESSON_WORDS;
+
+export const unitWordsForCourses = (list: Course[]): UnitWords =>
+  list.length > 0 && list.every((c) => c.unitLabel === "tasks") ? TASK_WORDS : LESSON_WORDS;
