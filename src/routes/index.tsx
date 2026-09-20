@@ -99,9 +99,12 @@ function Landing() {
       <AppHeader />
 
       {/* Hero */}
+      {/* min-w-0 on both columns: grid items default to min-width:auto, so the panel's
+          min-content width stretched the shared column and the section's overflow-hidden
+          silently clipped the headline and CTAs on any viewport under 430px. */}
       <section className="relative overflow-hidden">
         <div className="mx-auto grid max-w-[1400px] items-center gap-12 px-4 pb-16 pt-14 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:pb-24 lg:pt-20">
-          <div className="animate-rise">
+          <div className="min-w-0 animate-rise">
             <StatPill tone="brand">
               <Sparkles className="size-3.5" />
               {liveCourses} courses live · {totalLessons} hands-on lessons
@@ -142,7 +145,7 @@ function Landing() {
           </div>
 
           {/* Hero panel — a lesson in progress */}
-          <div className="animate-rise lg:justify-self-end">
+          <div className="min-w-0 animate-rise lg:justify-self-end">
             <div className="ink-surface diagonals relative w-full overflow-hidden rounded-[22px] p-5 shadow-lift">
               <div className="flex items-center justify-between">
                 <span className="rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-white/70">
