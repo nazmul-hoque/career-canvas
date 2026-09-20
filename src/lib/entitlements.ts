@@ -106,6 +106,19 @@ export function planFeatures(plan: PlanId): Entitlements {
   return PLANS[plan] ?? PLANS.free;
 }
 
+// Indexed per course: the curriculum is static, and the course page asks this
+// once per lesson row — a linear scan of the free module made that quadratic.
+const freeLessonIdCache = new WeakMap<Course, Set<string>>();
+
+/** The lessons a free plan can open: the first module of the course. */
+export function freeLessonIds(course: Course): Set<string> {
+  const cached = freeLessonIdCache.get(course);
+  if (cached) return cached;
+  const ids = new Set((course.modules[0]?.lessons ?? []).map((l) => l.id));
+  freeLessonIdCache.set(course, ids);
+  return ids;
+}
+
 /** Free tier sees the first module of every course and nothing beyond it. */
 export function isLessonUnlocked(
   course: Course,
@@ -113,7 +126,7 @@ export function isLessonUnlocked(
   entitlements: Entitlements,
 ): boolean {
   if (entitlements.allModules) return true;
-  return Boolean(course.modules[0]?.lessons.some((l) => l.id === lessonId));
+  return freeLessonIds(course).has(lessonId);
 }
 
 export function trialDaysLeft(trialEndsAt: string | null, now: Date = new Date()): number {

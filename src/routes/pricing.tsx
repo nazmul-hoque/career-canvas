@@ -1,9 +1,19 @@
+import { seoHead } from "@/lib/seo";
+import { QueryError } from "@/components/common/QueryError";
+import { liveLessonCount } from "@/content/lessons";
+import { AuthLink } from "@/components/common/AuthLink";
 import { useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Check, CreditCard, Loader2, Lock, Minus, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { track } from "@/lib/analytics";
-import { startCheckoutFn, startTrialFn, switchToFreeFn } from "@/lib/billing.functions";
+import {
+  billingModeFn,
+  billingPortalFn,
+  startCheckoutFn,
+  startTrialFn,
+  switchToFreeFn,
+} from "@/lib/billing.functions";
 import { TRIAL_DAYS } from "@/lib/entitlements";
 import { useEntitlements } from "@/hooks/useEntitlements";
 import { AppShell } from "@/components/layout/AppShell";
@@ -19,25 +29,33 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useSession } from "@/hooks/useAuth";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useProfile } from "@/hooks/useLearner";
 import { cn } from "@/lib/utils";
+import { courses } from "@/content/curriculum";
 
 export const Route = createFileRoute("/pricing")({
-  head: () => ({
-    meta: [
-      { title: "Pricing — Ascent" },
-      {
-        name: "description",
-        content:
-          "Free, Pro and Lifetime plans. Every course, unlimited practice, the AI mentor, portfolio projects and certificates — monthly or yearly.",
-      },
-      { property: "og:title", content: "Pricing — Ascent" },
-      {
-        property: "og:description",
-        content: "Start free. Upgrade when the AI mentor starts paying for itself.",
-      },
-    ],
+  head: () =>
+    seoHead({
+      path: "/pricing",
+      title: "Ascent Pricing \u2014 Free, Pro & Lifetime Plans",
+      description:
+        "Compare Ascent Free, Pro and Lifetime plans for interactive learning, AI mentor support, portfolio projects and certificates. Start learning for free.",
+    }),
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): {
+    plan?: "pro" | "lifetime";
+    interval?: "monthly" | "yearly";
+    checkout?: "success" | "cancelled";
+  } => ({
+    ...(search["plan"] === "pro" || search["plan"] === "lifetime" ? { plan: search["plan"] } : {}),
+    ...(search["interval"] === "monthly" || search["interval"] === "yearly"
+      ? { interval: search["interval"] }
+      : {}),
+    ...(search["checkout"] === "success" || search["checkout"] === "cancelled"
+      ? { checkout: search["checkout"] }
+      : {}),
   }),
   component: Pricing,
 });
@@ -71,6 +89,7 @@ const plans: Plan[] = [
       "Streaks, XP and levels",
       "Basic progress tracking",
       "Community access",
+      "Public profile with publication controls",
     ],
     missing: ["Mentor beyond 10 messages", "Portfolio projects", "Certificates"],
   },
@@ -83,7 +102,7 @@ const plans: Plan[] = [
     once: null,
     recommended: true,
     features: [
-      "All 15 courses, every module",
+      `All ${courses.length} courses, every module`,
       "Unlimited practice and challenges",
       "AI mentor — 500 messages a month",
       "All 8 portfolio projects with feedback",
@@ -117,26 +136,38 @@ const comparison: {
   pro: string | boolean;
   lifetime: string | boolean;
 }[] = [
-  { label: "Courses", free: "First module", pro: "All 15", lifetime: "All + future" },
+  {
+    label: "Courses",
+    free: "First module",
+    pro: `All ${courses.length}`,
+    lifetime: "All + future",
+  },
   { label: "Practice tasks", free: "10 / month", pro: "Unlimited", lifetime: "Unlimited" },
   { label: "Coding challenges", free: "Limited", pro: "Unlimited", lifetime: "Unlimited" },
   { label: "AI mentor", free: "10 / month", pro: "500 / month", lifetime: "500 / month" },
   { label: "Portfolio projects", free: false, pro: true, lifetime: true },
   { label: "Project feedback", free: false, pro: true, lifetime: true },
   { label: "Certificates", free: false, pro: true, lifetime: true },
-  { label: "Public profile", free: false, pro: true, lifetime: true },
+  { label: "Public profile", free: true, pro: true, lifetime: true },
   { label: "Community", free: true, pro: true, lifetime: true },
   { label: "Leaderboard", free: true, pro: true, lifetime: true },
 ];
 
 function Pricing() {
   const { user } = useSession();
-  const { data: profile } = useProfile();
+  const search = Route.useSearch();
+  const navigate = useNavigate();
+  const billing = useQuery({ queryKey: ["billing-mode"], queryFn: () => billingModeFn() });
+  const demo = billing.data?.provider === "mock";
+  const profileQuery = useProfile();
+  const { data: profile } = profileQuery;
   const qc = useQueryClient();
   const { trialing, trialUsed, trialDaysLeft } = useEntitlements();
   const [busy, setBusy] = useState(false);
-  const [yearly, setYearly] = useState(true);
-  const [checkout, setCheckout] = useState<Plan | null>(null);
+  const [yearly, setYearly] = useState(search.interval !== "monthly");
+  const [checkout, setCheckout] = useState<Plan | null>(() =>
+    search.plan ? (plans.find((p) => p.id === search.plan) ?? null) : null,
+  );
   const [stage, setStage] = useState<"form" | "processing" | "done">("form");
 
   const currentPlan = user ? ((profile?.plan ?? "free") as PlanId) : null;
@@ -151,9 +182,21 @@ function Pricing() {
 
   const refreshProfile = () => qc.invalidateQueries({ queryKey: ["profile", user?.id] });
 
+  async function manageBilling() {
+    setBusy(true);
+    try {
+      const result = await billingPortalFn();
+      window.location.href = result.url;
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Billing could not be opened.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function beginTrial() {
     if (!user) {
-      toast.info("Create an account first", { description: "Takes about twenty seconds." });
+      void navigate({ to: "/auth", search: { mode: "signup", returnTo: "/pricing" } });
       return;
     }
     setBusy(true);
@@ -172,7 +215,17 @@ function Pricing() {
 
   function startCheckout(plan: Plan) {
     if (!user) {
-      toast.info("Create an account first", { description: "Takes about twenty seconds." });
+      void navigate({
+        to: "/auth",
+        search: {
+          mode: "signup",
+          returnTo: `/pricing?plan=${plan.id}&interval=${yearly ? "yearly" : "monthly"}`,
+        },
+      });
+      return;
+    }
+    if (!demo && currentPlan && currentPlan !== "free") {
+      void manageBilling();
       return;
     }
     if (plan.id === "free") {
@@ -193,7 +246,15 @@ function Pricing() {
   }
 
   async function confirmCheckout() {
-    if (!checkout) return;
+    if (!checkout || !billing.data) return;
+    if (!demo && currentPlan && currentPlan !== "free") {
+      await manageBilling();
+      return;
+    }
+    if (!user) {
+      startCheckout(checkout);
+      return;
+    }
     setStage("processing");
     try {
       // With PAYMENTS_PROVIDER=stripe this returns a hosted checkout URL; in
@@ -230,14 +291,40 @@ function Pricing() {
 
   return (
     <AppShell>
+      {billing.isError ? (
+        <QueryError
+          title="Checkout availability could not be loaded"
+          retry={() => billing.refetch()}
+          busy={billing.isFetching}
+        />
+      ) : null}
+      {profileQuery.isError ? (
+        <QueryError
+          title="Your current plan could not be loaded"
+          retry={() => profileQuery.refetch()}
+        />
+      ) : null}
+      {search.checkout === "success" ? (
+        <p role="status" className="mb-5 rounded-xl bg-brand/10 p-4">
+          Payment submitted. Your plan will update after payment confirmation.{" "}
+          <button className="underline" onClick={() => void refreshProfile()}>
+            Refresh plan status
+          </button>
+        </p>
+      ) : null}
+      {search.checkout === "cancelled" ? (
+        <p role="status" className="mb-5 rounded-xl bg-secondary p-4">
+          Checkout cancelled. You can continue on your current plan.
+        </p>
+      ) : null}
       <header className="mx-auto max-w-2xl text-center">
         <p className="eyebrow">Pricing</p>
         <h1 className="mt-1 font-display text-3xl font-bold tracking-tight sm:text-4xl">
           Start free. Upgrade when the mentor starts earning its keep.
         </h1>
         <p className="mt-3 text-chalk">
-          No trial countdown, no card to cancel. The free plan stays useful — it just stops before
-          the parts that cost us money to run.
+          Free has no time limit. An optional Pro trial lasts 14 days, needs no card, and returns to
+          Free automatically.
         </p>
       </header>
 
@@ -257,10 +344,26 @@ function Pricing() {
         </div>
       ) : null}
 
+      <p className="mx-auto mt-4 max-w-2xl text-center text-sm text-chalk">
+        {courses.filter((course) => liveLessonCount(course) > 0).length} courses have lessons
+        available today. Planned lessons are labeled in each curriculum. All prices are USD.
+      </p>
+      {user && !demo && currentPlan !== "free" ? (
+        <div className="mt-4 text-center">
+          <Button variant="outline" onClick={manageBilling} disabled={busy || !billing.data}>
+            Manage billing or cancel
+          </Button>
+          <p className="mt-2 text-xs text-chalk">
+            Manage renewal and cancellation securely in Stripe. Access changes after confirmation
+            from Stripe.
+          </p>
+        </div>
+      ) : null}
       {/* Billing toggle */}
       <div className="mt-8 flex justify-center">
         <div className="inline-flex items-center gap-1 rounded-full bg-card p-1 ring-1 ring-border">
           <button
+            aria-pressed={!yearly}
             onClick={() => setYearly(false)}
             className={cn(
               "rounded-full px-4 py-2 text-sm font-semibold transition-colors",
@@ -270,6 +373,7 @@ function Pricing() {
             Monthly
           </button>
           <button
+            aria-pressed={yearly}
             onClick={() => setYearly(true)}
             className={cn(
               "inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-colors",
@@ -317,7 +421,7 @@ function Pricing() {
               <div className="mt-6">
                 <div className="flex items-baseline gap-1.5">
                   <span className="font-display text-4xl font-bold tracking-tight">
-                    ${price.amount}
+                    ${price.amount} USD
                   </span>
                   <span className="text-sm font-semibold text-chalk">{price.suffix}</span>
                 </div>
@@ -330,13 +434,23 @@ function Pricing() {
                 className="mt-6 w-full"
                 size="lg"
                 variant={plan.recommended ? "default" : "outline"}
-                disabled={isCurrent || busy}
+                disabled={
+                  isCurrent ||
+                  busy ||
+                  !billing.data ||
+                  profileQuery.isLoading ||
+                  profileQuery.isError
+                }
                 onClick={() => startCheckout(plan)}
               >
                 {isCurrent
                   ? "Your current plan"
                   : plan.id === "free"
-                    ? "Switch to Free"
+                    ? user
+                      ? demo
+                        ? "Switch to Free"
+                        : "Manage cancellation"
+                      : "Start free"
                     : `Get ${plan.name}`}
               </Button>
 
@@ -365,7 +479,7 @@ function Pricing() {
             Create a free account first — you can upgrade from inside the app any time.
           </p>
           <Button asChild size="sm">
-            <Link to="/auth">Start free</Link>
+            <AuthLink mode="signup">Start free</AuthLink>
           </Button>
         </div>
       ) : null}
@@ -447,9 +561,9 @@ function Pricing() {
 
       {/* Mock checkout */}
       <Dialog
-        open={Boolean(checkout)}
+        open={Boolean(checkout) && Boolean(user)}
         onOpenChange={(open) => {
-          if (!open) setCheckout(null);
+          if (!open && stage !== "processing") setCheckout(null);
         }}
       >
         <DialogContent>
@@ -479,8 +593,9 @@ function Pricing() {
               <DialogHeader>
                 <DialogTitle>Checkout — {checkout?.name}</DialogTitle>
                 <DialogDescription>
-                  This is a mock checkout. No payment is processed and no card details are stored or
-                  sent anywhere.
+                  {demo
+                    ? "Demo checkout: no payment or card details are required."
+                    : "Continue to secure Stripe checkout to review the final amount and enter payment details. No payment is taken on this screen."}
                 </DialogDescription>
               </DialogHeader>
 
@@ -491,51 +606,29 @@ function Pricing() {
                     {checkout?.once ? " · one-time" : yearly ? " · yearly" : " · monthly"}
                   </span>
                   <span className="font-display text-lg font-bold">
-                    ${checkout?.once ?? (yearly ? checkout?.yearly : checkout?.monthly)}
+                    ${checkout?.once ?? (yearly ? checkout?.yearly : checkout?.monthly)} USD
                   </span>
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <div>
-                  <Label htmlFor="card">Card number</Label>
-                  <div className="relative mt-1.5">
-                    <CreditCard className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-chalk" />
-                    <Input
-                      id="card"
-                      className="pl-9"
-                      placeholder="4242 4242 4242 4242"
-                      disabled={stage === "processing"}
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label htmlFor="exp">Expiry</Label>
-                    <Input
-                      id="exp"
-                      className="mt-1.5"
-                      placeholder="12 / 30"
-                      disabled={stage === "processing"}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="cvc">CVC</Label>
-                    <Input
-                      id="cvc"
-                      className="mt-1.5"
-                      placeholder="123"
-                      disabled={stage === "processing"}
-                    />
-                  </div>
-                </div>
-              </div>
+              <p className="text-sm text-chalk">
+                {checkout?.once
+                  ? "One payment for access while Ascent operates."
+                  : `Pro renews ${yearly ? "yearly" : "monthly"} until cancelled.`}{" "}
+                {demo
+                  ? "This demo changes your account access only."
+                  : "Review any applicable tax and the total on Stripe before paying."}
+              </p>
+              <p className="text-sm text-chalk">
+                Free retains your completed lessons and issued certificates. New Pro lessons and
+                project submissions require paid access or an active trial.
+              </p>
 
               <Button
                 size="lg"
                 className="w-full"
                 onClick={confirmCheckout}
-                disabled={stage === "processing"}
+                disabled={stage === "processing" || !billing.data || billing.isError}
               >
                 {stage === "processing" ? (
                   <>
@@ -543,12 +636,15 @@ function Pricing() {
                   </>
                 ) : (
                   <>
-                    <Lock className="mr-2 size-4" /> Complete demo purchase
+                    <Lock className="mr-2 size-4" />{" "}
+                    {demo ? "Activate demo plan" : "Continue to Stripe"}
                   </>
                 )}
               </Button>
               <p className="text-center text-xs text-chalk">
-                Demo only — type anything you like in the fields above.
+                {demo
+                  ? "Demo only — nothing will be charged."
+                  : "Payment details are entered only on Stripe."}
               </p>
             </>
           )}

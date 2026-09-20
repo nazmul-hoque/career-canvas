@@ -1,17 +1,13 @@
-import { afterAll, describe, expect, test } from "bun:test";
-import { GlobalRegistrator } from "@happy-dom/global-registrator";
+import { describe, expect, test } from "bun:test";
+import { registerHappyDom } from "./happy-dom";
 
 /**
  * The JavaScript and DOM challenge runners. Both run the learner's code and the
  * tests in one async scope; a test that throws reports why.
  */
-GlobalRegistrator.register();
-afterAll(async () => {
-  await new Promise((r) => setTimeout(r, 20));
-  await GlobalRegistrator.unregister();
-});
+registerHappyDom();
 
-const { runJavaScript } = await import("../src/lib/code-runner");
+const { runCode, runJavaScript } = await import("../src/lib/code-runner");
 const { runDomChallenge, previewDocument } = await import("../src/lib/dom-runtime");
 
 describe("javascript runner", () => {
@@ -34,6 +30,37 @@ console.log("hi");`;
   test("a syntax error fails everything with a message", async () => {
     const run = await runJavaScript("function (", [{ name: "x", expression: "true" }]);
     expect(run.error).toContain("SyntaxError");
+    expect(run.passed).toBe(false);
+  });
+});
+
+describe("typescript runner", () => {
+  test("transpiles annotations, interfaces, unions and generics before running tests", async () => {
+    const run = await runCode(
+      "typescript",
+      `interface Named { name: string }
+type Input = Named | string;
+function label(value: Input): string {
+  return typeof value === "string" ? value : value.name;
+}
+function first<T>(items: T[]): T | undefined { return items[0]; }`,
+      [
+        { name: "narrows a union", expression: `label({ name: "Ada" }) === "Ada"` },
+        { name: "keeps a generic value", expression: `first([3, 4]) === 3` },
+      ],
+    );
+
+    expect(run.engine).toBe("typescript");
+    expect(run.error).toBeNull();
+    expect(run.tests.every((test) => test.passed)).toBe(true);
+  });
+
+  test("reports TypeScript syntax errors without crashing", async () => {
+    const run = await runCode("typescript", "const value: = 2", [
+      { name: "never runs", expression: "true" },
+    ]);
+    expect(run.engine).toBe("typescript");
+    expect(run.error).toBeTruthy();
     expect(run.passed).toBe(false);
   });
 });

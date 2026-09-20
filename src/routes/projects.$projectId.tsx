@@ -1,3 +1,6 @@
+import { seoHead, breadcrumbs } from "@/lib/seo";
+import { QueryError } from "@/components/common/QueryError";
+import { AuthLink } from "@/components/common/AuthLink";
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import {
@@ -21,6 +24,7 @@ import { useSession } from "@/hooks/useAuth";
 import { useEntitlements } from "@/hooks/useEntitlements";
 import { toast } from "sonner";
 import {
+  usePublishProject,
   useProjectMilestones,
   useSubmission,
   useSubmitProject,
@@ -43,14 +47,18 @@ export const Route = createFileRoute("/projects/$projectId")({
       };
     }
     const { project } = loaderData;
-    return {
-      meta: [
-        { title: `${project.title} — Ascent` },
-        { name: "description", content: project.brief },
-        { property: "og:title", content: `${project.title} — Ascent` },
-        { property: "og:description", content: project.brief },
+    return seoHead({
+      path: `/projects/${project.id}`,
+      title: `${project.title} — Ascent`,
+      description: project.brief,
+      schema: [
+        breadcrumbs([
+          { name: "Home", path: "/" },
+          { name: "Projects", path: "/projects" },
+          { name: project.title, path: `/projects/${project.id}` },
+        ]),
       ],
-    };
+    });
   },
   notFoundComponent: ProjectMissing,
   errorComponent: ProjectMissing,
@@ -74,14 +82,18 @@ function ProjectMissing() {
 function ProjectDetail() {
   const { project } = Route.useLoaderData();
   const { user } = useSession();
-  const { data: submission, isLoading } = useSubmission(project.id);
+  const submissionQuery = useSubmission(project.id);
+  const { data: submission, isLoading } = submissionQuery;
   const { entitlements, trialUsed } = useEntitlements();
   const submit = useSubmitProject(project.id);
 
   const [repo, setRepo] = useState("");
   const [live, setLive] = useState("");
   const [notes, setNotes] = useState("");
-  const { data: milestones = [] } = useProjectMilestones(project.id);
+  const [summary, setSummary] = useState("");
+  const publish = usePublishProject(project.id);
+  const milestonesQuery = useProjectMilestones(project.id);
+  const { data: milestones = [] } = milestonesQuery;
   const toggleMilestoneMutation = useToggleMilestone(project.id);
 
   useEffect(() => {
@@ -89,6 +101,7 @@ function ProjectDetail() {
     setRepo(submission.repo_url ?? "");
     setLive(submission.live_url ?? "");
     setNotes(submission.notes ?? "");
+    setSummary(submission.public_summary ?? "");
   }, [submission]);
 
   const toggleMilestone = (i: number) => {
@@ -99,10 +112,22 @@ function ProjectDetail() {
     toggleMilestoneMutation.mutate({ index: i, checked: !milestones.includes(i) });
   };
 
-  const canSubmit = Boolean(notes.trim()) && !submit.isPending;
+  const canSubmit = Boolean(notes.trim()) && !submit.isPending && !submissionQuery.isError;
 
   return (
     <AppShell>
+      {submissionQuery.isError ? (
+        <QueryError
+          title="Your submission could not be loaded"
+          retry={() => submissionQuery.refetch()}
+        />
+      ) : null}
+      {milestonesQuery.isError ? (
+        <QueryError
+          title="Your milestones could not be loaded"
+          retry={() => milestonesQuery.refetch()}
+        />
+      ) : null}
       <Link
         to="/projects"
         className="inline-flex items-center gap-1.5 text-sm font-semibold text-chalk hover:text-foreground"
@@ -174,6 +199,8 @@ function ProjectDetail() {
                 return (
                   <li key={m}>
                     <button
+                      disabled={milestonesQuery.isError || milestonesQuery.isLoading}
+                      aria-pressed={checked}
                       onClick={() => toggleMilestone(i)}
                       className={cn(
                         "flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-left text-sm font-semibold transition-colors ring-1",
@@ -200,8 +227,8 @@ function ProjectDetail() {
           <section className="card-surface p-6" id="submit">
             <h2 className="font-display text-xl font-bold">Submit your work</h2>
             <p className="mt-1 text-sm text-chalk">
-              Links are optional. The notes are not — explain your decisions and your mentor reviews
-              those, the same way a reviewer would.
+              Links are optional. The notes are not — explain your decisions to receive automated
+              feedback on your write-up. Your repository and live application are not inspected.
             </p>
 
             {!user ? (
@@ -210,7 +237,7 @@ function ProjectDetail() {
                   Sign in to submit this project and keep the feedback.
                 </p>
                 <Button asChild className="mt-3">
-                  <Link to="/auth">Sign in</Link>
+                  <AuthLink mode="login">Sign in</AuthLink>
                 </Button>
               </div>
             ) : isLoading ? (
@@ -246,6 +273,7 @@ function ProjectDetail() {
                     <Label htmlFor="repo">Repository URL</Label>
                     <Input
                       id="repo"
+                      type="url"
                       value={repo}
                       onChange={(e) => setRepo(e.target.value)}
                       placeholder="https://github.com/you/project"
@@ -256,6 +284,7 @@ function ProjectDetail() {
                     <Label htmlFor="live">Live URL</Label>
                     <Input
                       id="live"
+                      type="url"
                       value={live}
                       onChange={(e) => setLive(e.target.value)}
                       placeholder="https://your-project.vercel.app"
@@ -278,18 +307,72 @@ function ProjectDetail() {
                 </div>
                 <Button type="submit" disabled={!canSubmit}>
                   {submit.isPending
-                    ? "Sending for review…"
+                    ? "Checking your write-up…"
                     : submission
-                      ? "Resubmit for review"
-                      : "Submit for review"}
+                      ? "Update write-up"
+                      : "Submit write-up"}
                 </Button>
               </form>
             )}
 
+            {submission ? (
+              <section className="mt-6 space-y-3 rounded-xl border p-5">
+                <h3 className="font-semibold">
+                  Portfolio publication · {submission.is_published ? "Public" : "Private draft"}
+                </h3>
+                <p className="text-sm text-chalk">
+                  Submitting for feedback stays private. Publishing shares your project links and
+                  case study, not your private notes or automated feedback. Updating a submission
+                  makes it private again until you republish.
+                </p>
+                <Label htmlFor="public-summary">Public case study</Label>
+                <Textarea
+                  id="public-summary"
+                  value={summary}
+                  onChange={(e) => setSummary(e.target.value)}
+                  maxLength={5000}
+                  placeholder="The problem, your approach, the evidence, and the outcome."
+                />
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    disabled={
+                      publish.isPending ||
+                      summary.trim().length < 20 ||
+                      !(submission.repo_url || submission.live_url)
+                    }
+                    onClick={() => publish.mutate({ published: true, summary })}
+                  >
+                    {submission.is_published ? "Update public case study" : "Publish project"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    disabled={publish.isPending}
+                    onClick={() => publish.mutate({ published: false, summary })}
+                  >
+                    {submission.is_published ? "Unpublish" : "Save private case study"}
+                  </Button>
+                  {user ? (
+                    <Button asChild variant="ghost">
+                      <Link
+                        to="/profile/$userId"
+                        params={{ userId: user.id }}
+                        search={{ preview: true }}
+                      >
+                        Preview portfolio
+                      </Link>
+                    </Button>
+                  ) : null}
+                </div>
+                <p className="text-xs text-chalk">
+                  Publishing needs a saved project link and at least 20 characters describing your
+                  work. Save a private case study before previewing it.
+                </p>
+              </section>
+            ) : null}
             {submission?.feedback ? (
               <div className="mt-6 rounded-xl bg-brand/8 p-5 ring-1 ring-brand/20">
                 <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-brand">
-                  <MessageCircle className="size-3.5" /> Mentor review
+                  <MessageCircle className="size-3.5" /> Automated feedback on your write-up
                 </div>
                 <div className="mt-3 space-y-3 text-sm leading-relaxed text-foreground">
                   {submission.feedback.split("\n\n").map((para, i) => (

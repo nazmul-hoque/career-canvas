@@ -1,5 +1,7 @@
+import { InlineText } from "./InlineText";
+import { QueryError } from "@/components/common/QueryError";
 import { useEffect, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Send, Sparkles, Loader2 } from "lucide-react";
 import { suggestedPrompts, type MentorContext, type MentorMessage } from "@/lib/mentor";
 import { mentorReplyFn } from "@/lib/mentor.functions";
@@ -29,13 +31,15 @@ export function MentorPanel({
   ]);
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
+  const [failedQuestion, setFailedQuestion] = useState<string | null>(null);
+  const qc = useQueryClient();
   const [remaining, setRemaining] = useState<number | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const { user } = useSession();
 
   // Conversations persist per lesson, so a learner can come back to how they got
   // unstuck last time.
-  const { data: saved } = useQuery({
+  const history = useQuery({
     queryKey: ["mentor", user?.id, context.lessonId],
     enabled: Boolean(user && context.lessonId),
     queryFn: async (): Promise<MentorMessage[]> => {
@@ -58,6 +62,8 @@ export function MentorPanel({
     },
   });
 
+  const saved = history.data;
+
   // Replay the saved thread once, keeping the local intro at the top.
   useEffect(() => {
     if (!saved?.length) return;
@@ -68,7 +74,7 @@ export function MentorPanel({
     scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: "smooth" });
   }, [messages, thinking]);
 
-  async function send(text: string) {
+  async function send(text: string, retry = false) {
     const trimmed = text.trim();
     if (!trimmed || thinking) return;
     if (!context.courseId || !context.lessonId) return;
@@ -79,7 +85,8 @@ export function MentorPanel({
       content: trimmed,
       at: Date.now(),
     };
-    setMessages((m) => [...m, userMsg]);
+    if (!retry) setMessages((m) => [...m, userMsg]);
+    setFailedQuestion(null);
     setInput("");
     setThinking(true);
     track("mentor_message_sent", {
@@ -104,22 +111,20 @@ export function MentorPanel({
         },
       });
       setRemaining(result.remaining);
+      void qc.invalidateQueries({ queryKey: ["mentor", user?.id, context.lessonId] });
       setMessages((m) => [
         ...m,
         { id: crypto.randomUUID(), role: "mentor", content: result.reply, at: Date.now() },
       ]);
     } catch (error) {
-      // Quota exhausted, misconfigured provider, network — say it in the thread
-      // rather than a toast the learner might miss mid-conversation.
+      setFailedQuestion(trimmed);
       setMessages((m) => [
         ...m,
         {
           id: crypto.randomUUID(),
           role: "mentor",
           content:
-            error instanceof Error
-              ? error.message
-              : "I couldn't reach my brain just then. Try again in a moment.",
+            error instanceof Error ? error.message : "Your message could not be sent. Try again.",
           at: Date.now(),
         },
       ]);
@@ -139,12 +144,26 @@ export function MentorPanel({
           <p className="text-[11px] text-chalk">
             {remaining !== null && remaining <= 5
               ? `${remaining} messages left this month`
-              : "Knows what lesson you're on"}
+              : remaining !== null
+                ? `${remaining} messages left this month`
+                : "Knows what lesson you're on"}
           </p>
         </div>
       </header>
 
-      <div ref={scroller} className="flex-1 space-y-4 overflow-y-auto px-5 py-5">
+      {history.isError ? (
+        <QueryError
+          title="Conversation history could not be loaded"
+          retry={() => history.refetch()}
+        />
+      ) : null}
+      <div
+        role="log"
+        aria-label="Mentor conversation"
+        aria-live="polite"
+        ref={scroller}
+        className="flex-1 space-y-4 overflow-y-auto px-5 py-5"
+      >
         {messages.map((m) => (
           <div
             key={m.id}
@@ -153,7 +172,20 @@ export function MentorPanel({
               m.role === "mentor" ? "bg-secondary text-foreground" : "ml-auto bg-ink text-white",
             )}
           >
-            {m.content}
+            {m.content.split(/(```[\s\S]*?```)/g).map((part, i) =>
+              part.startsWith("```") ? (
+                <pre
+                  key={i}
+                  className="my-2 overflow-x-auto rounded-lg bg-ink p-3 text-xs text-white"
+                >
+                  <code>{part.slice(3, -3).replace(/^[a-zA-Z]+\n/, "")}</code>
+                </pre>
+              ) : (
+                <span key={i} className="whitespace-pre-wrap">
+                  <InlineText text={part} />
+                </span>
+              ),
+            )}
           </div>
         ))}
         {thinking ? (
@@ -164,6 +196,16 @@ export function MentorPanel({
       </div>
 
       <div className="border-t border-border px-4 py-3">
+        {failedQuestion ? (
+          <Button
+            variant="outline"
+            className="mb-3"
+            disabled={thinking}
+            onClick={() => send(failedQuestion, true)}
+          >
+            Retry last message
+          </Button>
+        ) : null}
         <div className="mb-2.5 flex flex-wrap gap-1.5">
           {suggestedPrompts(context).map((p) => (
             <button

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { track } from "@/lib/analytics";
@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { safeReturnTo } from "@/lib/auth-navigation";
+import { useSession } from "@/hooks/useAuth";
 import { Wordmark } from "@/components/layout/AppShell";
 
 export const Route = createFileRoute("/auth")({
@@ -25,6 +27,13 @@ export const Route = createFileRoute("/auth")({
       },
     ],
   }),
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { mode?: Mode; returnTo?: string; complete?: boolean } => ({
+    mode: search["mode"] === "signup" ? "signup" : search["mode"] === "forgot" ? "forgot" : "login",
+    returnTo: safeReturnTo(search["returnTo"]),
+    complete: search["complete"] === true || search["complete"] === "1",
+  }),
   component: AuthPage,
 });
 
@@ -32,7 +41,58 @@ type Mode = "login" | "signup" | "forgot";
 
 function AuthPage() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<Mode>("login");
+  const search = Route.useSearch();
+  const mode = search.mode ?? "login";
+  const returnTo = safeReturnTo(search.returnTo);
+  const { user } = useSession();
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [resendSeconds, setResendSeconds] = useState(0);
+  function setMode(next: Mode) {
+    void navigate({ to: "/auth", search: { mode: next, returnTo }, replace: true });
+  }
+  const callbackUrl = () =>
+    `${window.location.origin}/auth?complete=1&returnTo=${encodeURIComponent(returnTo)}`;
+  async function finishLogin(id: string) {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("onboarded")
+      .eq("id", id)
+      .single();
+    if (error)
+      throw new Error("You're signed in, but we couldn't load your profile. Try continuing again.");
+    if (!data.onboarded) await navigate({ to: "/onboarding", search: { returnTo } });
+    else await navigate({ href: returnTo });
+  }
+  useEffect(() => {
+    if (!search.complete || !user) return;
+    void finishLogin(user.id).catch((error: Error) => setAuthError(error.message));
+    // Keyed on the account, not the objects: `finishLogin` is rebuilt every
+    // render and `user` is a fresh object on each auth refresh, so depending on
+    // either would re-run the redirect on a learner who is already on their way.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search.complete, user?.id]);
+  useEffect(() => {
+    if (resendSeconds <= 0) return;
+    const timer = window.setTimeout(() => setResendSeconds((n) => n - 1), 1000);
+    return () => window.clearTimeout(timer);
+  }, [resendSeconds]);
+  async function resend() {
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email,
+        options: { emailRedirectTo: callbackUrl() },
+      });
+      if (error) throw error;
+      setResendSeconds(60);
+      toast.success("Confirmation email sent");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Couldn't resend the email.");
+    } finally {
+      setBusy(false);
+    }
+  }
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -42,13 +102,14 @@ function AuthPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
+    setAuthError(null);
     try {
       if (mode === "signup") {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: window.location.origin,
+            emailRedirectTo: callbackUrl(),
             data: { display_name: name || email.split("@")[0] },
           },
         });
@@ -56,17 +117,18 @@ function AuthPage() {
         if (!data.session) {
           track("signed_up", { method: "email", verification_required: true });
           setSent("verify");
+          setResendSeconds(60);
           return;
         }
         track("signed_up", { method: "email", verification_required: false });
         toast.success("Welcome to Ascent");
-        navigate({ to: "/onboarding" });
+        navigate({ to: "/onboarding", search: { returnTo } });
       } else if (mode === "login") {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         track("signed_in", { method: "email" });
         toast.success("Welcome back");
-        navigate({ to: "/dashboard" });
+        await finishLogin(data.user.id);
       } else {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: `${window.location.origin}/reset-password`,
@@ -75,7 +137,7 @@ function AuthPage() {
         setSent("reset");
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Something went wrong");
+      setAuthError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setBusy(false);
     }
@@ -87,7 +149,7 @@ function AuthPage() {
     // project's allowed redirect list, or Supabase falls back to the Site URL.
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/dashboard` },
+      options: { redirectTo: callbackUrl() },
     });
     if (error) toast.error("Google sign-in is unavailable right now");
   }
@@ -105,6 +167,24 @@ function AuthPage() {
               ? `We sent a confirmation link to ${email}. Click it to activate your account, then come back here to sign in.`
               : `We sent a password reset link to ${email}. The link opens a page where you can choose a new password.`}
           </p>
+          {sent === "verify" ? (
+            <div className="mt-5 space-y-2">
+              <Button className="w-full" onClick={resend} disabled={busy || resendSeconds > 0}>
+                {resendSeconds > 0 ? `Resend in ${resendSeconds}s` : "Resend confirmation"}
+              </Button>
+              <Button
+                className="w-full"
+                variant="ghost"
+                onClick={() => {
+                  setSent(null);
+                  setMode("signup");
+                  setPassword("");
+                }}
+              >
+                Use a different email
+              </Button>
+            </div>
+          ) : null}
           <Button
             variant="outline"
             className="mt-6 w-full"
@@ -161,6 +241,24 @@ function AuthPage() {
             </>
           ) : null}
 
+          {authError ? (
+            <div role="alert" className="my-4 rounded-lg bg-destructive/10 p-3 text-sm">
+              {authError}
+              {user ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="mt-2"
+                  onClick={() => {
+                    setAuthError(null);
+                    void finishLogin(user.id).catch((e: Error) => setAuthError(e.message));
+                  }}
+                >
+                  Continue to your account
+                </Button>
+              ) : null}
+            </div>
+          ) : null}
           <form onSubmit={submit} className="space-y-4">
             {mode === "signup" ? (
               <div className="space-y-1.5">
@@ -177,6 +275,7 @@ function AuthPage() {
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
+                autoComplete="email"
                 type="email"
                 required
                 value={email}
@@ -200,6 +299,7 @@ function AuthPage() {
                 </div>
                 <Input
                   id="password"
+                  autoComplete={mode === "signup" ? "new-password" : "current-password"}
                   type="password"
                   required
                   minLength={6}

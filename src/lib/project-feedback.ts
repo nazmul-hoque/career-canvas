@@ -19,7 +19,7 @@ export function mockProjectFeedback(projectId: string, notes: string): string {
   const lines: string[] = [];
   lines.push(
     mentioned.length
-      ? `You've covered ${mentioned.length} of the ${req.length} requirements in your write-up — good, that's the part reviewers read first.`
+      ? `Your write-up mentions terms related to ${mentioned.length} of ${req.length} requirements. This is a writing aid, not verification that the requirements are met.`
       : `Start your notes with which requirements you met. Reviewers look for that before they open the repo.`,
   );
   if (missing.length) {
@@ -28,7 +28,7 @@ export function mockProjectFeedback(projectId: string, notes: string): string {
     );
   }
   lines.push(
-    `Two questions before you call it done: what breaks if the data is empty, and what would you change if this had to serve ten times the traffic? Write the answers in your README — that's the paragraph that gets you the interview.`,
+    `Two questions before you call it done: what breaks if the data is empty, and what would you change if this had to serve ten times the traffic? Write the answers in your README — that helps explain your reasoning to a reviewer.`,
   );
   return lines.join("\n\n");
 }

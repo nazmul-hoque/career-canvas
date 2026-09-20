@@ -1,3 +1,5 @@
+import { QueryError } from "@/components/common/QueryError";
+import { AuthLink } from "@/components/common/AuthLink";
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
@@ -66,10 +68,14 @@ function initialsOf(name?: string | null) {
 
 function ProfilePage() {
   const { user, isLoading: sessionLoading } = useSession();
-  const { data: profile, isLoading } = useProfile();
-  const { data: progress = [] } = useProgress();
-  const { data: earned = [] } = useAchievements();
-  const { data: submissions = [] } = useSubmissions();
+  const profileQuery = useProfile();
+  const { data: profile, isLoading } = profileQuery;
+  const progressQuery = useProgress();
+  const { data: progress = [] } = progressQuery;
+  const achievementsQuery = useAchievements();
+  const { data: earned = [] } = achievementsQuery;
+  const submissionsQuery = useSubmissions();
+  const { data: submissions = [] } = submissionsQuery;
   const updateProfile = useUpdateProfile();
   const push = usePushNotifications();
 
@@ -96,6 +102,31 @@ function ProfilePage() {
     );
   }
 
+  const pageQueries = [profileQuery, progressQuery, achievementsQuery, submissionsQuery];
+  const failedQueries = pageQueries.filter((query) => query.isError);
+  if (user && failedQueries.length)
+    return (
+      <AppShell>
+        <QueryError
+          title="We couldn't load your profile"
+          busy={failedQueries.some((q) => q.isFetching)}
+          retry={() => Promise.all(failedQueries.map((q) => q.refetch()))}
+        />
+      </AppShell>
+    );
+  if (user && pageQueries.some((query) => query.isLoading))
+    return (
+      <AppShell>
+        <p role="status">Loading your saved progress…</p>
+      </AppShell>
+    );
+  if (user && !profile)
+    return (
+      <AppShell>
+        <QueryError title="Your profile isn't available yet" retry={() => profileQuery.refetch()} />
+      </AppShell>
+    );
+
   if (!user || !profile) {
     return (
       <AppShell>
@@ -105,7 +136,7 @@ function ProfilePage() {
           description="Your XP, streak, certificates and portfolio all live here once you have an account."
           action={
             <Button asChild className="mt-2">
-              <Link to="/auth">Sign in or start free</Link>
+              <AuthLink mode="signup">Sign in or start free</AuthLink>
             </Button>
           }
         />
@@ -126,12 +157,17 @@ function ProfilePage() {
     return lessons.length > 0 && isCoursePublished(c) && lessons.every((l) => done.has(l.id));
   });
 
-  const certificates = allPathCompletions(done).filter((c) => c.eligible);
+  const certificates = allPathCompletions(done).filter((c) => c.credential === "eligible");
 
   const skills = [...new Set(completedCourses.flatMap((c) => c.skills))];
 
   const myProjects = (
-    submissions as { project_id: string; status: string; live_url: string | null }[]
+    submissions as {
+      project_id: string;
+      status: string;
+      is_published: boolean;
+      live_url: string | null;
+    }[]
   )
     .map((s) => ({ ...s, project: projectById(s.project_id) }))
     .filter((s) => s.project);
@@ -290,6 +326,18 @@ function ProfilePage() {
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[1.5fr_1fr]">
         <div className="space-y-6">
+          <p className="text-sm text-chalk">
+            Your public profile includes your name, bio, learning stats, achievements, and only the
+            projects you publish.{" "}
+            <Link
+              to="/profile/$userId"
+              params={{ userId: user.id }}
+              search={{ preview: true }}
+              className="font-semibold text-brand underline"
+            >
+              Preview your portfolio
+            </Link>
+          </p>
           {/* Portfolio */}
           <section>
             <div className="flex items-center justify-between">
@@ -306,7 +354,7 @@ function ProfilePage() {
                 <EmptyState
                   icon={<FolderGit2 className="size-5" />}
                   title="Nothing shipped yet"
-                  description="Projects you submit show up here, and on the public version of this page."
+                  description="Submitted projects are private until you choose to publish them from the project page."
                   action={
                     <Button asChild size="sm" className="mt-2">
                       <Link to="/projects">Pick a project</Link>
@@ -335,7 +383,7 @@ function ProfilePage() {
                       <div className="font-display font-bold leading-snug">{s.project!.title}</div>
                       <div className="mt-2 flex items-center justify-between">
                         <StatPill tone={s.status === "approved" ? "brand" : "neutral"}>
-                          {s.status}
+                          {s.is_published ? "Public" : "Private draft"}
                         </StatPill>
                         <span className="text-xs text-chalk">{s.project!.difficulty}</span>
                       </div>

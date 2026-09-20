@@ -1,3 +1,4 @@
+import { AuthLink } from "@/components/common/AuthLink";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { Award, Download, Lock, Printer, Share2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
@@ -16,6 +17,7 @@ import {
   formatCertificateDate,
   pathCompletedAt,
   pathCompletion,
+  type CredentialState,
 } from "@/lib/certificates";
 
 export const Route = createFileRoute("/certificates/$pathId")({
@@ -102,7 +104,7 @@ function Certificate() {
           description="Certificates are issued against your completed lessons, so we need to know who you are."
           action={
             <Button asChild className="mt-2">
-              <Link to="/auth">Sign in</Link>
+              <AuthLink mode="login">Sign in</AuthLink>
             </Button>
           }
         />
@@ -111,7 +113,7 @@ function Certificate() {
   }
 
   const done = new Set(progress.map((p) => p.lesson_id));
-  const { completed, total, live, percent, eligible, published } = pathCompletion(path, done);
+  const { completed, total, live, percent, credential } = pathCompletion(path, done);
 
   if (!issuedRecord && !entitlements.certificates) {
     return (
@@ -133,33 +135,33 @@ function Certificate() {
     );
   }
 
-  if (!eligible) {
+  if (credential !== "eligible") {
+    // One heading and one paragraph per state, so the two can never drift into
+    // a title that contradicts the explanation underneath it.
+    const locked: Record<Exclude<CredentialState, "eligible">, { title: string; body: string }> = {
+      "self-directed": {
+        title: "This path doesn't carry a certificate",
+        body: `The ${path.name} path is self-directed — the work happens in your own tools and nothing on it is marked. We'll only put our name to a credential we can actually check, so this path issues none. You're at ${completed} of ${live}, and it still builds your streak and XP.`,
+      },
+      unwritten: {
+        title: "This path is still being written",
+        body: `${live} of the ${total} lessons on the ${path.name} path are live so far. A certificate that says you completed a path we haven't finished writing wouldn't be worth anything, so this stays locked until the roadmap is complete. You're at ${completed} of ${live} live lessons.`,
+      },
+      "in-progress": {
+        title: "Not yet — but close enough to see it",
+        body: `The ${path.name} certificate unlocks when every lesson on the path is complete. You're at ${completed} of ${total}.`,
+      },
+    };
+    const { title, body } = locked[credential];
+
     return (
       <AppShell>
         <div className="card-surface mx-auto max-w-xl p-10 text-center">
           <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-secondary text-chalk">
             <Lock className="size-6" />
           </div>
-          <h1 className="mt-5 font-display text-2xl font-bold">
-            {published
-              ? "Not yet — but close enough to see it"
-              : "This path is still being written"}
-          </h1>
-          <p className="mt-2 text-sm text-chalk">
-            {published ? (
-              <>
-                The {path.name} certificate unlocks when every lesson on the path is complete.
-                You're at {completed} of {total}.
-              </>
-            ) : (
-              <>
-                {live} of the {total} lessons on the {path.name} path are live so far. A certificate
-                that says you completed a path we haven't finished writing wouldn't be worth
-                anything, so this stays locked until the roadmap is complete. You're at {completed}{" "}
-                of {live} live lessons.
-              </>
-            )}
-          </p>
+          <h1 className="mt-5 font-display text-2xl font-bold">{title}</h1>
+          <p className="mt-2 text-sm text-chalk">{body}</p>
           <div className="mx-auto mt-6 h-2 max-w-sm overflow-hidden rounded-full bg-secondary">
             <div
               className="h-full rounded-full bg-brand transition-all duration-700"

@@ -1,7 +1,7 @@
+import { AuthLink } from "@/components/common/AuthLink";
 import { useState, type ReactNode } from "react";
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
-  Bell,
   Flame,
   LayoutDashboard,
   GraduationCap,
@@ -106,6 +106,7 @@ export function AppHeader() {
               <Link
                 key={item.to}
                 to={item.to}
+                aria-current={active ? "page" : undefined}
                 className={cn(
                   "rounded-full px-3.5 py-2 text-sm font-semibold transition-colors",
                   active
@@ -122,6 +123,7 @@ export function AppHeader() {
         <div className="ml-auto flex items-center gap-2">
           <Link
             to="/learn"
+            search={{ focus: true }}
             className="hidden items-center gap-2 rounded-full border border-border bg-card px-3 py-2 text-sm text-chalk transition-colors hover:border-brand/40 hover:text-foreground md:flex"
           >
             <Search className="size-4" />
@@ -134,12 +136,6 @@ export function AppHeader() {
                 <Flame className="size-4" />
                 {profile?.streak_current ?? 0}
               </span>
-              <button
-                className="hidden size-9 place-items-center rounded-full text-chalk transition-colors hover:bg-secondary hover:text-foreground sm:grid"
-                aria-label="Notifications"
-              >
-                <Bell className="size-[18px]" />
-              </button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button aria-label="Account menu">
@@ -174,10 +170,10 @@ export function AppHeader() {
           ) : (
             <div className="flex items-center gap-2">
               <Button asChild variant="ghost" size="sm">
-                <Link to="/auth">Log in</Link>
+                <AuthLink mode="login">Log in</AuthLink>
               </Button>
               <Button asChild size="sm">
-                <Link to="/auth">Start free</Link>
+                <AuthLink mode="signup">Start free</AuthLink>
               </Button>
             </div>
           )}
@@ -185,7 +181,9 @@ export function AppHeader() {
           <button
             className="grid size-9 place-items-center rounded-full text-chalk lg:hidden"
             onClick={() => setOpen((v) => !v)}
-            aria-label="Menu"
+            aria-label={open ? "Close navigation menu" : "Open navigation menu"}
+            aria-expanded={open}
+            aria-controls="mobile-navigation"
           >
             {open ? <X className="size-5" /> : <Menu className="size-5" />}
           </button>
@@ -193,7 +191,7 @@ export function AppHeader() {
       </div>
 
       {open ? (
-        <div className="border-t border-border bg-card px-4 py-3 lg:hidden">
+        <div id="mobile-navigation" className="border-t border-border bg-card px-4 py-3 lg:hidden">
           {nav.map((item) => (
             <Link
               key={item.to}
@@ -222,6 +220,7 @@ export function MobileTabBar() {
             <li key={item.to}>
               <Link
                 to={item.to}
+                aria-current={active ? "page" : undefined}
                 className={cn(
                   "flex flex-col items-center gap-1 py-2.5 text-[10px] font-semibold",
                   active ? "text-brand" : "text-chalk",

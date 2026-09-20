@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "./useAuth";
 import { achievementByKey } from "@/content/gamification";
-import { submitProjectFn } from "@/lib/projects.functions";
+import { publishProjectFn, submitProjectFn } from "@/lib/projects.functions";
 import { track } from "@/lib/analytics";
 
 export interface Submission {
@@ -16,6 +16,8 @@ export interface Submission {
   status: string;
   feedback: string | null;
   created_at: string;
+  is_published: boolean;
+  public_summary: string;
 }
 
 export function useSubmission(projectId: string) {
@@ -124,9 +126,10 @@ export function useSubmitProject(projectId: string) {
     onSuccess: (result) => {
       qc.invalidateQueries({ queryKey: ["submission", user?.id, projectId] });
       qc.invalidateQueries({ queryKey: ["submissions", user?.id] });
+      qc.invalidateQueries({ queryKey: ["public-submissions", user?.id] });
       qc.invalidateQueries({ queryKey: ["achievements", user?.id] });
       toast.success(result.firstTime ? "Project submitted" : "Submission updated", {
-        description: "Your mentor review is below.",
+        description: "Automated feedback on your write-up is below. Code has not been reviewed.",
       });
       if (result.unlockedAchievement) {
         const a = achievementByKey("project-complete");
@@ -135,5 +138,22 @@ export function useSubmitProject(projectId: string) {
     },
     onError: (error) =>
       toast.error(error instanceof Error ? error.message : "We could not save that submission."),
+  });
+}
+
+export function usePublishProject(projectId: string) {
+  const { user } = useSession();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { published: boolean; summary: string }) =>
+      publishProjectFn({ data: { projectId, ...input } }),
+    onSuccess: (result) => {
+      void qc.invalidateQueries({ queryKey: ["submission", user?.id, projectId] });
+      void qc.invalidateQueries({ queryKey: ["submissions", user?.id] });
+      void qc.invalidateQueries({ queryKey: ["public-submissions", user?.id] });
+      toast.success(result.published ? "Project published" : "Project is private");
+    },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "Could not change publication."),
   });
 }

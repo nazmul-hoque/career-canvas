@@ -1,5 +1,5 @@
-import { afterAll, describe, expect, test } from "bun:test";
-import { GlobalRegistrator } from "@happy-dom/global-registrator";
+import { describe, expect, test } from "bun:test";
+import { registerHappyDom } from "./happy-dom";
 
 import { mediaMatches, parseCss, specificity } from "../src/lib/css-cascade";
 
@@ -8,8 +8,7 @@ import { mediaMatches, parseCss, specificity } from "../src/lib/css-cascade";
  * CSS specification (and so every browser) decides; the selector matching
  * itself is the DOM's own `Element.matches`.
  */
-GlobalRegistrator.register();
-afterAll(() => GlobalRegistrator.unregister());
+registerHappyDom();
 
 const { runWebChallenge, parsePage } = await import("../src/lib/web-runtime");
 const { cascadedValue } = await import("../src/lib/css-cascade");

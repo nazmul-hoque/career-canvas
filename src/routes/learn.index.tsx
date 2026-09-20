@@ -1,45 +1,99 @@
-import { useMemo, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { seoHead } from "@/lib/seo";
+import { useEffect, useMemo, useRef } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Search, Clock, SlidersHorizontal } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
-import { courses, courseLessons, careerPaths, type SkillLevel } from "@/content/curriculum";
-import { formatMinutes, liveChallengeCount, liveLessonCount, liveMinutes } from "@/content/lessons";
+import {
+  courses,
+  courseLessons,
+  careerPaths,
+  unitWords,
+  type SkillLevel,
+} from "@/content/curriculum";
+import {
+  formatMinutes,
+  liveChallengeCount,
+  liveLessonCount,
+  liveMinutes,
+  isCoursePublished,
+} from "@/content/lessons";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/common/StatPill";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/learn/")({
-  head: () => ({
-    meta: [
-      { title: "Course catalog — Ascent" },
-      {
-        name: "description",
-        content:
-          "Browse interactive courses in JavaScript, React, Python, SQL, data analytics, UX design and generative AI. Filter by skill, level and career.",
-      },
-      { property: "og:title", content: "Course catalog — Ascent" },
-      {
-        property: "og:description",
-        content:
-          "Interactive, practice-first courses across engineering, data, design and product.",
-      },
-    ],
+  head: () =>
+    seoHead({
+      path: "/learn",
+      title: "Interactive Coding, Data & AI Courses \u2014 Ascent",
+      description:
+        "Browse interactive courses in JavaScript, React, Python, SQL, data analytics, UX design and generative AI. Find courses by skill, level and career.",
+    }),
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): {
+    q?: string;
+    level?: SkillLevel | "All";
+    career?: string;
+    sort?: "recommended" | "written";
+    availability?: "all" | "complete" | "live";
+    duration?: "all" | "short" | "medium" | "long";
+    focus?: boolean;
+  } => ({
+    q: typeof search["q"] === "string" ? search["q"] : "",
+    level: levels.includes(search["level"] as SkillLevel) ? (search["level"] as SkillLevel) : "All",
+    career: careerPaths.some((p) => p.id === search["career"]) ? String(search["career"]) : "all",
+    sort: search["sort"] === "written" ? "written" : "recommended",
+    availability:
+      search["availability"] === "complete"
+        ? "complete"
+        : search["availability"] === "live"
+          ? "live"
+          : "all",
+    duration:
+      search["duration"] === "short"
+        ? "short"
+        : search["duration"] === "medium"
+          ? "medium"
+          : search["duration"] === "long"
+            ? "long"
+            : "all",
+    focus: search["focus"] === true || search["focus"] === "true",
   }),
   component: Catalog,
 });
 
 const levels: (SkillLevel | "All")[] = ["All", "Beginner", "Intermediate", "Advanced"];
 const sorts = [
-  { id: "recommended", label: "Recommended" },
-  { id: "written", label: "Most written" },
+  { id: "recommended", label: "Featured" },
+  { id: "written", label: "Most lessons available" },
 ] as const;
 
 function Catalog() {
-  const [query, setQuery] = useState("");
-  const [level, setLevel] = useState<(typeof levels)[number]>("All");
-  const [career, setCareer] = useState<string>("all");
-  const [sort, setSort] = useState<(typeof sorts)[number]["id"]>("recommended");
+  const search = Route.useSearch();
+  const navigate = useNavigate();
+  const query = search.q ?? "";
+  const level = search.level ?? "All";
+  const career = search.career ?? "all";
+  const sort = search.sort ?? "recommended";
+  const availability = search.availability ?? "all";
+  const duration = search.duration ?? "all";
+  const input = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (search.focus) input.current?.focus();
+  }, [search.focus]);
+  const update = (patch: Partial<typeof search>) =>
+    void navigate({
+      to: "/learn",
+      search: { ...search, ...patch },
+      replace: true,
+      resetScroll: false,
+    });
+  const setQuery = (q: string) => update({ q });
+  const setLevel = (value: typeof level) => update({ level: value });
+  const setCareer = (value: string) => update({ career: value });
+  const setSort = (value: typeof sort) => update({ sort: value });
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -51,7 +105,19 @@ function Catalog() {
         c.skills.some((s) => s.toLowerCase().includes(q));
       const matchesLevel = level === "All" || c.level === level;
       const matchesCareer = career === "all" || c.careers.includes(career);
-      return matchesQuery && matchesLevel && matchesCareer;
+      const live = liveLessonCount(c);
+      const available =
+        availability === "all" || (availability === "complete" ? isCoursePublished(c) : live > 0);
+      const minutes = liveMinutes(c);
+      const matchesDuration =
+        duration === "all" ||
+        (live > 0 &&
+          (duration === "short"
+            ? minutes <= 120
+            : duration === "medium"
+              ? minutes > 120 && minutes <= 600
+              : minutes > 600));
+      return matchesQuery && matchesLevel && matchesCareer && available && matchesDuration;
     });
     list = [...list].sort((a, b) => {
       const written = liveLessonCount(b) - liveLessonCount(a);
@@ -59,14 +125,14 @@ function Catalog() {
       return Number(b.recommended) - Number(a.recommended) || written;
     });
     return list;
-  }, [query, level, career, sort]);
+  }, [query, level, career, sort, availability, duration]);
 
   return (
     <AppShell>
       <header className="max-w-2xl">
         <p className="eyebrow">Catalog</p>
         <h1 className="mt-1 font-display text-3xl font-bold tracking-tight sm:text-4xl">
-          Fifteen courses. Every one of them makes you type.
+          {courses.length} courses. Every one of them makes you do the work.
         </h1>
         <p className="mt-2 text-chalk">
           Each course mixes short explanations with challenges you have to pass. No passive video
@@ -79,6 +145,7 @@ function Catalog() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-chalk" />
             <Input
+              ref={input}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search a skill — React, SQL, Figma…"
@@ -90,6 +157,7 @@ function Catalog() {
             {levels.map((l) => (
               <button
                 key={l}
+                aria-pressed={level === l}
                 onClick={() => setLevel(l)}
                 className={cn(
                   "rounded-full px-3.5 py-2 text-xs font-semibold transition-colors",
@@ -109,6 +177,7 @@ function Catalog() {
             <SlidersHorizontal className="size-3.5" /> Career
           </span>
           <button
+            aria-pressed={career === "all"}
             onClick={() => setCareer("all")}
             className={cn(
               "rounded-full px-3 py-1.5 text-xs font-semibold",
@@ -120,6 +189,7 @@ function Catalog() {
           {careerPaths.map((p) => (
             <button
               key={p.id}
+              aria-pressed={career === p.id}
               onClick={() => setCareer(p.id)}
               className={cn(
                 "rounded-full px-3 py-1.5 text-xs font-semibold",
@@ -133,6 +203,7 @@ function Catalog() {
             {sorts.map((s) => (
               <button
                 key={s.id}
+                aria-pressed={sort === s.id}
                 onClick={() => setSort(s.id)}
                 className={cn(
                   "rounded-full px-3 py-1.5 text-xs font-semibold",
@@ -148,7 +219,38 @@ function Catalog() {
         </div>
       </div>
 
-      <p className="mt-5 text-sm text-chalk">
+      <div className="mt-4 flex flex-wrap gap-4">
+        <label className="text-sm font-semibold">
+          Availability
+          <select
+            className="ml-2 rounded-lg border bg-card p-2"
+            value={availability}
+            onChange={(e) => update({ availability: e.target.value as typeof availability })}
+          >
+            <option value="all">All roadmaps</option>
+            <option value="live">Has live lessons</option>
+            <option value="complete">Fully available</option>
+          </select>
+        </label>
+        <label className="text-sm font-semibold">
+          Available lesson time
+          <select
+            className="ml-2 rounded-lg border bg-card p-2"
+            value={duration}
+            onChange={(e) => update({ duration: e.target.value as typeof duration })}
+          >
+            <option value="all">Any duration</option>
+            <option value="short">Up to 2 hours</option>
+            <option value="medium">2–10 hours</option>
+            <option value="long">Over 10 hours</option>
+          </select>
+        </label>
+      </div>
+      <p className="mt-3 text-sm text-chalk">
+        Featured courses are editorial picks. Free includes the first module; later modules require
+        Pro.
+      </p>
+      <p role="status" className="mt-5 text-sm text-chalk">
         {results.length} course{results.length === 1 ? "" : "s"}
       </p>
 
@@ -162,9 +264,13 @@ function Catalog() {
               <Button
                 variant="outline"
                 onClick={() => {
-                  setQuery("");
-                  setLevel("All");
-                  setCareer("all");
+                  update({
+                    q: "",
+                    level: "All",
+                    career: "all",
+                    availability: "all",
+                    duration: "all",
+                  });
                 }}
               >
                 Clear filters
@@ -187,10 +293,18 @@ function Catalog() {
                 </span>
                 {c.recommended ? (
                   <span className="rounded-full bg-brand/10 px-2.5 py-1 text-[11px] font-bold text-brand">
-                    Recommended
+                    Featured
                   </span>
                 ) : null}
               </div>
+              <p className="mt-3 text-xs font-semibold text-chalk">
+                {isCoursePublished(c)
+                  ? "Fully available"
+                  : liveLessonCount(c) > 0
+                    ? "Partially available"
+                    : "Coming soon"}{" "}
+                · Free first module
+              </p>
               <h2 className="mt-4 font-display text-lg font-bold group-hover:text-brand">
                 {c.title}
               </h2>
@@ -202,7 +316,7 @@ function Catalog() {
                   </span>
                 ) : null}
                 <span>
-                  {liveLessonCount(c)} of {courseLessons(c).length} lessons live
+                  {liveLessonCount(c)} of {courseLessons(c).length} {unitWords(c).plural} live
                 </span>
                 {liveChallengeCount(c) ? <span>{liveChallengeCount(c)} challenges</span> : null}
               </div>

@@ -106,6 +106,61 @@ export function useCreatePost() {
   });
 }
 
+export function useManagePost(postId: string) {
+  const { user } = useSession();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (
+      input:
+        | { action: "edit"; title: string; body: string }
+        | { action: "delete" }
+        | { action: "report"; reason: string },
+    ) => {
+      if (!user) throw new Error("Sign in to manage discussions.");
+      if (input.action === "report") {
+        const reason = input.reason.trim();
+        if (reason.length < 10 || reason.length > 2000)
+          throw new Error("Describe the issue in 10–2000 characters.");
+        const { error } = await supabase
+          .from("community_reports")
+          .insert({ post_id: postId, reporter_id: user.id, reason });
+        if (error && error.code !== "23505")
+          throw new Error("Your report could not be saved. Try again.");
+        return input.action;
+      }
+      if (
+        input.action === "edit" &&
+        (!input.title.trim() ||
+          !input.body.trim() ||
+          input.title.length > 200 ||
+          input.body.length > 10000)
+      )
+        throw new Error("Add a title (up to 200 characters) and post (up to 10,000 characters).");
+      const query =
+        input.action === "delete"
+          ? supabase.from("community_posts").delete()
+          : supabase
+              .from("community_posts")
+              .update({ title: input.title.trim(), body: input.body.trim() });
+      const { data, error } = await query.eq("id", postId).eq("user_id", user.id).select("id");
+      if (error || !data?.length)
+        throw new Error("This post could not be changed. It may have been removed.");
+      return input.action;
+    },
+    onSuccess: (action) => {
+      void qc.invalidateQueries({ queryKey: ["community", "posts"] });
+      toast.success(
+        action === "report"
+          ? "Report recorded for moderation"
+          : action === "delete"
+            ? "Post deleted"
+            : "Post updated",
+      );
+    },
+    onError: (error) => toast.error(error.message),
+  });
+}
+
 export function useAddComment(postId: string) {
   const { user } = useSession();
   const qc = useQueryClient();

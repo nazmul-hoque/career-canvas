@@ -11,10 +11,35 @@ import { TRIAL_DAYS, type PlanId } from "@/lib/entitlements";
  * what someone paid for cannot be writable by the person who benefits.
  */
 
-const checkoutSchema = z.object({
-  plan: z.enum(["pro", "lifetime"]),
-  interval: z.enum(["monthly", "yearly", "once"]),
+const checkoutSchema = z
+  .object({
+    plan: z.enum(["pro", "lifetime"]),
+    interval: z.enum(["monthly", "yearly", "once"]),
+  })
+  .refine(
+    (input) => (input.plan === "lifetime") === (input.interval === "once"),
+    "Choose a valid billing interval.",
+  );
+
+export const billingModeFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { paymentsProvider } = await import("@/lib/payments.server");
+  return { provider: paymentsProvider(), currency: "USD" as const };
 });
+
+export const billingPortalFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { createBillingPortal, paymentsProvider } = await import("@/lib/payments.server");
+    if (paymentsProvider() !== "stripe")
+      throw new Error("Demo plans do not have recurring payments.");
+    const email = (context.claims as { email?: string }).email;
+    if (!email) throw new Error("Sign in again to manage billing.");
+    return createBillingPortal({
+      userId: context.userId,
+      email,
+      origin: new URL(getRequest().url).origin,
+    });
+  });
 
 export type CheckoutResult =
   /** Stripe: send the browser to `url`. */
@@ -40,6 +65,15 @@ export const startCheckoutFn = createServerFn({ method: "POST" })
     }
 
     const { createCheckoutSession } = await import("@/lib/payments.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: profile, error } = await supabaseAdmin
+      .from("profiles")
+      .select("plan")
+      .eq("id", userId)
+      .single();
+    if (error) throw new Error("Your current plan could not be checked. Try again.");
+    if (profile.plan !== "free")
+      throw new Error("Manage your existing billing before starting another purchase.");
     const request = getRequest();
     const origin = request ? new URL(request.url).origin : "";
     const email = (context.claims as { email?: string } | undefined)?.email;
@@ -58,6 +92,12 @@ export const startCheckoutFn = createServerFn({ method: "POST" })
 export const switchToFreeFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<{ plan: PlanId }> => {
+    const { paymentsProvider } = await import("@/lib/payments.server");
+    if (paymentsProvider() !== "mock") {
+      throw new Error(
+        "Manage your subscription through billing. Changing access here would not cancel your payments.",
+      );
+    }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
       .from("profiles")

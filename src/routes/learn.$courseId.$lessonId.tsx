@@ -1,3 +1,11 @@
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  SheetDescription,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { QueryError } from "@/components/common/QueryError";
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import {
@@ -16,7 +24,13 @@ import { AppShell } from "@/components/layout/AppShell";
 import { MentorPanel } from "@/components/learn/MentorPanel";
 import { InlineText } from "@/components/learn/InlineText";
 import { CodeChallenge } from "@/components/learn/CodeChallenge";
-import { courseById, courseLessons, type Course, type LessonMeta } from "@/content/curriculum";
+import {
+  courseById,
+  courseLessons,
+  unitWords,
+  type Course,
+  type LessonMeta,
+} from "@/content/curriculum";
 import {
   isQuestion,
   isLessonLive,
@@ -35,6 +49,7 @@ import { track } from "@/lib/analytics";
 import { isLessonUnlocked } from "@/lib/entitlements";
 import { useEntitlements } from "@/hooks/useEntitlements";
 import { cn } from "@/lib/utils";
+import { useLessonDraft } from "@/hooks/useLessonDraft";
 
 export const Route = createFileRoute("/learn/$courseId/$lessonId")({
   loader: async ({ params, context }) => {
@@ -71,7 +86,11 @@ export const Route = createFileRoute("/learn/$courseId/$lessonId")({
     };
   },
   notFoundComponent: LessonMissing,
-  errorComponent: LessonMissing,
+  errorComponent: ({ reset }) => (
+    <AppShell>
+      <QueryError title="The lesson could not be loaded" retry={reset} />
+    </AppShell>
+  ),
   component: LessonRoute,
 });
 
@@ -91,13 +110,27 @@ function LessonMissing() {
 
 function LessonRoute() {
   const { course, lesson, body } = Route.useLoaderData();
+  const { user, isLoading: sessionLoading } = useSession();
   const { entitlements, trialUsed } = useEntitlements();
 
   if (!body) return <LessonComingSoon course={course} lesson={lesson} />;
   if (!isLessonUnlocked(course, lesson.id, entitlements)) {
     return <LessonLocked course={course} lesson={lesson} trialUsed={trialUsed} />;
   }
-  return <LessonWorkspace course={course} lesson={lesson} body={body} />;
+  if (sessionLoading)
+    return (
+      <AppShell>
+        <p role="status">Loading your workspace…</p>
+      </AppShell>
+    );
+  return (
+    <LessonWorkspace
+      key={`${user?.id ?? "guest"}:${lesson.id}`}
+      course={course}
+      lesson={lesson}
+      body={body}
+    />
+  );
 }
 
 /** Written, but beyond the first module — Free stops here. */
@@ -155,7 +188,8 @@ function LessonLocked({
  * XP and cannot be completed — saying so plainly beats generating filler.
  */
 function LessonComingSoon({ course, lesson }: { course: Course; lesson: LessonMeta }) {
-  const { data: progress = [] } = useProgress();
+  const progressQuery = useProgress();
+  const { data: progress = [] } = progressQuery;
 
   // Demand signal: which unwritten lessons people actually try to open decides
   // what gets written next.
@@ -222,7 +256,8 @@ function LessonWorkspace({
 }) {
   const navigate = useNavigate();
   const { user } = useSession();
-  const { data: progress = [] } = useProgress();
+  const progressQuery = useProgress();
+  const { data: progress = [] } = progressQuery;
   const complete = useCompleteLesson();
 
   const lessons = courseLessons(course);
@@ -232,17 +267,42 @@ function LessonWorkspace({
   // Skip past anything unwritten — sending someone to a "coming soon" screen as
   // their reward for finishing a lesson is a dead end.
   const next = nextLiveLesson(course, new Set([...done, lesson.id]));
+  const words = unitWords(course);
 
   const challenge = body.blocks.find((b) => b.kind === "challenge");
-  const [code, setCode] = useState(challenge?.kind === "challenge" ? challenge.starter : "");
+  const {
+    code,
+    setCode: saveCode,
+    answers,
+    setAnswers,
+    ready: draftReady,
+    status: draftStatus,
+  } = useLessonDraft(
+    user?.id,
+    course.id,
+    lesson.id,
+    challenge?.kind === "challenge" ? challenge.starter : "",
+  );
+  function setCode(value: string) {
+    saveCode(value);
+    setSolved(false);
+  }
   const [lastRun, setLastRun] = useState<RunResult | null>(null);
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [solved, setSolved] = useState(false);
-  const [answers, setAnswers] = useState<Record<string, number | string>>({});
   // Only the server knows the answers, so a question is done when it said so.
   const [results, setResults] = useState<Record<string, CheckAnswerResult>>({});
   const [checking, setChecking] = useState<string | null>(null);
   const [mentorOpen, setMentorOpen] = useState(false);
+  const [outlineOpen, setOutlineOpen] = useState(false);
+  const [wide, setWide] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia("(min-width: 1280px)");
+    const update = () => setWide(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
 
   useEffect(() => {
     track("lesson_started", {
@@ -259,7 +319,7 @@ function LessonWorkspace({
 
   function answer(blockId: string, value: number | string) {
     if (results[blockId]?.correct) return;
-    setAnswers((a) => ({ ...a, [blockId]: value }));
+    setAnswers({ ...answers, [blockId]: value });
     // A new attempt clears the old verdict, so "Not quite" doesn't linger.
     setResults(({ [blockId]: _stale, ...rest }) => rest);
   }
@@ -286,16 +346,21 @@ function LessonWorkspace({
   // checked. It used to wait for every question's own Check button, and a
   // selected-but-unchecked answer left the button disabled with no hint why.
   const canFinish = unanswered === 0 && wrong === 0 && (!challenge || solved);
+  // Declared by the lesson, not inferred from its emptiness — see LessonBody.
+  const selfAttested = body.attested === true;
   const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
-  const status = isDone
-    ? "You've already completed this lesson — revisit it any time."
-    : unanswered > 0
-      ? `${plural(unanswered, "question still needs", "questions still need")} an answer.`
-      : wrong > 0
-        ? `${plural(wrong, "answer isn't", "answers aren't")} right yet. Have another look.`
-        : challenge && !solved
-          ? "Pass the challenge to finish."
-          : "Everything's answered. Complete checks it and banks the XP.";
+  const status = (() => {
+    if (isDone) return `You've already completed this ${words.singular} — revisit it any time.`;
+    // Second, not last: a self-attested lesson has no questions and no
+    // challenge, so every test below it is necessarily false anyway.
+    if (selfAttested) return "Nothing here is marked for you — mark it done once you've done it.";
+    if (unanswered > 0)
+      return `${plural(unanswered, "question still needs", "questions still need")} an answer.`;
+    if (wrong > 0)
+      return `${plural(wrong, "answer isn't", "answers aren't")} right yet. Have another look.`;
+    if (challenge && !solved) return "Pass the challenge to finish.";
+    return "Everything's answered. Complete checks it and banks the XP.";
+  })();
 
   const mentorContext = useMemo(
     () => ({
@@ -374,146 +439,137 @@ function LessonWorkspace({
     }
   }
 
+  if (user && progressQuery.isError)
+    return (
+      <AppShell>
+        <QueryError
+          title="Your saved progress could not be loaded"
+          retry={() => progressQuery.refetch()}
+        />
+      </AppShell>
+    );
+  if (user && progressQuery.isLoading)
+    return (
+      <AppShell>
+        <p role="status">Loading saved progress…</p>
+      </AppShell>
+    );
+
   return (
     <AppShell>
-      <div className="grid gap-6 xl:grid-cols-[250px_1fr_340px]">
-        {/* Roadmap */}
-        <aside className="card-surface hidden max-h-[calc(100vh-7rem)] overflow-y-auto p-5 xl:sticky xl:top-24 xl:block">
-          <Link
-            to="/courses/$courseId"
-            params={{ courseId: course.id }}
-            className="eyebrow flex items-center gap-1.5"
-          >
-            <ArrowLeft className="size-3" /> {course.title}
-          </Link>
-          <div className="mt-5 space-y-5">
-            {course.modules.map((mod) => (
-              <div key={mod.id}>
-                <p className="text-[11px] font-bold uppercase tracking-wider text-chalk">
-                  {mod.title}
-                </p>
-                <ul className="mt-2 space-y-0.5">
-                  {mod.lessons.map((l) => {
-                    const active = l.id === lesson.id;
-                    if (!isLessonLive(l.id)) {
-                      return (
-                        <li
-                          key={l.id}
-                          className="flex items-start gap-2 rounded-lg px-2.5 py-2 text-sm text-chalk/60"
-                          title="Not written yet"
-                        >
-                          <Lock className="mt-0.5 size-4 shrink-0 opacity-40" />
-                          <span className="leading-snug">{l.title}</span>
-                        </li>
-                      );
-                    }
-                    return (
-                      <li key={l.id}>
-                        <Link
-                          to="/learn/$courseId/$lessonId"
-                          params={{ courseId: course.id, lessonId: l.id }}
-                          className={cn(
-                            "flex items-start gap-2 rounded-lg px-2.5 py-2 text-sm transition-colors",
-                            active
-                              ? "bg-brand/10 font-semibold text-brand"
-                              : "text-chalk hover:bg-secondary",
-                          )}
-                        >
-                          {done.has(l.id) ? (
-                            <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-brand" />
-                          ) : (
-                            <Circle className="mt-0.5 size-4 shrink-0 opacity-40" />
-                          )}
-                          <span className="leading-snug">{l.title}</span>
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </aside>
-
-        {/* Lesson */}
-        <article className="min-w-0 space-y-6">
-          <header className="card-surface p-6 sm:p-8">
-            <p className="eyebrow">
-              Lesson {index + 1} of {lessons.length} · {lesson.minutes} min · {body.xp} XP
-            </p>
-            <h1 className="mt-2 font-display text-2xl font-bold tracking-tight sm:text-4xl">
-              {lesson.title}
-            </h1>
-            <p className="mt-2 text-chalk">{body.summary}</p>
-          </header>
-
-          <div className="card-surface space-y-6 p-6 sm:p-8">
-            {body.blocks.map((block, i) => (
-              <Block
-                key={i}
-                block={block}
-                answers={answers}
-                results={results}
-                checking={checking}
-                onAnswer={answer}
-                onCheck={check}
-                code={code}
-                setCode={setCode}
-                solved={solved}
-                onSolved={() => {
-                  setSolved(true);
-                  toast.success("Challenge solved");
-                }}
-                onResult={(result) => {
-                  setLastRun(result);
-                  // Counts toward the mentor's three-strikes rule: after three
-                  // failed runs it stops withholding the solution.
-                  if (!result.passed) setFailedAttempts((n) => n + 1);
-                }}
-              />
-            ))}
-          </div>
-
-          <div className="card-surface flex flex-wrap items-center justify-between gap-3 p-5">
-            <p className="text-sm text-chalk">{status}</p>
-            <Button
-              onClick={finish}
-              disabled={(!isDone && !canFinish) || complete.isPending || checking !== null}
-              size="lg"
-            >
-              {isDone ? "Next lesson" : `Complete · +${body.xp} XP`}
-              <ArrowRight className="size-4" />
-            </Button>
-          </div>
-        </article>
-
-        {/* Mentor */}
-        <div className="hidden xl:sticky xl:top-24 xl:block xl:h-[calc(100vh-7rem)]">
-          <MentorPanel context={mentorContext} />
-        </div>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 xl:hidden">
+        <Link
+          to="/courses/$courseId"
+          params={{ courseId: course.id }}
+          className="text-sm font-semibold text-brand"
+        >
+          {course.title}
+        </Link>
+        <Sheet open={outlineOpen} onOpenChange={setOutlineOpen}>
+          <SheetTrigger asChild>
+            <Button variant="outline">Course outline</Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="overflow-y-auto">
+            <SheetTitle>Course outline</SheetTitle>
+            <SheetDescription className="mb-5">
+              Choose a lesson. Your draft stays on this device.
+            </SheetDescription>
+            <LessonOutline
+              course={course}
+              lessonId={lesson.id}
+              done={done}
+              onNavigate={() => setOutlineOpen(false)}
+            />
+          </SheetContent>
+        </Sheet>
       </div>
+      <p role="status" className="mb-3 text-xs text-chalk">
+        {draftStatus}
+      </p>
+      <fieldset disabled={!draftReady} className="min-w-0">
+        <div className="grid gap-6 xl:grid-cols-[250px_1fr_340px]">
+          {/* Roadmap */}
+          <aside className="card-surface hidden max-h-[calc(100vh-7rem)] overflow-y-auto p-5 xl:sticky xl:top-24 xl:block">
+            <LessonOutline course={course} lessonId={lesson.id} done={done} />
+          </aside>
 
-      {/* Mobile mentor */}
-      <button
-        onClick={() => {
-          track("mentor_opened", { lesson: lesson.title, surface: "mobile" });
-          setMentorOpen(true);
-        }}
-        className="fixed bottom-24 right-4 z-40 flex items-center gap-2 rounded-full bg-ink px-4 py-3 text-sm font-semibold text-white shadow-lg xl:hidden"
-      >
-        <Sparkles className="size-4" /> Mentor
-      </button>
-      {mentorOpen ? (
-        <div className="fixed inset-0 z-50 flex flex-col bg-background p-3 xl:hidden">
-          <button
-            onClick={() => setMentorOpen(false)}
-            className="mb-2 self-end rounded-full bg-secondary p-2"
-            aria-label="Close mentor"
-          >
-            <X className="size-4" />
-          </button>
-          <MentorPanel context={mentorContext} className="flex-1" />
+          {/* Lesson */}
+          <article className="min-w-0 space-y-6">
+            <header className="card-surface p-6 sm:p-8">
+              <p className="eyebrow">
+                {words.singularTitle} {index + 1} of {lessons.length} · {lesson.minutes} min ·{" "}
+                {body.xp} XP
+              </p>
+              <h1 className="mt-2 font-display text-2xl font-bold tracking-tight sm:text-4xl">
+                {lesson.title}
+              </h1>
+              <p className="mt-2 text-chalk">{body.summary}</p>
+            </header>
+
+            <div className="card-surface space-y-6 p-6 sm:p-8">
+              {body.blocks.map((block, i) => (
+                <Block
+                  key={i}
+                  block={block}
+                  answers={answers}
+                  results={results}
+                  checking={checking}
+                  onAnswer={answer}
+                  onCheck={check}
+                  code={code}
+                  setCode={setCode}
+                  solved={solved}
+                  onSolved={() => {
+                    setSolved(true);
+                    toast.success("Challenge solved");
+                  }}
+                  onResult={(result) => {
+                    setLastRun(result);
+                    // Counts toward the mentor's three-strikes rule: after three
+                    // failed runs it stops withholding the solution.
+                    if (!result.passed) setFailedAttempts((n) => n + 1);
+                  }}
+                />
+              ))}
+            </div>
+
+            <div className="card-surface flex flex-wrap items-center justify-between gap-3 p-5">
+              <p className="text-sm text-chalk">{status}</p>
+              <Button
+                onClick={finish}
+                disabled={(!isDone && !canFinish) || complete.isPending || checking !== null}
+                size="lg"
+              >
+                {isDone ? "Next lesson" : `Complete · +${body.xp} XP`}
+                <ArrowRight className="size-4" />
+              </Button>
+            </div>
+          </article>
+
+          {/* Mentor */}
+          <div className="hidden xl:sticky xl:top-24 xl:block xl:h-[calc(100vh-7rem)]">
+            {wide ? <MentorPanel context={mentorContext} /> : null}
+          </div>
         </div>
+      </fieldset>
+      {!wide ? (
+        <Sheet open={mentorOpen} onOpenChange={setMentorOpen}>
+          <SheetTrigger asChild>
+            <button
+              onClick={() => track("mentor_opened", { lesson: lesson.title, surface: "mobile" })}
+              className="fixed bottom-24 right-4 z-40 flex items-center gap-2 rounded-full bg-ink px-4 py-3 text-sm font-semibold text-white shadow-lg"
+            >
+              <Sparkles className="size-4" /> Mentor
+            </button>
+          </SheetTrigger>
+          <SheetContent className="flex h-dvh w-full flex-col p-3 pt-12 sm:max-w-lg">
+            <SheetTitle className="sr-only">Lesson mentor</SheetTitle>
+            <SheetDescription className="sr-only">
+              Ask about this lesson. Press Escape to return to your work.
+            </SheetDescription>
+            <MentorPanel context={mentorContext} className="min-h-0 flex-1" />
+          </SheetContent>
+        </Sheet>
       ) : null}
     </AppShell>
   );
@@ -695,3 +751,74 @@ function Block({
 }
 
 void MessageSquare;
+
+function LessonOutline({
+  course,
+  lessonId,
+  done,
+  onNavigate,
+}: {
+  course: Course;
+  lessonId: string;
+  done: Set<string>;
+  onNavigate?: () => void;
+}) {
+  return (
+    <nav aria-label="Course lessons">
+      <Link
+        to="/courses/$courseId"
+        params={{ courseId: course.id }}
+        className="eyebrow flex items-center gap-1.5"
+      >
+        <ArrowLeft className="size-3" /> {course.title}
+      </Link>
+      <div className="mt-5 space-y-5">
+        {course.modules.map((mod) => (
+          <div key={mod.id}>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-chalk">{mod.title}</p>
+            <ul className="mt-2 space-y-0.5">
+              {mod.lessons.map((l) => {
+                const active = l.id === lessonId;
+                if (!isLessonLive(l.id)) {
+                  return (
+                    <li
+                      key={l.id}
+                      className="flex items-start gap-2 rounded-lg px-2.5 py-2 text-sm text-chalk/60"
+                      title="Not written yet"
+                    >
+                      <Lock className="mt-0.5 size-4 shrink-0 opacity-40" />
+                      <span className="leading-snug">{l.title}</span>
+                    </li>
+                  );
+                }
+                return (
+                  <li key={l.id}>
+                    <Link
+                      to="/learn/$courseId/$lessonId"
+                      params={{ courseId: course.id, lessonId: l.id }}
+                      aria-current={active ? "step" : undefined}
+                      onClick={onNavigate}
+                      className={cn(
+                        "flex items-start gap-2 rounded-lg px-2.5 py-2 text-sm transition-colors",
+                        active
+                          ? "bg-brand/10 font-semibold text-brand"
+                          : "text-chalk hover:bg-secondary",
+                      )}
+                    >
+                      {done.has(l.id) ? (
+                        <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-brand" />
+                      ) : (
+                        <Circle className="mt-0.5 size-4 shrink-0 opacity-40" />
+                      )}
+                      <span className="leading-snug">{l.title}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </nav>
+  );
+}

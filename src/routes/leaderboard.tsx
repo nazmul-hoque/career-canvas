@@ -1,3 +1,4 @@
+import { AuthLink } from "@/components/common/AuthLink";
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Crown, Flame, Medal, Trophy, Zap } from "lucide-react";
@@ -350,12 +351,12 @@ function Leaderboard() {
             <Trophy className="size-4 text-ember" />
             Create an account to appear here and start earning XP.
           </p>
-          <Link
-            to="/auth"
+          <AuthLink
+            mode="signup"
             className="rounded-full bg-brand px-4 py-2 text-sm font-semibold text-brand-foreground"
           >
             Start free
-          </Link>
+          </AuthLink>
         </div>
       ) : null}
     </AppShell>

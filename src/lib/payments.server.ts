@@ -54,6 +54,55 @@ async function stripePost(path: string, form: Record<string, string>): Promise<u
   return response.json();
 }
 
+async function stripeGet<T>(path: string, params: Record<string, string>): Promise<T> {
+  const response = await fetch(`https://api.stripe.com/v1/${path}?${new URLSearchParams(params)}`, {
+    headers: { authorization: `Bearer ${stripeSecret()}` },
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!response.ok) throw new Error("Billing is temporarily unavailable. Please try again.");
+  return response.json() as Promise<T>;
+}
+
+/** Email narrows the lookup; a server-authored account reference proves ownership. */
+export async function createBillingPortal(input: {
+  userId: string;
+  email: string;
+  origin: string;
+}): Promise<{ url: string }> {
+  const customers = await stripeGet<{ data: { id: string }[] }>("customers", {
+    email: input.email,
+    limit: "100",
+  });
+  for (const customer of customers.data) {
+    let cursor = "";
+    for (let page = 0; page < 10; page++) {
+      const sessions = await stripeGet<{
+        data: { id: string; client_reference_id: string | null }[];
+        has_more: boolean;
+      }>("checkout/sessions", {
+        customer: customer.id,
+        status: "complete",
+        limit: "100",
+        ...(cursor ? { starting_after: cursor } : {}),
+      });
+      if (sessions.data.some((session) => session.client_reference_id === input.userId)) {
+        // https://docs.stripe.com/api/customer_portal/sessions/create
+        const portal = (await stripePost("billing_portal/sessions", {
+          customer: customer.id,
+          return_url: `${input.origin}/pricing`,
+        })) as { url?: string };
+        if (!portal.url) throw new Error("Billing did not return a management link. Try again.");
+        return { url: portal.url };
+      }
+      if (!sessions.has_more || !sessions.data.length) break;
+      cursor = sessions.data.at(-1)!.id;
+    }
+  }
+  throw new Error(
+    "No Stripe billing account was found for this sign-in. Use the billing link in your payment receipt if your billing email has changed.",
+  );
+}
+
 export async function createCheckoutSession(input: {
   userId: string;
   email: string | undefined;
@@ -73,6 +122,7 @@ export async function createCheckoutSession(input: {
     client_reference_id: input.userId,
     "metadata[user_id]": input.userId,
     "metadata[plan]": input.plan,
+    ...(!lifetime ? { "subscription_data[metadata][user_id]": input.userId } : {}),
     ...(input.email ? { customer_email: input.email } : {}),
   });
 

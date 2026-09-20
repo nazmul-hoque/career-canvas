@@ -1,3 +1,4 @@
+import { AuthLink } from "@/components/common/AuthLink";
 import { useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { Loader2, Check } from "lucide-react";
@@ -9,6 +10,7 @@ import { careerPaths } from "@/content/curriculum";
 import { dailyXpGoal, weeklyXpGoal } from "@/content/gamification";
 import { Button } from "@/components/ui/button";
 import { Wordmark } from "@/components/layout/AppShell";
+import { safeReturnTo } from "@/lib/auth-navigation";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/onboarding")({
@@ -26,6 +28,9 @@ export const Route = createFileRoute("/onboarding")({
         content: "Four questions, one roadmap built around your goal.",
       },
     ],
+  }),
+  validateSearch: (search: Record<string, unknown>): { returnTo?: string } => ({
+    returnTo: safeReturnTo(search["returnTo"]),
   }),
   component: Onboarding,
 });
@@ -69,6 +74,7 @@ function OptionCard({
   return (
     <button
       type="button"
+      aria-pressed={selected}
       onClick={onClick}
       className={cn(
         "flex w-full items-center gap-3 rounded-2xl border bg-card p-4 text-left transition-all",
@@ -95,6 +101,7 @@ function OptionCard({
 
 function Onboarding() {
   const navigate = useNavigate();
+  const { returnTo } = Route.useSearch();
   const { user, isLoading } = useSession();
   const { data: profile } = useProfile();
   const update = useUpdateProfile();
@@ -113,7 +120,7 @@ function Onboarding() {
             Your roadmap is saved to your profile, so we need you signed in.
           </p>
           <Button asChild className="mt-6">
-            <Link to="/auth">Sign in or sign up</Link>
+            <AuthLink mode="login">Sign in or sign up</AuthLink>
           </Button>
         </div>
       </Shell>
@@ -187,6 +194,7 @@ function Onboarding() {
             <button
               key={h}
               type="button"
+              aria-pressed={weekly === h}
               onClick={() => setWeekly(h)}
               className={cn(
                 "rounded-2xl border bg-card px-4 py-6 text-center transition-all",
@@ -223,7 +231,7 @@ function Onboarding() {
         hours_per_week: weekly,
       });
       toast.success("Roadmap ready", { description: "Your dashboard is personalised." });
-      navigate({ to: "/dashboard" });
+      navigate({ href: safeReturnTo(returnTo) });
     } catch {
       toast.error("Could not save your answers. Try again.");
     }

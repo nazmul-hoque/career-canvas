@@ -5,6 +5,7 @@ import { projectById } from "@/content/projects";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { entitlementsFor, planState } from "@/lib/entitlements";
 import { mockProjectFeedback } from "@/lib/project-feedback";
+import { projectUrl, publicationSchema } from "@/lib/project-publication";
 
 /**
  * Portfolio projects are a paid feature, so the submission itself has to be
@@ -13,9 +14,9 @@ import { mockProjectFeedback } from "@/lib/project-feedback";
 
 const submitSchema = z.object({
   projectId: z.string().min(1),
-  repoUrl: z.string().max(500).default(""),
-  liveUrl: z.string().max(500).default(""),
-  notes: z.string().min(1).max(20_000),
+  repoUrl: projectUrl.default(""),
+  liveUrl: projectUrl.default(""),
+  notes: z.string().trim().min(1).max(20_000),
 });
 
 export type SubmitProjectResult = {
@@ -62,6 +63,8 @@ export const submitProjectFn = createServerFn({ method: "POST" })
       notes: data.notes || null,
       status: "submitted",
       feedback,
+      // Updating private work must never silently replace a public case study.
+      is_published: false,
     };
 
     if (existing) {
@@ -91,4 +94,33 @@ export const submitProjectFn = createServerFn({ method: "POST" })
     }
 
     return { feedback, firstTime: !existing, unlockedAchievement };
+  });
+
+export const publishProjectFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => publicationSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: submission, error } = await supabaseAdmin
+      .from("project_submissions")
+      .select("id, repo_url, live_url")
+      .eq("user_id", context.userId)
+      .eq("project_id", data.projectId)
+      .single();
+    if (error || !submission) throw new Error("Your submission could not be loaded. Try again.");
+    if (data.published && !submission.repo_url && !submission.live_url)
+      throw new Error("Add a repository or live project link before publishing.");
+    if (
+      data.published &&
+      (!projectUrl.safeParse(submission.repo_url ?? "").success ||
+        !projectUrl.safeParse(submission.live_url ?? "").success)
+    )
+      throw new Error("Update your project links to valid HTTP or HTTPS URLs before publishing.");
+    const { error: updateError } = await supabaseAdmin
+      .from("project_submissions")
+      .update({ is_published: data.published, public_summary: data.summary })
+      .eq("id", submission.id)
+      .eq("user_id", context.userId);
+    if (updateError) throw new Error("Publication could not be saved. Try again.");
+    return { published: data.published };
   });

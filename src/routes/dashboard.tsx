@@ -1,3 +1,5 @@
+import { QueryError } from "@/components/common/QueryError";
+import { AuthLink } from "@/components/common/AuthLink";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Flame,
@@ -71,12 +73,18 @@ function lastSevenDays() {
 
 function Dashboard() {
   const { user, isLoading } = useSession();
-  const { data: profile, isLoading: profileLoading } = useProfile();
-  const { data: progress = [] } = useProgress();
-  const { data: activity = [] } = useActivity();
-  const { data: earned = [] } = useAchievements();
-  const { data: board = [] } = useLeaderboard();
-  const { data: reviewItems = [] } = useReviewQueue();
+  const profileQuery = useProfile();
+  const { data: profile, isLoading: profileLoading } = profileQuery;
+  const progressQuery = useProgress();
+  const { data: progress = [] } = progressQuery;
+  const activityQuery = useActivity();
+  const { data: activity = [] } = activityQuery;
+  const achievementsQuery = useAchievements();
+  const { data: earned = [] } = achievementsQuery;
+  const boardQuery = useLeaderboard();
+  const { data: board = [] } = boardQuery;
+  const reviewsQuery = useReviewQueue();
+  const { data: reviewItems = [] } = reviewsQuery;
 
   if (isLoading || (user && profileLoading)) {
     return (
@@ -102,13 +110,45 @@ function Dashboard() {
           description="Your streak, XP and roadmap live in your account. Creating one takes about twenty seconds."
           action={
             <Button asChild className="mt-2">
-              <Link to="/auth">Create a free account</Link>
+              <AuthLink mode="signup">Create a free account</AuthLink>
             </Button>
           }
         />
       </AppShell>
     );
   }
+
+  const pageQueries = [
+    profileQuery,
+    progressQuery,
+    activityQuery,
+    achievementsQuery,
+    boardQuery,
+    reviewsQuery,
+  ];
+  const failedQueries = pageQueries.filter((query) => query.isError);
+  if (user && failedQueries.length)
+    return (
+      <AppShell>
+        <QueryError
+          title="We couldn't load your dashboard"
+          busy={failedQueries.some((q) => q.isFetching)}
+          retry={() => Promise.all(failedQueries.map((q) => q.refetch()))}
+        />
+      </AppShell>
+    );
+  if (user && pageQueries.some((query) => query.isLoading))
+    return (
+      <AppShell>
+        <p role="status">Loading your saved progress…</p>
+      </AppShell>
+    );
+  if (user && !profile)
+    return (
+      <AppShell>
+        <QueryError title="Your profile isn't available yet" retry={() => profileQuery.refetch()} />
+      </AppShell>
+    );
 
   const xp = profile?.xp ?? 0;
   const { level, intoLevel: into, needed: span } = levelFromXp(xp);
@@ -221,7 +261,7 @@ function Dashboard() {
       <div className="mt-7 grid gap-5 lg:grid-cols-3">
         {/* Continue learning */}
         <section className="ink-surface diagonals relative overflow-hidden rounded-[18px] p-7 text-white lg:col-span-2">
-          <p className="eyebrow text-white/60">Continue where you stopped</p>
+          <p className="eyebrow text-white/60">Your next learning session</p>
           {nextLesson && nextCourseId ? (
             <>
               <h2 className="mt-2 font-display text-2xl font-bold sm:text-3xl">
@@ -229,6 +269,10 @@ function Dashboard() {
               </h2>
               <p className="mt-1.5 text-sm text-white/70">
                 {courseById(nextCourseId)?.title} · {nextLesson.minutes} min · {nextLesson.type}
+              </p>
+              <p className="mt-3 text-sm text-white/80">
+                The next available unfinished lesson in your roadmap. Practise{" "}
+                {courseById(nextCourseId)?.skill} in about {nextLesson.minutes} minutes.
               </p>
               <div className="mt-6 flex flex-wrap items-center gap-3">
                 <Button asChild size="lg" variant="secondary">
@@ -294,29 +338,15 @@ function Dashboard() {
         <section className="card-surface p-6">
           <div className="flex items-center gap-2">
             <Target className="size-4 text-brand" />
-            <p className="eyebrow">Today's recommended task</p>
+            <p className="eyebrow">Review and daily goal</p>
           </div>
-          {nextLesson && nextCourseId ? (
-            <>
-              <h3 className="mt-3 font-display text-lg font-semibold">{nextLesson.title}</h3>
-              <p className="mt-1 text-sm text-chalk">
-                A {nextLesson.minutes}-minute {nextLesson.type} block — enough to hold the streak on
-                a busy day.
-              </p>
-              <Button asChild variant="outline" className="mt-4 w-full">
-                <Link
-                  to="/learn/$courseId/$lessonId"
-                  params={{ courseId: nextCourseId, lessonId: nextLesson.id }}
-                >
-                  Start now
-                </Link>
-              </Button>
-            </>
-          ) : (
-            <p className="mt-3 text-sm text-chalk">
-              Nothing queued. Pick a new course from the catalog.
-            </p>
-          )}
+          <p className="mt-3 text-sm text-chalk">
+            Review earlier lessons to strengthen recall. Finishing one lesson or review keeps your
+            streak.
+          </p>
+          {reviewsDue === 0 ? (
+            <p className="mt-3 text-sm text-chalk">You're up to date with reviews.</p>
+          ) : null}
           {reviewsDue > 0 ? (
             <Link
               to="/review"

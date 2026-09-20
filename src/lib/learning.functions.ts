@@ -4,7 +4,7 @@ import { z } from "zod";
 import { careerPaths, findLesson } from "@/content/curriculum";
 import { certificateId, pathCompletion } from "@/lib/certificates";
 import { entitlementsFor, isLessonUnlocked, planState } from "@/lib/entitlements";
-import { levelFromXp } from "@/content/gamification";
+import { ATTESTED_XP, levelFromXp } from "@/content/gamification";
 import { isLessonLive } from "@/content/lessons";
 import { gradeLesson, isReviewable } from "@/lib/lesson-grading";
 import { initialReview } from "@/lib/review-schedule";
@@ -78,7 +78,10 @@ export const completeLessonFn = createServerFn({ method: "POST" })
     if (!graded.ok) throw new Error(graded.reason ?? "That lesson isn't finished yet.");
 
     const hasChallenge = body.blocks.some((b) => b.kind === "challenge");
-    const xp = body.xp;
+    // Unchecked work is capped here, not trusted from the body: nothing else
+    // stops an authored lesson paying a full lesson's XP for a task the learner
+    // simply said they did.
+    const xp = body.attested ? Math.min(body.xp, ATTESTED_XP) : body.xp;
 
     // Service-role client: the learner's own grants no longer allow these writes.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -251,7 +254,7 @@ export const completeLessonFn = createServerFn({ method: "POST" })
       const { certificatePayload, signToken } = await import("@/lib/signing.server");
 
       for (const path of careerPaths) {
-        if (!pathCompletion(path, done).eligible) continue;
+        if (pathCompletion(path, done).credential !== "eligible") continue;
 
         const { data: already } = await supabaseAdmin
           .from("issued_certificates")

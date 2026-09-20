@@ -1,17 +1,12 @@
-import { afterAll, describe, expect, test } from "bun:test";
-import { GlobalRegistrator } from "@happy-dom/global-registrator";
+import { describe, expect, test } from "bun:test";
+import { registerHappyDom } from "./happy-dom";
 
 /**
  * The React challenge runtime, exercised in a simulated DOM. The same module
  * runs in the learner's browser, so these are the rules a React challenge's
  * tests actually get.
  */
-GlobalRegistrator.register();
-afterAll(async () => {
-  // Let React's scheduler finish before the simulated window goes away.
-  await new Promise((resolve) => setTimeout(resolve, 50));
-  await GlobalRegistrator.unregister();
-});
+registerHappyDom();
 
 const { prepareSource, runReactChallenge } = await import("../src/lib/react-runtime");
 

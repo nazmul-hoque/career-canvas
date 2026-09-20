@@ -1,3 +1,4 @@
+import { AuthLink } from "@/components/common/AuthLink";
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -119,7 +120,7 @@ function Review() {
           description="Your review schedule is built from the lessons you've finished, so it lives in your account."
           action={
             <Button asChild className="mt-2">
-              <Link to="/auth">Sign in</Link>
+              <AuthLink mode="login">Sign in</AuthLink>
             </Button>
           }
         />

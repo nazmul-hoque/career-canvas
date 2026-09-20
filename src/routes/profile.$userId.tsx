@@ -1,3 +1,5 @@
+import { QueryError } from "@/components/common/QueryError";
+import { useSession } from "@/hooks/useAuth";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Award, BookCheck, Flame, FolderGit2, Zap } from "lucide-react";
@@ -25,6 +27,9 @@ export const Route = createFileRoute("/profile/$userId")({
       },
     ],
   }),
+  validateSearch: (search: Record<string, unknown>): { preview?: boolean } => ({
+    preview: search["preview"] === true || search["preview"] === "true",
+  }),
   component: PublicProfile,
 });
 
@@ -51,8 +56,11 @@ function initialsOf(name: string) {
 
 function PublicProfile() {
   const { userId } = Route.useParams();
+  const { user, isLoading: sessionLoading } = useSession();
+  const { preview: requestedPreview } = Route.useSearch();
+  const preview = requestedPreview && user?.id === userId;
 
-  const { data: profile, isLoading } = useQuery({
+  const profileQuery = useQuery({
     queryKey: ["public-profile", userId],
     queryFn: async (): Promise<PublicProfileRow | null> => {
       const { data, error } = await supabase
@@ -65,15 +73,20 @@ function PublicProfile() {
     },
   });
 
-  const { data: submissions = [] } = useQuery({
-    queryKey: ["public-submissions", userId],
+  const { data: profile, isLoading } = profileQuery;
+  const projectsQuery = useQuery({
+    queryKey: ["public-submissions", userId, preview ? user?.id : "public"],
+    enabled: !sessionLoading,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("project_submissions")
-        .select("project_id, status, live_url, repo_url")
-        .eq("user_id", userId);
+      const columns = "project_id, status, live_url, repo_url, public_summary, is_published";
+      const query = preview
+        ? supabase.from("project_submissions").select(columns)
+        : supabase.from("public_portfolio_projects").select(columns);
+      const { data, error } = await query.eq("user_id", userId);
       if (error) throw error;
       return (data ?? []) as {
+        public_summary: string;
+        is_published: boolean;
         project_id: string;
         status: string;
         live_url: string | null;
@@ -82,9 +95,21 @@ function PublicProfile() {
     },
   });
 
-  const { data: earned = [] } = useAchievements(userId);
+  const { data: submissions = [] } = projectsQuery;
+  const achievementsQuery = useAchievements(userId);
+  const { data: earned = [] } = achievementsQuery;
+  const failedQueries = [profileQuery, projectsQuery, achievementsQuery].filter((q) => q.isError);
+  if (failedQueries.length)
+    return (
+      <AppShell>
+        <QueryError
+          title="This portfolio could not be loaded"
+          retry={() => Promise.all(failedQueries.map((q) => q.refetch()))}
+        />
+      </AppShell>
+    );
 
-  if (isLoading) {
+  if (isLoading || sessionLoading || projectsQuery.isLoading || achievementsQuery.isLoading) {
     return (
       <AppShell>
         <Skeleton className="h-44 w-full rounded-[22px]" />
@@ -122,6 +147,20 @@ function PublicProfile() {
 
   return (
     <AppShell>
+      {preview ? (
+        <p role="status" className="mb-5 rounded-xl bg-ember/10 p-4">
+          Private preview: includes unpublished drafts. Visitors see only projects you publish. Your
+          name, bio, learning stats, and achievements are public.{" "}
+          <Link
+            to="/profile/$userId"
+            params={{ userId }}
+            search={{ preview: false }}
+            className="underline"
+          >
+            View published portfolio
+          </Link>
+        </p>
+      ) : null}
       <section className="ink-surface diagonals overflow-hidden rounded-[22px] px-6 py-8 sm:px-10">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-5">
@@ -168,7 +207,7 @@ function PublicProfile() {
       <div className="mt-8 grid gap-6 lg:grid-cols-[1.5fr_1fr]">
         <section>
           <h2 className="flex items-center gap-2 font-display text-xl font-bold">
-            <FolderGit2 className="size-4 text-brand" /> Shipped projects
+            <FolderGit2 className="size-4 text-brand" /> Portfolio projects
           </h2>
           {shipped.length === 0 ? (
             <p className="mt-3 text-sm text-chalk">Nothing published yet.</p>
@@ -187,9 +226,12 @@ function PublicProfile() {
                   <div className="p-4">
                     <div className="font-display font-bold leading-snug">{s.project!.title}</div>
                     <p className="mt-1 text-sm text-chalk">{s.project!.tagline}</p>
+                    <p className="mt-3 whitespace-pre-wrap text-sm">
+                      {s.public_summary || "Add a case study before publishing."}
+                    </p>
                     <div className="mt-3 flex flex-wrap items-center gap-3">
                       <StatPill tone={s.status === "approved" ? "brand" : "neutral"}>
-                        {s.status}
+                        {s.is_published ? "Published by learner" : "Private draft"}
                       </StatPill>
                       {s.live_url ? (
                         <a
@@ -264,7 +306,7 @@ function PublicProfile() {
                 <dd className="font-bold text-ember">{profile.streak_best} days</dd>
               </div>
               <div className="flex items-center justify-between">
-                <dt className="text-chalk">Projects shipped</dt>
+                <dt className="text-chalk">Published projects</dt>
                 <dd className="font-bold">{shipped.length}</dd>
               </div>
             </dl>

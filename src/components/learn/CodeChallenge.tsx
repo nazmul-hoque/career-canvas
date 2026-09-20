@@ -1,3 +1,4 @@
+import { CodeEditor } from "./CodeEditor";
 import { useEffect, useRef, useState } from "react";
 import {
   Play,
@@ -20,6 +21,7 @@ import { cn } from "@/lib/utils";
 
 /** What ran the code, said honestly under the test results. */
 const ENGINE_LABELS: Partial<Record<RunEngine, string>> = {
+  typescript: "TypeScript transpiled and run in this page",
   python: "CPython (WebAssembly)",
   sql: "SQLite (WebAssembly)",
   react: "React, rendered in this page",
@@ -30,6 +32,7 @@ const ENGINE_LABELS: Partial<Record<RunEngine, string>> = {
 
 /** Shown while an engine that downloads on first use is starting. */
 const STARTING_MESSAGES: Partial<Record<ChallengeLanguage, string>> = {
+  typescript: "Starting the TypeScript compiler — the first run loads it in your browser.",
   python: "Starting Python — the first run downloads the interpreter.",
   sql: "Starting the database — the first run downloads it.",
 };
@@ -73,6 +76,7 @@ export function CodeChallenge({
   const [result, setResult] = useState<RunResult | null>(null);
   const [running, setRunning] = useState(false);
   const [showHint, setShowHint] = useState(false);
+  const [beforeReset, setBeforeReset] = useState<string | null>(null);
   // The code the preview shows: what was last run, not every keystroke.
   const [previewCode, setPreviewCode] = useState<string | null>(null);
 
@@ -131,8 +135,20 @@ export function CodeChallenge({
               {language}
             </span>
             <div className="flex gap-1">
+              {beforeReset !== null ? (
+                <button
+                  className="rounded px-2 py-1 text-xs text-white"
+                  onClick={() => {
+                    onCodeChange(beforeReset);
+                    setBeforeReset(null);
+                  }}
+                >
+                  Undo reset
+                </button>
+              ) : null}
               <button
                 onClick={() => {
+                  setBeforeReset(code);
                   onCodeChange(starter);
                   setResult(null);
                   setPreviewCode(null);
@@ -142,6 +158,7 @@ export function CodeChallenge({
                 <RotateCcw className="size-3" /> Reset
               </button>
               <button
+                aria-expanded={showHint}
                 onClick={() => setShowHint((v) => !v)}
                 className="flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold text-white/60 transition-colors hover:text-white"
               >
@@ -149,13 +166,7 @@ export function CodeChallenge({
               </button>
             </div>
           </div>
-          <textarea
-            value={code}
-            onChange={(e) => onCodeChange(e.target.value)}
-            spellCheck={false}
-            aria-label="Code editor"
-            className="h-72 w-full resize-none bg-transparent p-4 font-mono text-[13px] leading-6 text-white/90 outline-none"
-          />
+          <CodeEditor value={code} onChange={onCodeChange} />
         </div>
 
         <div className="flex flex-col border-t border-border lg:border-l lg:border-t-0">
@@ -169,7 +180,11 @@ export function CodeChallenge({
           <div className={PANEL_HEADER}>
             <Terminal className="size-3.5" /> Output
           </div>
-          <div className="flex-1 space-y-3 overflow-y-auto p-4 font-mono text-[13px]">
+          <div
+            role="status"
+            aria-live="polite"
+            className="flex-1 space-y-3 overflow-y-auto p-4 font-mono text-[13px]"
+          >
             {!result ? (
               <p className="text-chalk">Run your code to see output and test results.</p>
             ) : (
@@ -228,6 +243,10 @@ export function CodeChallenge({
         </div>
       ) : null}
 
+      <p className="px-5 pt-3 text-xs text-chalk">
+        Run to try your code. Submit to check your solution, then Complete the lesson to save
+        progress.
+      </p>
       <div className="flex flex-wrap items-center gap-2 border-t border-border px-5 py-4">
         <Button variant="outline" onClick={() => handleRun(false)} disabled={running}>
           {running ? <Loader2 className="size-4 animate-spin" /> : <Play className="size-4" />} Run

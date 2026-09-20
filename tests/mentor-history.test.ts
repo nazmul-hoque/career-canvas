@@ -15,11 +15,15 @@ const live = courses.flatMap((c) =>
     .filter((l) => isLessonLive(l.id))
     .map((l) => ({ courseId: c.id, lessonId: l.id, title: l.title })),
 );
-const unwritten = courses.flatMap((c) =>
-  courseLessons(c)
-    .filter((l) => !isLessonLive(l.id))
-    .map((l) => ({ courseId: c.id, lessonId: l.id })),
-);
+/**
+ * A lesson id with no authored body. Synthetic rather than picked off the
+ * roadmap: every slot in the curriculum is written now, so scanning for an
+ * unwritten one finds nothing. The rows this guards against outlive the
+ * roadmap anyway — progress and review rows keep the lesson id they were
+ * written with, so a retired or renamed lesson arrives here long after it
+ * stopped being live.
+ */
+const unwritten = { courseId: "html-css", lessonId: "html-basics.retired-slot" };
 
 const [current, a, b, c] = live as [
   (typeof live)[number],
@@ -114,7 +118,8 @@ describe("summariseLearnerHistory", () => {
   });
 
   test("rows for unwritten lessons say nothing", () => {
-    const filler = unwritten[0]!;
+    const filler = unwritten;
+    expect(isLessonLive(filler.lessonId)).toBe(false);
     expect(
       summariseLearnerHistory({
         currentLessonId: current.lessonId,

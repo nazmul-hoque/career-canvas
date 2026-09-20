@@ -11,7 +11,8 @@ export function useSession() {
   const query = useQuery({
     queryKey: sessionQueryKey,
     queryFn: async (): Promise<Session | null> => {
-      const { data } = await supabase.auth.getSession();
+      const { data, error } = await supabase.auth.getSession();
+      if (error) throw error;
       return data.session;
     },
     staleTime: 30_000,
@@ -25,5 +26,11 @@ export function useSession() {
     return () => sub.subscription.unsubscribe();
   }, [queryClient]);
 
-  return { session: query.data ?? null, user: query.data?.user ?? null, isLoading: query.isLoading };
+  return {
+    session: query.data ?? null,
+    user: query.data?.user ?? null,
+    isLoading: query.isLoading,
+    isError: query.isError,
+    refetch: query.refetch,
+  };
 }

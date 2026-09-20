@@ -1,3 +1,6 @@
+import { PostActions } from "@/components/common/PostActions";
+import { QueryError } from "@/components/common/QueryError";
+import { AuthLink } from "@/components/common/AuthLink";
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Flame, Heart, MessageSquare, PenLine, TrendingUp, Users } from "lucide-react";
@@ -71,6 +74,7 @@ function timeAgo(iso: string) {
 
 /** Live posts and seed posts render through the same shape. */
 interface FeedItem {
+  userId: string | null;
   id: string;
   author: string;
   initials: string;
@@ -93,7 +97,8 @@ function Community() {
   const [body, setBody] = useState("");
   const [postTopic, setPostTopic] = useState("general");
 
-  const { data: livePosts = [], isLoading } = usePosts(topic);
+  const postsQuery = usePosts(topic);
+  const { data: livePosts = [], isLoading } = postsQuery;
   const { data: likedPostIds = [] } = useMyLikes();
   const toggleLikeMutation = useToggleLike();
   const { data: board = [] } = useLeaderboard();
@@ -111,6 +116,7 @@ function Community() {
 
   const feed = useMemo<FeedItem[]>(() => {
     const live: FeedItem[] = livePosts.map((p) => ({
+      userId: p.user_id,
       id: p.id,
       author: p.author?.display_name ?? "Learner",
       initials: initialsOf(p.author?.display_name ?? "Learner"),
@@ -128,6 +134,7 @@ function Community() {
     const seeds: FeedItem[] = seedPosts
       .filter((p) => topic === "all" || p.topic === topic)
       .map((p) => ({
+        userId: null,
         id: p.id,
         author: p.author,
         initials: p.initials,
@@ -149,6 +156,13 @@ function Community() {
 
   return (
     <AppShell>
+      {postsQuery.isError ? (
+        <QueryError
+          title="Live discussions could not be loaded"
+          retry={() => postsQuery.refetch()}
+          busy={postsQuery.isFetching}
+        />
+      ) : null}
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="max-w-2xl">
           <p className="eyebrow">Community</p>
@@ -251,7 +265,7 @@ function Community() {
             Reading is open to everyone. Sign in to post, comment and appear on the leaderboard.
           </p>
           <Button asChild variant="outline" size="sm">
-            <Link to="/auth">Sign in</Link>
+            <AuthLink mode="login">Sign in</AuthLink>
           </Button>
         </div>
       ) : null}
@@ -392,9 +406,11 @@ function PostCard({
   onLike: () => void;
   canComment: boolean;
 }) {
+  const { user } = useSession();
   const [showComments, setShowComments] = useState(false);
   const [draft, setDraft] = useState("");
-  const { data: liveComments = [] } = useComments(item.live && showComments ? item.id : null);
+  const commentsQuery = useComments(item.live && showComments ? item.id : null);
+  const { data: liveComments = [] } = commentsQuery;
   const addComment = useAddComment(item.id);
 
   const commentCount = item.live ? liveComments.length : item.seedComments.length;
@@ -412,15 +428,24 @@ function PostCard({
             <span className="font-semibold text-foreground">{item.author}</span>
             <span>Level {item.level}</span>
             <span>·</span>
-            <span>{item.ago} ago</span>
+            <span>{item.live ? `${item.ago} ago` : "Example content"}</span>
+            {!item.live ? <StatPill>Example discussion · read-only</StatPill> : null}
             <StatPill className="ml-1">{item.topic}</StatPill>
-            {item.trending ? <StatPill tone="ember">Trending</StatPill> : null}
+            {item.trending ? <StatPill tone="ember">Example highlight</StatPill> : null}
           </div>
 
           <h3 className="mt-2 font-display text-lg font-bold leading-snug">{item.title}</h3>
           <p className="mt-1.5 text-sm leading-relaxed text-chalk">{item.body}</p>
 
-          <div className="mt-4 flex items-center gap-4">
+          <div className="mt-4 flex flex-wrap items-center gap-4">
+            {item.live && user ? (
+              <PostActions
+                id={item.id}
+                own={user.id === item.userId}
+                title={item.title}
+                body={item.body}
+              />
+            ) : null}
             {item.live ? (
               <button
                 onClick={onLike}
@@ -445,16 +470,25 @@ function PostCard({
               </span>
             )}
             <button
+              aria-expanded={showComments}
+              aria-label={showComments ? "Hide replies" : "Show replies"}
               onClick={() => setShowComments((v) => !v)}
               className="inline-flex items-center gap-1.5 text-sm font-semibold text-chalk transition-colors hover:text-foreground"
             >
               <MessageSquare className="size-4" />
-              {commentCount}
+              {item.live && !showComments ? "Replies" : commentCount}
             </button>
           </div>
 
           {showComments ? (
             <div className="mt-4 space-y-3 border-t border-border pt-4">
+              {commentsQuery.isError ? (
+                <QueryError
+                  title="Replies could not be loaded"
+                  retry={() => commentsQuery.refetch()}
+                />
+              ) : null}
+              {commentsQuery.isLoading ? <p role="status">Loading replies…</p> : null}
               {(item.live
                 ? liveComments.map((c) => ({
                     key: c.id,
@@ -477,7 +511,9 @@ function PostCard({
                 </div>
               ))}
 
-              {commentCount === 0 ? <p className="text-sm text-chalk">No replies yet.</p> : null}
+              {commentCount === 0 && !commentsQuery.isLoading && !commentsQuery.isError ? (
+                <p className="text-sm text-chalk">No replies yet.</p>
+              ) : null}
 
               {item.live && canComment ? (
                 <form
@@ -491,6 +527,7 @@ function PostCard({
                   <Input
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}
+                    aria-label="Your reply"
                     placeholder="Add a reply…"
                   />
                   <Button type="submit" size="sm" disabled={addComment.isPending || !draft.trim()}>
