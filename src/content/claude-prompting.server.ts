@@ -12,18 +12,8 @@
  *
  * Server-only, like every other file holding an answer key.
  */
+import type { ClaudeAuthoredLesson } from "./claude-authored";
 import { ATTESTED_XP } from "./gamification";
-import type { LessonBody } from "./lessons";
-import type { LessonMeta } from "./curriculum";
-
-export type ClaudeAuthoredLesson = {
-  /** Appended to the level id to form the lesson id. */
-  slug: string;
-  title: string;
-  minutes: number;
-  type: LessonMeta["type"];
-  body: LessonBody;
-};
 
 export const claudePromptingLessons: ClaudeAuthoredLesson[] = [
   {
@@ -78,12 +68,12 @@ Strong:
           question:
             'You ask: "How should we handle errors in our API?" The answer is reasonable but generic. Which addition would change it most?',
           options: [
+            "Adding that it's a public API used by third parties who can't be asked to redeploy",
             'Adding "please be thorough and detailed"',
             'Adding "You are a senior backend engineer"',
-            "Adding that it's a public API used by third parties who can't be asked to redeploy",
             "Asking the same question again in a new conversation",
           ],
-          answer: 2,
+          answer: 0,
           explanation:
             "That one fact rules out whole categories of answer — you now need stable error codes and backward compatibility, not just try/catch advice. The other three leave Claude guessing at exactly the same things it was guessing at before.",
         },
@@ -92,12 +82,12 @@ Strong:
           id: "q2",
           question: "Which of these sets of constraints will actually shape the answer?",
           options: [
-            '"Be concise, but comprehensive, and cover everything important"',
             '"Under 200 words, no code, assume I already know what a foreign key is"',
+            '"Be concise, but comprehensive, and cover everything important"',
             '"Write professionally and make it high quality"',
             '"Be as detailed as possible while keeping it brief"',
           ],
-          answer: 1,
+          answer: 0,
           explanation:
             "Each clause removes something specific: a length ceiling, a whole content type, and a level of explanation you don't need. The other three either contradict themselves or name a quality bar without saying what would meet it, so Claude ends up choosing on your behalf.",
         },
@@ -155,11 +145,11 @@ uploaded CSV has no header row.`,
             "You want bug reports in your team's format. What does one real example give you that a written description usually doesn't?",
           options: [
             "It makes the answer shorter",
-            "It carries the details you'd never think to write down — ordering, tone, how much detail each section gets",
             "It stops Claude from asking clarifying questions",
+            "It carries the details you'd never think to write down — ordering, tone, how much detail each section gets",
             "It guarantees the format is followed exactly every time",
           ],
-          answer: 1,
+          answer: 2,
           explanation:
             "Most of a format lives in decisions nobody writes down. An example transmits all of them at once. It's a strong signal rather than a guarantee, which is why you still read the result.",
         },
@@ -170,10 +160,10 @@ uploaded CSV has no header row.`,
           options: [
             '"You are a world-class expert in software engineering"',
             '"You are a highly intelligent and capable assistant"',
-            '"You are the engineer who will be on call for this at 3am"',
             '"You are a professional with years of experience"',
+            '"You are the engineer who will be on call for this at 3am"',
           ],
-          answer: 2,
+          answer: 3,
           explanation:
             "That role has something to protect, so it changes what gets flagged: missing alerts, unclear logs, anything you can't debug half-asleep. The others raise the confidence of the writing without changing what the answer looks for.",
         },
@@ -232,11 +222,11 @@ Asking:
             "An answer is plausible but not quite right, and you can't say why. What's the most useful next move?",
           options: [
             "Ask the same question again and hope for a better roll",
-            "Ask what it assumed about your situation in order to answer",
             'Add "be more accurate" to the prompt',
             "Rewrite the prompt from scratch with more detail everywhere",
+            "Ask what it assumed about your situation in order to answer",
           ],
-          answer: 1,
+          answer: 3,
           explanation:
             "The assumptions are the gaps in your brief, listed for you. Rerolling changes the wording but not the missing context, and adding detail everywhere is expensive guesswork when you could be told exactly which detail was missing.",
         },
@@ -246,12 +236,12 @@ Asking:
           question:
             "You change a prompt's role *and* its output format at once, and the answer improves. What have you learned?",
           options: [
+            "That something helped, but not which change was responsible",
             "That the role change worked",
             "That the format change worked",
             "That both changes helped",
-            "That something helped, but not which change was responsible",
           ],
-          answer: 3,
+          answer: 0,
           explanation:
             "Two variables, one result — the improvement can't be attributed, and either change might even have hurt while the other more than made up for it. Change one thing at a time when you're trying to learn something that will transfer.",
         },
@@ -312,11 +302,11 @@ Ask for:
           question: 'Why does "summarise this thread" so often lose the thing you needed?',
           options: [
             "Summaries are always too short to be useful",
-            "A summary weights everything evenly, so a decision reads like any other line",
             "Claude can't read long threads accurately",
             "Threads contain too much irrelevant conversation",
+            "A summary weights everything evenly, so a decision reads like any other line",
           ],
-          answer: 1,
+          answer: 3,
           explanation:
             'Nothing in the word "summary" says decisions matter more than pleasantries, so they get flattened together. Naming the parts you want — decisions, owners, open questions — is what preserves them.',
         },
@@ -327,11 +317,11 @@ Ask for:
             "You're extracting contact details from messy notes. Some records have no phone number. What should the prompt say?",
           options: [
             "Nothing — Claude will leave it blank if it isn't there",
-            '"Be accurate and don\'t make anything up"',
             '"If a field isn\'t stated in the source, write null rather than inferring it"',
+            '"Be accurate and don\'t make anything up"',
             '"Only extract records that have every field"',
           ],
-          answer: 2,
+          answer: 1,
           explanation:
             "It gives the model something specific to do when a field is missing, so a gap comes back as a gap. A general accuracy plea doesn't define the behaviour, and dropping incomplete records quietly loses real data you wanted.",
         },
@@ -342,10 +332,10 @@ Ask for:
           options: [
             '"What do you think of this plan?"',
             '"Give me feedback on this plan"',
-            '"What\'s the strongest argument that this plan fails, and what would have to be true for it to hold?"',
             '"Is this plan good?"',
+            '"What\'s the strongest argument that this plan fails, and what would have to be true for it to hold?"',
           ],
-          answer: 2,
+          answer: 3,
           explanation:
             'It asks for an argument, which has to be built and can be evaluated. Open invitations for "feedback" or "thoughts" tend to return agreeable commentary that confirms what you already decided.',
         },
@@ -411,11 +401,11 @@ The shape of the problem survives; the identity doesn't.`,
             "Claude gives you a migration plan with eight factual claims. You have time to check two. Which two?",
           options: [
             "The two that appear earliest, since later steps depend on them",
-            "The two you personally find most surprising",
             "The two the plan would fail on if they were wrong",
+            "The two you personally find most surprising",
             "Any two — checking a sample tells you the overall reliability",
           ],
-          answer: 2,
+          answer: 1,
           explanation:
             "Verification budget goes where being wrong costs something. Surprise tracks your existing knowledge rather than risk, and an answer isn't uniformly reliable, so spot-checking two claims says nothing about the other six.",
         },
@@ -427,10 +417,10 @@ The shape of the problem survives; the identity doesn't.`,
           options: [
             "Paste it as-is — the conversation is private to your account",
             "Delete the key and the email entirely, leaving gaps",
-            "Replace the key and email with realistic fake values, keeping them consistent through the snippet",
             "Describe the code in words instead of pasting any of it",
+            "Replace the key and email with realistic fake values, keeping them consistent through the snippet",
           ],
-          answer: 2,
+          answer: 3,
           explanation:
             "Consistent placeholders keep the code runnable and the bug diagnosable while the real secret never leaves your machine. Leaving gaps often changes the behaviour you're asking about, and a prose description throws away the detail that usually holds the bug.",
         },
