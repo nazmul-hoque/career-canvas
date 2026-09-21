@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { careerPaths, courses, pathCourses, pathWeeks } from "@/content/curriculum";
 import { liveLessonCount, pathLiveLessonCount } from "@/content/lessons";
 import { projects } from "@/content/projects";
-import { cn } from "@/lib/utils";
+import { cn, plural } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
   head: () =>
@@ -242,7 +242,8 @@ function Landing() {
               <p className="mt-3 flex-1 text-sm leading-relaxed text-chalk">{path.overview}</p>
               <div className="mt-5 flex items-center justify-between border-t border-border pt-4 text-xs font-semibold text-chalk">
                 <span>
-                  {pathCourses(path).length} courses · {pathLiveLessonCount(path)} lessons live
+                  {pathCourses(path).length} {plural(pathCourses(path).length, "course")} ·{" "}
+                  {pathLiveLessonCount(path)} {plural(pathLiveLessonCount(path), "lesson")} live
                 </span>
                 <ArrowRight className="size-4 text-brand transition-transform group-hover:translate-x-1" />
               </div>

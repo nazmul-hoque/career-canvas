@@ -28,6 +28,7 @@ import {
   pathById,
   pathCourses,
   pathWeeks,
+  unitWords,
   unitWordsForCourses,
   type LessonMeta,
 } from "@/content/curriculum";
@@ -36,7 +37,7 @@ import { formatMinutes, isLessonLive, liveLessons, liveMinutes } from "@/content
 import { projectById } from "@/content/projects";
 import { pathCompletion, type CredentialState } from "@/lib/certificates";
 import { track } from "@/lib/analytics";
-import { cn } from "@/lib/utils";
+import { cn, plural } from "@/lib/utils";
 
 export const Route = createFileRoute("/paths/$pathId")({
   loader: ({ params }) => {
@@ -177,13 +178,15 @@ function PathDetail() {
 
             <div className="mt-6 flex flex-wrap gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/80">
-                <Layers className="size-3.5" /> {courses.length} courses
+                <Layers className="size-3.5" /> {courses.length} {plural(courses.length, "course")}
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/80">
-                <BookOpen className="size-3.5" /> {live} of {total} {words.plural} live
+                <BookOpen className="size-3.5" /> {live} of {total}{" "}
+                {plural(total, words.singular, words.plural)} live
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/80">
-                <Clock className="size-3.5" /> ~{pathWeeks(path, profile?.hours_per_week)} weeks
+                <Clock className="size-3.5" /> ~{pathWeeks(path, profile?.hours_per_week)}{" "}
+                {plural(pathWeeks(path, profile?.hours_per_week), "week")}
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/80">
                 {path.difficulty}
@@ -310,7 +313,13 @@ function PathDetail() {
                           {course.title}
                         </Link>
                         <span className="text-xs font-semibold text-chalk">
-                          {written.length} of {lessons.length} lessons live
+                          {written.length} of {lessons.length}{" "}
+                          {plural(
+                            lessons.length,
+                            unitWords(course).singular,
+                            unitWords(course).plural,
+                          )}{" "}
+                          live
                           {written.length ? ` · ${formatMinutes(liveMinutes(course))}` : ""}
                         </span>
                       </div>

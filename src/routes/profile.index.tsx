@@ -38,7 +38,7 @@ import { courses, courseLessons, pathById } from "@/content/curriculum";
 import { isCoursePublished } from "@/content/lessons";
 import { projectById } from "@/content/projects";
 import { allPathCompletions } from "@/lib/certificates";
-import { cn } from "@/lib/utils";
+import { cn, plural } from "@/lib/utils";
 
 export const Route = createFileRoute("/profile/")({
   head: () => ({
@@ -401,8 +401,8 @@ function ProfilePage() {
             </h2>
             {completedCourses.length === 0 ? (
               <p className="mt-3 text-sm text-chalk">
-                Finish every lesson in a course and it lands here. You're {progress.length} lessons
-                in.
+                Finish every lesson in a course and it lands here. You're {progress.length}{" "}
+                {plural(progress.length, "lesson")} in.
               </p>
             ) : (
               <ul className="mt-4 grid gap-2 sm:grid-cols-2">

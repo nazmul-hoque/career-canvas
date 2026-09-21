@@ -14,7 +14,7 @@ import {
   type SkillLevel,
 } from "@/content/curriculum";
 import { liveLessons, pathLiveLessonCount } from "@/content/lessons";
-import { cn } from "@/lib/utils";
+import { cn, plural } from "@/lib/utils";
 
 export const Route = createFileRoute("/paths/")({
   head: () =>
@@ -142,7 +142,8 @@ function Paths() {
               <div className="mt-5 flex items-center justify-between border-t border-border pt-4 text-xs font-semibold text-chalk">
                 <span className="inline-flex items-center gap-3">
                   <span className="inline-flex items-center gap-1">
-                    <Layers className="size-3.5" /> {pCourses.length} courses
+                    <Layers className="size-3.5" /> {pCourses.length}{" "}
+                    {plural(pCourses.length, "course")}
                   </span>
                   <span className="inline-flex items-center gap-1">
                     <Clock className="size-3.5" /> ~{pathWeeks(path, profile?.hours_per_week)}w
