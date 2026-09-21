@@ -1,10 +1,11 @@
 /**
- * Regenerates the two files the browser reads instead of the authored content:
+ * Regenerates the files the browser reads instead of the authored content:
  *
  *   bun run lessons:manifest
  *
  * - src/content/lesson-manifest.gen.ts — which lessons exist, and what they ask.
  * - src/content/claude-course.gen.ts   — the Claude roadmap's shape.
+ * - src/content/chatgpt-course.gen.ts  — the ChatGPT roadmap's shape.
  *
  * The client can't import either source (they carry the answer key, and in the
  * Claude course's case ~40KB of prose besides), so this is how it learns what
@@ -13,6 +14,7 @@
 import prettier from "prettier";
 
 import { renderClaudeModules } from "../src/content/claude-levels.server";
+import { renderChatGPTModules } from "../src/content/chatgpt-levels.server";
 
 /**
  * Generated files are linted like any other source, and `renderClaudeModules`
@@ -34,6 +36,12 @@ await writeFormatted(
   renderClaudeModules(),
 );
 console.log("Wrote src/content/claude-course.gen.ts");
+
+await writeFormatted(
+  new URL("../src/content/chatgpt-course.gen.ts", import.meta.url),
+  renderChatGPTModules(),
+);
+console.log("Wrote src/content/chatgpt-course.gen.ts");
 
 const { renderManifest } = await import("../src/content/lesson-manifest.server");
 await writeFormatted(

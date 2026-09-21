@@ -1,4 +1,5 @@
 import { claudeCourse } from "./claude-course";
+import { chatgptCourse } from "./chatgpt-course";
 import { DEFAULT_HOURS_PER_WEEK } from "./gamification";
 import { projectById } from "./projects";
 
@@ -63,6 +64,7 @@ const m = (
 
 export const courses: Course[] = [
   claudeCourse,
+  chatgptCourse,
   {
     id: "html-css",
     title: "HTML & CSS Foundations",
@@ -586,6 +588,26 @@ export const courses: Course[] = [
 ];
 
 export const careerPaths: CareerPath[] = [
+  {
+    id: "chatgpt-operator",
+    name: "ChatGPT Operator",
+    tagline: "Prompts · Research · Workflows · Autonomy",
+    overview:
+      "Go from your first ChatGPT prompt to repeatable workflows with verified sources, useful deliverables, clear permissions, and human review.",
+    difficulty: "Beginner",
+    skills: [
+      "Prompting",
+      "Context",
+      "Research",
+      "Data analysis",
+      "Workflows",
+      "Safety",
+      "Autonomy",
+    ],
+    courseIds: ["chatgpt-operator"],
+    projectIds: [],
+    popular: true,
+  },
   {
     id: "claude-operator",
     name: "Claude Operator",

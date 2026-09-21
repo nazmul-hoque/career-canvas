@@ -1,5 +1,6 @@
 import { findLesson } from "./curriculum";
 import { claudeLessonBodies } from "./claude-lessons.server";
+import { chatgptLessonBodies } from "./chatgpt-lessons.server";
 import { figmaLessonBodies } from "./figma-lessons.server";
 import { genaiLessonBodies } from "./genai-lessons.server";
 import { htmlCssLessonBodies } from "./html-css-lessons.server";
@@ -8243,6 +8244,7 @@ export const bodies: Record<string, LessonBody> = (() => {
   const merged: Record<string, LessonBody> = {};
   const sources: Record<string, LessonBody>[] = [
     claudeLessonBodies,
+    chatgptLessonBodies,
     figmaLessonBodies,
     genaiLessonBodies,
     htmlCssLessonBodies,
