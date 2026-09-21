@@ -9,6 +9,7 @@
  * skeleton is generated from this file into `claude-course.gen.ts` — regenerate
  * it with `bun run lessons:manifest`.
  */
+import { claudePromptingLessons, type ClaudeAuthoredLesson } from "./claude-prompting.server";
 import type { LessonMeta, ModuleMeta } from "./curriculum";
 
 export type ClaudeTaskSpec = {
@@ -27,7 +28,29 @@ export type ClaudeTaskSpec = {
   exampleLanguage?: string;
 };
 
-export type ClaudeLevelDefinition = {
+/**
+ * A level is either *templated* — a list of task specs that all render through
+ * the same teach/do/prove wrapper — or *authored*, a handful of real lessons
+ * written out in full with their own questions.
+ *
+ * Templated is what the whole course started as, and it is why Level 1 is being
+ * rewritten: the wrapper repeats the level's guide, safety note and reference
+ * on every page, so a twenty-task level shipped the same three paragraphs
+ * twenty times to deliver twenty new sentences. The union keeps both forms
+ * legal during the migration, and makes a half-converted level fail to compile
+ * rather than silently render both.
+ */
+export type ClaudeLevelDefinition = ClaudeTemplatedLevel | ClaudeAuthoredLevel;
+
+export type ClaudeAuthoredLevel = {
+  id: string;
+  title: string;
+  summary: string;
+  lessons: ClaudeAuthoredLesson[];
+  tasks?: never;
+};
+
+export type ClaudeTemplatedLevel = {
   id: string;
   title: string;
   summary: string;
@@ -46,6 +69,7 @@ export type ClaudeLevelDefinition = {
   safety: string;
   reference: string;
   tasks: ClaudeTaskSpec[];
+  lessons?: never;
 };
 
 const task = (
@@ -70,123 +94,19 @@ const task = (
 export const claudeTaskId = (levelId: string, index: number) =>
   `${levelId}.${String(index + 1).padStart(2, "0")}`;
 
+/**
+ * An authored lesson is keyed by a slug rather than a position, because merging
+ * twenty tasks into six lessons renumbers everything after the first change and
+ * a positional id would quietly point at different content each time.
+ */
+export const claudeLessonId = (levelId: string, slug: string) => `${levelId}.${slug}`;
+
 export const claudeLevels: ClaudeLevelDefinition[] = [
   {
     id: "claude-prompting",
     title: "Level 1 · Basic Prompting",
     summary: "Ask useful questions, shape the answer, and check it before you use it.",
-    minutes: 8,
-    capstoneMinutes: 25,
-    taskType: "practice",
-    guide:
-      "A useful prompt says what you want, supplies the context Claude cannot guess, and describes what a good answer should look like. Treat the first answer as a draft you can improve.",
-    safety:
-      "Do not paste passwords, private customer data, health records, or confidential work into a chat. Replace sensitive details with realistic placeholders.",
-    reference:
-      "Claude prompting guide · https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/overview",
-    tasks: [
-      task(
-        "Ask your first useful question",
-        "Ask Claude to explain one topic you genuinely want to understand, then add why you need it.",
-        "A saved prompt and an answer that fits your actual goal.",
-        "Explain [topic] for someone who needs to [goal].",
-      ),
-      task(
-        "Add the missing context",
-        "Take a vague question and add the audience, situation, and relevant background.",
-        "Before-and-after prompts showing how context changed the answer.",
-      ),
-      task(
-        "Request a clear format",
-        "Ask for the same answer as a checklist, a short table, and three bullets; decide which is easiest to use.",
-        "Three formats and one sentence explaining your choice.",
-      ),
-      task(
-        "Set useful constraints",
-        "Limit length, reading level, tone, and scope without overloading the prompt.",
-        "A constrained answer that still contains the needed information.",
-      ),
-      task(
-        "Show one good example",
-        "Give Claude a small example of the style or structure you want and ask for a new item that follows it.",
-        "Your example beside Claude's matching result.",
-      ),
-      task(
-        "Give Claude a role",
-        "Choose a role that adds a real viewpoint, such as patient tutor or skeptical editor, and state the audience too.",
-        "An answer whose advice reflects the chosen viewpoint.",
-      ),
-      task(
-        "Ask for clarifying questions",
-        "Give Claude an underspecified task and require it to ask up to three questions before answering.",
-        "The questions, your replies, and the improved answer.",
-      ),
-      task(
-        "Break down a big request",
-        "Turn an intimidating goal into a sequence of small steps with a clear first action.",
-        "A numbered plan with a first step you can do in fifteen minutes.",
-      ),
-      task(
-        "Improve a weak prompt",
-        "Run a vague prompt, identify what the answer guessed, then rewrite the prompt to remove those guesses.",
-        "The original, revision, and one concrete improvement.",
-      ),
-      task(
-        "Compare two prompt versions",
-        "Change one variable in a prompt—context, format, or constraint—and compare the outputs fairly.",
-        "A short comparison that names the changed variable.",
-      ),
-      task(
-        "Summarize without losing decisions",
-        "Paste a short, non-sensitive passage and ask for the decisions, actions, owners, and open questions.",
-        "A summary that separates facts from open questions.",
-      ),
-      task(
-        "Rewrite for a real audience",
-        "Rewrite a message once for a busy manager and once for a new learner.",
-        "Two versions whose vocabulary and detail fit their readers.",
-      ),
-      task(
-        "Extract structured information",
-        "Ask Claude to turn a small block of text into consistent fields without inventing missing values.",
-        "Structured output that marks missing information explicitly.",
-      ),
-      task(
-        "Brainstorm beyond the obvious",
-        "Ask for ideas in three distinct categories, then request a second round that avoids the first round's patterns.",
-        "A grouped shortlist with your top two choices.",
-      ),
-      task(
-        "Invite a constructive critique",
-        "Ask Claude to find weaknesses in a draft and rank them by impact before rewriting anything.",
-        "A prioritized critique that preserves your original draft.",
-      ),
-      task(
-        "Build a fact-check plan",
-        "Choose a factual answer and ask what claims need verification and what primary source could verify each one.",
-        "A claim-to-source checklist; no claim is treated as true merely because Claude said it.",
-      ),
-      task(
-        "Separate facts from assumptions",
-        "Ask Claude to label what comes from your prompt, what it inferred, and what remains unknown.",
-        "An answer with clearly separated facts, assumptions, and unknowns.",
-      ),
-      task(
-        "Redact before you paste",
-        "Rewrite a sensitive-looking sample using placeholders while preserving enough context to solve the problem.",
-        "A redacted prompt with no real names, secrets, or identifying details.",
-      ),
-      task(
-        "Create a reusable prompt template",
-        "Turn your best prompt into a template with named blanks and a one-line instruction for each blank.",
-        "A template another person can complete without your help.",
-      ),
-      task(
-        "Capstone: make a daily brief",
-        "Design and run a prompt that turns safe notes into a concise daily brief with priorities, blockers, and next actions.",
-        "The reusable prompt, one sample brief, and a note about what you checked manually.",
-      ),
-    ],
+    lessons: claudePromptingLessons,
   },
   {
     id: "claude-cli",
@@ -1148,20 +1068,35 @@ exit 0`,
  * written to disk; the test compares the two so the committed file cannot drift.
  */
 export function claudeModulesFromLevels(): ModuleMeta[] {
-  return claudeLevels.map((level) => ({
-    id: level.id,
-    title: level.title,
-    summary: `${level.tasks.length} tasks \u00b7 ${level.summary}`,
-    lessons: level.tasks.map((item, index) => {
-      const capstone = index === level.tasks.length - 1;
+  return claudeLevels.map((level) => {
+    if (level.lessons) {
       return {
-        id: claudeTaskId(level.id, index),
-        title: item.title,
-        minutes: capstone ? level.capstoneMinutes : level.minutes,
-        type: capstone ? ("project" as const) : level.taskType,
+        id: level.id,
+        title: level.title,
+        summary: `${level.lessons.length} lessons \u00b7 ${level.summary}`,
+        lessons: level.lessons.map((lesson) => ({
+          id: claudeLessonId(level.id, lesson.slug),
+          title: lesson.title,
+          minutes: lesson.minutes,
+          type: lesson.type,
+        })),
       };
-    }),
-  }));
+    }
+    return {
+      id: level.id,
+      title: level.title,
+      summary: `${level.tasks.length} tasks \u00b7 ${level.summary}`,
+      lessons: level.tasks.map((item, index) => {
+        const capstone = index === level.tasks.length - 1;
+        return {
+          id: claudeTaskId(level.id, index),
+          title: item.title,
+          minutes: capstone ? level.capstoneMinutes : level.minutes,
+          type: capstone ? ("project" as const) : level.taskType,
+        };
+      }),
+    };
+  });
 }
 
 export function renderClaudeModules(): string {

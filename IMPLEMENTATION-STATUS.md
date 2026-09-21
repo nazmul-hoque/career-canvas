@@ -138,6 +138,18 @@ Two facts shape every item below:
       request and response shape, message roles, `stop_reason`, tokens and the
       context window, verified against the live docs rather than recalled. The
       unbacked `"APIs"` skill came off the `ai` and `python` paths.
+- [x] **Claude Operator Level 1 rewritten as lessons** (2026-09-20) — the
+      generated wrapper stamped each level's guide, safety note and reference
+      onto every task in it, so ~77% of any page was identical to the page
+      before it and the unique part was one sentence naming the task; twenty
+      such pages covered basic prompting. Level 1 is now six authored lessons in
+      `claude-prompting.server.ts` carrying the same twenty missions as practice
+      inside the lesson that teaches them, with real MCQs on the judgement
+      calls. `ClaudeLevelDefinition` became a union of templated and authored
+      levels so the other five keep working and convert one at a time. Five
+      assessed lessons make `claude-operator` `assessable`, so the path's
+      credential moves off `self-directed` for the first time — 37 hours of work
+      could previously never certify. 172 tasks -> 158 lessons.
 - [x] **Claude Operator examples: the renderer, and the Level 5 permissions and
       hooks clusters** (2026-09-20) — `ClaudeTaskSpec` gained
       `exampleLanguage`, because the old sniff asked whether an example started

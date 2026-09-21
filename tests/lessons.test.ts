@@ -66,20 +66,22 @@ describe("every authored lesson", () => {
 });
 
 describe("Claude operator course", () => {
-  test("contains the promised 172 tasks in the exact level split", () => {
-    expect(claudeLevels.map((level) => level.tasks.length)).toEqual([20, 32, 35, 25, 35, 25]);
-    expect(courseLessons(claudeCourse)).toHaveLength(172);
+  test("contains the promised levels, with Level 1 rewritten as lessons", () => {
+    // Level 1 is authored as six real lessons; the rest are still task specs.
+    expect(claudeLevels.map((level) => level.lessons?.length ?? level.tasks!.length)).toEqual([
+      6, 32, 35, 25, 35, 25,
+    ]);
+    expect(courseLessons(claudeCourse)).toHaveLength(158);
   });
 
-  test("every task has a unique id and an authored body", () => {
+  test("every lesson has a unique id and an authored body", () => {
     const lessons = courseLessons(claudeCourse);
-    expect(new Set(lessons.map((lesson) => lesson.id)).size).toBe(172);
+    expect(new Set(lessons.map((lesson) => lesson.id)).size).toBe(158);
 
     for (const lesson of lessons) {
       const body = getLessonBody(claudeCourse.id, lesson.id);
       expect(body).not.toBeNull();
       expect(body?.summary.trim().length).toBeGreaterThan(20);
-      // The mission, the evidence to keep, and the level's safety note.
       expect(body?.blocks.length).toBeGreaterThanOrEqual(3);
     }
   });
@@ -89,15 +91,20 @@ describe("Claude operator course", () => {
   });
 
   /**
-   * The course is done in the learner's own tools, so nothing in it can be
-   * marked. That has to stay true in the data, not just in the prose: the
-   * moment one of these tasks asks a gradable question it starts paying review
-   * XP and counting towards a certificate for work nobody checked.
+   * The templated tasks are done in the learner's own tools, so nothing in them
+   * can be marked. That has to stay true in the data, not just in the prose: the
+   * moment one of them asks a gradable question it starts paying review XP and
+   * counting towards a certificate for work nobody checked. Level 1 is excluded
+   * because it no longer asks the learner to mark their own homework — it asks
+   * real questions about judgement calls, which is why it is assessed.
    */
-  test("tasks are self-attested: nothing is graded, so nothing is certified", () => {
-    const lessons = courseLessons(claudeCourse);
+  test("self-attested tasks are graded nowhere", () => {
+    const attested = courseLessons(claudeCourse).filter(
+      (lesson) => getLessonBody(claudeCourse.id, lesson.id)!.attested,
+    );
+    expect(attested.length).toBe(153);
 
-    for (const lesson of lessons) {
+    for (const lesson of attested) {
       const body = getLessonBody(claudeCourse.id, lesson.id)!;
       expect(body.blocks.some((block) => block.kind === "mcq" || block.kind === "fill")).toBe(
         false,
@@ -105,31 +112,59 @@ describe("Claude operator course", () => {
       expect(body.blocks.some((block) => block.kind === "challenge")).toBe(false);
       expect(isLessonAssessed(lesson.id)).toBe(false);
       expect(isReviewable(body)).toBe(false);
+      expect(body.xp).toBe(ATTESTED_XP);
     }
+  });
+
+  /**
+   * The point of rewriting Level 1: a path made only of self-attested work can
+   * never certify, so `pathCompletion` returned "self-directed" for ever. Every
+   * assessed lesson added here is what buys that back.
+   */
+  test("Level 1 is assessed, which lets the path certify", () => {
+    const authored = claudeLevels[0]!.lessons!;
+    const graded = authored.filter((lesson) => !lesson.body.attested);
+    expect(graded.length).toBe(5);
+
+    for (const lesson of graded) {
+      const id = `claude-prompting.${lesson.slug}`;
+      expect(isLessonAssessed(id)).toBe(true);
+      expect(lessonQuestionCount(id)).toBeGreaterThanOrEqual(2);
+      expect(lesson.body.xp).toBeGreaterThan(ATTESTED_XP);
+      // Every option list needs a wrong answer that someone could believe.
+      for (const block of lesson.body.blocks) {
+        if (block.kind !== "mcq") continue;
+        expect(block.options.length).toBeGreaterThanOrEqual(3);
+        expect(block.explanation.length).toBeGreaterThan(40);
+      }
+    }
+
+    // The right answer is not always the same option — the defect that made the
+    // course's previous 172 generated questions worthless.
+    const answers = graded.flatMap((lesson) =>
+      lesson.body.blocks.flatMap((block) => (block.kind === "mcq" ? [block.answer] : [])),
+    );
+    expect(new Set(answers).size).toBeGreaterThan(1);
 
     const path = careerPaths.find((p) => p.id === "claude-operator")!;
     const everyLessonDone = new Set(pathLiveLessons(path).map((l) => l.id));
     const completion = pathCompletion(path, everyLessonDone);
     expect(completion.percent).toBe(100);
-    expect(completion.credential).toBe("self-directed");
+    expect(completion.credential).toBe("eligible");
   });
 
   test("self-reported tasks stay a small fraction of the catalog's XP", () => {
-    const claudeXp = courseLessons(claudeCourse).reduce(
-      (sum, lesson) => sum + (bodies[lesson.id]?.xp ?? 0),
-      0,
-    );
+    const attestedXp = Object.entries(bodies)
+      .filter(([, body]) => body.attested)
+      .reduce((sum, [, body]) => sum + body.xp, 0);
     const assessedXp = Object.entries(bodies)
       .filter(([id]) => isLessonAssessed(id))
       .reduce((sum, [, body]) => sum + body.xp, 0);
 
-    for (const lesson of courseLessons(claudeCourse)) {
-      expect(bodies[lesson.id]?.xp).toBe(15);
-    }
-    expect(claudeXp).toBeLessThan(assessedXp / 2);
+    expect(attestedXp).toBeLessThan(assessedXp / 2);
   });
 
-  test("no task prose reaches the client course module", () => {
+  test("no lesson prose or answer reaches the client course module", () => {
     const clientSource = readFileSync(
       new URL("../src/content/claude-course.gen.ts", import.meta.url),
       "utf8",
@@ -137,6 +172,21 @@ describe("Claude operator course", () => {
     // A phrase that only ever appears in an authored mission.
     expect(clientSource).not.toContain("Keep this evidence");
     for (const level of claudeLevels) {
+      if (level.lessons) {
+        for (const lesson of level.lessons) {
+          expect(clientSource).not.toContain(lesson.body.summary);
+          for (const block of lesson.body.blocks) {
+            if (block.kind === "mcq") {
+              expect(clientSource).not.toContain(block.question);
+              expect(clientSource).not.toContain(block.explanation);
+            }
+            if (block.kind === "text" || block.kind === "callout") {
+              expect(clientSource).not.toContain(block.body);
+            }
+          }
+        }
+        continue;
+      }
       expect(clientSource).not.toContain(level.guide);
       expect(clientSource).not.toContain(level.safety);
       for (const task of level.tasks) expect(clientSource).not.toContain(task.mission);

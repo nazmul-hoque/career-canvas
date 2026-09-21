@@ -1,11 +1,15 @@
-import { claudeLevels, claudeTaskId } from "./claude-levels.server";
+import { claudeLessonId, claudeLevels, claudeTaskId } from "./claude-levels.server";
 import { ATTESTED_XP } from "./gamification";
 import type { LessonBody } from "./lessons";
 
 /**
- * Bodies for the 172 authored task specs in `claude-levels.server.ts`. The
- * mission, evidence, example and level guardrails are all authored; this only
- * gives each task the same teach → do → prove presentation.
+ * Bodies for the templated levels of `claude-levels.server.ts`. The mission,
+ * evidence, example and level guardrails are all authored; this only gives each
+ * task the same teach → do → prove presentation.
+ *
+ * Levels that have been rewritten as real lessons carry their own bodies and
+ * pass straight through — see `claude-prompting.server.ts` for Level 1, and the
+ * note on `ClaudeLevelDefinition` for why the wrapper is being retired.
  *
  * These are self-attested: the work happens in the learner's own tools, so
  * there is nothing here a server can mark. They deliberately ask no question
@@ -16,8 +20,14 @@ import type { LessonBody } from "./lessons";
  * template that grades itself certifies nothing.
  */
 export const claudeLessonBodies: Record<string, LessonBody> = Object.fromEntries(
-  claudeLevels.flatMap((level) =>
-    level.tasks.map((task, taskIndex) => {
+  claudeLevels.flatMap((level) => {
+    // An authored level brings its own bodies; there is nothing to assemble.
+    if (level.lessons) {
+      return level.lessons.map(
+        (lesson) => [claudeLessonId(level.id, lesson.slug), lesson.body] as const,
+      );
+    }
+    return level.tasks.map((task, taskIndex) => {
       const id = claudeTaskId(level.id, taskIndex);
       const blocks: LessonBody["blocks"] = [
         {
@@ -64,7 +74,7 @@ export const claudeLessonBodies: Record<string, LessonBody> = Object.fromEntries
           xp: ATTESTED_XP,
           blocks,
         },
-      ];
-    }),
-  ),
+      ] as const;
+    });
+  }),
 );
