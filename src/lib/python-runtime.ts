@@ -89,7 +89,13 @@ export const PYTHON_DRIVER = [
   "__ascent_result",
 ].join("\n");
 
-const WORKER_SOURCE = String.raw`
+/**
+ * The worker runs as a string, so neither TypeScript nor ESLint looks inside
+ * it: a module constant referenced here is simply undefined at runtime, and the
+ * failure surfaces as "the engine couldn't load". Exported so a test can check
+ * that every identifier it uses is one it declares.
+ */
+export const WORKER_SOURCE = String.raw`
 let pyodideReady = null;
 
 async function boot(base) {
@@ -110,7 +116,7 @@ self.onmessage = async (event) => {
     // fetched from the same CDN the first time code imports them.
     await pyodide.loadPackagesFromImports(code);
     pyodide.globals.set("__ascent_payload", JSON.stringify({ code, tests }));
-    const raw = pyodide.runPython(PYTHON_DRIVER);
+    const raw = pyodide.runPython(DRIVER);
     self.postMessage({ id, ok: true, outcome: JSON.parse(raw) });
   } catch (error) {
     self.postMessage({ id, ok: false, fatal: String(error && error.message ? error.message : error) });
@@ -204,6 +210,10 @@ export async function runPythonInPyodide(
           if (loadsPackages) dataPackagesLoaded = true;
           resolve(event.data.outcome);
         } else {
+          // A fatal is the runtime failing, not the learner's code. The caller
+          // can only report "it could not load", so without this the console is
+          // the one place a real defect is distinguishable from a blocked CDN.
+          if (event.data.fatal) console.warn("[pyodide] worker failed:", event.data.fatal);
           killWorker();
           resolve(null);
         }

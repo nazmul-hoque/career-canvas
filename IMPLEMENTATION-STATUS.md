@@ -106,6 +106,20 @@ Two facts shape every item below:
 
 ## Done
 
+- [x] **Python and SQL never ran for real** (2026-09-21) — `be9b275` renamed
+      the module constant `DRIVER` to `PYTHON_DRIVER` so `lessons:verify` could
+      import it, and the rename also rewrote the call site _inside_ the Pyodide
+      worker, where the local is still `DRIVER`. The worker is built from a
+      string, so TypeScript and ESLint both see an opaque template literal and
+      neither noticed: every run threw `PYTHON_DRIVER is not defined`. Python
+      silently fell back to the pattern simulation — labelled, so not dishonest,
+      but not CPython either — and SQL, which has no fallback by design, told
+      the learner "the SQL engine couldn't load… check your connection", so the
+      report arrived as a network complaint. One word fixes it. The worker's
+      `fatal` reply was also being discarded, which is why nothing anywhere
+      distinguished a real defect from a blocked CDN; it is now logged. A test
+      in `js-runtimes.test.ts` parses the worker source and fails when it
+      references a constant it does not declare.
 - [x] **Signing in left the learner on the login page** (2026-09-21) — the
       OAuth callback returns to `/auth?complete=1`, and the route read that flag
       with `search["complete"] === true || === "1"`. TanStack Router parses

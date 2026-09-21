@@ -102,3 +102,40 @@ document.querySelector("#f").addEventListener("submit", (e) => {
     expect(previewDocument('const s = "</script>";', "<p></p>")).not.toContain('"</script>"');
   });
 });
+
+/**
+ * The Pyodide worker is built from a string, so nothing else in the toolchain
+ * looks inside it — TypeScript and ESLint both see an opaque template literal.
+ * A rename that crosses that boundary compiles, lints, and then fails at
+ * runtime with "the engine couldn't load".
+ *
+ * That is not hypothetical: `be9b275` renamed the module constant `DRIVER` to
+ * `PYTHON_DRIVER` so the lesson verifier could import it, and the rename also
+ * rewrote the call site inside the worker, where the local is still `DRIVER`.
+ * Every Python run fell back to the simulation and every SQL run — which has no
+ * fallback by design — told the learner to check their connection.
+ */
+const { WORKER_SOURCE } = await import("../src/lib/python-runtime");
+
+describe("the Pyodide worker source is self-contained", () => {
+  test("every constant it references is one it declares", () => {
+    const declared = new Set(
+      [...WORKER_SOURCE.matchAll(/\b(?:const|let|var|function)\s+([A-Za-z_$][\w$]*)/g)].map(
+        (m) => m[1],
+      ),
+    );
+    // Only executable code: prose in a comment and the driver inside its string
+    // literal are not references to anything.
+    const code = WORKER_SOURCE.replace(/\/\/[^\n]*/g, " ").replace(/"(?:[^"\\]|\\.)*"/g, '""');
+    const globals = new Set(["JSON", "URL"]);
+    const used = new Set([...code.matchAll(/\b([A-Z][A-Z0-9_]{2,})\b/g)].map((m) => m[1]!));
+
+    const undeclared = [...used].filter((name) => !declared.has(name) && !globals.has(name));
+    expect(undeclared).toEqual([]);
+  });
+
+  test("it still carries the driver it runs", () => {
+    expect(WORKER_SOURCE).toContain("runPython(DRIVER)");
+    expect(WORKER_SOURCE).toContain("__ascent_result");
+  });
+});
