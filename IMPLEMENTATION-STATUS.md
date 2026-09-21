@@ -106,6 +106,44 @@ Two facts shape every item below:
 
 ## Done
 
+- [x] **The operator paths say which one is longer, and call their units
+      lessons** (2026-09-21) — the two paths now differ by roughly 2:1, the path
+      pages compute ~6 weeks against ~3, and neither overview said why. Each
+      names itself as the longer or shorter path, points at what accounts for
+      the gap, and points at the other, since choosing between them is the
+      actual question on those pages. The hours stay computed — a duration
+      repeated in prose is the hardcoded `weeks` field two entries below,
+      reintroduced somewhere harder to find. Both courses also still declared
+      `unitLabel: "tasks"`, so a rewritten lesson opened as "TASK 1 OF 51"; the
+      unit word and the section word were one field offering lessons-in-modules
+      or tasks-in-levels, and not the lessons-in-levels both courses are, so
+      they are now separate fields.
+- [x] **Counts are pluralised** (2026-09-21) — every operator path holds exactly
+      one course, so "1 courses" shipped to the landing page, the path index and
+      the path page the day those paths did. The same hardcoded plural was
+      waiting in "1 of 1 lessons live" on a path header and its course list,
+      "You're 1 lessons in" on an empty profile, and "~1 weeks" for any learner
+      whose stated pace makes a short path fit in one, since `pathWeeks()` floors
+      at one. `plural()` in `utils.ts` picks the noun once instead of seven
+      ternaries, and the per-course row now takes its noun from that course's
+      own vocabulary rather than assuming "lessons".
+- [x] **The landing hero stopped clipping itself on phones** (2026-09-20) — the
+      hero grid's columns inherited `min-width: auto`, so the lesson panel's
+      411px min-content width stretched the single mobile column past the
+      viewport and the section's `overflow-hidden` clipped the spill rather than
+      scrolling it. The headline, the body copy and both CTAs were cut off —
+      103px lost at 320px wide, 37px at 390px — while `document.scrollWidth`
+      still read 390, which is why no horizontal-overflow check had caught it.
+      `min-w-0` on both columns. Desktop is unchanged at 685/619.
+- [x] **Every control has a 44px tap target on touch** (2026-09-20) — controls
+      sat at Tailwind's h-8/h-9/h-10, right for a mouse and too small for a
+      thumb. The floor is raised under `@media (pointer: coarse)` rather than at
+      a breakpoint, so a touch laptop gets it and a mouse-driven desktop keeps
+      its exact proportions. `min-height` clamps without a specificity fight, and
+      an inline box ignores it, which leaves links inside a sentence alone — the
+      case WCAG 2.5.8 exempts. `.challenge-preview` is excluded because it
+      renders the learner's own component. 139 undersized controls across 16
+      routes became 2, both the "All" filter chip and short on width only.
 - [x] **Path duration is computed, and the invented instructors are gone**
       (2026-09-20) — `CareerPath.weeks` was a hardcoded number shown as
       "~N weeks" on three surfaces and it described no pace at all: Full-stack
