@@ -12,8 +12,8 @@ export const claudeCourse: Course = {
   skill: "Claude",
   level: "Beginner",
   recommended: true,
-  unitLabel: "tasks",
-  summary: `${claudeModules.reduce((n, m) => n + m.lessons.length, 0)} hands-on tasks from your first prompt to safe, autonomous Claude workflows.`,
+  sectionLabel: "levels",
+  summary: `${claudeModules.reduce((n, m) => n + m.lessons.length, 0)} lessons from your first prompt to safe, autonomous Claude workflows — every one with work to do in your own terminal.`,
   description:
     "Learn Claude by doing the work yourself. Start with ordinary questions, move into Claude Code and connected tools, then build subagents, reusable skills, permission boundaries, and bounded autonomous workflows—explained in everyday language.",
   skills: [

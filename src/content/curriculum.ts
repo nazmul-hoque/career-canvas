@@ -25,7 +25,13 @@ export interface Course {
   skill: string;
   level: SkillLevel;
   recommended: boolean;
+  /**
+   * What the course calls its units and their groups. Independent fields
+   * because they are independent facts: the operator courses teach lessons,
+   * and they group them into levels rather than modules.
+   */
   unitLabel?: "lessons" | "tasks";
+  sectionLabel?: "modules" | "levels";
   summary: string;
   description: string;
   skills: string[];
@@ -593,7 +599,7 @@ export const careerPaths: CareerPath[] = [
     name: "ChatGPT Operator",
     tagline: "Prompts · Research · Workflows · Autonomy",
     overview:
-      "Go from your first ChatGPT prompt to repeatable workflows with verified sources, useful deliverables, clear permissions, and human review.",
+      "Go from your first ChatGPT prompt to repeatable workflows with verified sources, useful deliverables, clear permissions, and human review. The shorter operator path—it all happens in the ChatGPT app; take Claude Operator for the terminal and real permission boundaries.",
     difficulty: "Beginner",
     skills: [
       "Prompting",
@@ -613,7 +619,7 @@ export const careerPaths: CareerPath[] = [
     name: "Claude Operator",
     tagline: "Prompts · Tools · Agents · Autonomy",
     overview:
-      "Go from asking Claude useful questions to running bounded, observable AI workflows—with permissions, verification and human approval built in.",
+      "Go from asking Claude useful questions to running bounded, observable AI workflows—with permissions, verification and human approval built in. The longer operator path: past prompting it adds the terminal, connected tools, subagents and permission rules.",
     difficulty: "Beginner",
     skills: ["Prompting", "Claude Code", "MCP", "Subagents", "Skills", "Safety", "Autonomy"],
     courseIds: ["claude-operator"],
@@ -771,22 +777,24 @@ export interface UnitWords {
   sections: string;
 }
 
-const LESSON_WORDS: UnitWords = {
-  singular: "lesson",
-  plural: "lessons",
-  singularTitle: "Lesson",
-  sections: "modules",
+const UNITS: Record<"lessons" | "tasks", Omit<UnitWords, "sections">> = {
+  lessons: { singular: "lesson", plural: "lessons", singularTitle: "Lesson" },
+  tasks: { singular: "task", plural: "tasks", singularTitle: "Task" },
 };
 
-const TASK_WORDS: UnitWords = {
-  singular: "task",
-  plural: "tasks",
-  singularTitle: "Task",
-  sections: "levels",
+const LESSON_WORDS: UnitWords = { ...UNITS.lessons, sections: "modules" };
+
+export const unitWords = (course: Course): UnitWords => ({
+  ...UNITS[course.unitLabel ?? "lessons"],
+  sections: course.sectionLabel ?? "modules",
+});
+
+/** A path only speaks its courses' vocabulary when they all agree on both. */
+export const unitWordsForCourses = (list: Course[]): UnitWords => {
+  const [first, ...rest] = list;
+  if (!first) return LESSON_WORDS;
+  const agree = rest.every(
+    (c) => c.unitLabel === first.unitLabel && c.sectionLabel === first.sectionLabel,
+  );
+  return agree ? unitWords(first) : LESSON_WORDS;
 };
-
-export const unitWords = (course: Course): UnitWords =>
-  course.unitLabel === "tasks" ? TASK_WORDS : LESSON_WORDS;
-
-export const unitWordsForCourses = (list: Course[]): UnitWords =>
-  list.length > 0 && list.every((c) => c.unitLabel === "tasks") ? TASK_WORDS : LESSON_WORDS;
