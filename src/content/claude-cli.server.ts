@@ -6,12 +6,12 @@
  * recalled — a course that teaches a flag that no longer exists is worse than
  * one that teaches nothing.
  */
-import type { ClaudeAuthoredLesson } from "./claude-authored";
+import type { AuthoredLesson } from "./authored-lesson";
 import { ATTESTED_XP } from "./gamification";
 
 const REFERENCE = "Claude Code CLI reference · https://code.claude.com/docs/en/cli-reference";
 
-export const claudeCliLessons: ClaudeAuthoredLesson[] = [
+export const claudeCliLessons: AuthoredLesson[] = [
   {
     slug: "first-session",
     title: "Install, check, and open your first session",

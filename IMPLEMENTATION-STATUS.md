@@ -138,6 +138,22 @@ Two facts shape every item below:
       request and response shape, message roles, `stop_reason`, tokens and the
       context window, verified against the live docs rather than recalled. The
       unbacked `"APIs"` skill came off the `ai` and `python` paths.
+- [x] **Both operator courses rewritten as lessons** (2026-09-21) — Claude
+      Levels 2-6 and the whole ChatGPT course followed Level 1 off the generated
+      wrapper. Claude: 172 tasks -> 51 lessons, 36.8h -> 18.0h. ChatGPT: 60
+      tasks -> 24 lessons, 17.1h -> 8.5h, which had the same defect measured at
+      71.5% repeated text. With no templated levels left, `ClaudeTaskSpec`, the
+      `task()` helper and both assembly steps are deleted and the shared
+      `AuthoredLesson` type lives in `authored-lesson.ts`. 63 of the 75 lessons
+      are assessed and the six capstones per course stay attested, so
+      `chatgpt-operator` joins `claude-operator` at `eligible` — neither path
+      could previously certify at all. Claude facts are checked against
+      code.claude.com, which corrected several (deny/ask/allow order ignores
+      rule specificity; managed settings outrank the command line; a PreToolUse
+      hook exiting 2 pre-empts permission rules; an omitted subagent `tools`
+      field inherits everything). Both suites now assert no MCQ option is
+      correct more than 35% of the time — the first drafts had B correct on 64
+      of 89 and 61% of questions respectively.
 - [x] **Claude Operator Level 1 rewritten as lessons** (2026-09-20) — the
       generated wrapper stamped each level's guide, safety note and reference
       onto every task in it, so ~77% of any page was identical to the page

@@ -5,12 +5,12 @@
  * agent directory locations are taken from code.claude.com/docs/en/sub-agents
  * rather than recalled.
  */
-import type { ClaudeAuthoredLesson } from "./claude-authored";
+import type { AuthoredLesson } from "./authored-lesson";
 import { ATTESTED_XP } from "./gamification";
 
 const REFERENCE = "Claude Code subagents · https://code.claude.com/docs/en/sub-agents";
 
-export const claudeSubagentsLessons: ClaudeAuthoredLesson[] = [
+export const claudeSubagentsLessons: AuthoredLesson[] = [
   {
     slug: "when-to-delegate",
     title: "What is worth delegating",

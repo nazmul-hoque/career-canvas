@@ -5,12 +5,12 @@
  * course's safety argument is cashed out: every control taught earlier exists
  * because at some point nobody is watching.
  */
-import type { ClaudeAuthoredLesson } from "./claude-authored";
+import type { AuthoredLesson } from "./authored-lesson";
 import { ATTESTED_XP } from "./gamification";
 
 const REFERENCE = "Claude Code CLI reference · https://code.claude.com/docs/en/cli-reference";
 
-export const claudeAutonomyLessons: ClaudeAuthoredLesson[] = [
+export const claudeAutonomyLessons: AuthoredLesson[] = [
   {
     slug: "worth-automating",
     title: "Choosing a job, and writing a goal a machine can check",

@@ -13,7 +13,7 @@
  * All six have now been rewritten as lessons, so the wrapper and the union that
  * kept both forms legal during the migration are gone with it.
  */
-import type { ClaudeAuthoredLesson } from "./claude-authored";
+import type { AuthoredLesson } from "./authored-lesson";
 import { claudeAutonomyLessons } from "./claude-autonomy.server";
 import { claudeCliLessons } from "./claude-cli.server";
 import { claudePromptingLessons } from "./claude-prompting.server";
@@ -26,7 +26,7 @@ export type ClaudeLevelDefinition = {
   id: string;
   title: string;
   summary: string;
-  lessons: ClaudeAuthoredLesson[];
+  lessons: AuthoredLesson[];
 };
 
 /**

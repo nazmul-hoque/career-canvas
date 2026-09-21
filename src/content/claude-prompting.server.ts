@@ -12,10 +12,10 @@
  *
  * Server-only, like every other file holding an answer key.
  */
-import type { ClaudeAuthoredLesson } from "./claude-authored";
+import type { AuthoredLesson } from "./authored-lesson";
 import { ATTESTED_XP } from "./gamification";
 
-export const claudePromptingLessons: ClaudeAuthoredLesson[] = [
+export const claudePromptingLessons: AuthoredLesson[] = [
   {
     slug: "anatomy",
     title: "Anatomy of a useful prompt",

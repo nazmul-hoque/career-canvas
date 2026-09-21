@@ -6,13 +6,13 @@
  * code.claude.com — this is the level where a remembered-but-wrong detail
  * would teach someone to write a rule that doesn't do what they think.
  */
-import type { ClaudeAuthoredLesson } from "./claude-authored";
+import type { AuthoredLesson } from "./authored-lesson";
 import { ATTESTED_XP } from "./gamification";
 
 const REFERENCE = "Claude Code skills · https://code.claude.com/docs/en/skills";
 const PERMISSIONS_REFERENCE = "Configure permissions · https://code.claude.com/docs/en/permissions";
 
-export const claudeSkillsSafetyLessons: ClaudeAuthoredLesson[] = [
+export const claudeSkillsSafetyLessons: AuthoredLesson[] = [
   {
     slug: "skill-or-memory",
     title: "Skill, project memory, or just a prompt?",

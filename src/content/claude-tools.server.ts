@@ -7,12 +7,12 @@
  * human — because that shape is the transferable part and the individual
  * connectors change.
  */
-import type { ClaudeAuthoredLesson } from "./claude-authored";
+import type { AuthoredLesson } from "./authored-lesson";
 import { ATTESTED_XP } from "./gamification";
 
 const REFERENCE = "Claude Code MCP guide · https://code.claude.com/docs/en/mcp";
 
-export const claudeToolsLessons: ClaudeAuthoredLesson[] = [
+export const claudeToolsLessons: AuthoredLesson[] = [
   {
     slug: "trust-boundary",
     title: "What connecting a tool actually does",

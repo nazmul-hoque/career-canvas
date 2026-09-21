@@ -143,12 +143,16 @@ describe("Claude operator course", () => {
       expect(ids.every((id) => isLessonAssessed(id))).toBe(true);
     }
 
-    // The right answer is not always the same option — the defect that made the
-    // course's previous 172 generated questions worthless.
+    // Guessing one letter every time must not pass. Counting distinct answers
+    // isn't enough: the first draft of this course used all four and still had
+    // B correct on 64 of 89 questions, so the bar is the most common option's
+    // share, not its existence.
     const answers = graded.flatMap((lesson) =>
       lesson.body.blocks.flatMap((block) => (block.kind === "mcq" ? [block.answer] : [])),
     );
-    expect(new Set(answers).size).toBeGreaterThan(3);
+    expect(new Set(answers).size).toBe(4);
+    const commonest = Math.max(...[0, 1, 2, 3].map((i) => answers.filter((a) => a === i).length));
+    expect(commonest / answers.length).toBeLessThan(0.35);
 
     const path = careerPaths.find((p) => p.id === "claude-operator")!;
     const everyLessonDone = new Set(pathLiveLessons(path).map((l) => l.id));
