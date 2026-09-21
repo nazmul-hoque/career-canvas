@@ -106,6 +106,19 @@ Two facts shape every item below:
 
 ## Done
 
+- [x] **Signing in left the learner on the login page** (2026-09-21) — the
+      OAuth callback returns to `/auth?complete=1`, and the route read that flag
+      with `search["complete"] === true || === "1"`. TanStack Router parses
+      search with `JSON.parse`, so the value arrives as the **number** `1` and
+      neither branch matched: `complete` validated to `false`, the router wrote
+      that back into the URL, and the effect that calls `finishLogin` never ran.
+      Supabase had already consumed the tokens from the hash, so the learner was
+      signed in and stranded — the reported URL ended `?complete=false…#`. The
+      flag is now `isAuthCallback()` in `auth-navigation.ts`, accepting every
+      shape it can arrive in, and the callback emits `complete=true` so it round
+      trips as a boolean. It still accepts `1` because that form is sitting in
+      already-delivered confirmation emails. This was never Google-specific:
+      email confirmation and password-reset links use the same callback.
 - [x] **The operator paths say which one is longer, and call their units
       lessons** (2026-09-21) — the two paths now differ by roughly 2:1, the path
       pages compute ~6 weeks against ~3, and neither overview said why. Each

@@ -1,8 +1,42 @@
 import { describe, expect, test } from "bun:test";
-import { safeReturnTo } from "../src/lib/auth-navigation";
+import { isAuthCallback, safeReturnTo } from "../src/lib/auth-navigation";
+import { parseSearchWith } from "@tanstack/router-core";
 import { draftKey, parseDraft } from "../src/lib/lesson-draft";
 import { projectUrl, publicationSchema } from "../src/lib/project-publication";
 import { codeTokens } from "../src/lib/code-tokens";
+
+/**
+ * The OAuth callback lands on `/auth?complete=…`, and whether the page then
+ * sends the learner on is decided by reading that flag back out of the URL.
+ * It is parsed by the router's default `JSON.parse` search parser before the
+ * route sees it, which is the step the original check missed.
+ */
+describe("auth callback flag survives the URL round trip", () => {
+  // The parser `createRouter` uses when no custom one is supplied.
+  const parse = parseSearchWith(JSON.parse);
+  const flagIn = (query: string) =>
+    isAuthCallback((parse(query) as Record<string, unknown>)["complete"]);
+
+  test("a real callback URL is recognised", () => {
+    // What the app sends today, and what is still sitting in already-delivered
+    // confirmation emails.
+    expect(flagIn("?complete=true&returnTo=%2Fdashboard")).toBe(true);
+    expect(flagIn("?complete=1&returnTo=%2Fdashboard")).toBe(true);
+  });
+
+  test("`1` arrives as a number, not a string", () => {
+    // The specific reason a signed-in learner sat on the login page: this is a
+    // number, so a check for `true` or `"1"` read every callback as false.
+    expect((parse("?complete=1") as Record<string, unknown>)["complete"]).toBe(1);
+  });
+
+  test("an ordinary visit to the login page is not a callback", () => {
+    expect(flagIn("?mode=login")).toBe(false);
+    expect(flagIn("?complete=false")).toBe(false);
+    expect(flagIn("?complete=0")).toBe(false);
+    expect(flagIn("")).toBe(false);
+  });
+});
 
 describe("authentication return destinations", () => {
   test("preserves lesson, plan, filters and fragment", () => {

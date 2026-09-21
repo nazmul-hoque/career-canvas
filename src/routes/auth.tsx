@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { safeReturnTo } from "@/lib/auth-navigation";
+import { isAuthCallback, safeReturnTo } from "@/lib/auth-navigation";
 import { useSession } from "@/hooks/useAuth";
 import { Wordmark } from "@/components/layout/AppShell";
 
@@ -32,7 +32,7 @@ export const Route = createFileRoute("/auth")({
   ): { mode?: Mode; returnTo?: string; complete?: boolean } => ({
     mode: search["mode"] === "signup" ? "signup" : search["mode"] === "forgot" ? "forgot" : "login",
     returnTo: safeReturnTo(search["returnTo"]),
-    complete: search["complete"] === true || search["complete"] === "1",
+    complete: isAuthCallback(search["complete"]),
   }),
   component: AuthPage,
 });
@@ -51,7 +51,7 @@ function AuthPage() {
     void navigate({ to: "/auth", search: { mode: next, returnTo }, replace: true });
   }
   const callbackUrl = () =>
-    `${window.location.origin}/auth?complete=1&returnTo=${encodeURIComponent(returnTo)}`;
+    `${window.location.origin}/auth?complete=true&returnTo=${encodeURIComponent(returnTo)}`;
   async function finishLogin(id: string) {
     const { data, error } = await supabase
       .from("profiles")
@@ -144,9 +144,10 @@ function AuthPage() {
   }
 
   async function google() {
-    // Leaves the page for Google; the client picks the session out of the URL
-    // when the browser lands back on /dashboard. That URL must be in the
-    // project's allowed redirect list, or Supabase falls back to the Site URL.
+    // Leaves the page for Google and comes back to /auth?complete=true, where
+    // the client picks the session out of the URL hash and `finishLogin` sends
+    // the learner on. That callback URL must be in the project's allowed
+    // redirect list, or Supabase falls back to the Site URL.
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: callbackUrl() },
