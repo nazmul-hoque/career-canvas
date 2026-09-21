@@ -450,7 +450,8 @@ function PostCard({
               <button
                 onClick={onLike}
                 className={cn(
-                  "inline-flex items-center gap-1.5 text-sm font-semibold transition-colors",
+                  // px/-mx widens the tap target past 44px without moving the icon.
+                  "-mx-2 inline-flex items-center gap-1.5 px-2 text-sm font-semibold transition-colors",
                   liked ? "text-ember" : "text-chalk hover:text-foreground",
                 )}
                 aria-pressed={liked}
@@ -473,7 +474,7 @@ function PostCard({
               aria-expanded={showComments}
               aria-label={showComments ? "Hide replies" : "Show replies"}
               onClick={() => setShowComments((v) => !v)}
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-chalk transition-colors hover:text-foreground"
+              className="-mx-2 inline-flex items-center gap-1.5 px-2 text-sm font-semibold text-chalk transition-colors hover:text-foreground"
             >
               <MessageSquare className="size-4" />
               {item.live && !showComments ? "Replies" : commentCount}

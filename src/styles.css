@@ -288,3 +288,29 @@
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }
+
+/*
+ * Touch targets. A finger needs ~44px to hit reliably (iOS HIG, WCAG 2.5.5),
+ * but 32-40px is the right size for a mouse — so the floor is raised for coarse
+ * pointers only and the desktop design keeps its proportions. min-height clamps
+ * Tailwind's h-8/h-9/h-10 without any specificity fight, which is why :where()
+ * is safe here. Only the height is raised: a blanket min-width turns a short
+ * pill like the "All" filter chip into a circle, and the narrow controls that
+ * genuinely need widening are sized where they are built instead.
+ *
+ * Inline links keep their text-sized box: an inline box ignores min-height, so
+ * a link inside a sentence is left alone rather than having its line box torn
+ * open — the exemption WCAG 2.5.8 grants for exactly this case.
+ *
+ * .challenge-preview is excluded because it renders the learner's own
+ * component, and the app has no business restyling what they built.
+ */
+@media (pointer: coarse) {
+  :where(button, [role="button"], a, select, textarea, input):not(
+    .challenge-preview *,
+    [type="checkbox"],
+    [type="radio"]
+  ) {
+    min-height: 44px;
+  }
+}

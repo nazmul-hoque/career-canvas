@@ -179,7 +179,7 @@ export function AppHeader() {
           )}
 
           <button
-            className="grid size-9 place-items-center rounded-full text-chalk lg:hidden"
+            className="grid size-11 place-items-center rounded-full text-chalk lg:hidden"
             onClick={() => setOpen((v) => !v)}
             aria-label={open ? "Close navigation menu" : "Open navigation menu"}
             aria-expanded={open}

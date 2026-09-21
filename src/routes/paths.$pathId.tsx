@@ -163,7 +163,9 @@ function PathDetail() {
           <div className="max-w-2xl">
             <Link
               to="/paths"
-              className="text-xs font-semibold uppercase tracking-[0.15em] text-white/50 hover:text-white"
+              /* inline-flex so the coarse-pointer tap-target floor in styles.css applies:
+                 an inline box ignores min-height, and this is a standalone control. */
+              className="inline-flex items-center text-xs font-semibold uppercase tracking-[0.15em] text-white/50 hover:text-white"
             >
               ← All career paths
             </Link>
