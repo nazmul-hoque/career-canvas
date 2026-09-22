@@ -111,6 +111,17 @@ Two facts shape every item below:
 
 ## Done
 
+- [x] **SQL for Analysis: pivots and data-quality checks** (2026-09-22) —
+      *Conditional aggregation* (a column per case, the `COUNT ... ELSE 0` and
+      `AVG ... ELSE 0` traps, rates, 0 vs NULL) joins the Analysis module on
+      the shop. *Checking the data before you trust it* opens a Checking the
+      data module on a new `payments` dataset: the shop plus a card-provider
+      export with one of each real fault (duplicate webhook, three spellings
+      of a status, a day-first date, an orphan, a NULL amount, a short charge,
+      a missing payment). Its point: totals of 1,655 vs 1,653 look like
+      rounding and hide all of them. A new test fails if an authored body has
+      no roadmap slot, which nothing caught before. Still to write: a capstone
+      and a Foundations checkpoint.
 - [x] **SQL for Analysis: an Over time module** (2026-09-22) — two lessons on
       the stores dataset. *Dates, calendars and missing days*: strftime
       bucketing, half-open ranges, week starts, julianday, trading vs calendar

@@ -1,11 +1,13 @@
 import { SHOP_SCHEMA } from "./datasets/shop";
+import { SQL_DATASETS } from "./datasets/sql";
 import { STORES_SCHEMA } from "./datasets/stores";
 import type { LessonBody } from "./lessons";
 
 /**
  * SQL Foundations (course `sql`) and SQL for Analysis (course `sql-analysis`).
  * Challenges run against the shop in `datasets/shop.ts`, except the Over time
- * module's, which use the stores in `datasets/stores.ts`. The prose quotes both
+ * module's, which use the stores in `datasets/stores.ts`, and the data-quality
+ * lesson's, which adds the payments export in `datasets/payments.ts`. The prose quotes both
  * datasets' numbers, so a dataset edit means re-checking every lesson here.
  */
 export const sqlLessonBodies: Record<string, LessonBody> = {
@@ -818,6 +820,152 @@ ORDER BY total_spent DESC;`,
       },
     ],
   },
+  "sql-analysis.conditional": {
+    summary: "Put several counts and totals side by side in one row, without a query for each.",
+    xp: 170,
+    blocks: [
+      {
+        kind: "text",
+        body: "`GROUP BY month, status` answers the question, but as a long list: one row per month per status. People read reports the other way round, with one row per month and a column for each status. Turning rows into columns like that is called a **pivot**, and in SQL you build it with a `CASE` inside an aggregate. The `CASE` decides which rows each column counts.",
+      },
+      {
+        kind: "code",
+        language: "sql",
+        caption: "Paid revenue per category, a column per month",
+        code: `SELECT p.category,
+       SUM(CASE WHEN o.order_date < '2026-02-01'
+                THEN i.quantity * i.unit_price ELSE 0 END) AS jan,
+       SUM(CASE WHEN o.order_date >= '2026-02-01' AND o.order_date < '2026-03-01'
+                THEN i.quantity * i.unit_price ELSE 0 END) AS feb,
+       SUM(CASE WHEN o.order_date >= '2026-03-01'
+                THEN i.quantity * i.unit_price ELSE 0 END) AS mar,
+       SUM(i.quantity * i.unit_price) AS total
+FROM orders AS o
+JOIN order_items AS i ON i.order_id = o.id
+JOIN products AS p ON p.id = i.product_id
+WHERE o.status = 'paid'
+GROUP BY p.category
+ORDER BY total DESC;
+
+-- category  jan    feb    mar    total
+-- Apparel   228.0  219.0  438.0  885.0
+-- Footwear  240.0  108.0  120.0  468.0
+-- Gear      75.0   145.0  55.0   275.0`,
+      },
+      {
+        kind: "text",
+        body: "Each row of the join goes through every `CASE`. A January line adds its value to `jan` and 0 to the other two, so the three month columns always add up to `total`. That's a check worth running: 885 + 468 + 275 is 1,628, the paid items total you met in the CTE lesson.",
+      },
+      {
+        kind: "text",
+        body: "What the `CASE` gives when it doesn't match matters, and it's different for each aggregate. For `SUM`, `ELSE 0` is harmless. For `COUNT`, it's a bug: `COUNT` counts every value that isn't NULL, and 0 isn't NULL, so `COUNT(CASE WHEN status = 'paid' THEN 1 ELSE 0 END)` counts every order. Leave the `ELSE` out and the `CASE` gives NULL for the rows you don't want.",
+      },
+      {
+        kind: "code",
+        language: "sql",
+        code: `SELECT COUNT(CASE WHEN status = 'paid' THEN 1 ELSE 0 END) AS wrong,
+       COUNT(CASE WHEN status = 'paid' THEN 1 END) AS paid
+FROM orders;
+
+-- wrong  paid
+-- 15     11`,
+      },
+      {
+        kind: "text",
+        body: "`AVG` has the same trap. The 11 paid orders average 148.0 in items. Add `ELSE 0` and the 4 other orders join the average as zeros, which drags it down to 108.53.",
+      },
+      {
+        kind: "text",
+        body: "Rates come from two aggregates over the same group: `100.0 * COUNT(CASE WHEN status = 'refunded' THEN 1 END) / COUNT(*)` is the share of orders refunded. You'll also see two shorter spellings. `SUM(status = 'paid')` works in SQLite and MySQL, where a comparison is 1 or 0. `COUNT(*) FILTER (WHERE status = 'paid')` is standard SQL and works in SQLite and PostgreSQL. The `CASE` form works everywhere, which is why this lesson uses it.",
+      },
+      {
+        kind: "callout",
+        body: "A column that counts something that never happened should say 0, not NULL. `COUNT(CASE ...)` gives 0 on its own. `SUM(CASE WHEN ... THEN 1 END)` gives NULL for a group where nothing matched, so either add `ELSE 0` to the `SUM` or use `COUNT`.",
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          "The shop has 15 orders, 11 of them paid. What does `COUNT(CASE WHEN status = 'paid' THEN 1 ELSE 0 END)` return?",
+        options: ["11", "4", "1", "15"],
+        answer: 3,
+        explanation:
+          "The `ELSE 0` gives every other order a 0, and `COUNT` counts anything that isn't NULL. Drop the `ELSE` and it returns 11.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          "`AVG(CASE WHEN status = 'paid' THEN items END)` gives 148.0. Why does adding `ELSE 0` change it to 108.53?",
+        options: [
+          "`AVG` rounds differently when it sees a 0",
+          "The 4 orders that aren't paid now count as zeros in the average",
+          "`ELSE 0` turns the whole column into integers",
+          "It doesn't; the two queries return the same number",
+        ],
+        answer: 1,
+        explanation:
+          "`AVG` skips NULLs but not zeros. Without `ELSE`, it averages the 11 paid orders; with it, it divides the same total by 15.",
+      },
+      {
+        kind: "fill",
+        id: "f1",
+        prompt: "Count only the paid orders.",
+        before: "COUNT(CASE WHEN status = 'paid' THEN 1 ",
+        after: ")",
+        answer: "END",
+        explanation: "No `ELSE`, so the other rows are NULL and `COUNT` skips them.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "A status report with a column per status",
+        prompt:
+          "Return one row per month: `month` (like `2026-01`), `orders`, `paid`, `refunded`, `pending` and `paid_pct` (the percentage of that month's orders that are paid, rounded to 1 decimal place), in month order. A status with no orders that month should show 0. The starter query has the right numbers in the wrong shape.",
+        language: "sql",
+        starter: `SELECT substr(order_date, 1, 7) AS month,
+       status,
+       COUNT(*) AS orders
+FROM orders
+GROUP BY month, status
+ORDER BY month, status;`,
+        hint: "Group by month only. Each status becomes a column like `COUNT(CASE WHEN status = 'paid' THEN 1 END) AS paid`, and `paid_pct` is `ROUND(100.0 * <that count> / COUNT(*), 1)`.",
+        solution: `SELECT substr(order_date, 1, 7) AS month,
+       COUNT(*) AS orders,
+       COUNT(CASE WHEN status = 'paid' THEN 1 END) AS paid,
+       COUNT(CASE WHEN status = 'refunded' THEN 1 END) AS refunded,
+       COUNT(CASE WHEN status = 'pending' THEN 1 END) AS pending,
+       ROUND(100.0 * COUNT(CASE WHEN status = 'paid' THEN 1 END) / COUNT(*), 1) AS paid_pct
+FROM orders
+GROUP BY month
+ORDER BY month;`,
+        tests: [
+          {
+            name: "Returns month, orders, paid, refunded, pending and paid_pct",
+            expression: 'columns == ["month", "orders", "paid", "refunded", "pending", "paid_pct"]',
+          },
+          { name: "One row per month", expression: "len(rows) == 3" },
+          {
+            name: "The status columns add up to orders",
+            expression: "all(r[1] == r[2] + r[3] + r[4] for r in rows)",
+          },
+          {
+            name: "January had no pending orders: 0, not NULL",
+            expression: 'rows[0][0] == "2026-01" and rows[0][4] == 0',
+          },
+          {
+            name: "March: 4 of 6 paid, 66.7%",
+            expression:
+              'any(r[0] == "2026-03" and r[2] == 4 and abs(r[5] - 66.7) < 0.05 for r in rows)',
+          },
+          {
+            name: "In month order",
+            expression: "[r[0] for r in rows] == sorted(r[0] for r in rows)",
+          },
+        ],
+      },
+    ],
+  },
   "sql-analysis.windows": {
     summary: "Rank, number and run totals across rows without collapsing them.",
     xp: 180,
@@ -1304,6 +1452,230 @@ ORDER BY month;`,
           },
           {
             name: "In month order",
+            expression: "[r[0] for r in rows] == sorted(r[0] for r in rows)",
+          },
+        ],
+      },
+    ],
+  },
+  "sql-quality.checks": {
+    summary:
+      "Find duplicates, orphans, bad values and totals that don't reconcile before you report.",
+    xp: 190,
+    blocks: [
+      {
+        kind: "text",
+        body: "Every query so far has trusted the data. Real data arrives from other systems, and each one has its own bugs. This lesson adds one such system to the shop: an export from its card provider, with one row per charge or refund. Before anyone reports revenue from it, it needs checking.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "The shop, plus the payments export",
+        code: SQL_DATASETS.payments.schema,
+      },
+      {
+        kind: "text",
+        body: "A data check is a query that should return nothing. If it returns rows, those rows are the problem. There are five kinds worth running on any new table, and then one more that ties it to the rest of the data.",
+      },
+      {
+        kind: "text",
+        body: "**1. Allowed values.** Group by any column that should hold a short list of values, and read the list.",
+      },
+      {
+        kind: "code",
+        language: "sql",
+        code: `SELECT status, COUNT(*) AS payments
+FROM payments
+GROUP BY status;
+
+-- status      payments
+-- Succeeded   1
+-- failed      1
+-- refunded    2
+-- succeeded   12
+-- succeeded   1`,
+      },
+      {
+        kind: "text",
+        body: "Two rows both seem to say `succeeded`. The second one is `'succeeded '`, with a trailing space you can't see in the output. With the capital-S version, that's 14 successful payments spelled three ways, and `WHERE status = 'succeeded'` finds 12 of them. `LOWER(TRIM(status))` brings them back together.",
+      },
+      {
+        kind: "text",
+        body: "**2. Duplicates.** Decide what should be unique, then look for groups with more than one row. Here each payment has its own `id`, so group by everything else.",
+      },
+      {
+        kind: "code",
+        language: "sql",
+        code: `SELECT order_id, created_at, amount, COUNT(*) AS copies
+FROM payments
+GROUP BY order_id, created_at, amount, status
+HAVING COUNT(*) > 1;
+
+-- order_id  created_at           amount  copies
+-- 106       2026-02-06 13:20:00  154.0   2`,
+      },
+      {
+        kind: "text",
+        body: "Payments 7 and 8 are the same charge, recorded twice when the provider's notification arrived twice. Sum the export and order 106 has paid 308.0 for a 154.0 order.",
+      },
+      {
+        kind: "text",
+        body: "**3. Orphans.** A row that points at something that doesn't exist. The anti-join from SQL Foundations' joins lesson finds them: `LEFT JOIN` the table it should match, and keep the rows that found nothing.",
+      },
+      {
+        kind: "code",
+        language: "sql",
+        code: `SELECT p.id, p.order_id
+FROM payments AS p
+LEFT JOIN orders AS o ON o.id = p.order_id
+WHERE o.id IS NULL;
+
+-- id  order_id
+-- 17  999`,
+      },
+      {
+        kind: "text",
+        body: "**4. Missing values.** `COUNT(*)` counts rows and `COUNT(amount)` counts amounts, so the difference is how many are NULL. Here it's 17 against 16. That matters because `SUM` skips NULLs without a word: payment 16's missing amount just vanishes from the total.",
+      },
+      {
+        kind: "text",
+        body: "**5. Formats.** A date that isn't `YYYY-MM-DD` sorts and filters as the wrong date. `GLOB` matches a pattern of characters, so this finds any row that doesn't start with one:",
+      },
+      {
+        kind: "code",
+        language: "sql",
+        code: `SELECT id, created_at
+FROM payments
+WHERE created_at NOT GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]*';
+
+-- id  created_at
+-- 10  19/02/2026 12:47`,
+      },
+      {
+        kind: "text",
+        body: "As text, `'19/02/2026'` sorts before `'2'`, so a filter for February finds 5 payments instead of 6. Don't fix a row like this by guessing, though. `19/02` can only mean the 19th of February, but `04/03` could be April or March. Ask where the export came from.",
+      },
+      {
+        kind: "text",
+        body: "**6. Reconciliation.** Compare the new data with something you already trust. The succeeded charges total 1,655. The paid orders total 1,653: 1,628 in items plus 25 in shipping. That's so close that it looks like rounding.",
+      },
+      {
+        kind: "text",
+        body: "It isn't. The 1,655 includes the duplicate (+154), the orphan (+49) and the charges on the two orders later refunded (+165). It's missing order 114, which has no payment (−324), and order 113's amount (−25). And order 112 was charged 17 less than its total. Those errors happen to cancel out to 2. A total that matches proves very little. Reconcile row by row, at the grain where things should match, which here is one row per order.",
+      },
+      {
+        kind: "callout",
+        body: "Run the checks before the analysis and keep them. When the next export arrives, run them again first. A check that returned nothing last month is exactly the one that catches the new bug.",
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question: "Why does `WHERE status = 'succeeded'` find 12 of the 14 successful payments?",
+        options: [
+          "Two of them are duplicates",
+          "SQLite ignores rows with a NULL amount",
+          "Two are spelled differently: 'Succeeded' and 'succeeded ' with a trailing space",
+          "Two of them belong to orders that don't exist",
+        ],
+        answer: 2,
+        explanation:
+          "`=` compares text exactly, so capital letters and spaces count. `LOWER(TRIM(status)) = 'succeeded'` finds all 14. The duplicate and the orphan both pass the filter.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          "Payments total 1,655 and paid orders total 1,653. What does that tell you about the payments?",
+        options: [
+          "Very little: several errors can cancel out, so reconcile order by order",
+          "They're correct, apart from 2 lost to rounding",
+          "Exactly one payment is wrong, by 2",
+          "The shop was overpaid by 2",
+        ],
+        answer: 0,
+        explanation:
+          "Here, a duplicate, an orphan, two refunded charges, a missing payment, a missing amount and a short charge add up to +2. Only a check on each order shows them.",
+      },
+      {
+        kind: "mcq",
+        id: "q3",
+        question:
+          "`SELECT COUNT(*), COUNT(amount) FROM payments` returns 17 and 16. What does that mean?",
+        options: [
+          "One payment is a duplicate",
+          "One payment has an amount of 0",
+          "One payment's order doesn't exist",
+          "One payment has a NULL amount, which SUM will silently leave out",
+        ],
+        answer: 3,
+        explanation:
+          "`COUNT(column)` skips NULLs, so the difference between the two counts is how many values are missing. A 0 would be counted.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Which paid orders don't reconcile?",
+        prompt:
+          "For every **paid** order, compare its total (items plus shipping) with what its successful payments add up to. Return the orders where the two differ, as `order_id`, `order_total` and `collected`, in order of `order_id`. Show `collected` as 0 when nothing was collected. The starter runs, but it's wrong in several ways at once.",
+        language: "sql",
+        dataset: "payments",
+        starter: `SELECT o.id AS order_id,
+       SUM(i.quantity * i.unit_price) + o.shipping AS order_total,
+       SUM(p.amount) AS collected
+FROM orders AS o
+JOIN order_items AS i ON i.order_id = o.id
+JOIN payments AS p ON p.order_id = o.id
+WHERE o.status = 'paid'
+  AND p.status = 'succeeded'
+GROUP BY o.id
+HAVING order_total <> collected
+ORDER BY order_id;`,
+        hint: "Bring both sides to one row per order before joining: one CTE for each paid order's total, and one for each order's successful payments, using `LOWER(TRIM(status))`. Then `LEFT JOIN` the payments to the totals, so an order with no payment stays in, and compare `COALESCE(collected, 0)` with the total.",
+        solution: `WITH order_totals AS (
+  SELECT o.id AS order_id,
+         o.shipping + SUM(i.quantity * i.unit_price) AS order_total
+  FROM orders AS o
+  JOIN order_items AS i ON i.order_id = o.id
+  WHERE o.status = 'paid'
+  GROUP BY o.id
+), collected AS (
+  SELECT order_id, SUM(amount) AS collected
+  FROM payments
+  WHERE LOWER(TRIM(status)) = 'succeeded'
+  GROUP BY order_id
+)
+SELECT t.order_id, t.order_total, COALESCE(c.collected, 0) AS collected
+FROM order_totals AS t
+LEFT JOIN collected AS c ON c.order_id = t.order_id
+WHERE COALESCE(c.collected, 0) <> t.order_total
+ORDER BY t.order_id;`,
+        tests: [
+          {
+            name: "Returns order_id, order_total and collected",
+            expression: 'columns == ["order_id", "order_total", "collected"]',
+          },
+          {
+            name: "Finds the four orders that don't reconcile: 106, 112, 113 and 114",
+            expression: "sorted(r[0] for r in rows) == [106, 112, 113, 114]",
+          },
+          {
+            name: "Doesn't flag 104 or 110, whose status is only spelled differently",
+            expression: "not any(r[0] in (104, 110) for r in rows)",
+          },
+          {
+            name: "Each order's total counts its items once: 106 is 154",
+            expression: "dict((r[0], r[1]) for r in rows).get(106) == 154",
+          },
+          {
+            name: "The duplicate shows up: 106 collected 308",
+            expression: "dict((r[0], r[2]) for r in rows).get(106) == 308",
+          },
+          {
+            name: "Order 114, with no payment, shows 0 collected",
+            expression: "dict((r[0], r[2]) for r in rows).get(114) == 0",
+          },
+          {
+            name: "In order of order_id",
             expression: "[r[0] for r in rows] == sorted(r[0] for r in rows)",
           },
         ],

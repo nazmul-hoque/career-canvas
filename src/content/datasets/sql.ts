@@ -1,4 +1,5 @@
 import { SHOP_SCHEMA, SHOP_SQL } from "./shop";
+import { PAYMENTS_SCHEMA, PAYMENTS_SQL } from "./payments";
 import { STORES_SCHEMA, STORES_SQL } from "./stores";
 
 /**
@@ -9,6 +10,8 @@ import { STORES_SCHEMA, STORES_SQL } from "./stores";
 export const SQL_DATASETS = {
   shop: { sql: SHOP_SQL, schema: SHOP_SCHEMA },
   stores: { sql: STORES_SQL, schema: STORES_SCHEMA },
+  // The shop plus its card provider's export, so payments reconcile against orders.
+  payments: { sql: SHOP_SQL + PAYMENTS_SQL, schema: `${SHOP_SCHEMA}\n${PAYMENTS_SCHEMA}` },
 } as const;
 
 export type SqlDataset = keyof typeof SQL_DATASETS;

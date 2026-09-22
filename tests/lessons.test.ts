@@ -64,6 +64,17 @@ describe("every authored lesson", () => {
     }
   });
 
+  /**
+   * A body with no slot on any roadmap is unreachable: no page links to it, it
+   * earns nothing, and every other check here still passes. Easy to cause by
+   * renaming a module or forgetting the curriculum edit.
+   */
+  test("has a place on some course's roadmap", () => {
+    const onRoadmap = new Set(courses.flatMap((c) => courseLessons(c).map((l) => l.id)));
+    const unreachable = Object.keys(bodies).filter((id) => !onRoadmap.has(id));
+    expect(unreachable).toEqual([]);
+  });
+
   test("self-attested lessons never pay more than unchecked work is worth", () => {
     for (const [id, body] of Object.entries(bodies)) {
       if (body.attested) expect(body.xp).toBeLessThanOrEqual(ATTESTED_XP);
@@ -629,5 +640,43 @@ describe("stores dataset", () => {
   test("Harrogate starts on its opening day, and every other day sold something", () => {
     expect(one<string>("SELECT MIN(day) FROM daily_sales WHERE store_id = 3")).toBe("2025-04-12");
     expect(one<number>("SELECT COUNT(*) FROM daily_sales WHERE orders = 0")).toBe(1);
+  });
+});
+
+/**
+ * The payments export is dirty on purpose, and the data-quality lesson quotes
+ * each fault. Cleaning one up by accident would leave the lesson describing
+ * a problem that isn't there.
+ */
+describe("payments dataset", () => {
+  const db = new Database(":memory:");
+  db.exec(SQL_DATASETS.payments.sql);
+  const all = (sql: string) => db.query(sql).values();
+
+  test("still carries every fault the lesson teaches", () => {
+    expect(all("SELECT DISTINCT status FROM payments ORDER BY status")).toEqual([
+      ["Succeeded"],
+      ["failed"],
+      ["refunded"],
+      ["succeeded"],
+      ["succeeded "],
+    ]);
+    expect(
+      all(
+        "SELECT order_id FROM payments GROUP BY order_id, created_at, amount, status HAVING COUNT(*) > 1",
+      ),
+    ).toEqual([[106]]);
+    expect(
+      all(
+        "SELECT p.id FROM payments AS p LEFT JOIN orders AS o ON o.id = p.order_id WHERE o.id IS NULL",
+      ),
+    ).toEqual([[17]]);
+    expect(all("SELECT id FROM payments WHERE amount IS NULL")).toEqual([[16]]);
+    expect(
+      all("SELECT id FROM payments WHERE created_at NOT GLOB '[0-9][0-9][0-9][0-9]-*'"),
+    ).toEqual([[10]]);
+    expect(all("SELECT SUM(amount) FROM payments WHERE LOWER(TRIM(status)) = 'succeeded'")).toEqual(
+      [[1655]],
+    );
   });
 });

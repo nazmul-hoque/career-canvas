@@ -364,23 +364,29 @@ export const courses: Course[] = [
     recommended: false,
     summary: "Multi-step queries whose numbers you can defend.",
     description:
-      "CTEs, the join that quietly double-counts and window functions on the shop, then dates and period-over-period change on two years of store sales.",
+      "CTEs, pivots and window functions on the shop, dates and period-over-period change on two years of store sales, then checking a messy payments export before trusting it.",
     skills: [
       "CTEs",
       "Grain and double-counting",
+      "Pivots",
       "Window functions",
       "Dates",
       "Period-over-period",
+      "Data-quality checks",
     ],
     careers: ["data", "fullstack", "python"],
     modules: [
       m("sql-analysis", "Analysis", "Build in steps, check the grain, then window.", [
         ["ctes", "CTEs and numbers you can trust", 14, "challenge"],
+        ["conditional", "Conditional aggregation: a column per case", 14, "challenge"],
         ["windows", "Window functions", 15, "challenge"],
       ]),
       m("sql-time", "Over time", "Bucket dates, fill the gaps, compare periods fairly.", [
         ["dates", "Dates, calendars and missing days", 15, "challenge"],
         ["lag", "LAG and period-over-period change", 16, "challenge"],
+      ]),
+      m("sql-quality", "Checking the data", "Duplicates, orphans and totals that don't add up.", [
+        ["checks", "Checking the data before you trust it", 16, "challenge"],
       ]),
     ],
   },
