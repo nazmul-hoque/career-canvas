@@ -7233,7 +7233,8 @@ HAVING COUNT(*) >= 2;
       {
         kind: "mcq",
         id: "q1",
-        question: "`SELECT COUNT(*), COUNT(city) FROM customers;` What comes back?",
+        question:
+          "The shop has 8 customers, and one of them has no city on file. `SELECT COUNT(*), COUNT(city) FROM customers;` What comes back?",
         options: ["8 and 7", "8 and 8", "7 and 8", "8 and NULL"],
         answer: 0,
         explanation:
@@ -7257,7 +7258,7 @@ HAVING COUNT(*) >= 2;
       {
         kind: "fill",
         id: "f1",
-        prompt: "How many different customers have placed a paid order?",
+        prompt: "Count the different customers who have placed a paid order, not the orders.",
         before: "SELECT COUNT(",
         after: " customer_id) FROM orders WHERE status = 'paid';",
         answer: "DISTINCT",
