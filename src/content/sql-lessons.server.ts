@@ -1,10 +1,12 @@
 import { SHOP_SCHEMA } from "./datasets/shop";
+import { STORES_SCHEMA } from "./datasets/stores";
 import type { LessonBody } from "./lessons";
 
 /**
  * SQL Foundations (course `sql`) and SQL for Analysis (course `sql-analysis`).
- * Every challenge runs against the shop in `datasets/shop.ts`, and the prose
- * quotes its numbers, so a dataset edit means re-checking every lesson here.
+ * Challenges run against the shop in `datasets/shop.ts`, except the Over time
+ * module's, which use the stores in `datasets/stores.ts`. The prose quotes both
+ * datasets' numbers, so a dataset edit means re-checking every lesson here.
  */
 export const sqlLessonBodies: Record<string, LessonBody> = {
   "sql-core.select": {
@@ -955,6 +957,353 @@ ORDER BY name;`,
           },
           {
             name: "Sorted by name",
+            expression: "[r[0] for r in rows] == sorted(r[0] for r in rows)",
+          },
+        ],
+      },
+    ],
+  },
+  "sql-time.dates": {
+    summary: "Bucket days into weeks and months, and stop missing days from skewing the answer.",
+    xp: 180,
+    blocks: [
+      {
+        kind: "text",
+        body: "The shop's 15 orders are too few to see anything happen over time, so this module uses a second database: two years of daily sales from a small chain of outdoor-gear stores, 2024 and 2025. It has a website, a store in Leeds, and a store in Harrogate that opened on 12 April 2025. There's one row per store per day it traded.",
+      },
+      { kind: "code", language: "text", caption: "The two tables", code: STORES_SCHEMA },
+      {
+        kind: "text",
+        body: "SQLite has no date type. Dates are text in the form `YYYY-MM-DD`, and that form was chosen on purpose: because the year comes first and every part is zero-padded, sorting and comparing the text gives the same answer as comparing the dates. `'2025-06-09' < '2025-06-10'` is true. Stored as `'9/6/2025'`, neither sorting nor `<` would work.",
+      },
+      {
+        kind: "text",
+        body: "`strftime` pulls parts out of a date, which is how you bucket days. `strftime('%Y-%m', day)` gives the month, `'%Y'` the year, and `'%w'` the weekday as a number from 0 (Sunday) to 6 (Saturday).",
+      },
+      {
+        kind: "code",
+        language: "sql",
+        caption: "The website's revenue per month",
+        code: `SELECT strftime('%Y-%m', day) AS month,
+       SUM(revenue) AS revenue
+FROM daily_sales
+WHERE store_id = 1
+  AND day >= '2025-01-01' AND day < '2025-04-01'
+GROUP BY month;
+
+-- month    revenue
+-- 2025-01  22709.0
+-- 2025-02  22447.0
+-- 2025-03  28682.0`,
+      },
+      {
+        kind: "text",
+        body: "Notice the range: `>=` the first day and `<` the day after the last. That's called a half-open range, and it's worth the habit. `BETWEEN '2025-06-01' AND '2025-06-30'` works on plain dates, but if the column holds timestamps, `'2025-06-30 14:05'` sorts after `'2025-06-30'` and everything after midnight on the last day silently drops out.",
+      },
+      {
+        kind: "text",
+        body: "`date()` does arithmetic with modifiers. `date(day, '+1 day')` is tomorrow and `date(day, 'start of month')` the 1st. Weeks need two steps: `date(day, '-6 days', 'weekday 1')` goes back six days, then forward to the next Monday (staying put if it's already one), which lands on the Monday that starts the day's week. For the number of days between two dates, subtract their `julianday()` values: `julianday('2025-12-31') - julianday('2025-04-12')` is 263.0.",
+      },
+      {
+        kind: "code",
+        language: "sql",
+        caption: "Leeds, week by week",
+        code: `SELECT date(day, '-6 days', 'weekday 1') AS week_start,
+       COUNT(*) AS days,
+       SUM(revenue) AS revenue
+FROM daily_sales
+WHERE store_id = 2
+  AND day >= '2025-06-02' AND day < '2025-06-16'
+GROUP BY week_start;
+
+-- week_start  days  revenue
+-- 2025-06-02  6     7072.0
+-- 2025-06-09  6     7828.0`,
+      },
+      {
+        kind: "text",
+        body: "Each week has 7 days but only 6 rows, because Leeds is closed on Sundays and a closed day has **no row at all**. That matters the moment you average. `AVG(revenue)` over Leeds's 2025 rows is 1,009.68, which is its average *trading* day. Its average *calendar* day is 313,002 over 365 days, or 857.54. Both are real numbers; the mistake is reporting one when you meant the other. The website was also down from 10 to 12 June 2025, so June has 27 website rows, not 30.",
+      },
+      {
+        kind: "text",
+        body: "A missing row and a row that says 0 are different things. On 8 January 2025, Leeds opened through the snow and sold nothing, so that day has a row with 0 orders. `COUNT(*)` counts it; it doesn't count a Sunday.",
+      },
+      {
+        kind: "text",
+        body: "To report every day, including those with no row, make the days yourself. A recursive CTE produces a calendar, one row per day, and a `LEFT JOIN` hangs the sales on it. Days that found no sales get NULL, which `COALESCE` turns into 0.",
+      },
+      {
+        kind: "code",
+        language: "sql",
+        code: `WITH RECURSIVE calendar(day) AS (
+  SELECT '2025-06-08'
+  UNION ALL
+  SELECT date(day, '+1 day') FROM calendar WHERE day < '2025-06-14'
+)
+SELECT c.day, COALESCE(s.revenue, 0) AS revenue
+FROM calendar AS c
+LEFT JOIN daily_sales AS s
+  ON s.day = c.day AND s.store_id = 1
+ORDER BY c.day;
+
+-- day         revenue
+-- 2025-06-08  1386.0
+-- 2025-06-09  1265.0
+-- 2025-06-10  0
+-- 2025-06-11  0
+-- 2025-06-12  0
+-- 2025-06-13  1242.0
+-- 2025-06-14  1736.0`,
+      },
+      {
+        kind: "callout",
+        body: "Put the store filter in the `ON`, not in `WHERE`. On a day with no sales, every column from `daily_sales` is NULL, including `store_id`, so `WHERE s.store_id = 1` throws out exactly the days the calendar was there to keep. The query still runs, and the gaps quietly disappear again.",
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          "Leeds took 7,072 in the week starting Monday 2 June 2025, and was closed on the Sunday. What does `AVG(revenue)` over that week's rows return?",
+        options: [
+          "1,010.29: 7,072 over the 7 days of the week",
+          "NULL, because Sunday has no row",
+          "An error, until Sunday is filled in",
+          "1,178.67: 7,072 over the 6 rows that exist",
+        ],
+        answer: 3,
+        explanation:
+          "`AVG` divides by the rows it sees, and Sunday isn't one of them. For an average per calendar day, divide the total by 7, or join a calendar and count the closed day as 0.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          "You LEFT JOIN a calendar of the 30 days of June 2025 to `daily_sales` and add `WHERE s.store_id = 1`. How many rows come back?",
+        options: [
+          "27: the WHERE removes the three outage days, whose store_id is NULL",
+          "30, one for each day in the calendar",
+          "82, one for each store's sales",
+          "90, three stores times 30 days",
+        ],
+        answer: 0,
+        explanation:
+          "The calendar gives 30 days, but `WHERE` runs after the join, and the outage days have NULL in every `daily_sales` column. Moving `s.store_id = 1` into the `ON` keeps all 30. Without any store filter you'd get 82: 27 website rows, 25 for Leeds and 30 for Harrogate.",
+      },
+      {
+        kind: "fill",
+        id: "f1",
+        prompt: "Show 0, not NULL, on days the calendar found no sales.",
+        before: "SELECT c.day, ",
+        after: "(s.revenue, 0) AS revenue",
+        answer: "COALESCE",
+        explanation: "`COALESCE` returns its first argument that isn't NULL.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Every day of June, outage included",
+        prompt:
+          "Return the website's (`store_id = 1`) revenue for **every** day of June 2025: `day` and `revenue`, in date order, with 0 on days it has no row. The starter query runs, but it skips the outage.",
+        language: "sql",
+        dataset: "stores",
+        starter: `SELECT day, revenue
+FROM daily_sales
+WHERE store_id = 1
+  AND day >= '2025-06-01' AND day < '2025-07-01'
+ORDER BY day;`,
+        hint: "Build a calendar with `WITH RECURSIVE calendar(day) AS (SELECT '2025-06-01' UNION ALL SELECT date(day, '+1 day') FROM calendar WHERE day < '2025-06-30')`. LEFT JOIN `daily_sales` to it with the store in the `ON`, and wrap the revenue in `COALESCE`.",
+        solution: `WITH RECURSIVE calendar(day) AS (
+  SELECT '2025-06-01'
+  UNION ALL
+  SELECT date(day, '+1 day') FROM calendar WHERE day < '2025-06-30'
+)
+SELECT c.day, COALESCE(s.revenue, 0) AS revenue
+FROM calendar AS c
+LEFT JOIN daily_sales AS s
+  ON s.day = c.day AND s.store_id = 1
+ORDER BY c.day;`,
+        tests: [
+          { name: "Returns day and revenue", expression: 'columns == ["day", "revenue"]' },
+          { name: "One row for each of June's 30 days", expression: "len(rows) == 30" },
+          {
+            name: "The outage days show 0, not NULL",
+            expression:
+              'all(dict(rows).get(d, -1) == 0 for d in ("2025-06-10", "2025-06-11", "2025-06-12"))',
+          },
+          {
+            name: "Only the website's sales: 37,381 in total",
+            expression: "abs(sum(r[1] or 0 for r in rows) - 37381) < 0.01",
+          },
+          {
+            name: "Every day from 1 to 30 June, in order",
+            expression: '[r[0] for r in rows] == [f"2025-06-{d:02d}" for d in range(1, 31)]',
+          },
+        ],
+      },
+    ],
+  },
+  "sql-time.lag": {
+    summary: "Compare each period with the one before, and know when the comparison is fair.",
+    xp: 190,
+    blocks: [
+      {
+        kind: "text",
+        body: '"Up 12% on last month" needs two numbers on the same row: this month and last. `LAG(x) OVER (ORDER BY ...)` fetches `x` from the previous row, without a self-join. `LEAD` fetches the next one. `LAG(x, 12)` reaches back 12 rows, and a third argument, as in `LAG(x, 1, 0)`, is what to use when there\'s no row that far back.',
+      },
+      {
+        kind: "code",
+        language: "sql",
+        caption: "The chain's revenue, month on month",
+        code: `WITH monthly AS (
+  SELECT strftime('%Y-%m', day) AS month,
+         SUM(revenue) AS revenue
+  FROM daily_sales
+  GROUP BY month
+), compared AS (
+  SELECT month, revenue,
+         LAG(revenue) OVER (ORDER BY month) AS prev
+  FROM monthly
+)
+SELECT month, revenue,
+       revenue - prev AS change,
+       ROUND(100.0 * (revenue - prev) / prev, 1) AS pct
+FROM compared
+ORDER BY month
+LIMIT 4;
+
+-- month    revenue  change   pct
+-- 2024-01  34920.0  NULL     NULL
+-- 2024-02  36467.0  1547.0   4.4
+-- 2024-03  46981.0  10514.0  28.8
+-- 2024-04  52936.0  5955.0   12.7`,
+      },
+      {
+        kind: "text",
+        body: "January 2024 has nothing before it, so its change is NULL, and NULL is the honest answer. Don't `COALESCE` it to 0: a 0 claims the month was flat, when in fact nobody knows. If the previous value can be 0, write `NULLIF(prev, 0)` in the denominator. SQLite returns NULL when you divide by zero, but PostgreSQL and most other databases stop with an error.",
+      },
+      {
+        kind: "text",
+        body: "Write `100.0 *`, not `100 *`, when the columns are whole numbers. `orders` is an INTEGER, and dividing one integer by another gives an integer, so every month-on-month change under 100%, up or down, comes out as 0.",
+      },
+      {
+        kind: "text",
+        body: "`PARTITION BY store_id` compares each store only with itself. Watch the first row of a new store, though. Harrogate opened on 12 April 2025, so its April has only 19 trading days, and its May is up 71.6% on April for no reason except that May is a whole month.",
+      },
+      {
+        kind: "text",
+        body: "`LAG` means *the previous row*, not *the previous period*. On Leeds's daily rows, Monday's previous row is Saturday, because Sunday has no row. Monthly totals here have every month, so `LAG(revenue, 12)` is the same month last year. Where a period might be missing, build a calendar first, as in the last lesson, and then `LAG` over that.",
+      },
+      {
+        kind: "text",
+        body: "Then there's the question of whether the comparison is fair. The chain took 921,587 in 2025, against 632,516 in 2024: up 45.7%. But 201,753 of 2025's revenue came from Harrogate, which didn't exist in 2024. Compare only the stores that traded in both years, the website and Leeds, and growth is 13.8%. That's called **like-for-like** growth, and it's the one that tells you whether the business is doing better, rather than just bigger.",
+      },
+      {
+        kind: "callout",
+        body: "Two checks before you publish a period comparison. Is every period there, so that the previous row is really the previous period? And is the same set of things being counted in both periods?",
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          "`orders` is an INTEGER column. February 2024 had 541 orders and January had 522. In SQLite, what does `(orders - prev) / prev` return for February?",
+        options: ["3.6", "0.036", "0", "NULL"],
+        answer: 2,
+        explanation:
+          "19 / 522 is integer division, so the result is 0, and so is every change under 100%. `100.0 * (orders - prev) / prev` makes it a decimal: 3.6.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          "The first month in a report has no month before it. What should its `change` show?",
+        options: [
+          "NULL. There's nothing to compare it with, and 0 would claim a flat month",
+          "0, because nothing changed",
+          "The month's own revenue, since it's all new",
+          "Nothing: drop the first month from the report",
+        ],
+        answer: 0,
+        explanation:
+          "A missing comparison is unknown, and NULL says so. 0 and the month's own revenue are both claims about a month nobody measured, and dropping the row hides that month's revenue too.",
+      },
+      {
+        kind: "mcq",
+        id: "q3",
+        question:
+          "The chain's revenue rose from 632,516 in 2024 to 921,587 in 2025, and 201,753 of 2025's came from the new Harrogate store. Which headline is accurate?",
+        options: [
+          "Revenue grew 45.7%",
+          "Revenue grew 45.7% overall; the stores that traded in both years grew 13.8%",
+          "Revenue grew 13.8%, because Harrogate's sales don't count",
+          "Growth can't be measured, because Harrogate has no 2024",
+        ],
+        answer: 1,
+        explanation:
+          "45.7% is true but reads as though the existing business is booming. Harrogate's sales are real and do count; they just aren't growth of anything. Reporting both numbers lets the reader see how much came from the new store.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Like-for-like growth, month by month",
+        prompt:
+          "For each month of 2025, compare the stores that traded all through 2024 (those opened on or before `2024-01-01`) with the same month a year earlier. Return `month`, `revenue`, `last_year` and `growth_pct` (rounded to 1 decimal place), in month order: 12 rows. The starter query counts every store and shows both years.",
+        language: "sql",
+        dataset: "stores",
+        starter: `WITH monthly AS (
+  SELECT strftime('%Y-%m', day) AS month,
+         SUM(revenue) AS revenue
+  FROM daily_sales
+  GROUP BY month
+), compared AS (
+  SELECT month, revenue,
+         LAG(revenue, 12) OVER (ORDER BY month) AS last_year
+  FROM monthly
+)
+SELECT month, revenue, last_year,
+       ROUND(100.0 * (revenue - last_year) / last_year, 1) AS growth_pct
+FROM compared
+ORDER BY month;`,
+        hint: "Join `stores` in the first CTE and keep `s.opened_on <= '2024-01-01'`. Keep only 2025 in the **outer** query: filter any earlier and the 2024 months are gone before `LAG` can reach them.",
+        solution: `WITH monthly AS (
+  SELECT strftime('%Y-%m', d.day) AS month,
+         SUM(d.revenue) AS revenue
+  FROM daily_sales AS d
+  JOIN stores AS s ON s.id = d.store_id
+  WHERE s.opened_on <= '2024-01-01'
+  GROUP BY month
+), compared AS (
+  SELECT month, revenue,
+         LAG(revenue, 12) OVER (ORDER BY month) AS last_year
+  FROM monthly
+)
+SELECT month, revenue, last_year,
+       ROUND(100.0 * (revenue - last_year) / last_year, 1) AS growth_pct
+FROM compared
+WHERE month >= '2025-01'
+ORDER BY month;`,
+        tests: [
+          {
+            name: "Returns month, revenue, last_year and growth_pct",
+            expression: 'columns == ["month", "revenue", "last_year", "growth_pct"]',
+          },
+          {
+            name: "The 12 months of 2025",
+            expression: 'len(rows) == 12 and all(r[0].startswith("2025-") for r in rows)',
+          },
+          {
+            name: "Every month has last year's figure",
+            expression: "all(r[2] is not None for r in rows)",
+          },
+          {
+            name: "Harrogate is left out: July is 79,832",
+            expression: 'abs(dict((r[0], r[1]) for r in rows).get("2025-07", 0) - 79832) < 0.01',
+          },
+          {
+            name: "July grew 18.6% on July 2024",
+            expression: 'abs((dict((r[0], r[3]) for r in rows).get("2025-07") or 0) - 18.6) < 0.05',
+          },
+          {
+            name: "In month order",
             expression: "[r[0] for r in rows] == sorted(r[0] for r in rows)",
           },
         ],
