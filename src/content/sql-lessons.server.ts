@@ -547,6 +547,107 @@ ORDER BY c.name;`,
       },
     ],
   },
+  "sql-core.checkpoint": {
+    summary: "Build a packing list from four tables, with flags a warehouse can act on.",
+    xp: 180,
+    blocks: [
+      {
+        kind: "callout",
+        body: "This checkpoint starts from an empty editor. Before you write anything, decide what one row of the answer is, which tables it needs, and which rows must be left out. Open the hint only after your first run.",
+      },
+      {
+        kind: "text",
+        body: "Everything here comes from the lessons in this module: filtering with `WHERE`, labelling with `CASE`, filling gaps with `COALESCE`, joining, and asking about other rows with `EXISTS`. The new part is deciding for yourself which piece goes where. A good order of work: get the rows right first, joins and filters, and check the count. Add the columns second.",
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          "To flag a customer's first order, you write `NOT EXISTS (SELECT 1 FROM orders AS e WHERE e.customer_id = o.customer_id)`. Why is every order flagged 'no'?",
+        options: [
+          "`NOT EXISTS` can't be used inside a `CASE`",
+          "The subquery needs `SELECT *`, not `SELECT 1`",
+          "`e` and `o` are the same table, so SQLite can't tell them apart",
+          "The subquery finds the order itself. It also needs `e.order_date < o.order_date`",
+        ],
+        answer: 3,
+        explanation:
+          "Every order belongs to its own customer, so without the date condition there's always a matching row: the order you're looking at. Asking for an *earlier* order is what makes the first one stand out.",
+      },
+      {
+        kind: "fill",
+        id: "f1",
+        prompt: "Show 'unknown' when a customer has no city on file.",
+        before: "",
+        after: "(c.city, 'unknown') AS city",
+        answer: "COALESCE",
+        explanation: "`COALESCE` returns the first of its arguments that isn't NULL.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "March packing list",
+        prompt:
+          "The warehouse needs a packing list for every **paid** order placed in March 2026, with one row per item line. Return `order_id`, `customer` (their name), `city` ('unknown' when it's missing), `product` (its name), `quantity`, `line_total` (quantity times the price paid), `discounted` ('yes' when the price paid is below the product's list price, otherwise 'no') and `first_order` ('yes' when the customer has no earlier order of any status, otherwise 'no'). Sort by `order_id`, then `product`.",
+        language: "sql",
+        starter: `-- Write the query from the brief. Get the rows right before the columns.
+`,
+        hint: "Join `orders`, `customers`, `order_items` and `products`, and filter to paid orders with `order_date >= '2026-03-01' AND order_date < '2026-04-01'`: that should give 7 rows. Then `discounted` is `CASE WHEN i.unit_price < p.price ...`, and `first_order` is `CASE WHEN NOT EXISTS (SELECT 1 FROM orders AS e WHERE e.customer_id = o.customer_id AND e.order_date < o.order_date) ...`.",
+        solution: `SELECT o.id AS order_id,
+       c.name AS customer,
+       COALESCE(c.city, 'unknown') AS city,
+       p.name AS product,
+       i.quantity,
+       i.quantity * i.unit_price AS line_total,
+       CASE WHEN i.unit_price < p.price THEN 'yes' ELSE 'no' END AS discounted,
+       CASE WHEN NOT EXISTS (
+         SELECT 1 FROM orders AS e
+         WHERE e.customer_id = o.customer_id AND e.order_date < o.order_date
+       ) THEN 'yes' ELSE 'no' END AS first_order
+FROM orders AS o
+JOIN customers AS c ON c.id = o.customer_id
+JOIN order_items AS i ON i.order_id = o.id
+JOIN products AS p ON p.id = i.product_id
+WHERE o.status = 'paid'
+  AND o.order_date >= '2026-03-01' AND o.order_date < '2026-04-01'
+ORDER BY o.id, p.name;`,
+        tests: [
+          {
+            name: "Returns the eight columns in the brief's order",
+            expression:
+              'columns == ["order_id", "customer", "city", "product", "quantity", "line_total", "discounted", "first_order"]',
+          },
+          { name: "One row for each of March's 7 paid item lines", expression: "len(rows) == 7" },
+          {
+            name: "Leaves out refunded order 111 and pending order 115",
+            expression: "not any(r[0] in (111, 115) for r in rows)",
+          },
+          {
+            name: "Emma Novak's city shows as 'unknown'",
+            expression:
+              'any(r[1] == "Emma Novak" for r in rows) and all(r[2] == "unknown" for r in rows if r[1] == "Emma Novak")',
+          },
+          {
+            name: "Only Emma's jacket was discounted",
+            expression:
+              '[(r[0], r[3]) for r in rows if r[6] == "yes"] == [(112, "Rain Shell Jacket")]',
+          },
+          {
+            name: "Only Emma is ordering for the first time",
+            expression: '{r[1] for r in rows if r[7] == "yes"} == {"Emma Novak"}',
+          },
+          {
+            name: "Line totals add up to March's paid items: 613",
+            expression: "abs(sum(r[5] for r in rows) - 613) < 0.01",
+          },
+          {
+            name: "Sorted by order_id, then product",
+            expression: "[(r[0], r[3]) for r in rows] == sorted((r[0], r[3]) for r in rows)",
+          },
+        ],
+      },
+    ],
+  },
   "sql-summary.groupby": {
     summary: "Count, sum and average per group, and filter before or after grouping.",
     xp: 150,
@@ -1676,6 +1777,113 @@ ORDER BY t.order_id;`,
           },
           {
             name: "In order of order_id",
+            expression: "[r[0] for r in rows] == sorted(r[0] for r in rows)",
+          },
+        ],
+      },
+    ],
+  },
+  "sql-project.capstone": {
+    summary: "Answer a director's question end to end, and say what the number really means.",
+    xp: 250,
+    blocks: [
+      {
+        kind: "callout",
+        body: "This is the independent capstone. The editor starts empty and the brief doesn't say which technique to use. Plan the steps first: what one row of each step means, where the months come from, and where the comparison has to happen. Use the earlier lessons as references, and open the hint only once you have a plan.",
+      },
+      {
+        kind: "text",
+        body: "The chain's director has seen the website's revenue level off and asks: *is the website taking over from the stores, or losing ground to them?* The answer is a table for 2025 with one row per month, plus a sentence on what it shows. Before you trust your table, reconcile it: the website and stores together should add up to the chain's 2025 revenue of 921,587.",
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          "Your table shows the website's share falling 10.7 points in April 2025, and staying between 40% and 44% for the rest of the year. What's the accurate sentence for the director?",
+        options: [
+          "The website is losing customers to the stores",
+          "The website's share fell because Harrogate opened on 12 April. Against Leeds alone, the store it competed with in both years, it's holding steady",
+          "The website had a bad April",
+          "A 10.7-point fall must be a data error, so leave April out",
+        ],
+        answer: 1,
+        explanation:
+          "A share is a fraction, and a new store adds to the bottom of it: the website took more in April than in March, and its share still fell. Compared like for like with Leeds alone, the idea from the LAG lesson, it had 56.8% of the two in 2024 and 56.5% in 2025.",
+      },
+      {
+        kind: "fill",
+        id: "f1",
+        prompt: "Compare each month's share with the month before.",
+        before: "web_share - ",
+        after: "(web_share) OVER (ORDER BY month)",
+        answer: "LAG",
+        explanation: "`LAG` fetches the value from the previous row in the window's order.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Is the website taking over?",
+        prompt:
+          "For each month of 2025, return `month` (like `2025-01`), `web` (the website's revenue), `stores` (all stores' revenue together), `web_share` (the website's percentage of the month's total, rounded to 1 decimal place) and `share_change` (the change in `web_share` from the previous month, in percentage points, rounded to 1 decimal place). January is compared with December 2024. Sort by month.",
+        language: "sql",
+        dataset: "stores",
+        starter: `-- Write the query from the brief. Plan the steps before you start.
+`,
+        hint: "Step 1: one row per month, with `web` and `stores` as conditional sums over `daily_sales` joined to `stores` on `channel`. Step 2: the share, `100.0 * web / (web + stores)`. Step 3: `LAG` over all 24 months. Keep only 2025 in the final query, after the `LAG`, or January has nothing to compare with.",
+        solution: `WITH monthly AS (
+  SELECT strftime('%Y-%m', d.day) AS month,
+         SUM(CASE WHEN s.channel = 'web' THEN d.revenue ELSE 0 END) AS web,
+         SUM(CASE WHEN s.channel = 'store' THEN d.revenue ELSE 0 END) AS stores
+  FROM daily_sales AS d
+  JOIN stores AS s ON s.id = d.store_id
+  GROUP BY month
+), shares AS (
+  SELECT month, web, stores,
+         100.0 * web / (web + stores) AS share
+  FROM monthly
+), compared AS (
+  SELECT month, web, stores, share,
+         share - LAG(share) OVER (ORDER BY month) AS change
+  FROM shares
+)
+SELECT month, web, stores,
+       ROUND(share, 1) AS web_share,
+       ROUND(change, 1) AS share_change
+FROM compared
+WHERE month >= '2025-01'
+ORDER BY month;`,
+        tests: [
+          {
+            name: "Returns month, web, stores, web_share and share_change",
+            expression: 'columns == ["month", "web", "stores", "web_share", "share_change"]',
+          },
+          {
+            name: "The 12 months of 2025",
+            expression: 'len(rows) == 12 and all(r[0].startswith("2025-") for r in rows)',
+          },
+          {
+            name: "Website and stores reconcile with the chain's 2025 revenue: 921,587",
+            expression: "abs(sum(r[1] + r[2] for r in rows) - 921587) < 0.01",
+          },
+          {
+            name: "stores counts Harrogate: April is 38,428",
+            expression: 'abs(dict((r[0], r[2]) for r in rows).get("2025-04", 0) - 38428) < 0.01',
+          },
+          {
+            name: "June's web_share is 40.5",
+            expression: 'abs((dict((r[0], r[3]) for r in rows).get("2025-06") or 0) - 40.5) < 0.05',
+          },
+          {
+            name: "January is compared with December 2024: -0.2",
+            expression: 'abs((dict((r[0], r[4]) for r in rows).get("2025-01") or 99) + 0.2) < 0.11',
+          },
+          {
+            name: "April shows the fall when Harrogate opened: -10.7",
+            expression:
+              'abs((dict((r[0], r[4]) for r in rows).get("2025-04") or 99) + 10.7) < 0.11',
+          },
+          {
+            name: "In month order",
             expression: "[r[0] for r in rows] == sorted(r[0] for r in rows)",
           },
         ],

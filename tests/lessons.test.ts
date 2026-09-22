@@ -537,11 +537,15 @@ describe("sql challenges", () => {
   });
 
   for (const { id, b } of challenges) {
-    test(`${id}: solution and starter run on the shop dataset`, () => {
+    test(`${id}: solution and starter run on its dataset`, () => {
       const db = new Database(":memory:");
       db.exec(sqlDataset(b.dataset).sql);
       expect(() => db.query(b.solution).all()).not.toThrow();
-      expect(() => db.query(b.starter).all()).not.toThrow();
+      // An empty-editor starter (checkpoints, capstones) is only a comment; the
+      // runner answers that with "Write a query first." rather than running it.
+      if (b.starter.replace(/--.*$/gm, "").trim()) {
+        expect(() => db.query(b.starter).all()).not.toThrow();
+      }
       db.close();
     });
   }

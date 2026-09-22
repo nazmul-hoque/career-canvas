@@ -111,6 +111,15 @@ Two facts shape every item below:
 
 ## Done
 
+- [x] **SQL checkpoint and capstone** (2026-09-22) — both SQL courses are now
+      complete as planned. Foundations ends its Querying module with an
+      empty-editor *March packing list* (four-table join, half-open dates,
+      COALESCE, a discount CASE, a NOT EXISTS first-order flag). Analysis ends
+      with an Independent project, *Is the website taking over?* (conditional
+      sums by channel, a share, LAG across the year boundary), whose question
+      asks the learner to read the April fall as Harrogate opening, not the
+      website losing ground (56.8% vs 56.5% of web+Leeds). Foundations: 6
+      lessons; Analysis: 7.
 - [x] **SQL for Analysis: pivots and data-quality checks** (2026-09-22) —
       *Conditional aggregation* (a column per case, the `COUNT ... ELSE 0` and
       `AVG ... ELSE 0` traps, rates, 0 vs NULL) joins the Analysis module on

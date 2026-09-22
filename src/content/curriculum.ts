@@ -346,6 +346,7 @@ export const courses: Course[] = [
         ["shaping", "Shaping results: DISTINCT, LIMIT, LIKE, CASE", 14, "challenge"],
         ["joins", "Joining tables", 13, "challenge"],
         ["subqueries", "Subqueries: IN, EXISTS, or a join?", 15, "challenge"],
+        ["checkpoint", "Checkpoint: March packing list", 20, "challenge"],
       ]),
       // Its lesson was `sql-analysis.groupby` until the course split; the
       // 20260922120000 migration renamed the stored rows to match.
@@ -387,6 +388,9 @@ export const courses: Course[] = [
       ]),
       m("sql-quality", "Checking the data", "Duplicates, orphans and totals that don't add up.", [
         ["checks", "Checking the data before you trust it", 16, "challenge"],
+      ]),
+      m("sql-project", "Independent project", "Answer a real question end to end.", [
+        ["capstone", "Capstone: is the website taking over?", 35, "challenge"],
       ]),
     ],
   },
