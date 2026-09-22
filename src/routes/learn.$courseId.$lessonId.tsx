@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/sheet";
 import { QueryError } from "@/components/common/QueryError";
 import { useEffect, useMemo, useState } from "react";
-import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, redirect, useNavigate } from "@tanstack/react-router";
 import {
   ArrowLeft,
   ArrowRight,
@@ -27,6 +27,7 @@ import { CodeChallenge } from "@/components/learn/CodeChallenge";
 import {
   courseById,
   courseLessons,
+  movedLesson,
   unitWords,
   type Course,
   type LessonMeta,
@@ -55,7 +56,12 @@ export const Route = createFileRoute("/learn/$courseId/$lessonId")({
   loader: async ({ params, context }) => {
     const course = courseById(params.courseId);
     const lesson = course ? courseLessons(course).find((l) => l.id === params.lessonId) : undefined;
-    if (!course || !lesson) throw notFound();
+    if (!course || !lesson) {
+      const moved = movedLesson(params.courseId, params.lessonId);
+      if (moved)
+        throw redirect({ to: "/learn/$courseId/$lessonId", params: moved, statusCode: 301 });
+      throw notFound();
+    }
     // Comes from the server without its answer key; see lessons.functions.ts.
     const body = await context.queryClient.ensureQueryData(lessonQuery(course.id, lesson.id));
     // `body` is null for lessons nobody has written yet — the route renders a

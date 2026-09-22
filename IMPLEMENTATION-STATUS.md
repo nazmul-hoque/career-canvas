@@ -38,6 +38,11 @@ Two facts shape every item below:
       `.env.local` (git-ignored; Bun loads it) and restart the dev server.
       Production: the host's environment settings. It's the Secret key (or the
       legacy service_role key) under Project Settings → API Keys.
+- [ ] **Apply `20260922120000_split_sql_course`** with `supabase db push`. The
+      SQL course split in two, and the migration moves stored progress, review
+      items and mentor history onto the new course and lesson ids. Until it
+      runs, a learner who had done GROUP BY, CTEs or windows sees them as not
+      done, and those review cards drop out of `/review`.
 - [ ] **Enable Google sign-in in Supabase.** The code now calls Supabase's own
       `signInWithOAuth` (the Lovable helper is gone). In the dashboard: turn on
       Google under Authentication → Sign In / Providers with a Google OAuth
@@ -106,6 +111,19 @@ Two facts shape every item below:
 
 ## Done
 
+- [x] **SQL split into Foundations and Analysis** (2026-09-22) — `sql` is now
+      SQL Foundations (Beginner): SELECT/WHERE, a new *Shaping results* lesson
+      (DISTINCT, LIMIT, LIKE, COALESCE, CASE), joins, a new *Subqueries* lesson
+      (IN, EXISTS, the NOT IN NULL trap, subquery vs join) and GROUP BY, now
+      `sql-summary.groupby`. CTEs and window functions moved to a new
+      `sql-analysis` course (Intermediate), because window functions sat at the
+      end of a course labelled Beginner. Data, Python and Full-stack take both.
+      Bodies live in `sql-lessons.server.ts`. The three old lesson URLs 301 to
+      their new addresses (`movedLesson` in `curriculum.ts`). Next batches: Foundations
+      checkpoint; Analysis conditional aggregation, dates, LAG, data-quality
+      checks and a capstone, which need extra dataset tables first (the shop's
+      15 orders are too few for date bucketing or LAG, and adding rows would
+      invalidate numbers the lessons quote).
 - [x] **Python and SQL never ran for real** (2026-09-21) — `be9b275` renamed
       the module constant `DRIVER` to `PYTHON_DRIVER` so `lessons:verify` could
       import it, and the rename also rewrote the call site _inside_ the Pyodide

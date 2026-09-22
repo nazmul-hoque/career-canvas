@@ -331,22 +331,44 @@ export const courses: Course[] = [
   },
   {
     id: "sql",
-    title: "SQL for Analysis",
+    title: "SQL Foundations",
     skill: "SQL",
     level: "Beginner",
     recommended: true,
     summary: "Ask a database real questions and get trustworthy answers.",
     description:
-      "SELECT to window functions, run for real against one small shop's orders the whole way through.",
-    skills: ["SELECT", "Joins", "Aggregation", "CTEs", "Window functions"],
+      "SELECT to GROUP BY, run for real against one small shop's orders the whole way through.",
+    skills: ["SELECT", "CASE and COALESCE", "Joins", "Subqueries", "Aggregation"],
     careers: ["data", "fullstack", "python"],
     modules: [
-      m("sql-core", "Querying", "Filter, sort and join rows.", [
+      m("sql-core", "Querying", "Filter, shape and join rows.", [
         ["select", "SELECT and WHERE", 12, "practice"],
+        ["shaping", "Shaping results: DISTINCT, LIMIT, LIKE, CASE", 14, "challenge"],
         ["joins", "Joining tables", 13, "challenge"],
+        ["subqueries", "Subqueries: IN, EXISTS, or a join?", 15, "challenge"],
       ]),
-      m("sql-analysis", "Analysis", "Group, check and window.", [
+      // Its lesson was `sql-analysis.groupby` until the course split; the
+      // 20260922120000 migration renamed the stored rows to match.
+      m("sql-summary", "Summarising", "Count, sum and average per group.", [
         ["groupby", "GROUP BY and HAVING", 12, "practice"],
+      ]),
+    ],
+  },
+  {
+    // Split out of `sql` rather than appended to it: window functions sat at the
+    // end of a course labelled Beginner, and the catalog card shows only the label.
+    id: "sql-analysis",
+    title: "SQL for Analysis",
+    skill: "SQL",
+    level: "Intermediate",
+    recommended: false,
+    summary: "Multi-step queries whose numbers you can defend.",
+    description:
+      "CTEs, the join that quietly double-counts, and window functions, on the same shop as SQL Foundations.",
+    skills: ["CTEs", "Grain and double-counting", "Window functions", "Running totals"],
+    careers: ["data", "fullstack", "python"],
+    modules: [
+      m("sql-analysis", "Analysis", "Build in steps, check the grain, then window.", [
         ["ctes", "CTEs and numbers you can trust", 14, "challenge"],
         ["windows", "Window functions", 15, "challenge"],
       ]),
@@ -645,7 +667,7 @@ export const careerPaths: CareerPath[] = [
     overview: "Own a feature end to end: the screen, the endpoint and the table behind it.",
     difficulty: "Intermediate",
     skills: ["JavaScript", "React", "Node.js", "SQL", "Auth", "Deployment"],
-    courseIds: ["javascript", "react", "node", "sql", "git"],
+    courseIds: ["javascript", "react", "node", "sql", "sql-analysis", "git"],
     projectIds: ["ecommerce-site", "dashboard-ui", "ai-chatbot"],
   },
   {
@@ -656,7 +678,7 @@ export const careerPaths: CareerPath[] = [
       "Learn the language that runs scripts, servers and models — then use it to automate real work.",
     difficulty: "Beginner",
     skills: ["Python", "Collections", "Automation", "SQL", "Testing"],
-    courseIds: ["python", "sql", "git", "genai"],
+    courseIds: ["python", "sql", "sql-analysis", "git", "genai"],
     projectIds: ["weather-app", "data-dashboard", "ai-chatbot"],
     popular: true,
   },
@@ -667,7 +689,7 @@ export const careerPaths: CareerPath[] = [
     overview: "Answer business questions with data people trust, and present them clearly.",
     difficulty: "Intermediate",
     skills: ["SQL", "Excel", "Python", "Statistics", "Dashboards", "Storytelling"],
-    courseIds: ["sql", "excel", "python", "data-analytics"],
+    courseIds: ["sql", "sql-analysis", "excel", "python", "data-analytics"],
     projectIds: ["data-dashboard", "dashboard-ui"],
   },
   {
@@ -725,6 +747,23 @@ export const findLesson = (courseId: string, lessonId: string) => {
   }
   return null;
 };
+
+/**
+ * Lessons that changed course or id, keyed `course/lesson` at the old address.
+ * The lesson route redirects these so bookmarks, shared links and emailed
+ * nudges keep working; stored rows were moved by migration instead.
+ */
+const movedLessons: Record<string, { courseId: string; lessonId: string }> = {
+  // 20260922120000_split_sql_course
+  "sql/sql-analysis.groupby": { courseId: "sql", lessonId: "sql-summary.groupby" },
+  "sql/sql-analysis.ctes": { courseId: "sql-analysis", lessonId: "sql-analysis.ctes" },
+  "sql/sql-analysis.windows": { courseId: "sql-analysis", lessonId: "sql-analysis.windows" },
+};
+
+export const movedLesson = (courseId: string, lessonId: string) =>
+  movedLessons[`${courseId}/${lessonId}`] ?? null;
+
+export const movedLessonEntries = () => Object.entries(movedLessons);
 
 export const pathCourses = (path: CareerPath) =>
   path.courseIds.map(courseById).filter((c): c is Course => Boolean(c));

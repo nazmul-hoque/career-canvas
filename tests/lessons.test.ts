@@ -2,7 +2,14 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { Database } from "bun:sqlite";
 
-import { careerPaths, courseLessons, courses, pathCourses } from "../src/content/curriculum";
+import {
+  careerPaths,
+  courseLessons,
+  courses,
+  findLesson,
+  movedLessonEntries,
+  pathCourses,
+} from "../src/content/curriculum";
 import { SHOP_SQL } from "../src/content/datasets/shop";
 import { bodies, getLessonBody } from "../src/content/lesson-bodies.server";
 import { renderManifest } from "../src/content/lesson-manifest.server";
@@ -555,4 +562,19 @@ describe("lessonShape", () => {
   test("a lesson that was never written reports unwritten", () => {
     expect(lessonShape("html-basics.retired-slot")).toBe("unwritten");
   });
+});
+
+/**
+ * A redirect that points at a lesson which later moves again, or that shadows a
+ * lesson still at its old address, sends the learner somewhere wrong silently.
+ */
+describe("moved lessons", () => {
+  for (const [from, to] of movedLessonEntries()) {
+    test(`${from} redirects to a live lesson`, () => {
+      const [courseId = "", lessonId = ""] = from.split("/");
+      expect(findLesson(courseId, lessonId)).toBeNull();
+      expect(findLesson(to.courseId, to.lessonId)).not.toBeNull();
+      expect(getLessonBody(to.courseId, to.lessonId)).not.toBeNull();
+    });
+  }
 });

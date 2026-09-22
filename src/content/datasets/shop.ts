@@ -1,6 +1,7 @@
 /**
- * The dataset every SQL for Analysis challenge runs against: a small outdoor-gear
- * shop, loaded fresh into an in-memory SQLite database on each run.
+ * The dataset every SQL challenge runs against, in both SQL Foundations and SQL
+ * for Analysis: a small outdoor-gear shop, loaded fresh into an in-memory SQLite
+ * database on each run.
  *
  * It is small enough to check an answer by eye and built to contain the things
  * that make real analysis go wrong: a customer with no orders, a product that
