@@ -698,16 +698,19 @@ function Block({
         <p className="mt-2 font-semibold">
           <InlineText text={block.prompt} />
         </p>
-        <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl bg-ink px-4 py-3 font-mono text-[13px] text-white/90">
-          <span>{block.before}</span>
+        {/* Inline flow, not flex: the gap must sit inside the code and keep its newlines and
+            indentation, or the snippet stops reading as one statement. */}
+        <div className="mt-4 whitespace-pre-wrap break-words rounded-xl bg-ink px-4 py-3 font-mono text-[13px] leading-9 text-white/90">
+          {block.before}
           <Input
             value={value}
             onChange={(e) => onAnswer(block.id, e.target.value)}
             disabled={correct}
             aria-label="Your answer"
-            className="h-8 w-40 border-white/20 bg-white/10 font-mono text-white placeholder:text-white/40"
+            style={{ width: `calc(${Math.max(value.length, 8)}ch + 1.5rem)` }}
+            className="mx-0.5 inline-block h-8 max-w-full border-white/20 bg-white/10 px-2 align-middle font-mono text-[13px] text-white placeholder:text-white/40 md:text-[13px]"
           />
-          <span>{block.after}</span>
+          {block.after}
         </div>
         {result ? (
           <p className={cn("mt-3 text-sm", correct ? "text-brand" : "text-destructive")}>
