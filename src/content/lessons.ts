@@ -7,6 +7,7 @@ import {
 } from "./curriculum";
 import { lessonManifest } from "./lesson-manifest.gen";
 import type { ChallengeLanguage } from "@/lib/code-runner";
+import type { SqlDataset } from "./datasets/sql";
 
 export type LessonBlock =
   | { kind: "text"; body: string }
@@ -41,6 +42,8 @@ export type LessonBlock =
       sheet?: string | undefined;
       /** DOM challenges only: the fixed page markup the learner's script works on. */
       html?: string | undefined;
+      /** SQL challenges only: which database in datasets/sql.ts to run against (default shop). */
+      dataset?: SqlDataset | undefined;
       starter: string;
       hint: string;
       solution: string;

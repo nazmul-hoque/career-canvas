@@ -6,12 +6,12 @@
  * that runtime cannot be reached, falls back to the old source-pattern
  * simulation, which reports itself as simulated so the UI never claims code ran
  * that did not. SQL runs on real SQLite inside the same Python runtime, against
- * the shop dataset; it has no simulation — if the engine can't load, it says so.
+ * the challenge's dataset (datasets/sql.ts); it has no simulation — if the engine can't load, it says so.
  *
  * `RunResult` is the contract the lesson UI depends on: swap any engine for a
  * network call without changing the shape.
  */
-import { SHOP_SQL } from "@/content/datasets/shop";
+import { sqlDataset, type SqlDataset } from "@/content/datasets/sql";
 import { runPythonInPyodide } from "./python-runtime";
 import {
   captureConsole,
@@ -198,11 +198,11 @@ const SQL_PRINT_ROWS = 25;
  * `rows` (a list of tuples) and `columns` (a list of names) for the tests.
  * Strings cross into Python as JSON literals, which are valid Python strings.
  */
-export function sqlProgram(query: string): string {
+export function sqlProgram(query: string, dataset?: SqlDataset | undefined): string {
   return [
     "import json, sqlite3",
     `__db = sqlite3.connect(":memory:")`,
-    `__db.executescript(json.loads(${JSON.stringify(JSON.stringify(SHOP_SQL))}))`,
+    `__db.executescript(json.loads(${JSON.stringify(JSON.stringify(sqlDataset(dataset).sql))}))`,
     `__cur = __db.execute(json.loads(${JSON.stringify(JSON.stringify(query))}))`,
     "columns = [d[0] for d in __cur.description] if __cur.description else []",
     "rows = __cur.fetchall()",
@@ -218,14 +218,18 @@ export function sqlProgram(query: string): string {
   ].join("\n");
 }
 
-async function runSql(query: string, tests: TestSpec[]): Promise<RunResult> {
+async function runSql(
+  query: string,
+  tests: TestSpec[],
+  dataset: SqlDataset | undefined,
+): Promise<RunResult> {
   const started = performance.now();
   const failed = (error: string) => toRunResult("sql", tests, failedOutcome(tests, error), started);
 
   if (!query.replace(/--.*$/gm, "").trim()) return failed("Write a query first.");
 
   const outcome = await runPythonInPyodide(
-    sqlProgram(query),
+    sqlProgram(query, dataset),
     tests.map((t) => t.expression),
   );
   // No simulation for SQL: guessing a result table from the query text would
@@ -249,10 +253,11 @@ async function runSql(query: string, tests: TestSpec[]): Promise<RunResult> {
   );
 }
 
-/** What a challenge needs besides its code: Excel's sheet, the DOM lessons' markup. */
+/** What a challenge needs besides its code: Excel's sheet, the DOM lessons' markup, SQL's database. */
 export interface ChallengeContext {
   sheet?: string | undefined;
   html?: string | undefined;
+  dataset?: SqlDataset | undefined;
 }
 
 type EngineRun = (
@@ -301,7 +306,7 @@ export async function runCode(
 ): Promise<RunResult> {
   if (language === "javascript") return runJavaScript(code, tests);
   if (language === "python") return runPython(code, tests);
-  if (language === "sql") return runSql(code, tests);
+  if (language === "sql") return runSql(code, tests, context.dataset);
 
   const started = performance.now();
   let run: EngineRun;

@@ -34,7 +34,7 @@ const PYTHON_CONCURRENCY = 8;
 
 async function runPythonLocally(block: Challenge, code: string): Promise<Outcome> {
   const payload = JSON.stringify({
-    code: block.language === "sql" ? sqlProgram(code) : code,
+    code: block.language === "sql" ? sqlProgram(code, block.dataset) : code,
     tests: block.tests.map((t) => t.expression),
   });
   const program = `__ascent_payload = ${JSON.stringify(payload)}\n${PYTHON_DRIVER}\nprint("__RESULT__" + __ascent_result)`;
@@ -54,6 +54,7 @@ async function runInBrowserEngine(block: Challenge, code: string): Promise<Outco
   const run = await runCode(block.language, code, block.tests, {
     sheet: block.sheet,
     html: block.html,
+    dataset: block.dataset,
   });
   // A failing test's detail is shown next to FAIL; it isn't a run error.
   const why = run.tests.find((t) => t.detail)?.detail ?? null;

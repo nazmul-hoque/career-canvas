@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { runCode, type ChallengeLanguage, type RunEngine, type RunResult } from "@/lib/code-runner";
 import { numberToCol, parseRef } from "@/lib/sheet-refs";
-import { SHOP_SCHEMA } from "@/content/datasets/shop";
+import { sqlDataset, type SqlDataset } from "@/content/datasets/sql";
 import { SHEETS } from "@/content/datasets/sheets";
 import { InlineText } from "@/components/learn/InlineText";
 import { track } from "@/lib/analytics";
@@ -48,6 +48,8 @@ interface Props {
   sheet?: string | undefined;
   /** DOM challenges: the page markup the script runs against. */
   html?: string | undefined;
+  /** SQL challenges: the database the query runs against. */
+  dataset?: SqlDataset | undefined;
   starter: string;
   hint: string;
   tests: { name: string; expression: string }[];
@@ -64,6 +66,7 @@ export function CodeChallenge({
   language,
   sheet,
   html,
+  dataset,
   starter,
   hint,
   tests,
@@ -86,7 +89,7 @@ export function CodeChallenge({
     // Some engines finish before the spinner paints; a short minimum keeps the
     // running state visible instead of flickering.
     const [res] = await Promise.all([
-      runCode(language, code, tests, { sheet, html }),
+      runCode(language, code, tests, { sheet, html, dataset }),
       new Promise((resolve) => setTimeout(resolve, 250)),
     ]);
     setResult(res);
@@ -123,7 +126,7 @@ export function CodeChallenge({
         ) : null}
         {language === "sql" ? (
           <pre className="mt-3 overflow-x-auto rounded-lg bg-background px-3 py-2 font-mono text-[12px] leading-5 text-chalk">
-            {SHOP_SCHEMA}
+            {sqlDataset(dataset).schema}
           </pre>
         ) : null}
       </div>

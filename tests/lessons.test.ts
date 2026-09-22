@@ -10,7 +10,7 @@ import {
   movedLessonEntries,
   pathCourses,
 } from "../src/content/curriculum";
-import { SHOP_SQL } from "../src/content/datasets/shop";
+import { sqlDataset, SQL_DATASETS } from "../src/content/datasets/sql";
 import { bodies, getLessonBody } from "../src/content/lesson-bodies.server";
 import { renderManifest } from "../src/content/lesson-manifest.server";
 import { ATTESTED_XP } from "../src/content/gamification";
@@ -512,7 +512,7 @@ describe("answer key", () => {
 });
 
 /**
- * Every SQL challenge must run against the shop dataset. This catches a broken
+ * Every SQL challenge must run against its dataset. This catches a broken
  * query or a dataset edit that removes a column; whether the solution passes
  * its (Python) tests is checked by `bun run lessons:verify`.
  */
@@ -528,7 +528,7 @@ describe("sql challenges", () => {
   for (const { id, b } of challenges) {
     test(`${id}: solution and starter run on the shop dataset`, () => {
       const db = new Database(":memory:");
-      db.exec(SHOP_SQL);
+      db.exec(sqlDataset(b.dataset).sql);
       expect(() => db.query(b.solution).all()).not.toThrow();
       expect(() => db.query(b.starter).all()).not.toThrow();
       db.close();
@@ -577,4 +577,57 @@ describe("moved lessons", () => {
       expect(getLessonBody(to.courseId, to.lessonId)).not.toBeNull();
     });
   }
+});
+
+/**
+ * The stores data is generated, so a harmless-looking edit to the generator
+ * silently rewrites every number a lesson quotes. These pin its totals and the
+ * awkward cases the date lessons are built on.
+ */
+describe("stores dataset", () => {
+  const db = new Database(":memory:");
+  db.exec(SQL_DATASETS.stores.sql);
+  const one = <T>(sql: string) => Object.values(db.query(sql).get() as object)[0] as T;
+
+  test("totals are unchanged", () => {
+    expect(
+      db
+        .query(
+          "SELECT store_id, COUNT(*) AS n, SUM(orders) AS o, SUM(revenue) AS r FROM daily_sales GROUP BY store_id",
+        )
+        .all(),
+    ).toEqual([
+      { store_id: 1, n: 728, o: 12346, r: 766062 },
+      { store_id: 2, n: 621, o: 7893, r: 586288 },
+      { store_id: 3, n: 262, o: 2720, r: 201753 },
+    ]);
+  });
+
+  test("closed days have no row; the snow day has a zero row", () => {
+    expect(
+      one<number>(
+        "SELECT COUNT(*) FROM daily_sales WHERE store_id = 2 AND strftime('%w', day) = '0'",
+      ),
+    ).toBe(0);
+    expect(
+      one<number>(
+        "SELECT COUNT(*) FROM daily_sales WHERE store_id > 1 AND substr(day, 6) IN ('12-25', '12-26', '01-01')",
+      ),
+    ).toBe(0);
+    expect(
+      one<number>(
+        "SELECT COUNT(*) FROM daily_sales WHERE store_id = 1 AND day BETWEEN '2025-06-10' AND '2025-06-12'",
+      ),
+    ).toBe(0);
+    expect(
+      db
+        .query("SELECT orders, revenue FROM daily_sales WHERE store_id = 2 AND day = '2025-01-08'")
+        .get(),
+    ).toEqual({ orders: 0, revenue: 0 });
+  });
+
+  test("Harrogate starts on its opening day, and every other day sold something", () => {
+    expect(one<string>("SELECT MIN(day) FROM daily_sales WHERE store_id = 3")).toBe("2025-04-12");
+    expect(one<number>("SELECT COUNT(*) FROM daily_sales WHERE orders = 0")).toBe(1);
+  });
 });

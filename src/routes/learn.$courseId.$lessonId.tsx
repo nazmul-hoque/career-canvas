@@ -747,6 +747,7 @@ function Block({
       language={block.language}
       sheet={block.sheet}
       html={block.html}
+      dataset={block.dataset}
       starter={block.starter}
       hint={block.hint}
       tests={block.tests}
