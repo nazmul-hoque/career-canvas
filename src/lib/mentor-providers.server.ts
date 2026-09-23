@@ -9,6 +9,7 @@
  *   anthropic  ANTHROPIC_API_KEY   default model claude-opus-5
  *   openai     OPENAI_API_KEY      default model gpt-4o
  *   deepseek   DEEPSEEK_API_KEY    default model deepseek-chat
+ *   gemini     GEMINI_API_KEY      default model gemini-3.8-flash
  *   mock       (no key)            the scripted mentor in src/lib/mentor.ts
  *
  * Server-only: this file reads API keys and must never reach the browser bundle.
@@ -63,25 +64,36 @@ function anthropicProvider(): MentorProvider {
   };
 }
 
+type OpenAiFlavour = "openai" | "deepseek" | "gemini";
+
 /**
- * OpenAI and DeepSeek speak the same chat-completions dialect, so one adapter
- * serves both — only the base URL, key and default model differ.
+ * OpenAI, DeepSeek and Gemini (through Google's OpenAI-compatible endpoint)
+ * speak the same chat-completions dialect, so one adapter serves all three —
+ * only the base URL, key and default model differ.
  */
-function openAiCompatibleProvider(flavour: "openai" | "deepseek"): MentorProvider {
-  const config =
-    flavour === "openai"
-      ? {
-          key: process.env["OPENAI_API_KEY"],
-          keyName: "OPENAI_API_KEY",
-          baseUrl: process.env["OPENAI_BASE_URL"] || "https://api.openai.com/v1",
-          defaultModel: "gpt-4o",
-        }
-      : {
-          key: process.env["DEEPSEEK_API_KEY"],
-          keyName: "DEEPSEEK_API_KEY",
-          baseUrl: process.env["DEEPSEEK_BASE_URL"] || "https://api.deepseek.com/v1",
-          defaultModel: "deepseek-chat",
-        };
+function openAiCompatibleProvider(flavour: OpenAiFlavour): MentorProvider {
+  const configs = {
+    openai: {
+      key: process.env["OPENAI_API_KEY"],
+      keyName: "OPENAI_API_KEY",
+      baseUrl: process.env["OPENAI_BASE_URL"] || "https://api.openai.com/v1",
+      defaultModel: "gpt-4o",
+    },
+    deepseek: {
+      key: process.env["DEEPSEEK_API_KEY"],
+      keyName: "DEEPSEEK_API_KEY",
+      baseUrl: process.env["DEEPSEEK_BASE_URL"] || "https://api.deepseek.com/v1",
+      defaultModel: "deepseek-chat",
+    },
+    gemini: {
+      key: process.env["GEMINI_API_KEY"],
+      keyName: "GEMINI_API_KEY",
+      baseUrl:
+        process.env["GEMINI_BASE_URL"] || "https://generativelanguage.googleapis.com/v1beta/openai",
+      defaultModel: "gemini-3.8-flash",
+    },
+  } satisfies Record<OpenAiFlavour, unknown>;
+  const config = configs[flavour];
 
   if (!config.key) {
     throw new Error(`MENTOR_PROVIDER=${flavour} but ${config.keyName} is not set.`);
@@ -101,6 +113,9 @@ function openAiCompatibleProvider(flavour: "openai" | "deepseek"): MentorProvide
         body: JSON.stringify({
           model,
           max_tokens: MAX_REPLY_TOKENS,
+          // Gemini thinks by default and its thinking can eat the reply budget,
+          // leaving an empty answer; a tutor reply doesn't need much of it.
+          ...(flavour === "gemini" ? { reasoning_effort: "low" } : {}),
           messages: [{ role: "system", content: system }, ...messages],
         }),
       });
@@ -128,12 +143,15 @@ export function getMentorProvider(): MentorProvider | null {
       return openAiCompatibleProvider("openai");
     case "deepseek":
       return openAiCompatibleProvider("deepseek");
+    case "gemini":
+    case "google":
+      return openAiCompatibleProvider("gemini");
     case "mock":
     case "":
       return null;
     default:
       throw new Error(
-        `Unknown MENTOR_PROVIDER "${choice}". Use anthropic, openai, deepseek or mock.`,
+        `Unknown MENTOR_PROVIDER "${choice}". Use anthropic, openai, deepseek, gemini or mock.`,
       );
   }
 }

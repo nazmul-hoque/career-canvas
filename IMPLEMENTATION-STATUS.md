@@ -496,7 +496,7 @@ Two facts shape every item below:
 
 - [x] **#2 AI mentor** — real models behind a provider seam
       (`src/lib/mentor-providers.server.ts`): Anthropic (official SDK, default
-      `claude-opus-5`), OpenAI and DeepSeek (shared chat-completions adapter),
+      `claude-opus-5`), OpenAI, DeepSeek and Gemini (shared chat-completions adapter),
       or `mock` for the scripted fallback. `mentorReplyFn` in
       `src/lib/mentor.functions.ts` runs it server-side with the authored lesson
       as context, persists both sides of the conversation to `mentor_messages`,

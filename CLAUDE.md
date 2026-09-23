@@ -220,7 +220,7 @@ the semantic token classes (`bg-background`, `text-muted-foreground`,
 `| undefined` written explicitly.
 
 **AI mentor.** Real models run server-side in `src/lib/mentor.functions.ts`
-against a provider chosen by `MENTOR_PROVIDER` (anthropic | openai | deepseek |
+against a provider chosen by `MENTOR_PROVIDER` (anthropic | openai | deepseek | gemini |
 mock) in `src/lib/mentor-providers.server.ts`. Keys are server-only and must
 never get a `VITE_` prefix. `mock` (the default when unset) uses
 `scriptedMentorReply` in `src/lib/mentor.ts` so the app runs without a key.
