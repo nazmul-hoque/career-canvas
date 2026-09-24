@@ -111,6 +111,16 @@ Two facts shape every item below:
 
 ## Done
 
+- [x] **Community examples step aside; trending is real** (2026-09-24) — the
+      six example posts in `src/content/community.ts` now hide once 5 real
+      posts exist (they still show when the count can't be loaded), and a
+      topic with nothing in it gets an empty state instead of a blank column.
+      Trending ranks real posts from the last 14 days by likes plus replies;
+      it used to pick from the examples forever, so a real post could never
+      trend. Examples fill it only while they fill the feed, now labelled.
+      Rules in `src/lib/community-feed.ts`, tested. Topics and house rules
+      stay in code by decision.
+
 - [x] **Admin console** (2026-09-23) — `/admin`, for accounts in the new
       `admin_users` table (service-role written; grant with the SQL at the foot
       of `20260923120000_admin_roles.sql`). Users: search by name/email/id,

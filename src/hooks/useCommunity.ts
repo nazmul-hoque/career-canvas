@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "./useAuth";
+import { rankTrending, TRENDING_WINDOW_DAYS } from "@/lib/community-feed";
 
 export interface CommunityPost {
   id: string;
@@ -172,7 +173,11 @@ export function useAddComment(postId: string) {
         .insert({ post_id: postId, user_id: user.id, body });
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["community", "comments", postId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["community", "comments", postId] });
+      // Replies count towards trending.
+      qc.invalidateQueries({ queryKey: trendingKey });
+    },
     onError: () => toast.error("We could not add that comment."),
   });
 }
@@ -241,6 +246,79 @@ export function useToggleLike() {
     onSettled: () => {
       qc.invalidateQueries({ queryKey: key });
       qc.invalidateQueries({ queryKey: ["community", "posts"] });
+    },
+  });
+}
+
+// Both sit under ["community", "posts"] so every write that already refreshes the
+// feed (post, delete, like, admin moderation) refreshes these too. The object
+// segment keeps them from colliding with a topic id.
+const postCountKey = ["community", "posts", { summary: "count" }] as const;
+const trendingKey = ["community", "posts", { summary: "trending" }] as const;
+
+/** How many real posts exist, across every topic — what decides whether examples show. */
+export function useRealPostCount() {
+  return useQuery({
+    queryKey: postCountKey,
+    queryFn: async (): Promise<number> => {
+      const { count, error } = await supabase
+        .from("community_posts")
+        .select("id", { count: "exact", head: true });
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+}
+
+export interface TrendingPost {
+  id: string;
+  title: string;
+  author: string;
+  likes: number;
+  replies: number;
+  createdAt: string;
+}
+
+/** Real posts from the trending window with their reply counts, ranked by `rankTrending`. */
+export function useTrendingPosts() {
+  return useQuery({
+    queryKey: trendingKey,
+    queryFn: async (): Promise<TrendingPost[]> => {
+      const since = new Date(Date.now() - TRENDING_WINDOW_DAYS * 86_400_000).toISOString();
+      const { data, error } = await supabase
+        .from("community_posts")
+        .select("id, user_id, title, likes, created_at")
+        .gte("created_at", since)
+        .order("likes", { ascending: false })
+        .limit(100);
+      if (error) throw error;
+      const rows = data ?? [];
+      if (!rows.length) return [];
+
+      const ids = rows.map((r) => r.id);
+      const [{ data: comments, error: commentsError }, { data: profiles }] = await Promise.all([
+        supabase.from("post_comments").select("post_id").in("post_id", ids),
+        supabase
+          .from("profiles")
+          .select("id, display_name")
+          .in("id", [...new Set(rows.map((r) => r.user_id))]),
+      ]);
+      if (commentsError) throw commentsError;
+
+      const replies = new Map<string, number>();
+      for (const c of comments ?? []) replies.set(c.post_id, (replies.get(c.post_id) ?? 0) + 1);
+      const names = new Map((profiles ?? []).map((p) => [p.id, p.display_name]));
+
+      return rankTrending(
+        rows.map((r) => ({
+          id: r.id,
+          title: r.title,
+          author: names.get(r.user_id) ?? "Learner",
+          likes: r.likes,
+          replies: replies.get(r.id) ?? 0,
+          createdAt: r.created_at,
+        })),
+      );
     },
   });
 }

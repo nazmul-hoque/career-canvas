@@ -30,8 +30,11 @@ import {
   useCreatePost,
   usePosts,
   useMyLikes,
+  useRealPostCount,
   useToggleLike,
+  useTrendingPosts,
 } from "@/hooks/useCommunity";
+import { showExamples } from "@/lib/community-feed";
 import { seedPosts, topics, type SeedPost } from "@/content/community";
 import { cn } from "@/lib/utils";
 
@@ -99,6 +102,9 @@ function Community() {
 
   const postsQuery = usePosts(topic);
   const { data: livePosts = [], isLoading } = postsQuery;
+  const postCount = useRealPostCount();
+  const examples = showExamples(postCount.data, postCount.isError);
+  const trendingQuery = useTrendingPosts();
   const { data: likedPostIds = [] } = useMyLikes();
   const toggleLikeMutation = useToggleLike();
   const { data: board = [] } = useLeaderboard();
@@ -131,7 +137,7 @@ function Community() {
       live: true,
     }));
 
-    const seeds: FeedItem[] = seedPosts
+    const seeds: FeedItem[] = (examples ? seedPosts : [])
       .filter((p) => topic === "all" || p.topic === topic)
       .map((p) => ({
         userId: null,
@@ -150,9 +156,26 @@ function Community() {
       }));
 
     return [...live, ...seeds];
-  }, [livePosts, topic]);
+  }, [livePosts, topic, examples]);
 
-  const trending = seedPosts.filter((p) => p.trending).slice(0, 3);
+  // Examples stand in for trending only while they stand in for the feed, or
+  // when the real ranking can't be loaded — never alongside real posts that
+  // simply haven't been liked yet.
+  const trending =
+    examples || trendingQuery.isError
+      ? seedPosts
+          .filter((p) => p.trending)
+          .slice(0, 3)
+          .map((p) => ({
+            id: p.id,
+            title: p.title,
+            author: p.author,
+            likes: p.likes,
+            replies: p.comments.length,
+            example: true,
+          }))
+      : (trendingQuery.data ?? []).map((p) => ({ ...p, example: false }));
+  const feedLoading = (isLoading || postCount.isLoading) && feed.length === 0;
 
   return (
     <AppShell>
@@ -301,7 +324,21 @@ function Community() {
           </div>
 
           <div className="mt-5 space-y-4">
-            {isLoading && feed.length === 0
+            {!feedLoading && feed.length === 0 ? (
+              <div className="card-surface px-6 py-10 text-center">
+                <p className="font-semibold">
+                  {topic === "all"
+                    ? "No discussions yet."
+                    : `No ${topics.find((t) => t.id === topic)?.label ?? topic} discussions yet.`}
+                </p>
+                <p className="mt-1 text-sm text-chalk">
+                  {user
+                    ? "Start one — someone else is stuck on the same thing."
+                    : "Sign in to start one."}
+                </p>
+              </div>
+            ) : null}
+            {feedLoading
               ? [0, 1, 2].map((i) => (
                   <div key={i} className="card-surface space-y-3 p-5">
                     <Skeleton className="h-5 w-2/3" />
@@ -331,10 +368,17 @@ function Community() {
                 <li key={p.id} className="border-b border-border pb-3 last:border-0 last:pb-0">
                   <p className="text-sm font-semibold leading-snug">{p.title}</p>
                   <p className="mt-1 text-xs text-chalk">
-                    {p.author} · {p.likes} likes · {p.comments.length} replies
+                    {p.author} · {p.likes} {p.likes === 1 ? "like" : "likes"} · {p.replies}{" "}
+                    {p.replies === 1 ? "reply" : "replies"}
+                    {p.example ? " · Example" : null}
                   </p>
                 </li>
               ))}
+              {trending.length === 0 && !trendingQuery.isLoading ? (
+                <li className="text-sm text-chalk">
+                  Nothing has taken off in the last two weeks. Likes and replies put a post here.
+                </li>
+              ) : null}
             </ul>
           </section>
 
