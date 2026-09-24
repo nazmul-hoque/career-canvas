@@ -78,6 +78,7 @@ function Review() {
     gained: number;
     dueOn: string;
     feedback: SubmitReviewResult["feedback"];
+    wrongBlockIds: string[];
   } | null>(null);
 
   const cards = useMemo<Card[]>(() => {
@@ -210,6 +211,7 @@ function Review() {
         gained: result.gained,
         dueOn: result.dueOn,
         feedback: result.feedback,
+        wrongBlockIds: result.wrongBlockIds,
       });
       if (result.correct && result.gained > 0) {
         toast.success(`+${result.gained} XP`, { description: `Back on ${result.dueOn}.` });
@@ -261,6 +263,7 @@ function Review() {
               block={block}
               value={answers[block.id]}
               feedback={outcome?.feedback[block.id]}
+              wrong={outcome?.wrongBlockIds.includes(block.id) ?? false}
               onChange={(value) => setAnswers((a) => ({ ...a, [block.id]: value }))}
             />
           ))}
@@ -324,12 +327,15 @@ function Question({
   block,
   value,
   feedback,
+  wrong,
   onChange,
 }: {
   block: PublicGradableBlock;
   value: string | number | undefined;
   /** Present once graded — the only time the answer is known here. */
   feedback: Feedback | undefined;
+  /** The server's verdict on this question; the page never compares answers itself. */
+  wrong: boolean;
   onChange: (value: string | number) => void;
 }) {
   const locked = Boolean(feedback);
@@ -340,25 +346,44 @@ function Question({
           <InlineText text={block.question} />
         </p>
         <div className="mt-4 space-y-2">
-          {block.options.map((option, i) => (
-            <button
-              key={option}
-              disabled={locked}
-              onClick={() => onChange(i)}
-              className={cn(
-                "flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm transition-colors",
-                value === i
-                  ? "border-brand bg-brand/5 font-semibold"
-                  : "border-border hover:bg-secondary",
-                feedback && i === feedback.answer && "border-brand bg-brand/10",
-              )}
-            >
-              <span className="grid size-6 shrink-0 place-items-center rounded-full border border-current text-[11px] font-bold">
-                {String.fromCharCode(65 + i)}
-              </span>
-              <InlineText text={option} />
-            </button>
-          ))}
+          {block.options.map((option, i) => {
+            // Once graded, the right answer and a wrong pick must look different,
+            // or a miss reads as two selected options.
+            const isAnswer = locked && i === feedback?.answer;
+            const missed = locked && wrong && value === i;
+            return (
+              <button
+                key={option}
+                disabled={locked}
+                aria-pressed={value === i}
+                onClick={() => onChange(i)}
+                className={cn(
+                  "flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm transition-colors",
+                  !locked && value === i && "border-brand bg-brand/5 font-semibold",
+                  !locked && value !== i && "border-border hover:bg-secondary",
+                  isAnswer && "border-brand bg-brand/10 font-semibold",
+                  missed && "border-destructive bg-destructive/5",
+                  locked && !isAnswer && !missed && "border-border opacity-60",
+                )}
+              >
+                <span className="grid size-6 shrink-0 place-items-center rounded-full border border-current text-[11px] font-bold">
+                  {String.fromCharCode(65 + i)}
+                </span>
+                <span className="flex-1">
+                  <InlineText text={option} />
+                </span>
+                {isAnswer ? (
+                  <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-brand">
+                    <Check className="size-4" /> {value === i ? "Your answer" : "Correct answer"}
+                  </span>
+                ) : missed ? (
+                  <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-destructive">
+                    <X className="size-4" /> Your answer
+                  </span>
+                ) : null}
+              </button>
+            );
+          })}
         </div>
         {feedback ? (
           <p className="mt-3 text-sm text-chalk">
@@ -381,12 +406,16 @@ function Question({
           disabled={locked}
           onChange={(e) => onChange(e.target.value)}
           aria-label="Your answer"
-          className="h-8 w-40 border-white/20 bg-white/10 font-mono text-white placeholder:text-white/40"
+          className={cn(
+            "h-8 w-40 border-white/20 bg-white/10 font-mono text-white placeholder:text-white/40",
+            locked && (wrong ? "border-destructive" : "border-brand"),
+          )}
         />
         <span>{block.after}</span>
       </div>
       {feedback ? (
         <p className="mt-3 text-sm text-chalk">
+          {wrong ? "Not quite. " : "Correct. "}
           Answer: <span className="font-mono font-semibold">{feedback.answer}</span> —{" "}
           <InlineText text={feedback.explanation} />
         </p>
