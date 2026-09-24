@@ -67,6 +67,13 @@ function Review() {
   const [reviewed, setReviewed] = useState<string[]>([]);
   const [answers, setAnswers] = useState<Record<string, string | number>>({});
   const [outcome, setOutcome] = useState<{
+    /**
+     * The card that was graded. Grading reschedules it, so the refetch drops it
+     * from the due list at once; without holding it here the next card slid in
+     * under this one's result — locked, showing the wrong explanation, and
+     * marked reviewed unanswered when the learner moved on.
+     */
+    card: Card;
     correct: boolean;
     gained: number;
     dueOn: string;
@@ -84,17 +91,20 @@ function Review() {
       .filter((c): c is Card => Boolean(c));
   }, [items, reviewed]);
 
+  const card = outcome?.card ?? cards[0];
+  const waiting = cards.filter((c) => c.item.id !== card?.item.id);
+
   // The questions arrive without their answers; those come back from the
   // server with the grade.
   const { data: currentBody, isLoading: bodyLoading } = usePublicLesson(
-    cards[0]?.item.course_id,
-    cards[0]?.item.lesson_id,
+    card?.item.course_id,
+    card?.item.lesson_id,
   );
 
   // Fetch the next card's questions while this one is being answered, so
   // moving on doesn't flash the loading skeleton.
   const queryClient = useQueryClient();
-  const nextCard = cards[1]?.item;
+  const nextCard = waiting[0]?.item;
   useEffect(() => {
     if (nextCard)
       void queryClient.prefetchQuery(lessonQuery(nextCard.course_id, nextCard.lesson_id));
@@ -103,7 +113,7 @@ function Review() {
 
   const upcoming = items.filter((i) => i.due_on > new Date().toISOString().slice(0, 10));
 
-  if (sessionLoading || (user && isLoading) || (cards.length > 0 && bodyLoading)) {
+  if (sessionLoading || (user && isLoading) || (card && bodyLoading)) {
     return (
       <AppShell>
         <Skeleton className="h-[420px] w-full rounded-[22px]" />
@@ -128,9 +138,8 @@ function Review() {
     );
   }
 
-  const card = cards[0];
   const position = reviewed.length + 1;
-  const total = cards.length + reviewed.length;
+  const total = reviewed.length + waiting.length + (card ? 1 : 0);
 
   if (!card) {
     return (
@@ -196,6 +205,7 @@ function Review() {
         answers,
       });
       setOutcome({
+        card,
         correct: result.correct,
         gained: result.gained,
         dueOn: result.dueOn,
@@ -221,7 +231,7 @@ function Review() {
         <div className="max-w-2xl">
           <p className="eyebrow">Daily review</p>
           <h1 className="mt-1 font-display text-3xl font-bold tracking-tight sm:text-4xl">
-            {cards.length} {cards.length === 1 ? "lesson" : "lessons"} left to review
+            {waiting.length + 1} {waiting.length === 0 ? "lesson" : "lessons"} left to review
           </h1>
           <p className="mt-2 text-chalk">
             Answer from memory — the lesson is one click away, but looking it up teaches you less
@@ -290,7 +300,7 @@ function Review() {
                 </Link>
               </Button>
               <Button size="sm" onClick={next}>
-                {cards.length > 1 ? (
+                {waiting.length > 0 ? (
                   "Next lesson"
                 ) : (
                   <>
