@@ -1,5 +1,5 @@
 import { CodeEditor } from "./CodeEditor";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import {
   Play,
   RotateCcw,
@@ -9,6 +9,7 @@ import {
   Loader2,
   Terminal,
   Eye,
+  ChevronDown,
 } from "lucide-react";
 import { runCode, type ChallengeLanguage, type RunEngine, type RunResult } from "@/lib/code-runner";
 import { numberToCol, parseRef } from "@/lib/sheet-refs";
@@ -82,6 +83,14 @@ export function CodeChallenge({
   const [beforeReset, setBeforeReset] = useState<string | null>(null);
   // The code the preview shows: what was last run, not every keystroke.
   const [previewCode, setPreviewCode] = useState<string | null>(null);
+  // Only matters when the challenge is too narrow to sit beside its output:
+  // the output is then a drawer under the editor, shut until the first run.
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerTab, setDrawerTab] = useState<"preview" | "tests">("tests");
+  const drawer = useRef<HTMLDivElement>(null);
+  const drawerToggle = useRef<HTMLButtonElement>(null);
+  const outputId = useId();
+  const hasPreview = previewCode !== null;
 
   async function handleRun(submit: boolean) {
     setRunning(true);
@@ -95,6 +104,17 @@ export function CodeChallenge({
     setResult(res);
     onResult(res);
     setRunning(false);
+    setDrawerOpen(true);
+    // A failure needs its message; a pass is best seen in the page it drew.
+    setDrawerTab(res.passed ? "preview" : "tests");
+    // The toggle is only visible in the stacked layout, so this leaves the
+    // side-by-side one where it is.
+    if (drawerToggle.current?.offsetParent) {
+      const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      requestAnimationFrame(() =>
+        drawer.current?.scrollIntoView({ block: "nearest", behavior: smooth ? "smooth" : "auto" }),
+      );
+    }
     track("challenge_run", {
       title,
       language,
@@ -108,7 +128,7 @@ export function CodeChallenge({
   }
 
   return (
-    <div className="overflow-hidden rounded-[16px] border border-border">
+    <div className="@container overflow-hidden rounded-[16px] border border-border">
       <div className="border-b border-border bg-secondary/60 px-5 py-4">
         <p className="eyebrow">Coding challenge</p>
         <h3 className="mt-1 font-display text-lg font-bold">{title}</h3>
@@ -131,7 +151,9 @@ export function CodeChallenge({
         ) : null}
       </div>
 
-      <div className="grid lg:grid-cols-2">
+      {/* Split on the challenge's own width, not the screen's: beside the
+          lesson list and the mentor, a laptop leaves it too narrow to halve. */}
+      <div className="grid @3xl:grid-cols-2">
         <div className="bg-ink">
           <div className="flex items-center justify-between border-b border-white/10 px-4 py-2">
             <span className="font-mono text-[11px] uppercase tracking-wider text-white/50">
@@ -172,69 +194,136 @@ export function CodeChallenge({
           <CodeEditor value={code} onChange={onCodeChange} />
         </div>
 
-        <div className="flex flex-col border-t border-border lg:border-l lg:border-t-0">
-          {language === "react" && previewCode !== null ? (
-            <ReactPreview code={previewCode} />
-          ) : null}
-          {language === "web" && previewCode !== null ? <PagePreview html={previewCode} /> : null}
-          {language === "dom" && previewCode !== null ? (
-            <DomPreview code={previewCode} html={html ?? ""} />
-          ) : null}
-          <div className={PANEL_HEADER}>
-            <Terminal className="size-3.5" /> Output
-          </div>
-          <div
-            role="status"
-            aria-live="polite"
-            className="flex-1 space-y-3 overflow-y-auto p-4 font-mono text-[13px]"
+        <div
+          ref={drawer}
+          className="flex flex-col border-t border-border @3xl:border-l @3xl:border-t-0"
+        >
+          <button
+            ref={drawerToggle}
+            aria-expanded={drawerOpen}
+            aria-controls={outputId}
+            onClick={() => setDrawerOpen((v) => !v)}
+            className={cn(PANEL_HEADER, "w-full justify-between hover:text-foreground @3xl:hidden")}
           >
-            {!result ? (
-              <p className="text-chalk">Run your code to see output and test results.</p>
-            ) : (
-              <>
-                {result.logs.map((l, i) => (
-                  <p key={i} className="whitespace-pre-wrap text-foreground">
-                    {l}
-                  </p>
-                ))}
-                {result.error ? (
-                  <p className="whitespace-pre-wrap text-destructive">{result.error}</p>
-                ) : null}
-                <ul className="space-y-1.5 pt-2 font-sans">
-                  {result.tests.map((t) => (
-                    <li key={t.name} className="text-sm">
-                      <span
-                        className={cn(
-                          "flex items-center gap-2",
-                          t.passed ? "text-brand" : "text-destructive",
-                        )}
-                      >
-                        {t.passed ? (
-                          <CheckCircle2 className="size-4 shrink-0" />
-                        ) : (
-                          <XCircle className="size-4 shrink-0" />
-                        )}
-                        {t.name}
-                      </span>
-                      {!t.passed && t.detail ? (
-                        <span className="ml-6 block text-xs text-chalk">{t.detail}</span>
-                      ) : null}
-                    </li>
-                  ))}
-                </ul>
-                <p className="pt-1 font-sans text-xs text-chalk">
-                  Finished in {result.durationMs}ms
-                  {ENGINE_LABELS[result.engine] ? ` · ${ENGINE_LABELS[result.engine]}` : null}
-                </p>
-                {result.engine === "python-simulated" ? (
-                  <p className="font-sans text-xs text-ember">
-                    The Python runtime could not be loaded, so these results come from reading your
-                    code rather than running it. Check your connection and run again for a real
-                    result.
-                  </p>
-                ) : null}
-              </>
+            <span className="flex items-center gap-2">
+              <Terminal className="size-3.5" /> Output
+              <span className="font-normal normal-case tracking-normal">
+                · {outputSummary(result)}
+              </span>
+            </span>
+            <ChevronDown
+              className={cn("size-4 transition-transform", drawerOpen && "rotate-180")}
+            />
+          </button>
+
+          <div
+            id={outputId}
+            className={cn(
+              "flex-1 flex-col @3xl:flex",
+              drawerOpen ? "flex animate-in fade-in slide-in-from-top-2" : "hidden",
             )}
+          >
+            {hasPreview ? (
+              <div
+                role="tablist"
+                className="flex gap-1 border-b border-border px-3 py-1.5 @3xl:hidden"
+              >
+                {(["preview", "tests"] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    role="tab"
+                    aria-selected={drawerTab === tab}
+                    onClick={() => setDrawerTab(tab)}
+                    className={cn(
+                      "rounded-md px-2 py-0.5 text-xs font-semibold",
+                      drawerTab === tab
+                        ? "bg-secondary text-foreground"
+                        : "text-chalk hover:text-foreground",
+                    )}
+                  >
+                    {tab === "preview" ? "Preview" : "Tests"}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+
+            {/* Hidden with CSS rather than unmounted, so switching tabs doesn't
+                reload the preview, and the wide layout shows both at once. */}
+            <div className={cn(drawerTab !== "preview" && "hidden @3xl:block")}>
+              {language === "react" && previewCode !== null ? (
+                <ReactPreview code={previewCode} />
+              ) : null}
+              {language === "web" && previewCode !== null ? (
+                <PagePreview html={previewCode} />
+              ) : null}
+              {language === "dom" && previewCode !== null ? (
+                <DomPreview code={previewCode} html={html ?? ""} />
+              ) : null}
+            </div>
+
+            <div
+              className={cn(
+                "flex flex-1 flex-col",
+                hasPreview && drawerTab !== "tests" && "hidden @3xl:flex",
+              )}
+            >
+              <div className={cn(PANEL_HEADER, "hidden @3xl:flex")}>
+                <Terminal className="size-3.5" /> Output
+              </div>
+              <div
+                role="status"
+                aria-live="polite"
+                className="flex-1 space-y-3 overflow-y-auto p-4 font-mono text-[13px]"
+              >
+                {!result ? (
+                  <p className="text-chalk">Run your code to see output and test results.</p>
+                ) : (
+                  <>
+                    {result.logs.map((l, i) => (
+                      <p key={i} className="whitespace-pre-wrap text-foreground">
+                        {l}
+                      </p>
+                    ))}
+                    {result.error ? (
+                      <p className="whitespace-pre-wrap text-destructive">{result.error}</p>
+                    ) : null}
+                    <ul className="space-y-1.5 pt-2 font-sans">
+                      {result.tests.map((t) => (
+                        <li key={t.name} className="text-sm">
+                          <span
+                            className={cn(
+                              "flex items-center gap-2",
+                              t.passed ? "text-brand" : "text-destructive",
+                            )}
+                          >
+                            {t.passed ? (
+                              <CheckCircle2 className="size-4 shrink-0" />
+                            ) : (
+                              <XCircle className="size-4 shrink-0" />
+                            )}
+                            {t.name}
+                          </span>
+                          {!t.passed && t.detail ? (
+                            <span className="ml-6 block text-xs text-chalk">{t.detail}</span>
+                          ) : null}
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="pt-1 font-sans text-xs text-chalk">
+                      Finished in {result.durationMs}ms
+                      {ENGINE_LABELS[result.engine] ? ` · ${ENGINE_LABELS[result.engine]}` : null}
+                    </p>
+                    {result.engine === "python-simulated" ? (
+                      <p className="font-sans text-xs text-ember">
+                        The Python runtime could not be loaded, so these results come from reading
+                        your code rather than running it. Check your connection and run again for a
+                        real result.
+                      </p>
+                    ) : null}
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -266,6 +355,14 @@ export function CodeChallenge({
       </div>
     </div>
   );
+}
+
+/** The collapsed drawer's one line: enough to know whether to open it. */
+function outputSummary(result: RunResult | null): string {
+  if (!result) return "Run your code to see results";
+  if (result.error) return "Error";
+  const passed = result.tests.filter((t) => t.passed).length;
+  return `${passed} of ${result.tests.length} tests passed`;
 }
 
 /**
