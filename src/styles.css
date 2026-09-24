@@ -123,6 +123,8 @@
 
 .dark {
   --background: oklch(0.168 0.011 265);
+  /* The light step sits above the dark surface's lightness band; a bar in it glares. */
+  --chart-1: oklch(0.66 0.13 165.5);
   --foreground: oklch(0.98 0.003 250);
   --card: oklch(0.22 0.014 265);
   --card-foreground: oklch(0.98 0.003 250);

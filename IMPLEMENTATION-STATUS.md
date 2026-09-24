@@ -111,6 +111,18 @@ Two facts shape every item below:
 
 ## Done
 
+- [x] **Admin console** (2026-09-23) — `/admin`, for accounts in the new
+      `admin_users` table (service-role written; grant with the SQL at the foot
+      of `20260923120000_admin_roles.sql`). Users: search by name/email/id,
+      activity, change plan, suspend sign-in, delete account (refused for a
+      paid Stripe plan and for other admins). Moderation: open/resolved/
+      dismissed reports, delete a post, unpublish a portfolio project.
+      Metrics: headline counts and daily sign-ups, completions and active
+      learners. Content: read-only written/graded/usage per course — lessons
+      stay in `src/content/`. Every change lands in `admin_actions`, shown
+      under Log. Server functions in `src/lib/admin.functions.ts` re-check
+      admin on every call.
+
 - [x] **SQL checkpoint and capstone** (2026-09-22) — both SQL courses are now
       complete as planned. Foundations ends its Querying module with an
       empty-editor *March packing list* (four-table join, half-open dates,

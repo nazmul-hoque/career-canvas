@@ -270,6 +270,14 @@ and must stay that way — no product behaviour may depend on an event landing.
 `lesson_completed` is recorded server-side on purpose. Query packs live in
 `supabase/analytics-queries.sql`.
 
+**Admin.** `/admin` is gated by a row in `admin_users`, which only the service
+role writes. The page reads the viewer's own row to decide what to render;
+every function in `src/lib/admin.functions.ts` re-checks it server-side and
+records changes in `admin_actions` (service-role only). Email search goes
+through the `admin_user_directory` SQL function, since PostgREST can't reach
+`auth.users`. Course content is deliberately read-only there — see
+"The answer key never reaches the browser".
+
 **Status tracking.** `IMPLEMENTATION-STATUS.md` tracks what's done and what's
 left from the product review. Update it when an item moves.
 

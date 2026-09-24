@@ -19,6 +19,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useLearner";
+import { useIsAdmin } from "@/hooks/useAdmin";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -82,6 +83,7 @@ function initialsOf(name?: string | null) {
 export function AppHeader() {
   const { user } = useSession();
   const { data: profile } = useProfile();
+  const { isAdmin } = useIsAdmin();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -160,6 +162,11 @@ export function AppHeader() {
                   <DropdownMenuItem asChild>
                     <Link to="/pricing">Plan & billing</Link>
                   </DropdownMenuItem>
+                  {isAdmin ? (
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin">Admin console</Link>
+                    </DropdownMenuItem>
+                  ) : null}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onSelect={signOut}>
                     <LogOut className="mr-2 size-4" /> Sign out

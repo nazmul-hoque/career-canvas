@@ -7,8 +7,12 @@ export type Database = {
     PostgrestVersion: "14.5";
   };
   graphql_public: {
-    Tables: { [_ in never]: never };
-    Views: { [_ in never]: never };
+    Tables: {
+      [_ in never]: never;
+    };
+    Views: {
+      [_ in never]: never;
+    };
     Functions: {
       graphql: {
         Args: {
@@ -29,10 +33,52 @@ export type Database = {
   };
   public: {
     Tables: {
-      community_reports: {
-        Row: { id: string; post_id: string; reporter_id: string; reason: string; status: string; created_at: string };
-        Insert: { id?: string; post_id: string; reporter_id: string; reason: string; status?: string; created_at?: string };
-        Update: { status?: string };
+      admin_actions: {
+        Row: {
+          action: string;
+          admin_id: string | null;
+          created_at: string;
+          detail: Json;
+          id: string;
+          target_id: string;
+          target_type: string;
+        };
+        Insert: {
+          action: string;
+          admin_id?: string | null;
+          created_at?: string;
+          detail?: Json;
+          id?: string;
+          target_id: string;
+          target_type: string;
+        };
+        Update: {
+          action?: string;
+          admin_id?: string | null;
+          created_at?: string;
+          detail?: Json;
+          id?: string;
+          target_id?: string;
+          target_type?: string;
+        };
+        Relationships: [];
+      };
+      admin_users: {
+        Row: {
+          granted_at: string;
+          note: string | null;
+          user_id: string;
+        };
+        Insert: {
+          granted_at?: string;
+          note?: string | null;
+          user_id: string;
+        };
+        Update: {
+          granted_at?: string;
+          note?: string | null;
+          user_id?: string;
+        };
         Relationships: [];
       };
       analytics_events: {
@@ -94,6 +140,41 @@ export type Database = {
           user_id?: string;
         };
         Relationships: [];
+      };
+      community_reports: {
+        Row: {
+          created_at: string;
+          id: string;
+          post_id: string;
+          reason: string;
+          reporter_id: string;
+          status: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          post_id: string;
+          reason: string;
+          reporter_id: string;
+          status?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          post_id?: string;
+          reason?: string;
+          reporter_id?: string;
+          status?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "community_reports_post_id_fkey";
+            columns: ["post_id"];
+            isOneToOne: false;
+            referencedRelation: "community_posts";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       daily_activity: {
         Row: {
@@ -356,40 +437,40 @@ export type Database = {
       };
       project_submissions: {
         Row: {
-          is_published: boolean;
-          public_summary: string;
           created_at: string;
           feedback: string | null;
           id: string;
+          is_published: boolean;
           live_url: string | null;
           notes: string | null;
           project_id: string;
+          public_summary: string;
           repo_url: string | null;
           status: string;
           user_id: string;
         };
         Insert: {
-          is_published?: boolean;
-          public_summary?: string;
           created_at?: string;
           feedback?: string | null;
           id?: string;
+          is_published?: boolean;
           live_url?: string | null;
           notes?: string | null;
           project_id: string;
+          public_summary?: string;
           repo_url?: string | null;
           status?: string;
           user_id: string;
         };
         Update: {
-          is_published?: boolean;
-          public_summary?: string;
           created_at?: string;
           feedback?: string | null;
           id?: string;
+          is_published?: boolean;
           live_url?: string | null;
           notes?: string | null;
           project_id?: string;
+          public_summary?: string;
           repo_url?: string | null;
           status?: string;
           user_id?: string;
@@ -522,12 +603,65 @@ export type Database = {
     };
     Views: {
       public_portfolio_projects: {
-        Row: { user_id: string; project_id: string; status: string; repo_url: string | null; live_url: string | null; public_summary: string; is_published: boolean };
+        Row: {
+          is_published: boolean | null;
+          live_url: string | null;
+          project_id: string | null;
+          public_summary: string | null;
+          repo_url: string | null;
+          status: string | null;
+          user_id: string | null;
+        };
+        Insert: {
+          is_published?: boolean | null;
+          live_url?: string | null;
+          project_id?: string | null;
+          public_summary?: string | null;
+          repo_url?: string | null;
+          status?: string | null;
+          user_id?: string | null;
+        };
+        Update: {
+          is_published?: boolean | null;
+          live_url?: string | null;
+          project_id?: string | null;
+          public_summary?: string | null;
+          repo_url?: string | null;
+          status?: string | null;
+          user_id?: string | null;
+        };
         Relationships: [];
       };
     };
     Functions: {
-      [_ in never]: never;
+      admin_course_usage: {
+        Args: never;
+        Returns: {
+          completions: number;
+          course_id: string;
+          learners: number;
+        }[];
+      };
+      admin_metrics: { Args: { p_days: number }; Returns: Json };
+      admin_user_directory: {
+        Args: { p_limit: number; p_offset: number; p_query: string };
+        Returns: {
+          banned_until: string;
+          created_at: string;
+          display_name: string;
+          email: string;
+          id: string;
+          is_admin: boolean;
+          last_active_day: string;
+          last_sign_in_at: string;
+          level: number;
+          plan: string;
+          streak_current: number;
+          total: number;
+          trial_ends_at: string;
+          xp: number;
+        }[];
+      };
     };
     Enums: {
       [_ in never]: never;
