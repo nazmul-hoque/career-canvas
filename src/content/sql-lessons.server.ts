@@ -340,10 +340,10 @@ WHERE o.status = 'refunded';`,
       {
         kind: "mcq",
         id: "q2",
-        question: "Only two customers come back. Why?",
+        question: "The shop has 8 customers, but only two come back. Why?",
         options: [
           "LEFT JOIN only works on primary keys",
-          "Nobody else has a refund, so two is correct",
+          "Only two customers have a refund, so leaving the other six out is right",
           "Refunds are stored in a different table",
           "WHERE runs after the join and drops every customer whose `o.status` isn't 'refunded', NULLs included. The condition belongs in ON",
         ],
