@@ -7,7 +7,7 @@ import { registerHappyDom } from "./happy-dom";
  */
 registerHappyDom();
 
-const { runCode, runJavaScript } = await import("../src/lib/code-runner");
+const { runCode, runJavaScript, packageLoadingMessage } = await import("../src/lib/code-runner");
 const { runDomChallenge, previewDocument } = await import("../src/lib/dom-runtime");
 
 describe("javascript runner", () => {
@@ -137,5 +137,19 @@ describe("the Pyodide worker source is self-contained", () => {
   test("it still carries the driver it runs", () => {
     expect(WORKER_SOURCE).toContain("runPython(DRIVER)");
     expect(WORKER_SOURCE).toContain("__ascent_result");
+  });
+});
+
+describe("the package download message", () => {
+  test("names the package the learner imported, not the dependency that dominates it", () => {
+    const message = packageLoadingMessage({
+      stage: "loading",
+      packages: ["numpy", "scipy", "scikit-learn", "joblib"],
+    });
+    expect(message).toContain("scikit-learn");
+  });
+
+  test("stays quiet for small stdlib extras, so SQL keeps its own starting line", () => {
+    expect(packageLoadingMessage({ stage: "loading", packages: ["sqlite3"] })).toBeNull();
   });
 });

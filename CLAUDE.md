@@ -231,7 +231,10 @@ read-only to the client for exactly that reason.
 real on Pyodide (CPython in WebAssembly) in a Blob worker — `src/lib/python-runtime.ts`,
 loaded from a CDN (`VITE_PYODIDE_URL`) rather than bundled, so no dependency is
 added. If it can't boot, the old source-pattern simulation takes over and the
-result carries `engine: "python-simulated"`, which the UI labels. Never let a
+result carries `engine: "python-simulated"`, which the UI labels. Loading (boot plus
+packages such as scikit-learn, ~24 MB) and the learner's code are timed
+separately: a slow download falls back as "couldn't load", and only the run
+itself gets the 15s "loop that never ends" limit. Never let a
 simulated run present itself as a real one. Python challenge `tests` are real
 Python expressions evaluated against the learner's namespace; JavaScript ones are
 JS expressions. SQL runs on Pyodide's sqlite3 against the challenge's dataset (no

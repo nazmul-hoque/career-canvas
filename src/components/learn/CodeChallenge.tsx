@@ -11,7 +11,13 @@ import {
   Eye,
   ChevronDown,
 } from "lucide-react";
-import { runCode, type ChallengeLanguage, type RunEngine, type RunResult } from "@/lib/code-runner";
+import {
+  packageLoadingMessage,
+  runCode,
+  type ChallengeLanguage,
+  type RunEngine,
+  type RunResult,
+} from "@/lib/code-runner";
 import { numberToCol, parseRef } from "@/lib/sheet-refs";
 import { sqlDataset, type SqlDataset } from "@/content/datasets/sql";
 import { SHEETS } from "@/content/datasets/sheets";
@@ -79,6 +85,8 @@ export function CodeChallenge({
 }: Props) {
   const [result, setResult] = useState<RunResult | null>(null);
   const [running, setRunning] = useState(false);
+  // Set while a run is downloading a large package, replacing the starting line.
+  const [loadingMessage, setLoadingMessage] = useState<string | null>(null);
   const [showHint, setShowHint] = useState(false);
   const [beforeReset, setBeforeReset] = useState<string | null>(null);
   // The code the preview shows: what was last run, not every keystroke.
@@ -98,12 +106,15 @@ export function CodeChallenge({
     // Some engines finish before the spinner paints; a short minimum keeps the
     // running state visible instead of flickering.
     const [res] = await Promise.all([
-      runCode(language, code, tests, { sheet, html, dataset }),
+      runCode(language, code, tests, { sheet, html, dataset }, (progress) =>
+        setLoadingMessage(packageLoadingMessage(progress)),
+      ),
       new Promise((resolve) => setTimeout(resolve, 250)),
     ]);
     setResult(res);
     onResult(res);
     setRunning(false);
+    setLoadingMessage(null);
     setDrawerOpen(true);
     // A failure needs its message; a pass is best seen in the page it drew.
     setDrawerTab(res.passed ? "preview" : "tests");
@@ -349,8 +360,10 @@ export function CodeChallenge({
         {solved ? (
           <span className="text-sm font-semibold text-brand">All tests green. Nice work.</span>
         ) : null}
-        {running && STARTING_MESSAGES[language] ? (
-          <span className="text-sm text-chalk">{STARTING_MESSAGES[language]}</span>
+        {running && (loadingMessage ?? STARTING_MESSAGES[language]) ? (
+          <span role="status" className="text-sm text-chalk">
+            {loadingMessage ?? STARTING_MESSAGES[language]}
+          </span>
         ) : null}
       </div>
     </div>

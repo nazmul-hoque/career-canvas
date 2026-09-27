@@ -17,8 +17,13 @@ const PYODIDE_BASE =
     ? (import.meta.env?.["VITE_PYODIDE_URL"] as string | undefined)
     : undefined) ?? "https://cdn.jsdelivr.net/pyodide/v0.28.0/full/";
 
-/** First run pays for the WASM download; later runs are warm. */
-const BOOT_TIMEOUT_MS = 45_000;
+/**
+ * Booting and fetching packages is timed separately from the learner's code.
+ * scikit-learn alone is ~24 MB (scipy is most of it) and took 23s cold on a
+ * fast connection, so loading gets a generous limit; the run itself gets the
+ * short one that catches a loop that never ends.
+ */
+const LOAD_TIMEOUT_MS = 90_000;
 const RUN_TIMEOUT_MS = 15_000;
 
 export interface PythonRunOutcome {
@@ -27,9 +32,15 @@ export interface PythonRunOutcome {
   results: boolean[];
 }
 
+/** Pyodide's package names, e.g. ["scikit-learn", "scipy", "numpy", …]. */
+export type PythonProgress = { stage: "loading"; packages: string[] };
+
 interface WorkerReply {
   id: number;
-  ok: boolean;
+  /** A progress report; the final reply has no phase. */
+  phase?: "loading" | "running";
+  packages?: string[];
+  ok?: boolean;
   /** Present when ok. */
   outcome?: PythonRunOutcome;
   /** Present when the worker itself failed (boot, import, internal error). */
@@ -112,9 +123,19 @@ self.onmessage = async (event) => {
   const { id, base, code, tests } = event.data;
   try {
     const pyodide = await boot(base);
-    // Stdlib modules Pyodide ships separately (sqlite3 for the SQL course) are
-    // fetched from the same CDN the first time code imports them.
-    await pyodide.loadPackagesFromImports(code);
+    // Stdlib modules Pyodide ships separately (sqlite3 for the SQL course) and
+    // packages like numpy or scikit-learn are fetched from the same CDN the
+    // first time code imports them. The page is told what is downloading so it
+    // can say so, rather than show a spinner for half a minute.
+    await pyodide.loadPackagesFromImports(code, {
+      messageCallback: (message) => {
+        const loading = /^Loading (.+)$/.exec(message);
+        if (loading) self.postMessage({ id, phase: "loading", packages: loading[1].split(", ") });
+      },
+    });
+    // Everything from here on is the learner's code, so the page switches to
+    // the run timeout: a slow download must never read as an infinite loop.
+    self.postMessage({ id, phase: "running" });
     pyodide.globals.set("__ascent_payload", JSON.stringify({ code, tests }));
     const raw = pyodide.runPython(DRIVER);
     self.postMessage({ id, ok: true, outcome: JSON.parse(raw) });
@@ -136,21 +157,12 @@ function ensureWorker(): Worker {
 }
 
 let booted = false;
-/**
- * pandas and numpy are ~8 MB fetched the first time code imports them, which
- * can outlast a warm run's timeout on a slow connection.
- */
-let dataPackagesLoaded = false;
-const IMPORTS_DATA_PACKAGES = /^\s*(?:import|from)\s+(?:pandas|numpy)\b/m;
 
 /** A worker that has gone wrong is never reused — Pyodide state may be torn. */
 function killWorker() {
   worker?.terminate();
   worker = null;
-  // A fresh worker boots Pyodide and loads packages again, so the next run
-  // needs the long timeout.
   booted = false;
-  dataPackagesLoaded = false;
   if (workerUrl) URL.revokeObjectURL(workerUrl);
   workerUrl = null;
 }
@@ -173,28 +185,39 @@ export function pythonRuntimeBooted(): boolean {
 export async function runPythonInPyodide(
   code: string,
   expressions: string[],
+  onProgress?: (progress: PythonProgress) => void,
 ): Promise<PythonRunOutcome | null> {
   if (!pythonRuntimeAvailable()) return null;
 
   const id = nextId++;
-  const loadsPackages = !dataPackagesLoaded && IMPORTS_DATA_PACKAGES.test(code);
-  const timeoutMs = booted && !loadsPackages ? RUN_TIMEOUT_MS : BOOT_TIMEOUT_MS;
 
   try {
     const instance = ensureWorker();
 
     const outcome = await new Promise<PythonRunOutcome | null>((resolve) => {
-      const timer = setTimeout(() => {
+      let timer = setTimeout(onLoadTimeout, LOAD_TIMEOUT_MS);
+
+      // The interpreter or a package didn't arrive in time. That is the
+      // runtime failing, not the learner's code, so the caller falls back
+      // rather than blaming a loop.
+      function onLoadTimeout() {
+        cleanup();
+        console.warn(`[pyodide] still loading after ${LOAD_TIMEOUT_MS / 1000}s`);
+        killWorker();
+        resolve(null);
+      }
+
+      function onRunTimeout() {
         cleanup();
         // A hung interpreter is the learner's infinite loop far more often than
         // it is our bug, so this reads as an error rather than a fallback.
         killWorker();
         resolve({
           logs: [],
-          error: `Your code was still running after ${Math.round(timeoutMs / 1000)}s and was stopped. Check for a loop that never ends.`,
+          error: `Your code was still running after ${RUN_TIMEOUT_MS / 1000}s and was stopped. Check for a loop that never ends.`,
           results: expressions.map(() => false),
         });
-      }, timeoutMs);
+      }
 
       function cleanup() {
         clearTimeout(timer);
@@ -203,17 +226,26 @@ export async function runPythonInPyodide(
       }
 
       function onMessage(event: MessageEvent<WorkerReply>) {
-        if (event.data.id !== id) return;
+        const reply = event.data;
+        if (reply.id !== id) return;
+        if (reply.phase === "loading") {
+          onProgress?.({ stage: "loading", packages: reply.packages ?? [] });
+          return;
+        }
+        if (reply.phase === "running") {
+          clearTimeout(timer);
+          timer = setTimeout(onRunTimeout, RUN_TIMEOUT_MS);
+          return;
+        }
         cleanup();
-        if (event.data.ok && event.data.outcome) {
+        if (reply.ok && reply.outcome) {
           booted = true;
-          if (loadsPackages) dataPackagesLoaded = true;
-          resolve(event.data.outcome);
+          resolve(reply.outcome);
         } else {
           // A fatal is the runtime failing, not the learner's code. The caller
           // can only report "it could not load", so without this the console is
           // the one place a real defect is distinguishable from a blocked CDN.
-          if (event.data.fatal) console.warn("[pyodide] worker failed:", event.data.fatal);
+          if (reply.fatal) console.warn("[pyodide] worker failed:", reply.fatal);
           killWorker();
           resolve(null);
         }

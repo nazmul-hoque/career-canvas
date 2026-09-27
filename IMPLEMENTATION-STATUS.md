@@ -24,21 +24,25 @@ Two facts shape every item below:
   settings, never in `.env`. Only public values with a `VITE_` prefix belong
   there.
 
-- [ ] **Run one SQL, one Python and one React challenge in a real browser.**
-      Each is verified by `lessons:verify` (SQL/Python on local CPython, React
-      under happy-dom) but none has been clicked in Chrome yet. Open
-      `/learn/sql/sql-core.select`, `/learn/genai/ai-rag.embeddings` and
-      `/learn/react/react-core.state`, click Run, and expect results — plus a
-      rendered Preview for React.
-- [ ] **Set `SUPABASE_SERVICE_ROLE_KEY` as a secret** for `nqudmlzugtssfqaebaqb`
+- [x] **Run one SQL, one Python and one React challenge in a real browser**
+      (2026-09-27, headless Chrome). `sql-core.select` ran on SQLite
+      (WebAssembly), `ai-rag.embeddings` on CPython (WebAssembly), not the
+      simulation, and `react-core.state` rendered its Preview. Each starter
+      failed some tests and each reference solution passed all of them, with no
+      console errors.
+- [x] **Set `SUPABASE_SERVICE_ROLE_KEY` as a secret** for `nqudmlzugtssfqaebaqb`
       (server-only, never `VITE_`, never `.env` — it bypasses every RLS policy).
       Do this first: lesson completion runs through the service-role client, so
       without it no learner can earn XP — Complete fails with "Missing Supabase
       environment variable(s): SUPABASE_SERVICE_ROLE_KEY". Local dev: put it in
       `.env.local` (git-ignored; Bun loads it) and restart the dev server.
       Production: the host's environment settings. It's the Secret key (or the
-      legacy service_role key) under Project Settings → API Keys.
-- [ ] **Apply `20260922120000_split_sql_course`** with `supabase db push`. The
+      legacy service_role key) under Project Settings → API Keys. Done
+      2026-09-27 in `.env.local`: a signed-in completion wrote XP, streak and
+      progress. Make sure the production host has it too.
+- [x] **Apply `20260922120000_split_sql_course`** with `supabase db push`
+      (confirmed applied 2026-09-27: `supabase migration list` shows every
+      local migration on the remote). The
       SQL course split in two, and the migration moves stored progress, review
       items and mentor history onto the new course and lesson ids. Until it
       runs, a learner who had done GROUP BY, CTEs or windows sees them as not
@@ -446,7 +450,7 @@ Two facts shape every item below:
       simulation fallback: if the engine can't load, the run says so. Every
       number the lessons quote was computed from the data;
       `bun run lessons:verify` checks each solution passes and each starter
-      fails. **Not yet run in a real browser** — see "Blocked on you".
+      fails. Run in a real browser on 2026-09-27.
 
 - [x] **Git & GitHub course, complete** (2026-09-19) — a "Git from zero" module
       (why version control, first repository and `.gitignore`, reading
@@ -465,7 +469,10 @@ Two facts shape every item below:
       on history, files, index, stash and reflog). Found on the way: a plain
       `git pull` on diverged branches fails in modern git unless `pull.rebase`
       is set, which the course's advice depended on — the setup lesson now sets
-      it. Not yet checked: a signed-in completion through `completeLessonFn`.
+      it. Checked signed in on 2026-09-27: solving `git-start.first-repo` in the
+      UI and pressing Complete paid 110 XP. Forged calls with
+      `challengeSolved: true` were all rejected: a transcript that only runs
+      `git init`, no transcript at all, and one that commits `.env`.
 
 - [x] **Git "Getting out of trouble" module** (2026-09-27) — six lessons the
       course description already promised: stash, reset's three modes, the
@@ -671,6 +678,24 @@ Two facts shape every item below:
       primitives, which are regenerated through the CLI.
       Separately, `prettier --check` flags four files eslint does not cover:
       `AGENTS.md`, `CLAUDE.md`, `src/routes/README.md`, `src/styles.css`.
+
+- [ ] **Machine Learning Basics is a primer, not the "end to end" it promises**
+      (reviewed 2026-09-27). The six lessons are sound, but the learner never
+      trains a real model: every scikit-learn snippet says "(not run here)",
+      and the challenges are hand-written maths on 5–9 made-up rows. Lesson 2
+      grades a classifier the course never builds, and lesson 4's scenario
+      compares decision trees it never teaches. Nothing joins features, split,
+      fit, evaluate and ship on one dataset. In priority order: runnable sklearn
+      snippets; a lesson that trains a classifier and tunes its threshold; a
+      capstone on one messy dataset; several features and cross-validation in
+      practice. Also: "Basics" is labelled Intermediate with no stated Python
+      prerequisite, 14–15 min per lesson is low for reading plus a challenge,
+      module 1's "improve" happens in module 2, the course list says "Metrics
+      that do not lie" while the challenge says "don't", and the course isn't in
+      the Data Analyst path. **scikit-learn runs** through the existing Pyodide
+      runtime (checked in Chrome): ~24 MB on first import, 23s cold, then
+      instant. `lessons:verify` needs `pip install scikit-learn` locally before
+      any sklearn challenge.
 
 - [ ] **Claude Operator assesses nothing.** 172 tasks, 37 hours, zero graded
       questions, so the path is permanently `self-directed`. That is the correct

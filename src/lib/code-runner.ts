@@ -12,7 +12,7 @@
  * network call without changing the shape.
  */
 import { sqlDataset, type SqlDataset } from "@/content/datasets/sql";
-import { runPythonInPyodide } from "./python-runtime";
+import { runPythonInPyodide, type PythonProgress } from "./python-runtime";
 import {
   captureConsole,
   errorMessage,
@@ -169,11 +169,16 @@ function runPythonSimulated(code: string, tests: TestSpec[], started: number): R
   };
 }
 
-async function runPython(code: string, tests: TestSpec[]): Promise<RunResult> {
+async function runPython(
+  code: string,
+  tests: TestSpec[],
+  onProgress: ((progress: PythonProgress) => void) | undefined,
+): Promise<RunResult> {
   const started = performance.now();
   const outcome = await runPythonInPyodide(
     code,
     tests.map((t) => t.expression),
+    onProgress,
   );
 
   if (!outcome) return runPythonSimulated(code, tests, started);
@@ -223,6 +228,7 @@ async function runSql(
   query: string,
   tests: TestSpec[],
   dataset: SqlDataset | undefined,
+  onProgress: ((progress: PythonProgress) => void) | undefined,
 ): Promise<RunResult> {
   const started = performance.now();
   const failed = (error: string) => toRunResult("sql", tests, failedOutcome(tests, error), started);
@@ -232,6 +238,7 @@ async function runSql(
   const outcome = await runPythonInPyodide(
     sqlProgram(query, dataset),
     tests.map((t) => t.expression),
+    onProgress,
   );
   // No simulation for SQL: guessing a result table from the query text would
   // be exactly the kind of fake run the UI promises never to show.
@@ -305,15 +312,35 @@ const LAZY_ENGINES: Record<
   },
 };
 
+/**
+ * What to tell the learner while Pyodide downloads a large package, or null to
+ * keep the ordinary "starting" line. Sizes include dependencies (scikit-learn
+ * brings scipy), measured against the pinned Pyodide release.
+ */
+const LARGE_PACKAGES: [name: string, label: string, size: string][] = [
+  ["scikit-learn", "scikit-learn", "about 25 MB"],
+  ["pandas", "pandas", "about 9 MB"],
+  ["scipy", "SciPy", "about 18 MB"],
+  ["numpy", "NumPy", "about 3 MB"],
+];
+
+export function packageLoadingMessage(progress: PythonProgress): string | null {
+  const found = LARGE_PACKAGES.find(([name]) => progress.packages.includes(name));
+  if (!found) return null;
+  const [, label, size] = found;
+  return `Downloading ${label} (${size}). This happens the first time only; later runs are instant.`;
+}
+
 export async function runCode(
   language: ChallengeLanguage,
   code: string,
   tests: TestSpec[],
   context: ChallengeContext = {},
+  onProgress?: (progress: PythonProgress) => void,
 ): Promise<RunResult> {
   if (language === "javascript") return runJavaScript(code, tests);
-  if (language === "python") return runPython(code, tests);
-  if (language === "sql") return runSql(code, tests, context.dataset);
+  if (language === "python") return runPython(code, tests, onProgress);
+  if (language === "sql") return runSql(code, tests, context.dataset, onProgress);
 
   const started = performance.now();
   let run: EngineRun;
