@@ -157,8 +157,9 @@ export const courses: Course[] = [
         ["errors", "Reading stack traces", 16, "challenge"],
         ["fixit", "Debug the cart total", 20, "challenge"],
       ]),
-      m("js-browser", "Inside the browser", "Load scripts deliberately and debug the real page.", [
+      m("js-browser", "Inside the browser", "Load scripts, debug the page, keep state private.", [
         ["run", "Run JavaScript in a browser", 18, "practice"],
+        ["scope", "Scope, closures and modules", 20, "challenge"],
       ]),
       m("js-dom", "The DOM", "Make the page respond to people.", [
         ["select", "Selecting and updating elements", 18, "practice"],

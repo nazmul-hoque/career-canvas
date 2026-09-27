@@ -460,6 +460,20 @@ Two facts shape every item below:
       Free unlocks a course's first module, so with enforcement on, Free gets
       the four basics and "Everyday git" needs a plan.
 
+- [x] **JavaScript: scope, closures and modules** (2026-09-27) —
+      `js-browser.scope`, after loading scripts and before the DOM, so event
+      handlers (closures over state) and React's hooks have a foundation.
+      Block scope and lookup, why globals collide, `var` leaking from loops,
+      closures as private state, and modules (file scope, `export`/`import`,
+      `./` and `.js`, a module runs once). The runner executes one function
+      body, where `export` is a syntax error, so modules are assessed by a
+      question and a fill; the lesson says so and gives a two-file exercise to
+      try locally. The challenge is `makeCounter` and `once`. Four plausible
+      mistakes (a shared count, the count as a property, `once` forgetting its
+      result or sharing state across wrappers) each fail. Still open from the
+      review: a first-program lesson and HTML basics for Full-stack, and the
+      classic `for`/`while` loop.
+
 - [x] **JavaScript: fetch and JSON** (2026-09-27) — `js-async.fetch`, between
       promises and the capstone. JSON's rules and what `stringify` drops,
       `fetch` resolving on a 404/500 so `response.ok` must be checked, POSTing

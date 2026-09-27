@@ -465,6 +465,210 @@ function checkoutLabel(priceText, quantityText, member = false) {
       },
     ],
   },
+  "js-browser.scope": {
+    summary:
+      "Know where a variable can be seen, let a function remember state privately, and split code into modules that share only what they export.",
+    xp: 150,
+    blocks: [
+      {
+        kind: "text",
+        body: "**Scope** is where a name can be seen. `let` and `const` are **block-scoped**: a variable declared inside `{ }` (an `if`, a loop, a function) exists only inside those braces. When JavaScript meets a name, it looks in the current block, then the block around it, and so on outwards to the top of the file. It never looks inwards, so an outer block can't see a variable declared inside an inner one.",
+      },
+      {
+        kind: "code",
+        language: "javascript",
+        code: `const taxRate = 0.2;              // visible everywhere below
+
+function priceWithTax(price) {
+  const tax = price * taxRate;     // taxRate found one level out
+  if (tax > 100) {
+    const note = "high tax";       // exists only inside this if
+  }
+  return price + tax;              // note doesn't exist here
+}
+
+console.log(tax);                  // ReferenceError: tax is not defined`,
+      },
+      {
+        kind: "text",
+        body: "Keep variables in the smallest scope that works. A variable at the top of a classic script is **global**: every other script on the page can read it, change it, or collide with it by using the same name. That's how two libraries that both define `total` break each other. `var`, which you'll meet in older code, ignores blocks and is scoped to the whole function, which is why it leaks out of loops.",
+      },
+      {
+        kind: "text",
+        body: "A **closure** is what happens when a function uses a variable from the scope it was created in: the function keeps that variable alive, even after the outer function has returned. Each call to the outer function makes a fresh variable, so each closure has its own. It's the standard way to keep state **private**: nothing outside can reach `count` except through the functions you hand back.",
+      },
+      {
+        kind: "code",
+        language: "javascript",
+        caption: "Two counters, each with its own private count",
+        code: `function makeCounter() {
+  let count = 0;                       // a new count for every call
+  return {
+    increment: () => ++count,
+    value: () => count,
+  };
+}
+
+const likes = makeCounter();
+const views = makeCounter();
+likes.increment(); likes.increment();
+views.increment();
+likes.value();   // 2
+views.value();   // 1
+likes.count;     // undefined: the variable isn't a property, and no one else can change it`,
+      },
+      {
+        kind: "text",
+        body: "You've already relied on closures: an event handler that changes a `quantity` variable declared outside it is one. React's hooks, later, are closures too, and one that captured an old value is behind a common kind of React bug.",
+      },
+      {
+        kind: "text",
+        body: '**Modules** give every file its own scope. In a file loaded with `type="module"` (or imported by one), top-level variables are private to that file; nothing becomes global by accident. A file shares something by **exporting** it, and another file uses it by **importing** it by name. In the browser, the path needs the `./` and the `.js`. A module runs once, however many files import it, so they all share the same exported values.',
+      },
+      {
+        kind: "code",
+        language: "javascript",
+        caption: "cart.js and app.js",
+        code: `// cart.js
+const items = [];                        // private to this file
+export function addItem(item) {
+  items.push(item);
+}
+export function itemCount() {
+  return items.length;
+}
+
+// app.js, loaded with <script type="module" src="./app.js">
+import { addItem, itemCount } from "./cart.js";
+addItem({ id: "tent" });
+itemCount();   // 1
+items;         // ReferenceError: items is private to cart.js`,
+      },
+      {
+        kind: "callout",
+        body: "The lesson editor runs a single script, so it can't show `import` and `export` between files. The challenge practises scope and closures; to see modules work, make the two files above in a folder, serve it with your editor's local server, and open the page with the console open.",
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          "`const handlers = []; for (var i = 0; i < 3; i++) handlers.push(() => i);` What does `handlers.map((h) => h())` give?",
+        options: [
+          "`[0, 1, 2]`",
+          "`[2, 2, 2]`",
+          "`[undefined, undefined, undefined]`",
+          "`[3, 3, 3]`",
+        ],
+        answer: 3,
+        explanation:
+          "`var` makes one `i` for the whole loop, and all three functions close over that same variable. By the time they're called the loop has finished, so `i` is 3. With `let`, each pass through the loop gets its own `i`, and you get `[0, 1, 2]`.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          '`cart.js` is loaded with `type="module"` and declares `let items = [];` at the top. A separate, classic script on the same page runs `console.log(items)`. What happens?',
+        options: [
+          "It logs `[]`",
+          "It logs `undefined`",
+          "`ReferenceError: items is not defined`",
+          "It logs whatever `window.items` holds, which the module set",
+        ],
+        answer: 2,
+        explanation:
+          "A module's top-level variables belong to that module, not to the page. Nothing is shared unless the module exports it and another module imports it.",
+      },
+      {
+        kind: "fill",
+        id: "f1",
+        prompt: "Complete the line so other files can import `addItem` from cart.js.",
+        before: "",
+        after: " function addItem(item) {",
+        answer: "export",
+        explanation:
+          '`export` in front of a declaration shares it. Another module then writes `import { addItem } from "./cart.js";`.',
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "State that stays private",
+        prompt:
+          "Write `makeCounter(start = 0)`, which returns an object with `increment()` (adds 1 and returns the new value), `reset()` (goes back to `start`) and `value()`. Each counter keeps its own count, and the count must not be reachable as a property. Then write `once(fn)`, which returns a function that calls `fn` with its arguments the first time and returns the result; every later call returns that first result without calling `fn` again. That's how you stop a double-click submitting an order twice.",
+        language: "javascript",
+        starter: `function makeCounter(start = 0) {
+  // your code here
+}
+
+function once(fn) {
+  // your code here
+}
+
+const likes = makeCounter();
+likes.increment();
+console.log(likes.value());`,
+        hint: "Inside `makeCounter`, declare `let count = start;` and return an object of arrow functions that read and change `count`. For `once`, keep `let called = false;` and `let result;` in `once`'s scope, and have the returned function check `called` before doing anything.",
+        solution: `function makeCounter(start = 0) {
+  let count = start;
+  return {
+    increment: () => ++count,
+    reset: () => {
+      count = start;
+    },
+    value: () => count,
+  };
+}
+
+function once(fn) {
+  let called = false;
+  let result;
+  return (...args) => {
+    if (!called) {
+      called = true;
+      result = fn(...args);
+    }
+    return result;
+  };
+}`,
+        tests: [
+          {
+            name: "Counts up from its start",
+            expression:
+              "(() => { const c = makeCounter(5); c.increment(); return c.increment() === 7 && c.value() === 7; })()",
+          },
+          {
+            name: "Starts at 0 by default, and reset goes back to the start",
+            expression:
+              "(() => { const a = makeCounter(); const b = makeCounter(10); a.increment(); b.increment(); a.reset(); b.reset(); return a.value() === 0 && b.value() === 10; })()",
+          },
+          {
+            name: "Two counters never share a count",
+            expression:
+              "(() => { const a = makeCounter(); const b = makeCounter(); a.increment(); a.increment(); b.increment(); return a.value() === 2 && b.value() === 1; })()",
+          },
+          {
+            name: "The count is private, not a property anyone can change",
+            expression:
+              '(() => { const c = makeCounter(); c.increment(); for (const key of Object.keys(c)) { if (typeof c[key] !== "function") return false; } c.count = 99; return c.value() === 1; })()',
+          },
+          {
+            name: "once calls the function the first time, with its arguments",
+            expression:
+              '(() => { const place = once((total) => `order for ${total}`); return place(40) === "order for 40"; })()',
+          },
+          {
+            name: "…and never again, returning the first result",
+            expression:
+              "(() => { let calls = 0; const place = once((total) => { calls++; return total; }); place(40); return place(99) === 40 && calls === 1; })()",
+          },
+          {
+            name: "Each once-wrapped function remembers separately",
+            expression:
+              '(() => { const a = once(() => "a"); const b = once(() => "b"); a(); return b() === "b" && a() === "a"; })()',
+          },
+        ],
+      },
+    ],
+  },
   "js-dom.checkpoint": {
     summary:
       "Build an interactive packing list from state, render it safely, and handle additions and removals through events.",

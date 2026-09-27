@@ -267,7 +267,7 @@ const LEARNING_DESIGNS = [
   },
   {
     courseId: "javascript",
-    lessonCount: 18,
+    lessonCount: 19,
     minMinutes: 330,
     lastLessonId: "js-project.catalog",
     minFills: 6,
@@ -276,6 +276,8 @@ const LEARNING_DESIGNS = [
       ["js-basics.strings", "js-basics.checkpoint"],
       ["js-basics.conditionals", "js-basics.checkpoint"],
       ["js-data.transform", "js-data.checkpoint"],
+      ["js-browser.run", "js-browser.scope"],
+      ["js-browser.scope", "js-dom.events"],
       ["js-browser.run", "js-dom.select"],
       ["js-async.async", "js-async.fetch"],
       ["js-async.fetch", "js-project.catalog"],
