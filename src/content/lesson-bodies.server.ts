@@ -6962,12 +6962,12 @@ def drift_report(train_stats, live, threshold):
       {
         kind: "code",
         language: "bash",
-        caption: "Check git is installed, then tell it who you are (once per computer)",
-        code: `git --version\n# git version 2.46.0  — any 2.23 or later works for this course\n\ngit config --global user.name "Alex Rivera"\ngit config --global user.email "alex@example.com"`,
+        caption: "Check git is installed, then set it up (once per computer)",
+        code: `git --version\n# git version 2.46.0  — any 2.28 or later works for this course\n\ngit config --global user.name "Alex Rivera"\ngit config --global user.email "alex@example.com"\ngit config --global init.defaultBranch main`,
       },
       {
         kind: "callout",
-        body: "Every commit is stamped with that name and email, and GitHub uses the email to link commits to your account. Use the same email you sign up to GitHub with.",
+        body: "Every commit is stamped with that name and email, and GitHub uses the email to link commits to your account. Use the same email you sign up to GitHub with. The last line names the first branch of every new repository `main`, as GitHub does. Without it, git still calls it `master`, and the commands in this course won't match what you see.",
       },
       {
         kind: "code",
@@ -7015,7 +7015,7 @@ def drift_report(train_stats, live, threshold):
       },
       {
         kind: "callout",
-        body: "**Try it on your machine:** install git from git-scm.com if `git --version` doesn't work, then run the two `git config` lines with your own name and email. Check them with `git config --global --list`.",
+        body: "**Try it on your machine:** install git from git-scm.com if `git --version` doesn't work, then run the three `git config` lines, with your own name and email. Check them with `git config --global --list`.",
       },
     ],
   },
@@ -7192,6 +7192,16 @@ def drift_report(train_stats, live, threshold):
       },
       {
         kind: "text",
+        body: "Your first push asks you to sign in, and your GitHub password won't work: GitHub stopped accepting passwords for git in 2021. If git opens a browser to sign in (Git for Windows does), follow it. Otherwise install the GitHub CLI from cli.github.com and run `gh auth login` once. Choose HTTPS and let it set up git, and every push after that just works.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "If your first push fails like this",
+        code: `$ git push -u origin main\nerror: src refspec main does not match any\n\n# Your branch is called master (git's old default). Rename it, then push:\n$ git branch -m main\n$ git push -u origin main`,
+      },
+      {
+        kind: "text",
         body: "`git fetch` downloads new commits from the remote but leaves your branch alone. After a fetch, `git status` tells you how far apart you are. `git pull` is a fetch followed by a merge, and it's what you'll usually run.",
       },
       {
@@ -7251,7 +7261,7 @@ def drift_report(train_stats, live, threshold):
       },
       {
         kind: "callout",
-        body: "**Try it on your machine:** create an empty repository on GitHub (no README), connect your practice repository with `git remote add origin …`, and `git push -u origin main`. Refresh the GitHub page and your commits are there. Then edit a file on GitHub's website, commit it there, and bring it back with `git pull`.",
+        body: "**Try it on your machine:** create an empty repository on GitHub (no README), connect your practice repository with `git remote add origin …`, sign in with `gh auth login` if git asks you to, and `git push -u origin main`. Refresh the GitHub page and your commits are there. Then edit a file on GitHub's website, commit it there, and bring it back with `git pull`.",
       },
     ],
   },
