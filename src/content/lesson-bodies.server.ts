@@ -6980,24 +6980,24 @@ def drift_report(train_stats, live, threshold):
         id: "q1",
         question: "What would git give this team that the folder doesn't?",
         options: [
-          "An automatic backup in the cloud",
-          "Smaller files",
-          "One file whose every saved version is kept, with who changed it, when and why",
-          "Automatic merging of Word documents",
+          "A backup copy in the cloud, so nobody can lose the file",
+          "Automatic merging, so Sam's edits and yours combine on their own",
+          "One `proposal.docx`, with each committed version kept, plus who changed it, when and why",
+          "A lock, so only one person can edit the document at a time",
         ],
         answer: 2,
         explanation:
-          "That's what commits give you. A cloud copy is what GitHub adds on top, and git can't merge binary files like `.docx` line by line. It's at its best with text files such as code.",
+          "That's what commits give you. A cloud copy is what GitHub adds on top, git never locks files, and it can't merge a binary file like `.docx` line by line. It's at its best with text files such as code.",
       },
       {
         kind: "mcq",
         id: "q2",
         question: "You're on a train with no internet. Which of these still works?",
         options: [
-          "Committing and looking through history, because git runs on your computer",
-          "Nothing, git needs GitHub",
-          "Only reading history",
-          "Only committing, straight to GitHub",
+          "Committing and reading history both work",
+          "Nothing works until you're back online",
+          "Reading history works, but committing waits until you're back online",
+          "Committing works, but browsing history needs GitHub",
         ],
         answer: 0,
         explanation:
@@ -7056,12 +7056,13 @@ def drift_report(train_stats, live, threshold):
       {
         kind: "mcq",
         id: "q1",
-        question: 'You run `git commit -m "Add home page"` right now. What happens?',
+        question:
+          'Straight after that `git status`, you run `git commit -m "Add home page"`. What happens?',
         options: [
           "Both files are committed",
-          "Only `index.html` is committed",
+          "Only `index.html` is committed, because git skips files that look like secrets",
           "Nothing is committed, because nothing has been staged yet",
-          "Git deletes the untracked files",
+          "A commit is made with no files in it",
         ],
         answer: 2,
         explanation:
@@ -7122,22 +7123,22 @@ def drift_report(train_stats, live, threshold):
       {
         kind: "code",
         language: "text",
-        caption: "Scenario: you run git diff",
-        code: `$ git diff\ndiff --git a/src/cart.js b/src/cart.js\n@@ -3,5 +3,5 @@\n function total(items) {\n-  return items.reduce((sum, i) => sum + i.price, 0);\n+  return items.reduce((sum, i) => sum + i.price * i.quantity, 0);\n }`,
+        caption: "Scenario: you edit cart.js, then run git diff",
+        code: `$ git diff\ndiff --git a/src/cart.js b/src/cart.js\nindex 3f1c2a4..9d0b7e1 100644\n--- a/src/cart.js\n+++ b/src/cart.js\n@@ -3,3 +3,3 @@\n function total(items) {\n-  return items.reduce((sum, i) => sum + i.price, 0);\n+  return items.reduce((sum, i) => sum + i.price * i.quantity, 0);\n }`,
       },
       {
         kind: "mcq",
         id: "q1",
-        question: "What does this diff tell you?",
+        question: "You ran plain `git diff` and got the output above. What does it tell you?",
         options: [
-          "The `total` function was deleted",
-          "`total` now multiplies each price by its quantity, and the change isn't staged yet",
-          "A new file called `cart.js` was created",
-          "The change has already been committed",
+          "One line in `total` was edited to multiply by quantity, and the edit is staged for the next commit",
+          "A second `return` line was added to `total`, so the function now has two",
+          "One line in `total` was edited to multiply by quantity, and the edit isn't staged yet",
+          "The edit is already committed, and `git diff` is showing the latest commit",
         ],
-        answer: 1,
+        answer: 2,
         explanation:
-          "One line was swapped: `-` is the old version and `+` is the new one. Plain `git diff` shows only unstaged changes; once staged, they'd appear under `git diff --staged`.",
+          "A `-` line followed by a `+` line is one edited line: the old version, then its replacement. Plain `git diff` shows only edits you haven't staged. Staged edits move to `git diff --staged`, and committed ones stop appearing in either.",
       },
       {
         kind: "code",
@@ -7206,9 +7207,9 @@ def drift_report(train_stats, live, threshold):
       {
         kind: "mcq",
         id: "q1",
-        question: "What do you do?",
+        question: "Your `git push` was rejected with the message above. What do you do?",
         options: [
-          "`git push --force`",
+          "`git push --force`, so your commits go through",
           "Delete your folder and clone the repository again",
           "`git pull`, sort out any conflict, then `git push` again",
           "Make another commit and push that instead",
@@ -7226,16 +7227,17 @@ def drift_report(train_stats, live, threshold):
       {
         kind: "mcq",
         id: "q2",
-        question: "What does this mean?",
+        question:
+          "After `git fetch`, `git status` says your branch is behind `origin/main` by 2 commits and can be fast-forwarded. What does that mean?",
         options: [
-          "You have 2 commits that still need pushing",
-          "GitHub has 2 commits you don't have yet, and `git pull` will bring them in",
-          "2 of your commits were lost",
-          "There's a merge conflict to resolve",
+          "You have 2 commits that GitHub doesn't have yet",
+          "GitHub has 2 commits you don't, and `git pull` will bring them in",
+          "2 of your commits were lost when you fetched",
+          "Your branch and GitHub's have split, so pulling will need a merge commit",
         ],
         answer: 1,
         explanation:
-          "*Behind* means the remote is ahead of you. *Can be fast-forwarded* means you have no new commits of your own, so pulling just moves your branch forward.",
+          "*Behind* means the remote is ahead of you. *Can be fast-forwarded* means you have no new commits of your own, so pulling just moves your branch forward, with no merge commit.",
       },
       {
         kind: "fill",
@@ -7295,7 +7297,7 @@ def drift_report(train_stats, live, threshold):
         kind: "mcq",
         id: "q1",
         question:
-          'You now run `git commit -m "Fix rounding in cart total"`. What goes into the commit?',
+          'With `git status` showing the above, you run `git commit -m "Fix rounding in cart total"`. What goes into the commit?',
         options: [
           "Only the staged part of `src/cart.js`",
           "Every change to `src/cart.js`, staged or not",
@@ -7312,14 +7314,14 @@ def drift_report(train_stats, live, threshold):
         question:
           "In March a teammate wants to know why the checkout total started rounding differently. Which commit lets them find out without asking you?",
         options: [
-          "`a91c3e0 Updates`",
-          "`a91c3e0 Fix cart.js`",
-          "`a91c3e0 Round cart total in cents`, with a body explaining the float bug it fixes",
-          "`a91c3e0 Changes after review from Sam`",
+          "`Update cart.js to sum in cents`, with no body",
+          "`Round cart total in cents`, with no body",
+          "`Round cart total in cents`, with a body explaining the float bug it fixes",
+          "`Fix bug Sam reported`, with a body linking the chat thread",
         ],
         answer: 2,
         explanation:
-          "The diff already shows which file changed. Only the message can record why, and a subject that states the effect is what they'll find when searching the log.",
+          "The diff already shows what changed. Only the message can record why, and a subject line has no room for it: the body is where the float bug goes. A chat link is only as good as the chat, which may be gone by March.",
       },
       {
         kind: "code",
@@ -7398,7 +7400,8 @@ def drift_report(train_stats, live, threshold):
       {
         kind: "mcq",
         id: "q1",
-        question: "On `main`, you run `git merge feature/discount-codes`. What happens?",
+        question:
+          "With history as in Scenario A, you run `git merge feature/discount-codes` on `main`. What happens?",
         options: [
           "Git creates a merge commit with two parents",
           "A conflict, because both branches touched the cart",
@@ -7418,7 +7421,8 @@ def drift_report(train_stats, live, threshold):
       {
         kind: "mcq",
         id: "q2",
-        question: "Now what does `git merge feature/discount-codes` produce?",
+        question:
+          "With history as in Scenario B, what does `git merge feature/discount-codes` on `main` produce?",
         options: [
           "A fast-forward to `7d1e9a0`",
           "A new merge commit whose parents are `5e6f7a8` and `7d1e9a0`",
@@ -7521,16 +7525,17 @@ def drift_report(train_stats, live, threshold):
       {
         kind: "mcq",
         id: "q1",
-        question: "What would do the most to get this a real review?",
+        question:
+          "Your pull request, titled *Updates*, changes 41 files and about 2,400 lines, with no description. What would do the most to get it a real review?",
         options: [
-          "Add more reviewers so someone notices it",
-          "Mark it urgent",
-          "Approve it yourself, since the tests pass",
+          "Add more reviewers, so the work is shared",
+          "Keep it as one PR, but write a description of what changes, why, and how it was tested",
+          "Ask for a quick approval and promise to fix anything found later",
           "Split it into focused PRs, each saying what changes, why, and how it was tested",
         ],
         answer: 3,
         explanation:
-          "Nobody can review 1,800 unexplained lines properly. They skim and approve. Small, explained PRs are the only kind that get a real review.",
+          "A description helps, but nobody reviews 2,400 lines properly in one sitting: they skim and approve. Small PRs, each explained, are the kind that get a real review.",
       },
       {
         kind: "code",
@@ -7542,7 +7547,8 @@ def drift_report(train_stats, live, threshold):
       {
         kind: "mcq",
         id: "q2",
-        question: "How do you undo pull request #42?",
+        question:
+          "Pull request #42 broke checkout, and teammates have already pulled `main`. How do you undo it?",
         options: [
           "`git revert -m 1 f00ba12`, then push the revert (or open a PR for it)",
           "`git reset --hard 5e6f7a8`, then `git push --force`",
@@ -7564,14 +7570,14 @@ def drift_report(train_stats, live, threshold):
         id: "q3",
         question: "It turns out an empty code crashes the checkout. What's the best response?",
         options: [
-          "Resolve the thread, since it's an edge case",
-          "Reply that it works on your machine",
-          "Squash everything and force-push a clean version",
+          "Fix it, then squash and force-push so the PR stays one clean commit",
+          "Fix it in a new commit and resolve the thread yourself",
+          "Reply that empty codes are rare, and open an issue to fix it later",
           "Add a test for the empty case, fix it in a new commit, and reply saying what changed",
         ],
         answer: 3,
         explanation:
-          "A new commit shows the reviewer exactly what changed since they last looked, the test stops the bug coming back, and your reply lets them close the thread.",
+          "A new commit shows the reviewer exactly what changed since they last looked, the test stops the bug coming back, and your reply lets them close the thread. Squashing hides what changed, and resolving the thread yourself skips their check.",
       },
       {
         kind: "callout",

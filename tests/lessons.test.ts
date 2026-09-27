@@ -19,6 +19,7 @@ import {
   isLessonAssessed,
   isLessonLive,
   isQuestion,
+  questionsWithScenario,
   lessonShape,
   lessonQuestionCount,
   isPathPublished,
@@ -482,6 +483,16 @@ describe("certificate ids", () => {
  * from a generated manifest and sees lessons only through toPublicBody; if any
  * of these fail, answers can reach the page source or the client bundle.
  */
+describe("questions shown outside their lesson", () => {
+  test("carry the code block they were written against", () => {
+    const body = bodies["git-start.remotes"]!;
+    const [push, status, clone] = questionsWithScenario(toPublicBody(body).blocks);
+    expect(push?.scenario?.caption).toBe("Scenario: you try to push");
+    expect(status?.scenario?.caption).toBe("Scenario: after git fetch");
+    expect(clone?.scenario).toBeUndefined();
+  });
+});
+
 describe("answer key", () => {
   test("the committed manifest matches the authored lessons", async () => {
     const committed = await Bun.file(

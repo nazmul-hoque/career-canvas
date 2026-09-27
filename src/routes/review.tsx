@@ -12,7 +12,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "@/hooks/useAuth";
 import { dueItems, useReviewQueue, useSubmitReview, type ReviewItem } from "@/hooks/useReviews";
 import { findLesson } from "@/content/curriculum";
-import { isQuestion, lessonQuestionCount, type PublicGradableBlock } from "@/content/lessons";
+import {
+  lessonQuestionCount,
+  questionsWithScenario,
+  type PublicGradableBlock,
+} from "@/content/lessons";
 import { lessonQuery, usePublicLesson } from "@/hooks/useLesson";
 import type { SubmitReviewResult } from "@/lib/review.functions";
 import { InlineText } from "@/components/learn/InlineText";
@@ -110,7 +114,8 @@ function Review() {
     if (nextCard)
       void queryClient.prefetchQuery(lessonQuery(nextCard.course_id, nextCard.lesson_id));
   }, [queryClient, nextCard]);
-  const blocks = (currentBody?.blocks ?? []).filter(isQuestion);
+  const questions = questionsWithScenario(currentBody?.blocks ?? []);
+  const blocks = questions.map((q) => q.question);
 
   const upcoming = items.filter((i) => i.due_on > new Date().toISOString().slice(0, 10));
 
@@ -257,15 +262,26 @@ function Review() {
         </p>
 
         <div className="mt-6 space-y-5">
-          {blocks.map((block) => (
-            <Question
-              key={block.id}
-              block={block}
-              value={answers[block.id]}
-              feedback={outcome?.feedback[block.id]}
-              wrong={outcome?.wrongBlockIds.includes(block.id) ?? false}
-              onChange={(value) => setAnswers((a) => ({ ...a, [block.id]: value }))}
-            />
+          {questions.map(({ question: block, scenario }) => (
+            <div key={block.id} className="space-y-3">
+              {scenario ? (
+                <div className="overflow-hidden rounded-[14px] bg-ink">
+                  <div className="border-b border-white/10 px-4 py-2 font-mono text-[11px] uppercase tracking-wider text-white/50">
+                    {scenario.caption ?? scenario.language}
+                  </div>
+                  <pre className="overflow-x-auto p-4 font-mono text-[13px] leading-6 text-white/90">
+                    {scenario.code}
+                  </pre>
+                </div>
+              ) : null}
+              <Question
+                block={block}
+                value={answers[block.id]}
+                feedback={outcome?.feedback[block.id]}
+                wrong={outcome?.wrongBlockIds.includes(block.id) ?? false}
+                onChange={(value) => setAnswers((a) => ({ ...a, [block.id]: value }))}
+              />
+            </div>
           ))}
         </div>
 

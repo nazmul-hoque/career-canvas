@@ -115,6 +115,20 @@ export const isQuestion = <B extends { kind: string }>(
   block: B,
 ): block is Extract<B, { kind: "mcq" | "fill" }> => block.kind === "mcq" || block.kind === "fill";
 
+/**
+ * Each question with the code block directly above it, if any. Questions are
+ * written against that block ("What does this mean?"), so anywhere a question
+ * is shown away from its lesson — /review — it has to travel with it.
+ */
+export function questionsWithScenario<B extends { kind: string }>(blocks: B[]) {
+  return blocks.flatMap((block, i) => {
+    if (!isQuestion(block)) return [];
+    const prev = blocks[i - 1];
+    const scenario = prev?.kind === "code" ? (prev as Extract<B, { kind: "code" }>) : undefined;
+    return [{ question: block, scenario }];
+  });
+}
+
 /** The facts about a lesson that pages outside the lesson itself need. */
 export interface LessonManifestEntry {
   challenge: boolean;
