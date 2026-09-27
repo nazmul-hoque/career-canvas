@@ -267,7 +267,7 @@ const LEARNING_DESIGNS = [
   },
   {
     courseId: "javascript",
-    lessonCount: 17,
+    lessonCount: 18,
     minMinutes: 330,
     lastLessonId: "js-project.catalog",
     minFills: 6,
@@ -277,6 +277,8 @@ const LEARNING_DESIGNS = [
       ["js-basics.conditionals", "js-basics.checkpoint"],
       ["js-data.transform", "js-data.checkpoint"],
       ["js-browser.run", "js-dom.select"],
+      ["js-async.async", "js-async.fetch"],
+      ["js-async.fetch", "js-project.catalog"],
     ],
     sparse: [
       ["js-basics.checkpoint", "function "],

@@ -15,32 +15,33 @@ function doubleFenced(part: string): string | null {
 }
 
 export function InlineText({ text }: { text: string }) {
-  return (
-    <>
-      {text.split(TOKEN).map((part, i) => {
-        const code =
-          doubleFenced(part) ??
-          (part.startsWith("`") && part.endsWith("`") && part.length > 2
-            ? part.slice(1, -1)
-            : null);
-        if (code !== null) {
-          return (
-            <code
-              key={i}
-              className="rounded bg-muted px-1 py-0.5 font-mono text-[0.9em] text-foreground"
-            >
-              {code}
-            </code>
-          );
-        }
-        if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
-          return <strong key={i}>{part.slice(2, -2)}</strong>;
-        }
-        if (part.startsWith("*") && part.endsWith("*") && part.length > 2) {
-          return <em key={i}>{part.slice(1, -1)}</em>;
-        }
-        return <Fragment key={i}>{part}</Fragment>;
-      })}
-    </>
-  );
+  return <>{marks(text)}</>;
+}
+
+function marks(text: string) {
+  return text.split(TOKEN).map((part, i) => {
+    const code =
+      doubleFenced(part) ??
+      (part.startsWith("`") && part.endsWith("`") && part.length > 2 ? part.slice(1, -1) : null);
+    if (code !== null) {
+      return (
+        <code
+          key={i}
+          className="rounded bg-muted px-1 py-0.5 font-mono text-[0.9em] text-foreground"
+        >
+          {code}
+        </code>
+      );
+    }
+    // Bold and emphasis can hold code (**`--add-dir`** names a flag), so their
+    // insides go through the same reading. They can't hold each other, which
+    // keeps this one level deep.
+    if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
+      return <strong key={i}>{marks(part.slice(2, -2))}</strong>;
+    }
+    if (part.startsWith("*") && part.endsWith("*") && part.length > 2) {
+      return <em key={i}>{marks(part.slice(1, -1))}</em>;
+    }
+    return <Fragment key={i}>{part}</Fragment>;
+  });
 }

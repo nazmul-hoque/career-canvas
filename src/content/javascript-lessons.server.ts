@@ -591,6 +591,272 @@ render();`,
       },
     ],
   },
+  "js-async.fetch": {
+    summary:
+      "Read and send JSON with fetch, treat a 404 or 500 as the failure it is, and show loading, empty and error states on the page.",
+    xp: 170,
+    blocks: [
+      {
+        kind: "text",
+        body: "**JSON** is the text format almost every web API speaks. It looks like a JavaScript object, but it's stricter: keys and strings need double quotes, and there are no comments, no trailing commas, no functions and no `undefined`. `JSON.stringify(value)` turns a value into JSON text, and `JSON.parse(text)` turns the text back into a value. `JSON.parse` throws a `SyntaxError` on anything that isn't valid JSON, such as `\"{'name': 'Ada'}\"` with single quotes.",
+      },
+      {
+        kind: "code",
+        language: "javascript",
+        code: `const order = { id: 101, items: ["tent"], note: undefined, placed: new Date("2026-03-01") };
+
+JSON.stringify(order);
+// '{"id":101,"items":["tent"],"placed":"2026-03-01T00:00:00.000Z"}'
+// undefined properties vanish; dates become text and stay text after parsing
+
+// localStorage only stores strings, so JSON is how you keep an object there
+localStorage.setItem("cart", JSON.stringify(cart));
+const saved = JSON.parse(localStorage.getItem("cart") ?? "[]");`,
+      },
+      {
+        kind: "text",
+        body: "`fetch(url)` makes a request and gives back a promise of a **response**. Reading the body is a second wait, because the headers arrive before the body does: `await response.json()` reads the body and parses it as JSON. A body can only be read once.",
+      },
+      {
+        kind: "text",
+        body: "The trap: `fetch` **only rejects when the request can't be made at all** (the network is down, the address is wrong). A `404 Not Found` or a `500` server error still *resolves*, with a response whose `ok` is `false` and whose `status` says what happened. Code that goes straight to `response.json()` then treats the server's error message as if it were the data. Check `response.ok` and throw, so every failure lands in one `catch`.",
+      },
+      {
+        kind: "code",
+        language: "javascript",
+        caption: "Reading JSON, and sending it",
+        code: `async function loadProduct(id) {
+  const response = await fetch(\`/api/products/\${id}\`);
+  if (!response.ok) throw new Error(\`Product \${id}: \${response.status}\`);
+  return response.json();
+}
+
+async function addReview(productId, stars) {
+  const response = await fetch("/api/reviews", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },   // tell the server it's JSON
+    body: JSON.stringify({ productId, stars }),         // the body must be text
+  });
+  if (!response.ok) throw new Error(\`Review not saved: \${response.status}\`);
+  return response.json();
+}`,
+      },
+      {
+        kind: "text",
+        body: "**On the page, a request has more than two outcomes.** It starts *loading*, then it succeeds with data, succeeds with *nothing* (an empty list is an answer, not an error), or fails. Show each one: say `Loading…` and disable the button that started it, render the data or an honest empty message, and on failure say so in words a person understands. `try`/`catch`/`finally` fits exactly: `finally` re-enables the button whichever way it went.",
+      },
+      {
+        kind: "text",
+        body: "One more thing goes wrong on real networks: responses don't always arrive in the order you asked. If someone searches for *shell* and then *lamp*, and the *shell* reply is slower, it lands last and replaces the right results. The capstone asks you to handle that: remember which request is the latest, and ignore any older reply.",
+      },
+      {
+        kind: "callout",
+        body: "**Try it in a browser:** open DevTools on any site, go to the Network panel, filter by Fetch/XHR, and click a request. The Response tab shows the JSON the page received, and the status column shows which requests failed.",
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          '`await fetch("/api/orders/999")` and the server answers `404 Not Found`. What happens?',
+        options: [
+          "The promise rejects, so the `catch` block runs",
+          "`fetch` returns `null`",
+          "The promise resolves with a response whose `ok` is `false`, and your code has to check it",
+          "The browser retries until it gets a 200",
+        ],
+        answer: 2,
+        explanation:
+          "`fetch` rejects only when no response arrives at all. Any response, including a 404 or 500, resolves the promise. That's why `if (!response.ok) throw …` belongs straight after every `fetch`.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          'What does `JSON.stringify({ name: "Ada", nickname: undefined, joined: new Date("2026-01-05") })` produce?',
+        options: [
+          '`{"name":"Ada","joined":"2026-01-05T00:00:00.000Z"}`',
+          '`{"name":"Ada","nickname":undefined,"joined":"2026-01-05"}`',
+          '`{"name":"Ada","nickname":null,"joined":{}}`',
+          "It throws, because `undefined` can't be turned into JSON",
+        ],
+        answer: 0,
+        explanation:
+          "JSON has no `undefined`, so that property is left out entirely, and a date is written as ISO text. `JSON.parse` gives you that text back, not a `Date`: convert it with `new Date(text)` when you need one.",
+      },
+      {
+        kind: "fill",
+        id: "f1",
+        prompt: "Complete the line that reads the response body and parses it as JSON.",
+        before: "const orders = await response.",
+        after: "();",
+        answer: "json",
+        explanation:
+          "`response.json()` reads the body and parses it. It returns a promise, so it needs its own `await`.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Order history from an API",
+        prompt:
+          "The starter contains a stand-in for the network: `fetch` answers like a real server, with real response objects, so your code is exactly what you'd write in a browser. Write `loadOrders(customer)`, which fetches `/api/orders?customer=` followed by the customer, throws an `Error` when the response isn't OK, and otherwise returns the parsed JSON. Write `saveNote(orderId, note)`, which POSTs `{ orderId, note }` as JSON to `/api/notes` with a `Content-Type: application/json` header and returns the parsed reply. Then make **Load orders** work: trim the customer field, clear the list, show `Loading…` and disable the button. List each order as `#101: $168.00`, and show `3 orders`, `1 order` or `No orders yet`. On any failure show `Could not load orders`. Re-enable the button when the request finishes, whether it worked or not.",
+        language: "dom",
+        html: `<label for="customer">Customer</label>
+<input id="customer" value="ada">
+<button id="load" type="button">Load orders</button>
+<p id="status" role="status"></p>
+<ul id="orders"></ul>`,
+        starter: `// A stand-in for the network. Keep it: your code calls fetch() as usual,
+// and gets real Response objects back, as it would in a browser.
+const requests = [];
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function fetch(url, options = {}) {
+  requests.push({ url, ...options });
+  await wait(20);
+  const reply = (data, status = 200) =>
+    new Response(JSON.stringify(data), {
+      status,
+      headers: { "Content-Type": "application/json" },
+    });
+  if (url === "/api/notes" && options.method === "POST") return reply({ saved: true }, 201);
+  const customer = new URL(url, "https://shop.example").searchParams.get("customer");
+  if (customer === "ada") {
+    return reply([
+      { id: 101, total: 168 },
+      { id: 104, total: 42.5 },
+      { id: 109, total: 9.99 },
+    ]);
+  }
+  if (customer === "solo") return reply([{ id: 120, total: 5 }]);
+  if (customer === "new") return reply([]);
+  if (customer === "broken") return reply({ error: "Database unavailable" }, 500);
+  return reply({ error: "No such customer" }, 404);
+}
+
+async function loadOrders(customer) {
+  // your code here
+}
+
+async function saveNote(orderId, note) {
+  // your code here
+}
+
+// Make the Load orders button work here.
+`,
+        hint: "In `loadOrders`: `` const response = await fetch(`/api/orders?customer=${customer}`) ``, then `if (!response.ok) throw new Error(…)`, then `return response.json()`. `saveNote` passes a second argument to `fetch` with `method`, `headers` and `body: JSON.stringify({ orderId, note })`. For the button, put the `await` inside `try`, the failure message in `catch`, and `button.disabled = false` in `finally`.",
+        solution: `// A stand-in for the network. Keep it: your code calls fetch() as usual,
+// and gets real Response objects back, as it would in a browser.
+const requests = [];
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function fetch(url, options = {}) {
+  requests.push({ url, ...options });
+  await wait(20);
+  const reply = (data, status = 200) =>
+    new Response(JSON.stringify(data), {
+      status,
+      headers: { "Content-Type": "application/json" },
+    });
+  if (url === "/api/notes" && options.method === "POST") return reply({ saved: true }, 201);
+  const customer = new URL(url, "https://shop.example").searchParams.get("customer");
+  if (customer === "ada") {
+    return reply([
+      { id: 101, total: 168 },
+      { id: 104, total: 42.5 },
+      { id: 109, total: 9.99 },
+    ]);
+  }
+  if (customer === "solo") return reply([{ id: 120, total: 5 }]);
+  if (customer === "new") return reply([]);
+  if (customer === "broken") return reply({ error: "Database unavailable" }, 500);
+  return reply({ error: "No such customer" }, 404);
+}
+
+async function loadOrders(customer) {
+  const response = await fetch(\`/api/orders?customer=\${encodeURIComponent(customer)}\`);
+  if (!response.ok) throw new Error(\`Orders for \${customer}: \${response.status}\`);
+  return response.json();
+}
+
+async function saveNote(orderId, note) {
+  const response = await fetch("/api/notes", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ orderId, note }),
+  });
+  if (!response.ok) throw new Error(\`Note not saved: \${response.status}\`);
+  return response.json();
+}
+
+const input = document.querySelector("#customer");
+const button = document.querySelector("#load");
+const status = document.querySelector("#status");
+const list = document.querySelector("#orders");
+
+button.addEventListener("click", async () => {
+  list.replaceChildren();
+  status.textContent = "Loading…";
+  button.disabled = true;
+  try {
+    const orders = await loadOrders(input.value.trim());
+    for (const order of orders) {
+      const item = document.createElement("li");
+      item.textContent = \`#\${order.id}: $\${order.total.toFixed(2)}\`;
+      list.append(item);
+    }
+    const count = orders.length;
+    status.textContent = count === 0 ? "No orders yet" : \`\${count} \${count === 1 ? "order" : "orders"}\`;
+  } catch {
+    status.textContent = "Could not load orders";
+  } finally {
+    button.disabled = false;
+  }
+});`,
+        tests: [
+          {
+            name: "Shows loading and disables the button straight away",
+            expression:
+              '(click($("#load")), text("#status") === "Loading…" && $("#load").disabled === true)',
+          },
+          {
+            name: "Lists each order from the JSON",
+            expression:
+              '(click($("#load")), await wait(80), $$("#orders li").length === 3 && text($$("#orders li")[0]) === "#101: $168.00" && text($$("#orders li")[2]) === "#109: $9.99" && text("#status") === "3 orders" && $("#load").disabled === false)',
+          },
+          {
+            name: "Trims the customer and asks for their orders",
+            expression:
+              '(fill($("#customer"), "  ada "), click($("#load")), await wait(80), requests.at(-1).url === "/api/orders?customer=ada" && $$("#orders li").length === 3)',
+          },
+          {
+            name: "One order reads as one",
+            expression:
+              '(fill($("#customer"), "solo"), click($("#load")), await wait(80), text("#status") === "1 order" && text("#orders li") === "#120: $5.00")',
+          },
+          {
+            name: "An empty history is an answer, not an error",
+            expression:
+              '(fill($("#customer"), "new"), click($("#load")), await wait(80), text("#status") === "No orders yet" && $$("#orders li").length === 0)',
+          },
+          {
+            name: "A 500 shows as a failure, not as orders",
+            expression:
+              '(fill($("#customer"), "broken"), click($("#load")), await wait(80), text("#status") === "Could not load orders" && $$("#orders li").length === 0 && $("#load").disabled === false)',
+          },
+          {
+            name: "loadOrders returns the parsed JSON, and throws when the response isn't OK",
+            expression:
+              '(await loadOrders("ada")).length === 3 && (await loadOrders("broken").then(() => false, (e) => e instanceof Error)) && (await loadOrders("nobody").then(() => false, (e) => e instanceof Error))',
+          },
+          {
+            name: "saveNote sends JSON, labelled as JSON",
+            expression:
+              '(await saveNote(101, "Gift wrap")).saved === true && requests.at(-1).url === "/api/notes" && requests.at(-1).method === "POST" && new Headers(requests.at(-1).headers).get("content-type").startsWith("application/json") && JSON.parse(requests.at(-1).body).note === "Gift wrap" && JSON.parse(requests.at(-1).body).orderId === 101',
+          },
+        ],
+      },
+    ],
+  },
   "js-project.catalog": {
     summary:
       "Build a resilient asynchronous product search with loading, empty, error and stale-response states.",

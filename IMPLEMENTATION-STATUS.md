@@ -460,6 +460,27 @@ Two facts shape every item below:
       Free unlocks a course's first module, so with enforcement on, Free gets
       the four basics and "Everyday git" needs a plan.
 
+- [x] **JavaScript: fetch and JSON** (2026-09-27) — `js-async.fetch`, between
+      promises and the capstone. JSON's rules and what `stringify` drops,
+      `fetch` resolving on a 404/500 so `response.ok` must be checked, POSTing
+      JSON, loading/empty/error states, and a first look at stale responses so
+      the capstone tests that idea instead of introducing it. The challenge's
+      starter declares a local `fetch` that returns real `Response` objects, so
+      learners write exactly the browser code; it must stay local, because DOM
+      challenges run in the app's own window. Solution passes 8/8 in Chrome and
+      under happy-dom; the starter and six plausible mistakes (no `ok` check,
+      unstringified body, no JSON header, GET instead of POST, button never
+      re-enabled, "1 orders") each fail. `InlineText` now renders code inside
+      bold and italic: 29 strings in 18 lessons had shown raw backticks, and a
+      scan of all 3,719 prose strings now finds none. Still open from the
+      review: scope/closures/modules, a first-program lesson and HTML basics for
+      Full-stack, and the classic `for`/`while` loop. `bun test` now runs
+      every in-process challenge (55: JavaScript, DOM, web, React, Excel)
+      through `runCode`: the solution must pass and the starter fail. Before,
+      only the manual `lessons:verify` did. One starter is exempt by name
+      (`react-data.fetch`: its missing `.catch` is the lesson, and bun fails a
+      test on any uncaught rejection); `lessons:verify` still checks it.
+
 - [x] **Multiple-choice answers no longer favour B** (2026-09-27) — eleven
       courses leant on one position (JavaScript: B on 23 of 27, so always
       answering B scored 85%; B was right on 153 of 396 questions overall).

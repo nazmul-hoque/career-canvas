@@ -29,3 +29,12 @@ describe("inline lesson text", () => {
     expect(html("`<img onerror=x>` and <b>bold</b>")).not.toContain("<b>");
   });
 });
+
+describe("code inside bold and emphasis", () => {
+  test("renders as code, not as raw backticks", () => {
+    const out = html("**`--add-dir`** extends it, and *`null`* is falsy");
+    expect(out).toContain("<strong><code");
+    expect(out).toContain("<em><code");
+    expect(out.replace(/<code[^>]*>.*?<\/code>/g, "")).not.toContain("`");
+  });
+});

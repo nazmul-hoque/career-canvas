@@ -125,6 +125,7 @@ export const lessonManifest: Record<string, LessonManifestEntry> = {
   "html-basics.tags": { challenge: true, questions: 2 },
   "html-project.trail-guide": { challenge: true, questions: 2 },
   "js-async.async": { challenge: true, questions: 2 },
+  "js-async.fetch": { challenge: true, questions: 3 },
   "js-basics.checkpoint": { challenge: true, questions: 2 },
   "js-basics.conditionals": { challenge: true, questions: 2 },
   "js-basics.functions": { challenge: true, questions: 3 },
