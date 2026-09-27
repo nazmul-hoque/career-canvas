@@ -55,6 +55,7 @@ async function runInBrowserEngine(block: Challenge, code: string): Promise<Outco
     sheet: block.sheet,
     html: block.html,
     dataset: block.dataset,
+    setup: block.setup,
   });
   // A failing test's detail is shown next to FAIL; it isn't a run error.
   const why = run.tests.find((t) => t.detail)?.detail ?? null;

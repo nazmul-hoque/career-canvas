@@ -456,6 +456,17 @@ Two facts shape every item below:
       Free unlocks a course's first module, so with enforcement on, Free gets
       the four basics and "Everyday git" needs a plan.
 
+- [x] **Git sandbox** (2026-09-27) — eleven Git lessons now end in a hands-on
+      challenge: a terminal, a live commit graph and a file editor over
+      `src/lib/git-sandbox.ts`, a deterministic model of git. The server replays
+      the learner's commands to grade it, so a git challenge is the first one
+      not taken on the browser's word. `bun run git:verify` checks the model
+      against real git (every challenge solution, plus eleven scenarios, match
+      on history, files, index, stash and reflog). Found on the way: a plain
+      `git pull` on diverged branches fails in modern git unless `pull.rebase`
+      is set, which the course's advice depended on — the setup lesson now sets
+      it. Not yet checked: a signed-in completion through `completeLessonFn`.
+
 - [x] **Git "Getting out of trouble" module** (2026-09-27) — six lessons the
       course description already promised: stash, reset's three modes, the
       wrong branch and detached HEAD, reflog recovery, rebase and

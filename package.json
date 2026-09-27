@@ -15,6 +15,7 @@
     "push:keys": "bun scripts/generate-vapid-keys.ts",
     "lessons:manifest": "bun scripts/build-lesson-manifest.ts",
     "lessons:verify": "bun scripts/verify-challenges.ts",
+    "git:verify": "bun scripts/verify-git-sandbox.ts",
     "format": "prettier --write ."
   },
   "overrides": {

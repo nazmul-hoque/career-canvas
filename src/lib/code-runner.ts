@@ -39,6 +39,7 @@ export const CHALLENGE_LANGUAGES = [
   "excel",
   "web",
   "dom",
+  "git",
 ] as const;
 
 export type ChallengeLanguage = (typeof CHALLENGE_LANGUAGES)[number];
@@ -253,11 +254,12 @@ async function runSql(
   );
 }
 
-/** What a challenge needs besides its code: Excel's sheet, the DOM lessons' markup, SQL's database. */
+/** What a challenge needs besides its code: Excel's sheet, the DOM lessons' markup, SQL's database, git's scenario. */
 export interface ChallengeContext {
   sheet?: string | undefined;
   html?: string | undefined;
   dataset?: SqlDataset | undefined;
+  setup?: string | undefined;
 }
 
 type EngineRun = (
@@ -273,7 +275,7 @@ type EngineRun = (
  * engine throws, the same way for all of them.
  */
 const LAZY_ENGINES: Record<
-  "typescript" | "react" | "excel" | "web" | "dom",
+  "typescript" | "react" | "excel" | "web" | "dom" | "git",
   () => Promise<EngineRun>
 > = {
   typescript: async () => {
@@ -295,6 +297,11 @@ const LAZY_ENGINES: Record<
   dom: async () => {
     const { runDomChallenge } = await import("./dom-runtime");
     return (code, tests, context) => runDomChallenge(code, context.html ?? "", tests);
+  },
+  // `code` is the transcript of commands; the server replays it the same way.
+  git: async () => {
+    const { runGitChallenge } = await import("./git-sandbox");
+    return async (code, tests, context) => runGitChallenge(context.setup ?? "", code, tests);
   },
 };
 

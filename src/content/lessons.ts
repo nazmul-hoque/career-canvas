@@ -44,6 +44,11 @@ export type LessonBlock =
       html?: string | undefined;
       /** SQL challenges only: which database in datasets/sql.ts to run against (default shop). */
       dataset?: SqlDataset | undefined;
+      /**
+       * Git challenges only: the script that builds the scenario (see git-sandbox.ts).
+       * For git, `starter` is the empty transcript and `solution` a transcript that works.
+       */
+      setup?: string | undefined;
       starter: string;
       hint: string;
       solution: string;

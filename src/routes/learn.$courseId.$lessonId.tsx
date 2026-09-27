@@ -24,6 +24,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { MentorPanel } from "@/components/learn/MentorPanel";
 import { InlineText } from "@/components/learn/InlineText";
 import { CodeChallenge } from "@/components/learn/CodeChallenge";
+import { GitSandbox } from "@/components/learn/GitSandbox";
 import {
   courseById,
   courseLessons,
@@ -422,6 +423,8 @@ function LessonWorkspace({
           lessonId: lesson.id,
           answers,
           challengeSolved: solved,
+          transcript:
+            challenge?.kind === "challenge" && challenge.language === "git" ? code : undefined,
         });
         if (res.firstTime) {
           toast.success(`+${res.gained} XP`, {
@@ -526,8 +529,9 @@ function LessonWorkspace({
                   setCode={setCode}
                   solved={solved}
                   onSolved={() => {
+                    // A git sandbox reports "still solved" after each command.
+                    if (!solved) toast.success("Challenge solved");
                     setSolved(true);
-                    toast.success("Challenge solved");
                   }}
                   onResult={(result) => {
                     setLastRun(result);
@@ -739,6 +743,23 @@ function Block({
           {checking === block.id ? "Checking…" : "Check answer"}
         </Button>
       </div>
+    );
+  }
+
+  if (block.language === "git") {
+    return (
+      <GitSandbox
+        title={block.title}
+        prompt={block.prompt}
+        setup={block.setup ?? ""}
+        hint={block.hint}
+        tests={block.tests}
+        code={code}
+        onCodeChange={setCode}
+        onResult={onResult}
+        onSolved={onSolved}
+        solved={solved}
+      />
     );
   }
 

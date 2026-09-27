@@ -8,6 +8,7 @@
  * Pure: no database, no request context.
  */
 import { isQuestion, type LessonBlock, type LessonBody } from "@/content/lessons";
+import { runGitChallenge } from "@/lib/git-sandbox";
 
 export type Answers = Record<string, string | number>;
 
@@ -50,13 +51,16 @@ export interface GradeResult {
 
 /**
  * Completion grading: every question right, and any coding challenge passed.
- * `challengeSolved` is still the client's word — the runner is a browser
- * sandbox — but the XP amount and everything else is not.
+ * For most languages `challengeSolved` is still the client's word — the runner
+ * is a browser sandbox. A git challenge is different: its engine is plain
+ * TypeScript, so the learner's transcript is replayed here and the flag is
+ * ignored.
  */
 export function gradeLesson(
   body: LessonBody,
   answers: Answers,
   challengeSolved: boolean,
+  transcript?: string | undefined,
 ): GradeResult {
   const wrongBlockIds = gradableBlocks(body)
     .filter((block) => !isBlockCorrect(block, answers))
@@ -70,7 +74,12 @@ export function gradeLesson(
     };
   }
 
-  if (body.blocks.some((b) => b.kind === "challenge") && !challengeSolved) {
+  const challenge = body.blocks.find((b) => b.kind === "challenge");
+  const solved =
+    challenge?.language === "git"
+      ? gitChallengePassed(challenge, transcript ?? "")
+      : challengeSolved;
+  if (challenge && !solved) {
     return {
       ok: false,
       reason: "Pass the challenge tests before completing this lesson.",
@@ -79,6 +88,14 @@ export function gradeLesson(
   }
 
   return { ok: true, reason: null, wrongBlockIds: [] };
+}
+
+function gitChallengePassed(
+  challenge: Extract<LessonBlock, { kind: "challenge" }>,
+  transcript: string,
+): boolean {
+  const run = runGitChallenge(challenge.setup ?? "", transcript, challenge.tests);
+  return !run.error && run.results.length > 0 && run.results.every((r) => r.passed);
 }
 
 /** Review grading: the questions only. A review never re-runs the challenge. */

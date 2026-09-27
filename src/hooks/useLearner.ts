@@ -182,6 +182,8 @@ interface CompleteArgs {
   /** Answers given, keyed by block id — re-checked on the server. */
   answers: Record<string, string | number>;
   challengeSolved: boolean;
+  /** A git challenge's transcript, which the server replays instead of trusting `challengeSolved`. */
+  transcript?: string | undefined;
 }
 
 /**

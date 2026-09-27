@@ -7,6 +7,7 @@ import { entitlementsFor, isLessonUnlocked, planState } from "@/lib/entitlements
 import { ATTESTED_XP, levelFromXp } from "@/content/gamification";
 import { isLessonLive } from "@/content/lessons";
 import { gradeLesson, isReviewable } from "@/lib/lesson-grading";
+import { MAX_TRANSCRIPT_CHARS } from "@/lib/git-sandbox";
 import { initialReview } from "@/lib/review-schedule";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
@@ -33,6 +34,8 @@ const completeLessonSchema = z.object({
    * needs a real execution service. XP amount and eligibility are not.
    */
   challengeSolved: z.boolean().default(false),
+  /** A git challenge's transcript. Replayed on the server, so for git the flag above is ignored. */
+  transcript: z.string().max(MAX_TRANSCRIPT_CHARS).optional(),
 });
 
 export type CompleteLessonResult = {
@@ -59,7 +62,7 @@ export const completeLessonFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => completeLessonSchema.parse(input))
   .handler(async ({ data, context }): Promise<CompleteLessonResult> => {
-    const { courseId, lessonId, answers, challengeSolved } = data;
+    const { courseId, lessonId, answers, challengeSolved, transcript } = data;
     const userId = context.userId;
 
     const found = findLesson(courseId, lessonId);
@@ -74,7 +77,7 @@ export const completeLessonFn = createServerFn({ method: "POST" })
     // Re-check every answer against the authored body. A completion is only
     // worth XP if the work was actually done. The rule itself lives in
     // lesson-grading.ts, shared with the spaced-review path.
-    const graded = gradeLesson(body, answers, challengeSolved);
+    const graded = gradeLesson(body, answers, challengeSolved, transcript);
     if (!graded.ok) throw new Error(graded.reason ?? "That lesson isn't finished yet.");
 
     const hasChallenge = body.blocks.some((b) => b.kind === "challenge");

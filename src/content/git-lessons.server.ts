@@ -1,14 +1,869 @@
 import type { LessonBody } from "./lessons";
 
 /**
- * Authored Git course lessons. Answer keys stay server-side. The first two
- * modules still live in the lesson-bodies.server.ts backlog.
+ * Authored Git course lessons. Answer keys stay server-side.
  *
  * Every terminal transcript here was captured from a real git 2.40 session,
  * hint text included, so a learner comparing it with their own screen sees
  * the same words.
  */
+/** Sandbox scripts: one command per line, a file's contents written in as JSON. */
+const write = (path: string, content: string) => `@write ${path} ${JSON.stringify(content)}`;
+const script = (...lines: string[]) => lines.join("\n");
+
+const CART = `export function total(items) {
+  return items.reduce((sum, i) => sum + i.price, 0);
+}
+`;
+
+/** The shop most scenarios start from: one commit, already pushed to GitHub. */
+const SHOP = [
+  "git init",
+  write("index.html", "<h1>Shop</h1>\n"),
+  write("src/cart.js", CART),
+  "git add .",
+  'git commit -m "Add cart page"',
+  "git remote add origin git@github.com:you/shop.git",
+  "git push -u origin main",
+];
+
 export const gitLessonBodies: Record<string, LessonBody> = {
+  "git-start.why": {
+    summary: "What git does for you, how it differs from GitHub, and setting it up once.",
+    xp: 90,
+    blocks: [
+      {
+        kind: "text",
+        body: "Without version control, a project's history ends up in file names: `report_final.docx`, `report_final_v2.docx`, `report_final_v2_REALLY.docx`. None of them say what changed or why, and when two people edit the same file, one of them quietly loses their work.",
+      },
+      {
+        kind: "text",
+        body: "Git fixes this for a whole folder at once. That folder becomes a **repository**, and every time you save a **commit** (a snapshot of the folder), git records who made it, when, and a message saying why. You keep one copy of each file, and every earlier version stays one command away.",
+      },
+      {
+        kind: "text",
+        body: "**Git and GitHub are different things.** Git is a program on your computer, and everything in the first few lessons works offline. GitHub is a website that hosts a copy of your repository so other people can see it and work on it. You send your commits there with `push` and bring other people's back with `pull`. GitLab and Bitbucket do the same job.",
+      },
+      {
+        kind: "code",
+        language: "bash",
+        caption: "Check git is installed, then set it up (once per computer)",
+        code: `git --version\n# git version 2.46.0  — any 2.28 or later works for this course\n\ngit config --global user.name "Alex Rivera"\ngit config --global user.email "alex@example.com"\ngit config --global init.defaultBranch main\ngit config --global pull.rebase false`,
+      },
+      {
+        kind: "callout",
+        body: "Every commit is stamped with that name and email, and GitHub uses the email to link commits to your account. Use the same email you sign up to GitHub with. `init.defaultBranch` names the first branch of every new repository `main`, as GitHub does; without it, git still calls it `master`. `pull.rebase false` tells `git pull` to merge when your copy and GitHub's have both moved on; without it, modern git stops and asks you to choose. Both keep what you see matching this course.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "Scenario: a shared folder",
+        code: `proposal.docx\nproposal_final.docx\nproposal_final_v2.docx\nproposal_final_v2_SAM_EDITS.docx`,
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question: "What would git give this team that the folder doesn't?",
+        options: [
+          "A backup copy in the cloud, so nobody can lose the file",
+          "Automatic merging, so Sam's edits and yours combine on their own",
+          "One `proposal.docx`, with each committed version kept, plus who changed it, when and why",
+          "A lock, so only one person can edit the document at a time",
+        ],
+        answer: 2,
+        explanation:
+          "That's what commits give you. A cloud copy is what GitHub adds on top, git never locks files, and it can't merge a binary file like `.docx` line by line. It's at its best with text files such as code.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question: "You're on a train with no internet. Which of these still works?",
+        options: [
+          "Committing and reading history both work",
+          "Nothing works until you're back online",
+          "Reading history works, but committing waits until you're back online",
+          "Committing works, but browsing history needs GitHub",
+        ],
+        answer: 0,
+        explanation:
+          "Your repository, including its full history, is on your laptop. Only `push` and `pull`, which talk to GitHub, need a connection.",
+      },
+      {
+        kind: "fill",
+        id: "f1",
+        prompt: "Set the email git stamps on your commits.",
+        before: "git config --global user.",
+        after: ' "alex@example.com"',
+        answer: "email",
+        explanation:
+          "`user.name` and `user.email` go on every commit you make. `--global` sets them once for every repository on this computer.",
+      },
+      {
+        kind: "callout",
+        body: "**Try it on your machine:** install git from git-scm.com if `git --version` doesn't work, then run the four `git config` lines, with your own name and email. Check them with `git config --global --list`.",
+      },
+    ],
+  },
+  "git-start.first-repo": {
+    summary: "Turn a folder into a repository, make your first commit, and keep secrets out of it.",
+    xp: 110,
+    blocks: [
+      {
+        kind: "text",
+        body: "`git init` turns the current folder into a repository. It creates a hidden `.git` folder, and that folder *is* the repository: every commit and every branch lives inside it. Your files stay exactly where they were. (Delete `.git` and the history goes with it.)",
+      },
+      {
+        kind: "code",
+        language: "bash",
+        caption: "A new project, from nothing to first commit",
+        code: `mkdir shop && cd shop\ngit init                         # Initialized empty Git repository in .../shop/.git/\necho "<h1>Shop</h1>" > index.html\ngit status                       # index.html is "untracked"\ngit add index.html               # stage it\ngit commit -m "Add home page"    # record the snapshot`,
+      },
+      {
+        kind: "text",
+        body: "Git never tracks a new file on its own. A new file is **untracked** until you `git add` it, and a commit only records what's been added (staged). That's deliberate: nothing lands in history unless you chose to put it there.",
+      },
+      {
+        kind: "text",
+        body: "Some files should never be committed: passwords and API keys (often in `.env`), downloaded dependencies (`node_modules/`), and build output. List them in a file called `.gitignore` and git will act as if they don't exist. Do it **before** your first `git add .`. Once a file has been committed, it stays in history even after you delete it.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: ".gitignore",
+        code: `.env\nnode_modules/\ndist/\n.DS_Store`,
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "Scenario: a brand-new repository",
+        code: `$ git status\nOn branch main\n\nNo commits yet\n\nUntracked files:\n  (use "git add <file>..." to include in what will be committed)\n        .env\n        index.html\n\nnothing added to commit but untracked files present (use "git add" to track)`,
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          'Straight after that `git status`, you run `git commit -m "Add home page"`. What happens?',
+        options: [
+          "Both files are committed",
+          "Only `index.html` is committed, because git skips files that look like secrets",
+          "Nothing is committed, because nothing has been staged yet",
+          "A commit is made with no files in it",
+        ],
+        answer: 2,
+        explanation:
+          "A commit records the staging area, and it's empty. Git says so on the last line: *nothing added to commit*. Run `git add index.html` first.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          "`.env` holds your database password. What should you do before your first commit?",
+        options: [
+          "Commit it. The repository is private, so it's safe",
+          "Commit it now and delete it in the next commit",
+          "Rename it to `env.txt`",
+          "Add `.env` to `.gitignore` so git never tracks it",
+        ],
+        answer: 3,
+        explanation:
+          "Private repositories get shared, forked and made public later. Deleting the file in a later commit doesn't help either, because the earlier commit still has it and anyone can check it out. Keep secrets out of history from the start.",
+      },
+      {
+        kind: "fill",
+        id: "f1",
+        prompt: "You're inside a new project folder. Turn it into a git repository.",
+        before: "git ",
+        after: "",
+        answer: "init",
+        explanation:
+          "`git init` creates the `.git` folder that holds the history. Your files aren't tracked until you add them.",
+      },
+      {
+        kind: "challenge",
+        id: "sandbox",
+        title: "Your first commit, without the secret",
+        prompt:
+          "This folder has a home page, a stylesheet, and an `.env` holding a database password. It isn't a repository yet. Make it one, and commit the page and the styles without the password ever going into history.",
+        language: "git",
+        setup: script(
+          write("index.html", "<h1>Shop</h1>\n"),
+          write("style.css", "h1 { color: teal; }\n"),
+          write(".env", "DATABASE_PASSWORD=hunter2\n"),
+        ),
+        starter: "",
+        hint: 'Start with `git init`. Create `.gitignore` before you add anything, with `echo ".env" > .gitignore`, and check that `git status` no longer lists `.env`. Then `git add .` and commit.',
+        solution: script(
+          "git init",
+          'echo ".env" > .gitignore',
+          "git add .",
+          'git commit -m "Add home page and styles"',
+        ),
+        tests: [
+          { name: "`index.html` is committed", expression: "present HEAD:index.html" },
+          { name: "`style.css` is committed", expression: "present HEAD:style.css" },
+          { name: "`.gitignore` is committed", expression: "present HEAD:.gitignore" },
+          { name: "`.env` is in no commit", expression: "absent HEAD:.env" },
+          { name: "Git ignores `.env`", expression: "ignored .env" },
+          { name: "Nothing is left uncommitted", expression: "clean" },
+        ],
+      },
+      {
+        kind: "callout",
+        body: "**Try it on your machine:** make a folder, `git init`, add a `.gitignore` containing `.env`, create an `.env` and an `index.html`, then run `git status`. Only `.gitignore` and `index.html` should appear. Add them, commit, and run `git log` to see your first commit.",
+      },
+    ],
+  },
+  "git-start.history": {
+    summary: "Read what changed with status, diff and log, and throw away edits you don't want.",
+    xp: 110,
+    blocks: [
+      {
+        kind: "text",
+        body: "Three commands answer nearly every *what's going on?* question. `git status` tells you which files changed and which are staged. `git diff` shows the changed lines themselves. `git log` shows the commits so far, newest first.",
+      },
+      {
+        kind: "code",
+        language: "bash",
+        code: `git diff               # changes you haven't staged yet\ngit diff --staged      # changes that will go into the next commit\ngit log --oneline      # one line per commit: short id + subject\ngit show b7a03d1       # everything one commit changed`,
+      },
+      {
+        kind: "text",
+        body: "In a diff, lines starting with `-` were removed and lines starting with `+` were added. The lines around them with no sign are unchanged context, there to show you where the change sits. A changed line shows up as a `-` line followed by a `+` line.",
+      },
+      {
+        kind: "text",
+        body: "To undo edits you haven't committed, use `git restore <file>`: the file goes back to how it was in the last commit. This one really is permanent, because the discarded edits were never saved anywhere. If you staged something by mistake, `git restore --staged <file>` unstages it and leaves your edits alone.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "Scenario: you edit cart.js, then run git diff",
+        code: `$ git diff\ndiff --git a/src/cart.js b/src/cart.js\nindex 3f1c2a4..9d0b7e1 100644\n--- a/src/cart.js\n+++ b/src/cart.js\n@@ -3,3 +3,3 @@\n function total(items) {\n-  return items.reduce((sum, i) => sum + i.price, 0);\n+  return items.reduce((sum, i) => sum + i.price * i.quantity, 0);\n }`,
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question: "You ran plain `git diff` and got the output above. What does it tell you?",
+        options: [
+          "One line in `total` was edited to multiply by quantity, and the edit is staged for the next commit",
+          "A second `return` line was added to `total`, so the function now has two",
+          "One line in `total` was edited to multiply by quantity, and the edit isn't staged yet",
+          "The edit is already committed, and `git diff` is showing the latest commit",
+        ],
+        answer: 2,
+        explanation:
+          "A `-` line followed by a `+` line is one edited line: the old version, then its replacement. Plain `git diff` shows only edits you haven't staged. Staged edits move to `git diff --staged`, and committed ones stop appearing in either.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "Scenario: history so far",
+        code: `$ git log --oneline\ne41f2c9 (HEAD -> main) Show shipping estimate on cart page\nb7a03d1 Fix rounding in cart total\n5c9e8f2 Add cart page`,
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question: 'Which command shows exactly what "Fix rounding in cart total" changed?',
+        options: ["`git show b7a03d1`", "`git status`", "`git diff`", "`git restore b7a03d1`"],
+        answer: 0,
+        explanation:
+          "`git show` prints a commit's message and its diff. `git status` and `git diff` only describe what you haven't committed yet.",
+      },
+      {
+        kind: "mcq",
+        id: "q3",
+        question:
+          "You experimented in `config.js` and want the file back exactly as it was in the last commit. Nothing is staged. What do you run?",
+        options: [
+          "`git log config.js`",
+          "`git diff --staged`",
+          "`git commit`, then delete the file",
+          "`git restore config.js`, knowing the experiment is gone for good",
+        ],
+        answer: 3,
+        explanation:
+          "`restore` copies the committed version back over your edits. Those edits were never committed, so git has no copy of them to get back.",
+      },
+      {
+        kind: "challenge",
+        id: "sandbox",
+        title: "Keep the fix, drop the experiment",
+        prompt:
+          "You have two uncommitted edits. The one in `src/cart.js` makes the total count quantities, and it's right. The one in `index.html` was an experiment you don't want. Commit the fix on its own, and put `index.html` back the way the last commit had it.",
+        language: "git",
+        setup: script(
+          ...SHOP,
+          write("src/cart.js", CART.replace("i.price", "i.price * i.quantity")),
+          write("index.html", "<h1>Shop</h1>\n<marquee>SALE SALE SALE</marquee>\n"),
+        ),
+        starter: "",
+        hint: "`git diff` shows both edits. `git restore index.html` puts that file back as it was committed. Then stage `src/cart.js` and commit it.",
+        solution: script(
+          "git restore index.html",
+          "git add src/cart.js",
+          'git commit -m "Multiply price by quantity in cart total"',
+        ),
+        tests: [
+          {
+            name: "Your latest commit has the quantity fix, and not the experiment",
+            expression:
+              'contains HEAD:src/cart.js "i.quantity" && excludes HEAD:index.html "marquee"',
+          },
+          {
+            name: "`index.html` is back to its committed version",
+            expression: 'excludes index.html "marquee"',
+          },
+          { name: "Nothing is left uncommitted", expression: "clean" },
+        ],
+      },
+      {
+        kind: "callout",
+        body: "**Try it on your machine:** in your practice repository, change a line in `index.html` and run `git diff`. Stage it and run `git diff` again (empty) and then `git diff --staged`. Commit it, and find the commit with `git log --oneline` and `git show`.",
+      },
+    ],
+  },
+  "git-start.remotes": {
+    summary: "Put your repository on GitHub, and keep your copy and everyone else's in step.",
+    xp: 120,
+    blocks: [
+      {
+        kind: "text",
+        body: "A **remote** is another copy of your repository, usually on GitHub, and by convention it's called `origin`. Nothing moves between your copy and the remote on its own: `push` sends your new commits up, and `pull` brings other people's commits down and merges them into your branch.",
+      },
+      {
+        kind: "code",
+        language: "bash",
+        caption: "Two ways to start",
+        code: `# A project that already exists on GitHub: download it, full history included\ngit clone https://github.com/acme/shop.git\n\n# A repository you started locally: create an empty repo on GitHub, then\ngit remote add origin https://github.com/you/shop.git\ngit push -u origin main   # -u remembers origin/main, so next time it's just \`git push\``,
+      },
+      {
+        kind: "text",
+        body: "Your first push asks you to sign in, and your GitHub password won't work: GitHub stopped accepting passwords for git in 2021. If git opens a browser to sign in (Git for Windows does), follow it. Otherwise install the GitHub CLI from cli.github.com and run `gh auth login` once. Choose HTTPS and let it set up git, and every push after that just works.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "If your first push fails like this",
+        code: `$ git push -u origin main\nerror: src refspec main does not match any\n\n# Your branch is called master (git's old default). Rename it, then push:\n$ git branch -m main\n$ git push -u origin main`,
+      },
+      {
+        kind: "text",
+        body: "`git fetch` downloads new commits from the remote but leaves your branch alone. After a fetch, `git status` tells you how far apart you are. `git pull` is a fetch followed by a merge (that's the `pull.rebase false` you set up in the first lesson), and it's what you'll usually run.",
+      },
+      {
+        kind: "text",
+        body: "If a teammate pushed since you last pulled, GitHub **rejects** your push, because accepting it would throw their commits away. The fix is always the same: `git pull`, resolve a conflict if there is one, then push again. `git push --force` would get your push through by deleting their work from GitHub. Don't use it on a shared branch.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "Scenario: you try to push",
+        code: `$ git push\nTo github.com:acme/shop.git\n ! [rejected]        main -> main (fetch first)\nerror: failed to push some refs to 'github.com:acme/shop.git'\nhint: Updates were rejected because the remote contains work that you do not\nhint: have locally.`,
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question: "Your `git push` was rejected with the message above. What do you do?",
+        options: [
+          "`git push --force`, so your commits go through",
+          "Delete your folder and clone the repository again",
+          "`git pull`, sort out any conflict, then `git push` again",
+          "Make another commit and push that instead",
+        ],
+        answer: 2,
+        explanation:
+          "The remote has commits you don't. Pull them in so your branch contains both, then your push goes through without deleting anyone's work.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "Scenario: after git fetch",
+        code: `$ git status\nOn branch main\nYour branch is behind 'origin/main' by 2 commits, and can be fast-forwarded.`,
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          "After `git fetch`, `git status` says your branch is behind `origin/main` by 2 commits and can be fast-forwarded. What does that mean?",
+        options: [
+          "You have 2 commits that GitHub doesn't have yet",
+          "GitHub has 2 commits you don't, and `git pull` will bring them in",
+          "2 of your commits were lost when you fetched",
+          "Your branch and GitHub's have split, so pulling will need a merge commit",
+        ],
+        answer: 1,
+        explanation:
+          "*Behind* means the remote is ahead of you. *Can be fast-forwarded* means you have no new commits of your own, so pulling just moves your branch forward, with no merge commit.",
+      },
+      {
+        kind: "fill",
+        id: "f1",
+        prompt: "Get your own copy of an existing GitHub project, with its full history.",
+        before: "git ",
+        after: " https://github.com/acme/shop.git",
+        answer: "clone",
+        explanation:
+          "`clone` downloads the whole repository, checks out its main branch, and sets it up as `origin` so `pull` and `push` work straight away.",
+      },
+      {
+        kind: "challenge",
+        id: "sandbox",
+        title: "Get a rejected push through",
+        prompt:
+          "You've committed a free-shipping banner, but while you worked a teammate pushed a fix to `main`. Run `git push` and read what happens. Then get your commit onto GitHub without losing theirs.",
+        language: "git",
+        setup: script(
+          ...SHOP,
+          `@teammate ${write("src/cart.js", CART.replace("sum + i.price, 0)", "sum + Math.round(i.price * 100), 0) / 100"))}`,
+          '@teammate git commit -am "Round prices to cents"',
+          "@teammate git push",
+          write("index.html", "<h1>Shop</h1>\n<p>Free shipping over $50</p>\n"),
+          'git commit -am "Show free-shipping banner"',
+        ),
+        starter: "",
+        hint: "The push is rejected because GitHub has a commit you don't. `git pull` brings it in and merges it with yours; then `git push` again.",
+        solution: script("git pull", "git push"),
+        tests: [
+          {
+            name: "GitHub's `main` has your *Show free-shipping banner*",
+            expression: 'remote-has main "Show free-shipping banner"',
+          },
+          {
+            name: "…and still has your teammate's *Round prices to cents*",
+            expression:
+              'remote-has main "Show free-shipping banner" && remote-has main "Round prices to cents"',
+          },
+          {
+            name: "Your `main` and GitHub's are the same commit, with nothing left uncommitted",
+            expression: "remote-same main main && clean",
+          },
+        ],
+      },
+      {
+        kind: "callout",
+        body: "**Try it on your machine:** create an empty repository on GitHub (no README), connect your practice repository with `git remote add origin …`, sign in with `gh auth login` if git asks you to, and `git push -u origin main`. Refresh the GitHub page and your commits are there. Then edit a file on GitHub's website, commit it there, and bring it back with `git pull`.",
+      },
+    ],
+  },
+  "git-core.commits": {
+    summary: "Make commits small enough to review and clear enough to read in a year.",
+    xp: 110,
+    blocks: [
+      {
+        kind: "text",
+        body: "A commit is a snapshot of your project plus a note explaining it. Git keeps every snapshot, so the history becomes a story of how the code got here. When something breaks six months from now, that story is what you read to find out why a line exists. A good commit does one thing and says why.",
+      },
+      {
+        kind: "text",
+        body: "Changes reach a commit in two steps. `git add` moves them into the **staging area**, and `git commit` records whatever is staged. The pause between the two steps is useful: if you fixed a bug and renamed a variable in the same file, `git add -p` lets you stage the fix alone, commit it, and commit the rename separately.",
+      },
+      {
+        kind: "code",
+        language: "bash",
+        caption: "Stage part of a file, check it, then commit",
+        code: `git status              # what changed, and what is staged\ngit add -p src/cart.js  # pick the hunks that belong to this commit\ngit diff --staged       # read exactly what you are about to commit\ngit commit`,
+      },
+      {
+        kind: "text",
+        body: "The message has two parts. The subject line is short (about 50 characters) and written as a command: *Fix rounding in cart total*, not *Fixed stuff*. After a blank line, the body explains **why** the change was needed. The diff already shows what changed; nothing else records why.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "A message someone can use later",
+        code: `Fix rounding in cart total\n\nPrices were summed as floats, so 2 x 9.99 + 24.50 came out as\n44.480000000000004 and failed the equality check at checkout.\nSum in cents and convert once at the end.`,
+      },
+      {
+        kind: "callout",
+        body: "Forgot a file or made a typo in the last commit? `git commit --amend` replaces it. Only do this before you push: amending creates a new commit with a new ID, so anyone who already pulled the old one ends up with a history that no longer matches yours.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "Scenario: you run git status",
+        code: `$ git status\nOn branch main\nChanges to be committed:\n        modified:   src/cart.js\n\nChanges not staged for commit:\n        modified:   src/cart.js\n        modified:   README.md`,
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          'With `git status` showing the above, you run `git commit -m "Fix rounding in cart total"`. What goes into the commit?',
+        options: [
+          "Only the staged part of `src/cart.js`",
+          "Every change to `src/cart.js`, staged or not",
+          "Everything listed, including `README.md`",
+          "Nothing: you have to run `git add .` first",
+        ],
+        answer: 0,
+        explanation:
+          "A commit records the staging area and nothing else. `src/cart.js` appears in both lists because only some of its changes were staged, and the unstaged ones stay in your working copy for a later commit.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          "In March a teammate wants to know why the checkout total started rounding differently. Which commit lets them find out without asking you?",
+        options: [
+          "`Update cart.js to sum in cents`, with no body",
+          "`Round cart total in cents`, with no body",
+          "`Round cart total in cents`, with a body explaining the float bug it fixes",
+          "`Fix bug Sam reported`, with a body linking the chat thread",
+        ],
+        answer: 2,
+        explanation:
+          "The diff already shows what changed. Only the message can record why, and a subject line has no room for it: the body is where the float bug goes. A chat link is only as good as the chat, which may be gone by March.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "Scenario: your log, just before pushing",
+        code: `$ git log --oneline\nc4d5e6f (HEAD -> main) Add discount code field\na1b2c3d (origin/main) Fix rounding in cart total\n9e8d7c6 Show free-shipping banner`,
+      },
+      {
+        kind: "mcq",
+        id: "q3",
+        question:
+          "You spot a typo in the discount code label. Which commit can you still safely `--amend`?",
+        options: [
+          "Both of the top two",
+          "Neither: amending is never safe",
+          "`a1b2c3d`, because it's older",
+          "`c4d5e6f` only, because it isn't on `origin` yet",
+        ],
+        answer: 3,
+        explanation:
+          "`origin/main` marks what the remote already has, so `a1b2c3d` is shared and rewriting it would break everyone's copy. `c4d5e6f` exists only on your machine.",
+      },
+      {
+        kind: "callout",
+        body: "**Try it on your machine:** in your practice repository, make two unrelated changes to one file. Stage just one with `git add -p`, commit it with a subject and a body that says why, then commit the other. `git log` should read as two clear entries.",
+      },
+    ],
+  },
+  "git-core.branches": {
+    summary: "Work on a branch, bring it back with a merge, and resolve a conflict calmly.",
+    xp: 140,
+    blocks: [
+      {
+        kind: "text",
+        body: "A branch is only a movable label pointing at a commit. Creating one costs nothing and copies nothing. Working on a branch keeps half-finished work away from `main`, so `main` always stays in a state you could ship.",
+      },
+      {
+        kind: "code",
+        language: "bash",
+        caption: "Start a branch, work on it, look at the shape of history",
+        code: `git switch -c feature/discount-codes   # create the branch and move onto it\n# ...edit, add, commit as usual...\ngit log --oneline --graph --all        # see where each branch points`,
+      },
+      {
+        kind: "text",
+        body: "`git merge` brings the branch back in two ways. If `main` has not moved since you branched, Git just slides the `main` label forward to your latest commit. This is called a **fast-forward**, and no new commit is created. If both branches have new commits, Git creates a **merge commit** with two parents, joining the two histories.",
+      },
+      {
+        kind: "code",
+        language: "bash",
+        code: `git switch main\ngit pull                      # get everyone else's work first\ngit merge feature/discount-codes`,
+      },
+      {
+        kind: "text",
+        body: "A **conflict** happens when both branches changed the same lines and Git cannot decide which version should win. It stops, marks the file, and waits for you. Everything between `<<<<<<<` and the divider is your side (`HEAD`), and everything between the divider and `>>>>>>>` is the incoming branch.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "What a conflict looks like inside the file",
+        code: `<<<<<<< HEAD\nconst FREE_SHIPPING_OVER = 50;\n=======\nconst FREE_SHIPPING_OVER = 75;\n>>>>>>> feature/discount-codes`,
+      },
+      {
+        kind: "text",
+        body: "To resolve it, edit the file so it reads the way it should. That might be one side, the other, or a mix of both. Delete all three marker lines, then run `git add` on the file and `git commit` to finish the merge. If you'd rather back out and think first, `git merge --abort` returns everything to how it was before the merge.",
+      },
+      {
+        kind: "callout",
+        body: "A conflict isn't an error. It means two people changed the same thing and someone has to decide which version is right. Read both sides before choosing, because the right answer is sometimes a combination of the two.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "Scenario A",
+        code: `$ git log --oneline --graph --all\n* 7d1e9a0 (feature/discount-codes) Validate discount code format\n* 3c8b2f1 Add discount code field\n* a1b2c3d (HEAD -> main) Fix rounding in cart total`,
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          "With history as in Scenario A, you run `git merge feature/discount-codes` on `main`. What happens?",
+        options: [
+          "Git creates a merge commit with two parents",
+          "A conflict, because both branches touched the cart",
+          "`main` moves to `7d1e9a0`: a fast-forward, with no new commit",
+          "The two feature commits are copied onto `main` with new IDs",
+        ],
+        answer: 2,
+        explanation:
+          "`main` is still at the commit the branch started from, so there's nothing to join. Git just moves the label forward.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "Scenario B: someone pushed to main in the meantime",
+        code: `$ git log --oneline --graph --all\n* 5e6f7a8 (HEAD -> main) Raise free shipping to 60\n| * 7d1e9a0 (feature/discount-codes) Validate discount code format\n| * 3c8b2f1 Add discount code field\n|/\n* a1b2c3d Fix rounding in cart total`,
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          "With history as in Scenario B, what does `git merge feature/discount-codes` on `main` produce?",
+        options: [
+          "A fast-forward to `7d1e9a0`",
+          "A new merge commit whose parents are `5e6f7a8` and `7d1e9a0`",
+          "It discards `5e6f7a8` to make room for the feature",
+          "An error: branches that have diverged can't be merged",
+        ],
+        answer: 1,
+        explanation:
+          "Both branches moved on after `a1b2c3d`, so Git joins them with a commit that has two parents. Neither side's commits are lost.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "The merge stops with a conflict in src/config.js",
+        code: `<<<<<<< HEAD\nconst FREE_SHIPPING_OVER = 60;\n=======\nconst FREE_SHIPPING_OVER = 50;\nconst DISCOUNT_CODE_PATTERN = /^[A-Z0-9]{6}$/;\n>>>>>>> feature/discount-codes`,
+      },
+      {
+        kind: "mcq",
+        id: "q3",
+        question:
+          "`main` raised the threshold to 60 on purpose. Your branch only meant to add the pattern line. What should the file say once you've resolved it?",
+        options: [
+          "Only the `HEAD` side: threshold 60 and no pattern",
+          "Only your side: threshold 50 plus the pattern",
+          "Threshold 60 **and** the pattern line, with all three markers removed",
+          "Both threshold lines, so nothing is lost",
+        ],
+        answer: 2,
+        explanation:
+          "Your branch still has the old threshold only because it started before `main` changed it. Keep the change each side intended: `main`'s 60 and your new line.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "After editing the file",
+        code: `$ git status\nOn branch main\nYou have unmerged paths.\n  (fix conflicts and run "git commit")\n\nUnmerged paths:\n        both modified:   src/config.js`,
+      },
+      {
+        kind: "mcq",
+        id: "q4",
+        question: "You've fixed `src/config.js` and saved it. What do you run next?",
+        options: [
+          "`git add src/config.js`, then `git commit`",
+          "`git merge feature/discount-codes` again",
+          "`git reset --hard`",
+          "Nothing: Git will notice the markers are gone",
+        ],
+        answer: 0,
+        explanation:
+          "Staging the file is how you tell Git it's resolved, and the commit records the merge. `git reset --hard` would throw your resolution away. (If you'd rather start over, `git merge --abort` puts everything back as it was.)",
+      },
+      {
+        kind: "challenge",
+        id: "sandbox",
+        title: "Merge a branch and resolve the conflict",
+        prompt:
+          "While `feature/discount-codes` added a pattern for discount codes, `main` raised free shipping to 60. Merge the branch into `main`. Both changed the same lines of `src/config.js`, so you'll resolve a conflict: keep `main`'s 60 and the branch's new line.",
+        language: "git",
+        setup: script(
+          "git init",
+          write("src/config.js", "const FREE_SHIPPING_OVER = 50;\n"),
+          "git add .",
+          'git commit -m "Add config"',
+          "git switch -c feature/discount-codes",
+          write(
+            "src/config.js",
+            "const FREE_SHIPPING_OVER = 50;\nconst DISCOUNT_CODE_PATTERN = /^[A-Z0-9]{6}$/;\n",
+          ),
+          'git commit -am "Add discount code pattern"',
+          "git switch main",
+          write("src/config.js", "const FREE_SHIPPING_OVER = 60;\n"),
+          'git commit -am "Raise free shipping to 60"',
+        ),
+        starter: "",
+        hint: "`git merge feature/discount-codes` stops with a conflict. Open `src/config.js` under Files, make it say what it should, delete the three marker lines and save. Then `git add src/config.js` and `git commit`.",
+        solution: script(
+          "git merge feature/discount-codes",
+          write(
+            "src/config.js",
+            "const FREE_SHIPPING_OVER = 60;\nconst DISCOUNT_CODE_PATTERN = /^[A-Z0-9]{6}$/;\n",
+          ),
+          "git add src/config.js",
+          "git commit",
+        ),
+        tests: [
+          {
+            name: "`main` includes *Add discount code pattern*",
+            expression: 'has main "Add discount code pattern"',
+          },
+          { name: "`main` ends in a merge commit", expression: "parents main 2" },
+          {
+            name: "The merged `src/config.js` keeps the threshold of 60 and the pattern line",
+            expression:
+              'parents main 2 && contains main:src/config.js "FREE_SHIPPING_OVER = 60;" && contains main:src/config.js "DISCOUNT_CODE_PATTERN"',
+          },
+          {
+            name: "…with no conflict markers left in it",
+            expression:
+              'parents main 2 && excludes main:src/config.js "<<<<<<<" && excludes main:src/config.js ">>>>>>>"',
+          },
+          { name: "Nothing is left uncommitted", expression: "parents main 2 && clean" },
+        ],
+      },
+      {
+        kind: "callout",
+        body: "**Try it on your machine:** make a conflict on purpose. On a new branch, change a line and commit. Switch back to `main`, change the same line differently and commit. Merge the branch, resolve the conflict, `git add` and commit, then look at the result with `git log --oneline --graph`.",
+      },
+    ],
+  },
+  "git-core.prs": {
+    summary:
+      "Open a pull request someone can review, and undo a bad merge without rewriting history.",
+    xp: 130,
+    blocks: [
+      {
+        kind: "text",
+        body: "A pull request asks your team to merge your branch into `main`. It is also where the review happens, so the job is to make reviewing easy. Keep it small, focused on one change, and explained well enough that the reviewer doesn't have to guess what you meant.",
+      },
+      {
+        kind: "code",
+        language: "bash",
+        caption: "Publish the branch and open the pull request",
+        code: `git push -u origin feature/discount-codes   # -u remembers the remote for next time\ngh pr create --fill                         # or open it from the GitHub page`,
+      },
+      {
+        kind: "text",
+        body: "A useful description answers three questions: **what** changes, **why** it's needed, and **how you checked it**. Link the issue it closes, and add a screenshot if the UI changes. A 200-line pull request gets a careful review, while a 2,000-line one usually gets a quick glance and an approval.",
+      },
+      {
+        kind: "text",
+        body: "Review comments are about the code, not the person. If you're reviewing, ask questions (*what happens if the list is empty?*) and say which comments block the merge and which are optional. If you're the author, reply to every comment, push fixes as new commits so the reviewer can see what changed, and resolve a thread only once the reviewer is satisfied.",
+      },
+      {
+        kind: "text",
+        body: "Sometimes a merged change breaks `main` anyway. The fix is not to rewrite shared history, because `git reset` followed by a force-push pulls commits out from under everyone who has already pulled them. Instead, `git revert` creates a **new** commit that undoes the bad one. History stays intact, and you can open a pull request for the revert like any other change.",
+      },
+      {
+        kind: "code",
+        language: "bash",
+        code: `git log --oneline            # find the commit that broke things, e.g. a1b2c3d\ngit revert a1b2c3d           # new commit that undoes it\ngit revert -m 1 <merge-sha>  # for a merge commit: keep main's side (parent 1)`,
+      },
+      {
+        kind: "callout",
+        body: "Use `reset` and `--amend` only on commits nobody else has. Once a commit is shared, undo it with `revert`.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "Scenario: a pull request waiting for review",
+        code: `Title:        Updates\nFiles changed: 41    +1,812  −604\nDescription:  (empty)`,
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          "Your pull request, titled *Updates*, changes 41 files and about 2,400 lines, with no description. What would do the most to get it a real review?",
+        options: [
+          "Add more reviewers, so the work is shared",
+          "Keep it as one PR, but write a description of what changes, why, and how it was tested",
+          "Ask for a quick approval and promise to fix anything found later",
+          "Split it into focused PRs, each saying what changes, why, and how it was tested",
+        ],
+        answer: 3,
+        explanation:
+          "A description helps, but nobody reviews 2,400 lines properly in one sitting: they skim and approve. Small PRs, each explained, are the kind that get a real review.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption:
+          "Scenario: checkout broke after this merge, and three teammates have already pulled main",
+        code: `$ git log --oneline\nf00ba12 (HEAD -> main, origin/main) Merge pull request #42 from feature/discount-codes\n5e6f7a8 Raise free shipping to 60\na1b2c3d Fix rounding in cart total`,
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          "Pull request #42 broke checkout, and teammates have already pulled `main`. How do you undo it?",
+        options: [
+          "`git revert -m 1 f00ba12`, then push the revert (or open a PR for it)",
+          "`git reset --hard 5e6f7a8`, then `git push --force`",
+          "`git commit --amend` to edit the merge",
+          "Delete the `feature/discount-codes` branch",
+        ],
+        answer: 0,
+        explanation:
+          "`f00ba12` is already shared, so rewriting it would break your teammates' copies. `revert` adds a new commit that undoes it. `-m 1` says to keep `main`'s side, because a merge has two parents.",
+      },
+      {
+        kind: "code",
+        language: "text",
+        caption: "A review comment on your PR",
+        code: `src/discount.js, line 12\n> What happens if code is an empty string?`,
+      },
+      {
+        kind: "mcq",
+        id: "q3",
+        question: "It turns out an empty code crashes the checkout. What's the best response?",
+        options: [
+          "Fix it, then squash and force-push so the PR stays one clean commit",
+          "Fix it in a new commit and resolve the thread yourself",
+          "Reply that empty codes are rare, and open an issue to fix it later",
+          "Add a test for the empty case, fix it in a new commit, and reply saying what changed",
+        ],
+        answer: 3,
+        explanation:
+          "A new commit shows the reviewer exactly what changed since they last looked, the test stops the bug coming back, and your reply lets them close the thread. Squashing hides what changed, and resolving the thread yourself skips their check.",
+      },
+      {
+        kind: "challenge",
+        id: "sandbox",
+        title: "Undo a merged pull request",
+        prompt:
+          "Pull request #42 was merged into `main` and pushed, and it broke checkout. Three teammates have already pulled. Undo it without rewriting history, and push the fix.",
+        language: "git",
+        setup: script(
+          ...SHOP,
+          "git switch -c feature/discount-codes",
+          write("src/discount.js", "export const PATTERN = /^[A-Z0-9]{6}$/;\n"),
+          "git add .",
+          'git commit -m "Add discount codes"',
+          "git push -u origin feature/discount-codes",
+          "git switch main",
+          'git merge --no-ff feature/discount-codes -m "Merge pull request #42 from feature/discount-codes"',
+          "git push",
+        ),
+        starter: "",
+        hint: "`git log --oneline` shows the merge on top. A merge has two parents, so revert it with `git revert -m 1 HEAD` to keep `main`'s side, then `git push`.",
+        solution: script("git revert -m 1 HEAD", "git push"),
+        tests: [
+          {
+            name: "`main` no longer has the pull request's changes",
+            expression: "absent main:src/discount.js",
+          },
+          {
+            name: "…and the merge is still in its history",
+            expression:
+              'absent main:src/discount.js && has main "Merge pull request #42 from feature/discount-codes"',
+          },
+          {
+            name: "GitHub's `main` has your fix, with nothing left uncommitted",
+            expression: "absent remote/main:src/discount.js && remote-same main main && clean",
+          },
+        ],
+      },
+      {
+        kind: "callout",
+        body: "**Try it on your machine:** push a branch to your practice repository on GitHub and open a pull request against `main`, with a description that covers what, why and how you tested it. Merge it, then undo it with `git revert -m 1 <merge-sha>` and push the revert.",
+      },
+    ],
+  },
   "git-rescue.stash": {
     summary: "Set unfinished work aside with stash, and bring it back without losing it.",
     xp: 110,
@@ -119,6 +974,46 @@ The stash entry is kept in case you need it again.`,
           "`-u` (`--include-untracked`) takes new files as well as changes to tracked ones.",
       },
       {
+        kind: "challenge",
+        id: "sandbox",
+        title: "Pull without losing your edit",
+        prompt:
+          "You're halfway through adding a discount function to `src/cart.js`, and a teammate has pushed a rounding fix to the same file. Get their fix into your `main` and carry on with your edit, still uncommitted.",
+        language: "git",
+        setup: script(
+          ...SHOP,
+          `@teammate ${write("src/cart.js", CART.replace("sum + i.price, 0)", "sum + Math.round(i.price * 100), 0) / 100"))}`,
+          '@teammate git commit -am "Fix rounding in cart total"',
+          "@teammate git push",
+          write(
+            "src/cart.js",
+            `${CART}\nexport function applyDiscount(total, code) {\n  // TODO: look up the code\n}\n`,
+          ),
+        ),
+        starter: "",
+        hint: "`git pull` refuses because your edit is in the way. `git stash`, then `git pull`, then `git stash pop` to put your edit back on top.",
+        solution: script("git stash", "git pull", "git stash pop"),
+        tests: [
+          {
+            name: "Your `main` has your teammate's *Fix rounding in cart total*",
+            expression: 'has main "Fix rounding in cart total"',
+          },
+          {
+            name: "`src/cart.js` has their fix and your unfinished edit together",
+            expression: 'contains src/cart.js "Math.round" && contains src/cart.js "applyDiscount"',
+          },
+          {
+            name: "…and your edit is still uncommitted",
+            expression:
+              'has main "Fix rounding in cart total" && excludes HEAD:src/cart.js "applyDiscount" && contains src/cart.js "applyDiscount"',
+          },
+          {
+            name: "The stash is empty and nothing is left conflicted",
+            expression: 'has main "Fix rounding in cart total" && stashes 0 && idle',
+          },
+        ],
+      },
+      {
         kind: "callout",
         body: "**Try it on your machine:** in your practice repository, edit a file and create a new one. Run `git stash` and check `git status`: the new file is still there. Run `git stash pop`, then try `git stash -u` and see both disappear. Bring them back with `git stash pop`.",
       },
@@ -212,6 +1107,53 @@ a1b2c3d (HEAD -> main, origin/main) Fix rounding in cart total`,
         answer: 0,
         explanation:
           "`restore` works on the file you name. `git reset --hard` would discard both files' edits, adding `HEAD~1` would also remove a pushed commit, and `stash` sets both files aside.",
+      },
+      {
+        kind: "challenge",
+        id: "sandbox",
+        title: "Three commits into one",
+        prompt:
+          "On `feature/coupons` you made three messy commits: *wip*, *wip 2* and *fix typo*. None are pushed. Turn them into a single commit called *Add coupon field*, keeping all of the work.",
+        language: "git",
+        setup: script(
+          ...SHOP,
+          "git switch -c feature/coupons",
+          write("src/coupon.js", "export function couponField() {\n"),
+          "git add .",
+          'git commit -m "wip"',
+          write(
+            "src/coupon.js",
+            "export function couponField() {\n  return '<input name=\"coupon\">';\n}\n",
+          ),
+          'git commit -am "wip 2"',
+          write(
+            "src/coupon.js",
+            'export function couponField() {\n  return \'<input name="coupon" maxlength="12">\';\n}\n',
+          ),
+          'git commit -am "fix typo"',
+        ),
+        starter: "",
+        hint: "`git reset --soft HEAD~3` takes the branch back to before the three commits and leaves all their changes staged. Then commit once.",
+        solution: script("git reset --soft HEAD~3", 'git commit -m "Add coupon field"'),
+        tests: [
+          {
+            name: "`feature/coupons` is one commit ahead of `main`",
+            expression: "ahead feature/coupons main 1",
+          },
+          {
+            name: "That commit is *Add coupon field*",
+            expression: 'tip feature/coupons "Add coupon field"',
+          },
+          {
+            name: "It has all the work, including the last fix",
+            expression:
+              'tip feature/coupons "Add coupon field" && contains feature/coupons:src/coupon.js "maxlength"',
+          },
+          {
+            name: "`main` is untouched and nothing is left uncommitted",
+            expression: 'tip feature/coupons "Add coupon field" && same main origin/main && clean',
+          },
+        ],
       },
       {
         kind: "callout",
@@ -321,6 +1263,37 @@ Switched to branch 'main'`,
           "`switch -c` creates a branch at the current commit and switches to it, so anything you commit next belongs to `experiment`.",
       },
       {
+        kind: "challenge",
+        id: "sandbox",
+        title: "Move a commit off main",
+        prompt:
+          "You committed *Add discount field* straight onto `main` when it belonged on a new branch, `feature/discount`. It isn't pushed. Put it on that branch, and put `main` back where GitHub has it.",
+        language: "git",
+        setup: script(
+          ...SHOP,
+          write("index.html", '<h1>Shop</h1>\n<input name="discount">\n'),
+          'git commit -am "Add discount field"',
+        ),
+        starter: "",
+        hint: "Make the branch first, with `git switch -c feature/discount`, so the commit is safe on it. Then `git switch main` and `git reset --hard origin/main`.",
+        solution: script(
+          "git switch -c feature/discount",
+          "git switch main",
+          "git reset --hard origin/main",
+        ),
+        tests: [
+          {
+            name: "`feature/discount` has *Add discount field*",
+            expression: 'has feature/discount "Add discount field"',
+          },
+          { name: "`main` doesn't", expression: 'lacks main "Add discount field"' },
+          {
+            name: "`main` is back where GitHub has it, with nothing left uncommitted",
+            expression: "same main origin/main && clean",
+          },
+        ],
+      },
+      {
         kind: "callout",
         body: "**Try it on your machine:** on `main` in your practice repository, make a commit you haven't pushed. Move it to a new branch with `git switch -c`, then put `main` back with `git reset --hard origin/main`. Check the result with `git log --oneline --graph --all`.",
       },
@@ -412,6 +1385,52 @@ Deleted branch feature/coupons (was c88774e).`,
         answer: 1,
         explanation:
           "The reflog records where `HEAD` pointed, and only commits can be pointed at. Every other option was a commit at some moment. Uncommitted edits only ever lived in your files, which is why it pays to commit or stash before anything risky.",
+      },
+      {
+        kind: "challenge",
+        id: "sandbox",
+        title: "Undo a bad five minutes",
+        prompt:
+          "You committed *Add coupon validation* on `main`, then wiped it with `git reset --hard HEAD~1`. Then you made `feature/wishlist`, committed *Add wishlist button* on it, went back to `main` and deleted the branch with `git branch -D`. Neither was pushed. Get both back.",
+        language: "git",
+        setup: script(
+          ...SHOP,
+          write(
+            "src/coupon.js",
+            "export const validCoupon = (code) => /^[A-Z0-9]{6}$/.test(code);\n",
+          ),
+          "git add .",
+          'git commit -m "Add coupon validation"',
+          "git reset --hard HEAD~1",
+          "git switch -c feature/wishlist",
+          write("src/wishlist.js", "export const wishlist = [];\n"),
+          "git add .",
+          'git commit -m "Add wishlist button"',
+          "git switch main",
+          "git branch -D feature/wishlist",
+        ),
+        starter: "",
+        hint: "`git reflog` lists both commits with their ids. Recreate the branch with `git branch feature/wishlist <id>`, and point `main` back at the other with `git reset --hard <id>`.",
+        solution: script("git branch feature/wishlist HEAD@{1}", "git reset --hard HEAD@{4}"),
+        tests: [
+          {
+            name: "`main` has *Add coupon validation* back",
+            expression: 'has main "Add coupon validation"',
+          },
+          {
+            name: "`feature/wishlist` exists again, with *Add wishlist button*",
+            expression: 'has feature/wishlist "Add wishlist button"',
+          },
+          {
+            name: "…and that commit is still only on its branch",
+            expression:
+              'has feature/wishlist "Add wishlist button" && lacks main "Add wishlist button"',
+          },
+          {
+            name: "Nothing is left uncommitted",
+            expression: 'has main "Add coupon validation" && clean',
+          },
+        ],
       },
       {
         kind: "callout",
@@ -539,6 +1558,46 @@ hint: 'git pull ...') before pushing again.`,
           "Rebasing replaces commits. That's harmless when nobody else has the old ones. Everything else on the list is shared, so rebasing it would leave other people holding commits that no longer exist on the remote.",
       },
       {
+        kind: "challenge",
+        id: "sandbox",
+        title: "Rebase your pull request branch",
+        prompt:
+          "Your branch `feature/discount` is pushed for a pull request, and `main` has moved on since. Bring the branch up to date with `main` as a straight line, with no merge commit, and update GitHub's copy.",
+        language: "git",
+        setup: script(
+          ...SHOP,
+          "git switch -c feature/discount",
+          write("src/discount.js", "export const PATTERN = /^[A-Z0-9]{6}$/;\n"),
+          "git add .",
+          'git commit -m "Add discount field"',
+          "git push -u origin feature/discount",
+          "git switch main",
+          write("index.html", "<h1>Shop</h1>\n<p>Free shipping over $60</p>\n"),
+          'git commit -am "Raise free shipping to 60"',
+          "git push",
+          "git switch feature/discount",
+        ),
+        starter: "",
+        hint: "`git rebase main` replays your commit on top of `main`. A plain push is then rejected, because GitHub has the old copy; replace it with `git push --force-with-lease`.",
+        solution: script("git rebase main", "git push --force-with-lease"),
+        tests: [
+          {
+            name: "`feature/discount` now includes *Raise free shipping to 60*",
+            expression: 'has feature/discount "Raise free shipping to 60"',
+          },
+          {
+            name: "…with no merge commit",
+            expression:
+              'has feature/discount "Raise free shipping to 60" && linear feature/discount',
+          },
+          {
+            name: "GitHub's `feature/discount` matches yours, and its `main` is untouched",
+            expression:
+              'remote-has feature/discount "Raise free shipping to 60" && remote-same feature/discount feature/discount && remote-lacks main "Add discount field" && clean',
+          },
+        ],
+      },
+      {
         kind: "callout",
         body: "**Try it on your machine:** branch off `main` and commit. Switch back to `main` and commit something else. Return to your branch, run `git rebase main`, and compare `git log --oneline --graph --all` before and after. Note that your commit's ID changed.",
       },
@@ -620,6 +1679,48 @@ $ git status --short
         answer: "--cached",
         explanation:
           "`--cached` removes the file from what git tracks and leaves your copy alone. Add `.env` to `.gitignore` and run `git commit --amend`, and the commit no longer contains it.",
+      },
+      {
+        kind: "challenge",
+        id: "sandbox",
+        title: "Stop tracking node_modules",
+        prompt:
+          "Someone committed `node_modules/` before the project had a `.gitignore`. Stop git tracking it, keep the folder on your disk, and make sure it can't be added again.",
+        language: "git",
+        setup: script(
+          "git init",
+          write("package.json", '{ "name": "shop" }\n'),
+          write("index.js", "require('lodash');\n"),
+          write("node_modules/lodash/index.js", "module.exports = {};\n"),
+          "git add .",
+          'git commit -m "Add shop"',
+          "git remote add origin git@github.com:you/shop.git",
+          "git push -u origin main",
+        ),
+        starter: "",
+        hint: 'Add it to `.gitignore` with `echo "node_modules/" >> .gitignore`, untrack it with `git rm -r --cached node_modules`, then stage `.gitignore` and commit.',
+        solution: script(
+          'echo "node_modules/" >> .gitignore',
+          "git rm -r --cached node_modules",
+          "git add .gitignore",
+          'git commit -m "Stop tracking node_modules"',
+        ),
+        tests: [
+          { name: "`node_modules` is no longer tracked", expression: "untracked node_modules" },
+          {
+            name: "…but it's still on your disk",
+            expression: "untracked node_modules && present node_modules/lodash/index.js",
+          },
+          {
+            name: "Your latest commit no longer contains it",
+            expression: "absent HEAD:node_modules",
+          },
+          {
+            name: "A committed `.gitignore` keeps it out",
+            expression: 'contains HEAD:.gitignore "node_modules"',
+          },
+          { name: "Nothing is left uncommitted", expression: "absent HEAD:node_modules && clean" },
+        ],
       },
       {
         kind: "callout",

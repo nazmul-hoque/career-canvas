@@ -242,6 +242,23 @@ using user-level helpers (`render`, `getByRole`, `getByLabelText`, `click`, `fil
 `blur`, `waitFor`, `text`) and should assert what a user sees, never how the
 code is written. `tests/react-runtime.test.ts` runs it under happy-dom.
 
+**Git sandbox.** Git challenges (`language: "git"`) run in `src/lib/git-sandbox.ts`,
+a deterministic model of git in plain TypeScript: commits, index, branches,
+three-way merges with real conflicts, rebase, reset, stash, reflog, a remote and
+an `@teammate` clone who pushes to it. It is a model, and the UI says so. A
+challenge's `setup` script builds the scenario; the learner's transcript (one
+command per line, editor saves as `@write <path> <json>`) is the `code`; `tests`
+are declarative checks on the resulting repository (`has main "msg"`,
+`remote-same main main`, `clean`, joined with `&&`), never on the commands typed.
+Because the engine is pure, `completeLessonFn` replays the transcript on the
+server and ignores `challengeSolved` for git — the one challenge type graded
+server-side. `bun run git:verify` runs every challenge's setup and solution,
+plus extra scenarios, through real git and the sandbox and compares the result;
+run it after touching the engine or a git challenge (`--outputs` also diffs the
+printed text). `tests/git-sandbox.test.ts` requires every solution to pass, an
+empty session to fail, and no goal to be met before the learner starts — a
+guard like "main is untouched" rides along with the goal it protects via `&&`.
+
 **Still mocked.** The checkout in `src/routes/pricing.tsx` when
 `PAYMENTS_PROVIDER=mock`. Its input/output shape is the contract the UI depends
 on — swap the implementation without changing the shape.
