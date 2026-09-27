@@ -460,6 +460,29 @@ Two facts shape every item below:
       Free unlocks a course's first module, so with enforcement on, Free gets
       the four basics and "Everyday git" needs a plan.
 
+- [x] **Multiple-choice answers no longer favour B** (2026-09-27) — eleven
+      courses leant on one position (JavaScript: B on 23 of 27, so always
+      answering B scored 85%; B was right on 153 of 396 questions overall).
+      111 questions had their right option moved, other options keeping their
+      order, and none whose wording points at a position ("above", "both of
+      the") or whose options are sorted numbers. Every question kept its text,
+      options and right answer; every course is now 25–33% at most. A test
+      now holds every course to within one question of an even split. A learner
+      with an unfinished lesson draft may find a picked-but-unchecked option
+      has moved; the server re-checks every answer, so nothing is miscredited.
+
+- [x] **JavaScript: strings and template literals** (2026-09-27) — a course
+      review found template literals were never taught, though the React course
+      uses them from its first lesson. `js-basics.strings` (after functions,
+      before conditionals) covers `${}`, the quotes-don't-interpolate trap,
+      `undefined` leaking into text, cleaning input, and strings never
+      changing. Its `itemCount` helper sets up the "1 item / N items" text the
+      DOM checkpoint and capstone ask for. `InlineText` now reads Markdown's
+      double-backtick code, which also fixes two Claude course spans that
+      rendered with stray backticks. Still open from that review: fetch and
+      JSON, scope/closures/modules, a first-program lesson and HTML basics for
+      the Full-stack path, and the classic `for`/`while` loop.
+
 - [x] **Git sandbox** (2026-09-27) — eleven Git lessons now end in a hands-on
       challenge: a terminal, a live commit graph and a file editor over
       `src/lib/git-sandbox.ts`, a deterministic model of git. The server replays

@@ -71,11 +71,11 @@ export const uxDesignLessonBodies: Record<string, LessonBody> = {
         question: "An interviewee says “Honestly, I'd pay for that tomorrow.” What is that worth?",
         options: [
           "Strong evidence of demand — record it as a validated signal",
-          "Very little on its own; follow it with what they pay for today and what they tried last",
           "Enough to justify building a prototype",
+          "Very little on its own; follow it with what they pay for today and what they tried last",
           "Nothing, and you should end the interview",
         ],
-        answer: 1,
+        answer: 2,
         explanation:
           "It's a compliment about a hypothetical. The follow-up is what converts it into evidence or dissolves it: if they already pay for three tools in this space, that's a signal; if they've never spent a penny or an hour on it, the enthusiasm is politeness.",
       },
@@ -145,12 +145,12 @@ export const uxDesignLessonBodies: Record<string, LessonBody> = {
         question:
           "You want to find the screens your team has forgotten to design. Which artefact is the right one to draw?",
         options: [
+          "A user flow, because its decision points force every branch to be drawn",
           "A task flow, because it shows the path most people take",
           "A journey map, because it covers the whole experience",
-          "A user flow, because its decision points force every branch to be drawn",
           "A sitemap, because it lists every page",
         ],
-        answer: 2,
+        answer: 0,
         explanation:
           "Missing screens hide behind decisions — expired, not permitted, already done. A task flow deliberately omits branches, a journey map is too coarse to name screens, and a sitemap shows what exists rather than what should.",
       },
@@ -160,12 +160,12 @@ export const uxDesignLessonBodies: Record<string, LessonBody> = {
         question:
           "Your invite flow works perfectly in testing, but real users keep landing on a blank page. What was most likely missing from the flow?",
         options: [
-          "The entry point where someone arrives from an email link while signed out",
           "A loading spinner",
           "The confirmation screen",
           "The colour tokens for the empty state",
+          "The entry point where someone arrives from an email link while signed out",
         ],
-        answer: 0,
+        answer: 3,
         explanation:
           "Testing starts from the home screen; real invites start from an email, often in a browser with no session. The flow needs that arrow drawn, ending at sign-in and returning to the invite — otherwise nobody specifies what happens in between.",
       },
@@ -253,12 +253,12 @@ P3  Invite    Stopped at the seat limit, no idea   "Does this cost me
         id: "q2",
         question: "Which of these belongs in your notes during a session?",
         options: [
-          "“The information architecture needs rethinking”",
           "“P2 opened the ⋯ menu, closed it, then re-read the page for 40 seconds”",
+          "“The information architecture needs rethinking”",
           "“Participant seemed like a confident user”",
           "“We should move Refund to the top level”",
         ],
-        answer: 1,
+        answer: 0,
         explanation:
           "It records what happened, with enough detail to group later. The other three are conclusions or solutions written before the evidence is in — and once they're on the page, you stop looking for anything that contradicts them.",
       },

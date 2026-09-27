@@ -68,10 +68,10 @@ export const productLessonBodies: Record<string, LessonBody> = {
         options: [
           "The one that is quickest to test",
           "The one the team disagrees about most loudly",
-          "The one that is both high-risk and has no evidence behind it",
           "All four, briefly",
+          "The one that is both high-risk and has no evidence behind it",
         ],
-        answer: 2,
+        answer: 3,
         explanation:
           "Risk times ignorance is where the value of a test lives. The quickest test is often the one you already know the answer to, the loudest argument is often about something low-stakes, and spreading two weeks across four questions answers none of them.",
       },
@@ -81,12 +81,12 @@ export const productLessonBodies: Record<string, LessonBody> = {
         question:
           "Which of these is a riskiest assumption test rather than a small version of the product?",
         options: [
-          "Build the feature for one customer segment first",
           "Put up a pricing page with a real Buy button and count who clicks, before anything is built",
+          "Build the feature for one customer segment first",
           "Ship it behind a feature flag to 5% of users",
           "Build a rough version with no styling",
         ],
-        answer: 1,
+        answer: 0,
         explanation:
           "It tests the belief “people will pay for this” without building the thing. The other three all require building the product first — they're useful, but they answer “does it work” after you have already spent the money.",
       },
@@ -177,11 +177,11 @@ Rollout      10% of team-plan accounts, one week, then all.`,
         question: "A spec arrives with no open questions listed. What should you suspect?",
         options: [
           "It is unusually well researched",
-          "The unknowns exist but haven't been written down, so they'll be resolved ad hoc during the build",
           "It is too long",
           "The success metric is wrong",
+          "The unknowns exist but haven't been written down, so they'll be resolved ad hoc during the build",
         ],
-        answer: 1,
+        answer: 3,
         explanation:
           "Real features have edges nobody has decided yet. Unwritten ones don't disappear — they get settled by whichever engineer reaches them first, at the least convenient moment, with no one else aware a decision was made.",
       },
@@ -264,12 +264,12 @@ Read on    Day 30. Not day 3.`,
         id: "q1",
         question: "Which of these is a vanity metric for judging a feature launch?",
         options: [
-          "Share of active teams that used the feature in week one",
           "Total documents ever created, all time",
+          "Share of active teams that used the feature in week one",
           "Median time to complete the task",
           "30-day retention of teams that used it, versus those that didn't",
         ],
-        answer: 1,
+        answer: 0,
         explanation:
           "A cumulative all-time total can only rise, so it goes up whether the launch went well, badly or was never noticed. The other three can all get worse, which is what makes them capable of telling you something.",
       },

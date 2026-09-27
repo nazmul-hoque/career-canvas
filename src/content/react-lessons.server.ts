@@ -361,11 +361,11 @@ return text().includes("First Status: resolved") && text().includes("Second Stat
         question: "The status filter changes. Should the app fetch the same orders again?",
         options: [
           "Yes, every visible change belongs in the effect dependencies",
-          "No; filtering already-loaded data is a render calculation",
           "Yes, but only for the paid filter",
           "No; effects may never depend on state",
+          "No; filtering already-loaded data is a render calculation",
         ],
-        answer: 1,
+        answer: 3,
         explanation:
           "The filter changes how existing data is displayed, not the external resource being synchronized.",
       },
@@ -565,11 +565,11 @@ return text().includes("Gone") && !text().includes("Late");`,
         question: "Why is a button better than a div with an onClick for a disclosure?",
         options: [
           "Buttons always look better",
-          "Buttons already provide keyboard behavior, focus and an interactive role",
           "Divs cannot contain text",
+          "Buttons already provide keyboard behavior, focus and an interactive role",
           "React only allows click handlers on buttons",
         ],
-        answer: 1,
+        answer: 2,
         explanation: "Native semantics provide behavior and meaning before any ARIA is added.",
       },
       {
@@ -832,11 +832,11 @@ return atMax && text().includes("Quantity: 2") && !text().includes("Maximum avai
         question: "After resolving a ticket, where should the open-ticket count come from?",
         options: [
           "A second state value decremented in the click handler",
-          "The latest tickets array, filtered during render",
           "A variable outside the component",
+          "The latest tickets array, filtered during render",
           "A new request after every click",
         ],
-        answer: 1,
+        answer: 2,
         explanation: "A derived count cannot drift away from the records it summarizes.",
       },
       {
@@ -844,12 +844,12 @@ return atMax && text().includes("Quantity: 2") && !text().includes("Maximum avai
         id: "q2",
         question: "What prevents two tickets being created by a rapid double-click?",
         options: [
-          "Clear the input immediately",
           "Disable the submit button while the save promise is pending",
+          "Clear the input immediately",
           "Put the submit handler in an effect",
           "Use an array index as the new ticket ID",
         ],
-        answer: 1,
+        answer: 0,
         explanation:
           "Pending is a visible application state. Disabling the action prevents a duplicate request and explains why it cannot run.",
       },

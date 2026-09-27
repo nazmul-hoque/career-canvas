@@ -118,8 +118,8 @@ def receipt_line(item, price, quantity):
         kind: "mcq",
         id: "q1",
         question: "Which ages should you test to check both sides of the senior boundary at 65?",
-        options: ["0 and 100", "64 and 65", "65 and 66", "Only 65"],
-        answer: 1,
+        options: ["0 and 100", "65 and 66", "Only 65", "64 and 65"],
+        answer: 3,
         explanation: "64 is the final non-senior value and 65 is the first senior value.",
       },
       {
@@ -514,12 +514,12 @@ def report_path(input_path):
         question:
           "Why build a price with `Decimal` from its CSV text rather than converting the text to float first?",
         options: [
-          "Decimal can only read strings",
           "Converting through float can preserve a binary rounding error in the Decimal",
+          "Decimal can only read strings",
           "float cannot read decimal text",
           "CSV files reject floats",
         ],
-        answer: 1,
+        answer: 0,
         explanation:
           "Start from the original decimal text so the exact written amount is preserved.",
       },

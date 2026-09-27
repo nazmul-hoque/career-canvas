@@ -267,11 +267,13 @@ const LEARNING_DESIGNS = [
   },
   {
     courseId: "javascript",
-    lessonCount: 16,
+    lessonCount: 17,
     minMinutes: 330,
     lastLessonId: "js-project.catalog",
     minFills: 6,
     order: [
+      ["js-basics.functions", "js-basics.strings"],
+      ["js-basics.strings", "js-basics.checkpoint"],
       ["js-basics.conditionals", "js-basics.checkpoint"],
       ["js-data.transform", "js-data.checkpoint"],
       ["js-browser.run", "js-dom.select"],
@@ -361,6 +363,26 @@ describe.each(LEARNING_DESIGNS)(
         bodies[lesson.id]!.blocks.filter((block) => block.kind === "fill"),
       );
       expect(fills.length).toBeGreaterThanOrEqual(minFills);
+    });
+  },
+);
+
+// Authors put the right answer second without meaning to. On 2026-09-27 eleven
+// courses leant on one letter, and JavaScript's was B for 23 of 27 questions,
+// so always answering B scored 85%. No position may beat an even split by more
+// than one question.
+describe.each(courses.map((course) => [course.id, course] as const))(
+  "%s multiple-choice answers",
+  (_id, course) => {
+    test("don't favour one position", () => {
+      const answers = courseLessons(course).flatMap((lesson) =>
+        (getLessonBody(course.id, lesson.id)?.blocks ?? []).flatMap((block) =>
+          block.kind === "mcq" ? [block.answer] : [],
+        ),
+      );
+      if (answers.length === 0) return;
+      const commonest = Math.max(...[0, 1, 2, 3].map((i) => answers.filter((a) => a === i).length));
+      expect(commonest).toBeLessThanOrEqual(Math.ceil(answers.length / 4) + 1);
     });
   },
 );

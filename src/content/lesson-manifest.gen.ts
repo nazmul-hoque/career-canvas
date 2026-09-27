@@ -128,6 +128,7 @@ export const lessonManifest: Record<string, LessonManifestEntry> = {
   "js-basics.checkpoint": { challenge: true, questions: 2 },
   "js-basics.conditionals": { challenge: true, questions: 2 },
   "js-basics.functions": { challenge: true, questions: 3 },
+  "js-basics.strings": { challenge: true, questions: 3 },
   "js-basics.values": { challenge: true, questions: 2 },
   "js-browser.run": { challenge: true, questions: 2 },
   "js-data.arrays": { challenge: true, questions: 2 },

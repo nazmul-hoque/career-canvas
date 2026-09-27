@@ -143,6 +143,7 @@ export const courses: Course[] = [
       m("js-basics", "Values and logic", "The building blocks you will use every day.", [
         ["values", "Variables, types and truthiness", 15, "practice"],
         ["functions", "Functions and return values", 16, "practice"],
+        ["strings", "Strings and template literals", 16, "practice"],
         ["conditionals", "Conditionals and guard clauses", 16, "challenge"],
         ["checkpoint", "Checkpoint: checkout calculator", 22, "challenge"],
       ]),

@@ -191,8 +191,8 @@ FROM products;`,
         id: "q1",
         question:
           "7 different customers have placed orders, and 4 of them have orders in two different statuses. `SELECT DISTINCT customer_id, status FROM orders;` How many rows come back?",
-        options: ["7", "15", "4", "11"],
-        answer: 3,
+        options: ["11", "7", "15", "4"],
+        answer: 0,
         explanation:
           "`DISTINCT` compares whole rows, so each customer appears once per status they have: 7 customers, plus 4 who have a second status, is 11. `SELECT DISTINCT customer_id` alone would give 7.",
       },
@@ -212,8 +212,8 @@ FROM products;`,
         kind: "mcq",
         id: "q2",
         question: "What tier does the Rain Shell Jacket (180.0) get?",
-        options: ["mid", "premium", "budget", "NULL"],
-        answer: 0,
+        options: ["premium", "budget", "NULL", "mid"],
+        answer: 3,
         explanation:
           "180 is at least 50, so the first `WHEN` matches and `CASE` stops there. No product can ever reach 'premium'. Nothing errors; the labels are just wrong. Put `price >= 100` first.",
       },
@@ -342,12 +342,12 @@ WHERE o.status = 'refunded';`,
         id: "q2",
         question: "The shop has 8 customers, but only two come back. Why?",
         options: [
+          "WHERE runs after the join and drops every customer whose `o.status` isn't 'refunded', NULLs included. The condition belongs in ON",
           "LEFT JOIN only works on primary keys",
           "Only two customers have a refund, so leaving the other six out is right",
           "Refunds are stored in a different table",
-          "WHERE runs after the join and drops every customer whose `o.status` isn't 'refunded', NULLs included. The condition belongs in ON",
         ],
-        answer: 3,
+        answer: 0,
         explanation:
           "Write `LEFT JOIN orders AS o ON o.customer_id = c.id AND o.status = 'refunded'` and all 8 customers come back, with the refund where there is one and NULL where there isn't.",
       },
@@ -846,11 +846,11 @@ WHERE o.status = 'paid';
         question: "Which change fixes the 35.0 shipping total?",
         options: [
           "`SUM(DISTINCT o.shipping)`",
-          "Use LEFT JOIN instead of JOIN",
           "Total the items per order in a CTE first, then join one row per order",
+          "Use LEFT JOIN instead of JOIN",
           "Divide the result by `COUNT(*)`",
         ],
-        answer: 2,
+        answer: 1,
         explanation:
           "`SUM(DISTINCT ...)` collapses every 5.0 into a single 5.0, which is wrong in a different way. LEFT JOIN changes nothing here because every order has items. Only fixing the grain gives 25.0.",
       },
@@ -859,8 +859,8 @@ WHERE o.status = 'paid';
         id: "q2",
         question:
           'A dashboard counts "orders per customer" with `COUNT(*)` after joining `orders` to `order_items`. Maja has 3 paid orders with 7 item lines between them. What does the dashboard show for her?',
-        options: ["3", "7", "10", "1"],
-        answer: 1,
+        options: ["3", "10", "1", "7"],
+        answer: 3,
         explanation:
           "`COUNT(*)` counts rows, and after that join each row is an item line. Count before the join, or use `COUNT(DISTINCT o.id)`.",
       },
@@ -988,8 +988,8 @@ FROM orders;
         id: "q1",
         question:
           "The shop has 15 orders, 11 of them paid. What does `COUNT(CASE WHEN status = 'paid' THEN 1 ELSE 0 END)` return?",
-        options: ["11", "4", "1", "15"],
-        answer: 3,
+        options: ["15", "11", "4", "1"],
+        answer: 0,
         explanation:
           "The `ELSE 0` gives every other order a 0, and `COUNT` counts anything that isn't NULL. Drop the `ELSE` and it returns 11.",
       },
@@ -1329,12 +1329,12 @@ ORDER BY c.day;
         question:
           "You LEFT JOIN a calendar of the 30 days of June 2025 to `daily_sales` and add `WHERE s.store_id = 1`. How many rows come back?",
         options: [
-          "27: the WHERE removes the three outage days, whose store_id is NULL",
           "30, one for each day in the calendar",
           "82, one for each store's sales",
+          "27: the WHERE removes the three outage days, whose store_id is NULL",
           "90, three stores times 30 days",
         ],
-        answer: 0,
+        answer: 2,
         explanation:
           "The calendar gives 30 days, but `WHERE` runs after the join, and the outage days have NULL in every `daily_sales` column. Moving `s.store_id = 1` into the `ON` keeps all 30. Without any store filter you'd get 82: 27 website rows, 25 for Leeds and 30 for Harrogate.",
       },
@@ -1455,8 +1455,8 @@ LIMIT 4;
         id: "q1",
         question:
           "`orders` is an INTEGER column. February 2024 had 541 orders and January had 522. In SQLite, what does `(orders - prev) / prev` return for February?",
-        options: ["3.6", "0.036", "0", "NULL"],
-        answer: 2,
+        options: ["3.6", "0", "0.036", "NULL"],
+        answer: 1,
         explanation:
           "19 / 522 is integer division, so the result is 0, and so is every change under 100%. `100.0 * (orders - prev) / prev` makes it a decimal: 3.6.",
       },
@@ -1482,11 +1482,11 @@ LIMIT 4;
           "The chain's revenue rose from 632,516 in 2024 to 921,587 in 2025, and 201,753 of 2025's came from the new Harrogate store. Which headline is accurate?",
         options: [
           "Revenue grew 45.7%",
-          "Revenue grew 45.7% overall; the stores that traded in both years grew 13.8%",
           "Revenue grew 13.8%, because Harrogate's sales don't count",
+          "Revenue grew 45.7% overall; the stores that traded in both years grew 13.8%",
           "Growth can't be measured, because Harrogate has no 2024",
         ],
-        answer: 1,
+        answer: 2,
         explanation:
           "45.7% is true but reads as though the existing business is booming. Harrogate's sales are real and do count; they just aren't growth of anything. Reporting both numbers lets the reader see how much came from the new store.",
       },
@@ -1675,10 +1675,10 @@ WHERE created_at NOT GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]*';
         options: [
           "Two of them are duplicates",
           "SQLite ignores rows with a NULL amount",
-          "Two are spelled differently: 'Succeeded' and 'succeeded ' with a trailing space",
           "Two of them belong to orders that don't exist",
+          "Two are spelled differently: 'Succeeded' and 'succeeded ' with a trailing space",
         ],
-        answer: 2,
+        answer: 3,
         explanation:
           "`=` compares text exactly, so capital letters and spaces count. `LOWER(TRIM(status)) = 'succeeded'` finds all 14. The duplicate and the orphan both pass the filter.",
       },

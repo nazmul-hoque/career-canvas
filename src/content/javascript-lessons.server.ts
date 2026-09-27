@@ -6,6 +6,158 @@ import type { LessonBody } from "./lessons";
  * async work with a real DOM rather than assessing those skills in isolation.
  */
 export const javascriptLessonBodies: Record<string, LessonBody> = {
+  "js-basics.strings": {
+    summary:
+      "Build text with template literals, clean up what people type, and remember that string methods hand back a new string.",
+    xp: 120,
+    blocks: [
+      {
+        kind: "text",
+        body: 'Text in JavaScript is a **string**, written in single or double quotes: `"Headlamp"` or `\'Headlamp\'`. Joining strings with `+` works, but gets hard to read the moment a sentence has more than one value in it: `"Total: $" + total + " for " + count + " items"`.',
+      },
+      {
+        kind: "text",
+        body: "A **template literal** uses backticks (`` ` ``, usually the key left of 1) instead of quotes. Inside it, `${ }` drops in the value of any expression: a variable, a calculation, a function call, even a ternary. It can also run over several lines. From here on, this is how you build text.",
+      },
+      {
+        kind: "code",
+        language: "javascript",
+        code: `const name = "Ada";
+const count = 3;
+const total = 42.5;
+
+\`Hello, \${name}!\`                          // "Hello, Ada!"
+\`Total: $\${total.toFixed(2)}\`             // "Total: $42.50"
+\`\${count} \${count === 1 ? "item" : "items"}\`   // "3 items"
+
+'Hello, \${name}'   // "Hello, \${name}", exactly as typed: quotes don't interpolate`,
+      },
+      {
+        kind: "text",
+        body: "Two traps. **Only backticks interpolate**: with ordinary quotes, `${name}` is printed as those seven characters. And `${}` turns *anything* into text, so a missing value doesn't fail, it shows up on the page as `undefined`, `null` or `[object Object]`. When text looks wrong, check the value going in before the template around it.",
+      },
+      {
+        kind: "text",
+        body: '**Cleaning up what people type.** `trim()` removes spaces from both ends, and `toLowerCase()` makes comparisons ignore case, so `"  Ada@Example.com "` and `"ada@example.com"` can be treated as the same address. `includes("lamp")`, `startsWith("SKU-")` and `endsWith(".pdf")` answer yes/no questions. `slice(-4)` takes the last four characters, `padStart(3, "0")` turns `"7"` into `"007"`, and `replaceAll(" ", "")` strips every space. (`split` turns a string into an array; you\'ll use it once arrays arrive in the next module.)',
+      },
+      {
+        kind: "text",
+        body: "**Strings never change.** Every string method returns a *new* string and leaves the original alone. `email.trim();` on its own line does nothing useful; keep the result: `const clean = email.trim();`. That's the same rule as the array methods that don't mutate, which you'll meet next module.",
+      },
+      {
+        kind: "callout",
+        body: "Template literals build **text**. Later in this course you'll put text on the page, and building HTML with a template literal and handing it to `innerHTML` is how cross-site scripting happens. The DOM lessons show the safe way.",
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question: "`const name = \"Ada\"; console.log('Hi, ${name}');` What does it print?",
+        options: [
+          "Hi, Ada",
+          "An error, because `name` isn't defined",
+          "Hi, undefined",
+          "Hi, ${name}",
+        ],
+        answer: 3,
+        explanation:
+          "Only backticks interpolate. Inside ordinary quotes, `${name}` is just seven characters of text. Write `` `Hi, ${name}` ``.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          'A sign-up form runs `email.trim().toLowerCase();` on its own line, then saves `email`. The person typed `"  Ada@Example.com "`. What gets saved?',
+        options: [
+          '`"  Ada@Example.com "`, unchanged',
+          '`"ada@example.com"`',
+          '`"Ada@Example.com"`, trimmed but not lowercased',
+          "`undefined`",
+        ],
+        answer: 0,
+        explanation:
+          "String methods return a new string; they never change the original. The cleaned-up result was thrown away. Keep it: `const clean = email.trim().toLowerCase();`.",
+      },
+      {
+        kind: "fill",
+        id: "f1",
+        prompt: "Complete the template literal so it greets whoever is in `name`.",
+        before: "const greeting = `Hello, ",
+        after: "!`;",
+        answer: "${name}",
+        explanation:
+          "`${ }` inside backticks drops in the value of the expression, here the variable `name`.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Text for a shop",
+        prompt:
+          'Write four small helpers, using template literals to build the text. `itemCount(n)` returns `"1 item"`, or `"0 items"`, `"3 items"` and so on. `receiptLine(name, qty, price)` returns a line like `"Headlamp × 2: $70.00"`, where `price` is the price of one and the total always shows two decimals. `matchesSearch(productName, query)` is true when the product name contains the query, ignoring case and any spaces around the query; an empty query matches everything. `maskCard(number)` returns `"•••• 4242"`: four dots, a space, and the last four digits, ignoring spaces around the number.',
+        language: "javascript",
+        starter: `function itemCount(n) {
+  // your code here
+}
+
+function receiptLine(name, qty, price) {
+  // your code here
+}
+
+function matchesSearch(productName, query) {
+  // your code here
+}
+
+function maskCard(number) {
+  // your code here
+}
+
+console.log(itemCount(3), receiptLine("Headlamp", 2, 35));`,
+        hint: 'For the count: `` `${n} ${n === 1 ? "item" : "items"}` ``. For the receipt, multiply first, then `.toFixed(2)` inside the `${}`. For search, clean the query with `.trim().toLowerCase()`, return `true` if it\'s `""`, then compare against `productName.toLowerCase()` with `includes`. For the card: `number.trim().slice(-4)`.',
+        solution: `function itemCount(n) {
+  return \`\${n} \${n === 1 ? "item" : "items"}\`;
+}
+
+function receiptLine(name, qty, price) {
+  return \`\${name} × \${qty}: $\${(qty * price).toFixed(2)}\`;
+}
+
+function matchesSearch(productName, query) {
+  const q = query.trim().toLowerCase();
+  if (q === "") return true;
+  return productName.toLowerCase().includes(q);
+}
+
+function maskCard(number) {
+  return \`•••• \${number.trim().slice(-4)}\`;
+}`,
+        tests: [
+          {
+            name: "One item, many items, and zero items",
+            expression: `itemCount(1) === "1 item" && itemCount(3) === "3 items" && itemCount(0) === "0 items"`,
+          },
+          {
+            name: "A receipt line totals the quantity",
+            expression: `receiptLine("Headlamp", 2, 35) === "Headlamp × 2: $70.00"`,
+          },
+          {
+            name: "The total always shows two decimals",
+            expression: `receiptLine("Sticker", 3, 0.1) === "Sticker × 3: $0.30"`,
+          },
+          {
+            name: "Search ignores case and surrounding spaces",
+            expression: `matchesSearch("Trail Headlamp", "  headLAMP ") === true && matchesSearch("Water Bottle", "lamp") === false`,
+          },
+          {
+            name: "An empty search matches everything",
+            expression: `matchesSearch("Water Bottle", "") === true && matchesSearch("Water Bottle", "   ") === true`,
+          },
+          {
+            name: "A card shows only its last four digits",
+            expression: `maskCard("4242424242424242") === "•••• 4242" && maskCard(" 4000 0566 5566 1881 ") === "•••• 1881"`,
+          },
+        ],
+      },
+    ],
+  },
   "js-basics.checkpoint": {
     summary:
       "Turn messy form-like text into a trustworthy checkout total using conversion, functions and guard clauses.",
@@ -231,12 +383,12 @@ function checkoutLabel(priceText, quantityText, member = false) {
         id: "q1",
         question: "The Network panel shows app.js returned 404. What should you fix first?",
         options: [
-          "The first function in app.js",
           "The script's src path, because none of that file ran",
+          "The first function in app.js",
           "The button's CSS",
           "Add more console.log calls inside the missing file",
         ],
-        answer: 1,
+        answer: 0,
         explanation:
           "A 404 means the browser never received the script. Fix loading before debugging its behavior.",
       },
@@ -332,11 +484,11 @@ function checkoutLabel(priceText, quantityText, member = false) {
         question: "Why should render clear the list before rebuilding it?",
         options: [
           "Clearing is faster than appending",
-          "Calling render twice with unchanged state should produce the same page, not duplicate every row",
           "Event listeners require an empty list",
           "The browser cannot append twice",
+          "Calling render twice with unchanged state should produce the same page, not duplicate every row",
         ],
-        answer: 1,
+        answer: 3,
         explanation:
           "An idempotent render makes the page a predictable projection of current state.",
       },

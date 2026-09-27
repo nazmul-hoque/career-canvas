@@ -24,12 +24,12 @@ export const htmlCssLessonBodies: Record<string, LessonBody> = {
         id: "q1",
         question: "Which is the best first step when turning a brief into semantic HTML?",
         options: [
-          "Choose colours and fonts",
           "Draw the document outline and identify landmarks, headings, controls and their labels",
+          "Choose colours and fonts",
           "Wrap every line in a div",
           "Add ARIA roles to every element",
         ],
-        answer: 1,
+        answer: 0,
         explanation:
           "Native structure comes first. Once landmarks and relationships are correct, styling can change without losing meaning.",
       },
@@ -292,11 +292,11 @@ export const htmlCssLessonBodies: Record<string, LessonBody> = {
         question: "Why is `button:focus { outline: none }` dangerous?",
         options: [
           "It makes the button slower",
-          "It removes the keyboard user's visible indication of where they are",
           "It disables mouse clicks",
           "Outline is required for every design",
+          "It removes the keyboard user's visible indication of where they are",
         ],
-        answer: 1,
+        answer: 3,
         explanation:
           "Removing focus without an equally visible replacement makes keyboard navigation effectively invisible.",
       },
@@ -546,11 +546,11 @@ export const htmlCssLessonBodies: Record<string, LessonBody> = {
         question: "When should you add the capstone's media query?",
         options: [
           "Before writing the HTML",
-          "After the semantic page and intrinsic layouts work, at the width where the content needs a different arrangement",
           "At standard iPhone and iPad pixel widths",
+          "After the semantic page and intrinsic layouts work, at the width where the content needs a different arrangement",
           "Only after adding fixed widths everywhere",
         ],
-        answer: 1,
+        answer: 2,
         explanation:
           "Start fluid and let content choose the breakpoint; the query should solve a demonstrated layout need.",
       },

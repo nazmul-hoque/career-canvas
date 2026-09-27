@@ -66,11 +66,11 @@ export const gitLessonBodies: Record<string, LessonBody> = {
         question: "What would git give this team that the folder doesn't?",
         options: [
           "A backup copy in the cloud, so nobody can lose the file",
-          "Automatic merging, so Sam's edits and yours combine on their own",
           "One `proposal.docx`, with each committed version kept, plus who changed it, when and why",
+          "Automatic merging, so Sam's edits and yours combine on their own",
           "A lock, so only one person can edit the document at a time",
         ],
-        answer: 2,
+        answer: 1,
         explanation:
           "That's what commits give you. A cloud copy is what GitHub adds on top, git never locks files, and it can't merge a binary file like `.docx` line by line. It's at its best with text files such as code.",
       },
@@ -79,12 +79,12 @@ export const gitLessonBodies: Record<string, LessonBody> = {
         id: "q2",
         question: "You're on a train with no internet. Which of these still works?",
         options: [
-          "Committing and reading history both work",
           "Nothing works until you're back online",
+          "Committing and reading history both work",
           "Reading history works, but committing waits until you're back online",
           "Committing works, but browsing history needs GitHub",
         ],
-        answer: 0,
+        answer: 1,
         explanation:
           "Your repository, including its full history, is on your laptop. Only `push` and `pull`, which talk to GitHub, need a connection.",
       },
@@ -276,11 +276,11 @@ export const gitLessonBodies: Record<string, LessonBody> = {
           "You experimented in `config.js` and want the file back exactly as it was in the last commit. Nothing is staged. What do you run?",
         options: [
           "`git log config.js`",
+          "`git restore config.js`, knowing the experiment is gone for good",
           "`git diff --staged`",
           "`git commit`, then delete the file",
-          "`git restore config.js`, knowing the experiment is gone for good",
         ],
-        answer: 3,
+        answer: 1,
         explanation:
           "`restore` copies the committed version back over your edits. Those edits were never committed, so git has no copy of them to get back.",
       },
@@ -593,12 +593,12 @@ export const gitLessonBodies: Record<string, LessonBody> = {
         question:
           "With history as in Scenario A, you run `git merge feature/discount-codes` on `main`. What happens?",
         options: [
+          "`main` moves to `7d1e9a0`: a fast-forward, with no new commit",
           "Git creates a merge commit with two parents",
           "A conflict, because both branches touched the cart",
-          "`main` moves to `7d1e9a0`: a fast-forward, with no new commit",
           "The two feature commits are copied onto `main` with new IDs",
         ],
-        answer: 2,
+        answer: 0,
         explanation:
           "`main` is still at the commit the branch started from, so there's nothing to join. Git just moves the label forward.",
       },
@@ -615,11 +615,11 @@ export const gitLessonBodies: Record<string, LessonBody> = {
           "With history as in Scenario B, what does `git merge feature/discount-codes` on `main` produce?",
         options: [
           "A fast-forward to `7d1e9a0`",
-          "A new merge commit whose parents are `5e6f7a8` and `7d1e9a0`",
           "It discards `5e6f7a8` to make room for the feature",
           "An error: branches that have diverged can't be merged",
+          "A new merge commit whose parents are `5e6f7a8` and `7d1e9a0`",
         ],
-        answer: 1,
+        answer: 3,
         explanation:
           "Both branches moved on after `a1b2c3d`, so Git joins them with a commit that has two parents. Neither side's commits are lost.",
       },
@@ -792,12 +792,12 @@ export const gitLessonBodies: Record<string, LessonBody> = {
         question:
           "Pull request #42 broke checkout, and teammates have already pulled `main`. How do you undo it?",
         options: [
-          "`git revert -m 1 f00ba12`, then push the revert (or open a PR for it)",
           "`git reset --hard 5e6f7a8`, then `git push --force`",
+          "`git revert -m 1 f00ba12`, then push the revert (or open a PR for it)",
           "`git commit --amend` to edit the merge",
           "Delete the `feature/discount-codes` branch",
         ],
-        answer: 0,
+        answer: 1,
         explanation:
           "`f00ba12` is already shared, so rewriting it would break your teammates' copies. `revert` adds a new commit that undoes it. `-m 1` says to keep `main`'s side, because a merge has two parents.",
       },
@@ -1074,12 +1074,12 @@ a1b2c3d (origin/main, main) Fix rounding in cart total`,
         question:
           "You just committed, then noticed `debug.log` went in by accident. The commit isn't pushed. You want the commit gone but every change still in your files, so you can stage it again properly. Which command?",
         options: [
-          "`git reset --hard HEAD~1`",
           "`git reset HEAD~1`",
+          "`git reset --hard HEAD~1`",
           "`git restore debug.log`",
           "`git revert HEAD`",
         ],
-        answer: 1,
+        answer: 0,
         explanation:
           "Plain `reset` is `--mixed`: the commit goes, and its changes stay in your files, unstaged, so you can `git add` only the ones you meant. `--hard` would delete them, `restore` doesn't touch the commit, and `revert` keeps the bad commit in history with an undo on top.",
       },
@@ -1099,12 +1099,12 @@ a1b2c3d (HEAD -> main, origin/main) Fix rounding in cart total`,
         question:
           "You want to throw away your edits to `src/cart.js` only, and keep the ones to `src/checkout.js`. What do you run?",
         options: [
-          "`git restore src/cart.js`",
           "`git reset --hard`",
           "`git reset --hard HEAD~1`",
+          "`git restore src/cart.js`",
           "`git stash`",
         ],
-        answer: 0,
+        answer: 2,
         explanation:
           "`restore` works on the file you name. `git reset --hard` would discard both files' edits, adding `HEAD~1` would also remove a pushed commit, and `stash` sets both files aside.",
       },
@@ -1211,10 +1211,10 @@ Your branch is ahead of 'origin/main' by 1 commit.
         options: [
           "`git reset --hard origin/main`, then `git switch -c feature/discount`",
           "`git push`, then open a pull request from `main`",
-          "`git switch -c feature/discount`, then `git switch main` and `git reset --hard origin/main`",
           "`git revert HEAD`, then `git switch -c feature/discount`",
+          "`git switch -c feature/discount`, then `git switch main` and `git reset --hard origin/main`",
         ],
-        answer: 2,
+        answer: 3,
         explanation:
           "Create the branch first: it's a label at your commit, so the commit is safe on it. Only then move `main` back. The other way round, `reset` takes the commit off `main` before any branch holds it. Reverting would leave `main` with the commit and its undo, and the new branch would get both.",
       },
@@ -1242,11 +1242,11 @@ Switched to branch 'main'`,
           "You checked out an old commit to try a layout, committed there, then switched to `main` and got this warning. How do you keep that commit?",
         options: [
           "You can't: commits made in detached HEAD are discarded",
+          "`git branch try-layout 38ddf90`",
           "`git stash pop`",
           "`git reset --hard 38ddf90`",
-          "`git branch try-layout 38ddf90`",
         ],
-        answer: 3,
+        answer: 1,
         explanation:
           "Git even prints the command. The commit still exists, but no branch points to it, and `git branch` gives it one. `reset --hard 38ddf90` would drag `main` back to the old commit your experiment started from, and nothing was stashed.",
       },
@@ -1509,11 +1509,11 @@ hint: To abort and get back to the state before "git rebase", run "git rebase --
         question: "You've edited `config.js` so it reads the way it should. What next?",
         options: [
           '`git commit -m "Fix conflict"`, then carry on working',
-          "`git add config.js`, then `git rebase --continue`",
           "`git merge --abort`",
           "`git rebase --skip`",
+          "`git add config.js`, then `git rebase --continue`",
         ],
-        answer: 1,
+        answer: 3,
         explanation:
           "Staging the file tells git it's resolved, and `--continue` finishes replaying the rest of your commits. `--skip` would drop your *Add discount code pattern* commit entirely, and `merge --abort` is for merges, not rebases.",
       },
@@ -1535,11 +1535,11 @@ hint: 'git pull ...') before pushing again.`,
           "Only you work on `feature/discount`, and you just rebased it onto `main`. What do you run?",
         options: [
           "`git pull`, as the hint says, then push again",
+          "`git push --force-with-lease`",
           "Rebase again, then push",
           "`git push --force` to `main` instead",
-          "`git push --force-with-lease`",
         ],
-        answer: 3,
+        answer: 1,
         explanation:
           "The remote has the old copies of your commits, and you want it to have the new ones. Pulling would merge the old copies back in, so you'd have every commit twice. `--force-with-lease` replaces them, and stops if anyone else has pushed in the meantime.",
       },
