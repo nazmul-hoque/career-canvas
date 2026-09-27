@@ -192,7 +192,9 @@ function Placement() {
                         <span className="grid size-6 shrink-0 place-items-center rounded-full border border-current text-[11px] font-bold">
                           {String.fromCharCode(65 + oi)}
                         </span>
-                        <InlineText text={option} />
+                        <span className="flex-1">
+                          <InlineText text={option} />
+                        </span>
                       </button>
                     ))}
                   </div>

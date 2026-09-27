@@ -456,6 +456,15 @@ Two facts shape every item below:
       Free unlocks a course's first module, so with enforcement on, Free gets
       the four basics and "Everyday git" needs a plan.
 
+- [x] **Git "Getting out of trouble" module** (2026-09-27) — six lessons the
+      course description already promised: stash, reset's three modes, the
+      wrong branch and detached HEAD, reflog recovery, rebase and
+      `--force-with-lease`, and untracking a file or rotating a leaked secret.
+      Bodies are in `git-lessons.server.ts`, and every transcript was captured
+      from a real git 2.40 session. Also fixed: the setup now sets
+      `init.defaultBranch`, the first push has a sign-in step, and `/review`
+      shows the scenario above each question.
+
 - [x] **The answer key no longer ships to the browser** (2026-09-19) — lesson
       bodies moved to `src/content/lesson-bodies.server.ts`, which the Start
       plugin won't bundle for the client. Pages learn which lessons exist from a

@@ -412,6 +412,9 @@ export const courses: Course[] = [
       "Merging",
       "Pull requests",
       "Undoing mistakes",
+      "Stash",
+      "Rebase",
+      "Recovering lost work",
     ],
     careers: ["frontend", "fullstack", "python", "data"],
     modules: [
@@ -426,6 +429,19 @@ export const courses: Course[] = [
         ["branches", "Branching and merging", 12, "practice"],
         ["prs", "Pull requests and review", 11, "practice"],
       ]),
+      m(
+        "git-rescue",
+        "Getting out of trouble",
+        "Park work, undo commits and recover what looks lost.",
+        [
+          ["stash", "Set work aside with stash", 9, "practice"],
+          ["reset", "Undo local commits with reset", 11, "practice"],
+          ["wrong-branch", "Wrong branch and detached HEAD", 10, "practice"],
+          ["reflog", "Recover lost commits with reflog", 10, "practice"],
+          ["rebase", "Rebase, and when not to", 13, "practice"],
+          ["secrets", "Committed something you shouldn't have", 9, "practice"],
+        ],
+      ),
     ],
   },
   {

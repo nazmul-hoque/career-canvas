@@ -2,6 +2,7 @@ import { findLesson } from "./curriculum";
 import { claudeLessonBodies } from "./claude-lessons.server";
 import { chatgptLessonBodies } from "./chatgpt-lessons.server";
 import { figmaLessonBodies } from "./figma-lessons.server";
+import { gitLessonBodies } from "./git-lessons.server";
 import { genaiLessonBodies } from "./genai-lessons.server";
 import { htmlCssLessonBodies } from "./html-css-lessons.server";
 import { javascriptLessonBodies } from "./javascript-lessons.server";
@@ -7615,6 +7616,7 @@ export const bodies: Record<string, LessonBody> = (() => {
     chatgptLessonBodies,
     figmaLessonBodies,
     genaiLessonBodies,
+    gitLessonBodies,
     htmlCssLessonBodies,
     javascriptLessonBodies,
     nodeLessonBodies,
