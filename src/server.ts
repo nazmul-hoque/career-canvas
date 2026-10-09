@@ -61,6 +61,20 @@ const WEBHOOK_PATHS = new Set(["/api/webhooks/stripe"]);
  */
 const CRON_PATHS = new Set(["/api/cron/reengagement"]);
 
+/**
+ * Served with a 404 status to every direct load. Sign-in lives in the browser,
+ * so the server can't tell an admin from a visitor; answering 404 to all of them
+ * means the console isn't advertised to crawlers or curious visitors. The page
+ * itself still loads, and shows the console only after the browser confirms an
+ * `admin_users` row. The data behind it is guarded in admin.functions.ts.
+ */
+const HIDDEN_PAGES = new Set(["/admin"]);
+
+function hideAsNotFound(response: Response): Response {
+  if (response.status !== 200) return response;
+  return new Response(response.body, { status: 404, headers: response.headers });
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
@@ -117,8 +131,10 @@ export default {
       }
 
       const handler = await getServerEntry();
-      const response = await handler.fetch(request, env, ctx);
-      return await normalizeCatastrophicSsrResponse(response);
+      const response = await normalizeCatastrophicSsrResponse(
+        await handler.fetch(request, env, ctx),
+      );
+      return HIDDEN_PAGES.has(pathname.replace(/\/+$/, "")) ? hideAsNotFound(response) : response;
     } catch (error) {
       console.error(error);
       return new Response(renderErrorPage(), {

@@ -138,6 +138,15 @@ Two facts shape every item below:
       `LEGAL_UPDATED`. **Not legal advice: have a lawyer review both before
       relying on them.** Also paste `https://ascent.withcloud.io/privacy` and
       `/terms` into the Google OAuth consent screen.
+- [x] **Crawl review follow-up** (2026-10-09) — `/contact` exists (the footer
+      links it); `/admin` is served with a 404 status to every direct load
+      (`src/server.ts`), still opening the console for a real admin; lesson
+      pages server-render all their teaching text and code examples, not just
+      the prose before the first one. Verified with a throwaway user: a new
+      account lands on `/onboarding`, a signed-in non-admin calling the admin
+      functions gets "You don't have admin access", and an admin gets the
+      console. Admin Metrics returns real daily data; Log is empty because no
+      admin action has been taken yet.
 - [x] **Self-serve account deletion** (2026-10-09) — "Delete account" on
       `/profile`, typed confirmation checked on the server too. A Pro learner's
       Stripe subscription is cancelled first; if it can't be found, the account

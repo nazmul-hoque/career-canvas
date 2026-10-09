@@ -310,9 +310,9 @@ export function SiteFooter({ clearTabBar = false }: { clearTabBar?: boolean }) {
             <Link to="/about" className={footerLink}>
               About
             </Link>
-            <a href={`mailto:${COMPANY.email}`} className={footerLink}>
+            <Link to="/contact" className={footerLink}>
               Contact
-            </a>
+            </Link>
             <Link to="/terms" className={footerLink}>
               Terms
             </Link>

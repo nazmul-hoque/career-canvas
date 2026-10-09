@@ -14,6 +14,7 @@ export function sitemapPaths() {
     "/community",
     "/leaderboard",
     "/about",
+    "/contact",
     "/terms",
     "/privacy",
     ...careerPaths.map((path) => `/paths/${path.id}`),

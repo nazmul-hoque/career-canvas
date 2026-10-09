@@ -110,6 +110,43 @@ export const Route = createFileRoute("/learn/$courseId/$lessonId")({
   component: LessonRoute,
 });
 
+/** The parts of a lesson that teach rather than ask — also what the server renders. */
+function TeachingBlock({
+  block,
+}: {
+  block: Extract<PublicLessonBlock, { kind: "text" | "callout" | "code" }>;
+}) {
+  if (block.kind === "text") {
+    return (
+      <p className="text-[15px] leading-7 text-foreground">
+        <InlineText text={block.body} />
+      </p>
+    );
+  }
+
+  if (block.kind === "callout") {
+    return (
+      <div className="flex gap-3 rounded-[14px] border border-ember/25 bg-ember/5 p-4">
+        <Lightbulb className="mt-0.5 size-4 shrink-0 text-ember" />
+        <p className="text-sm leading-6">
+          <InlineText text={block.body} />
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-hidden rounded-[14px] bg-ink">
+      <div className="border-b border-white/10 px-4 py-2 font-mono text-[11px] uppercase tracking-wider text-white/50">
+        {block.caption ?? block.language}
+      </div>
+      <pre className="overflow-x-auto p-4 font-mono text-[13px] leading-6 text-white/90">
+        {block.code}
+      </pre>
+    </div>
+  );
+}
+
 function LessonReading({
   course,
   lesson,
@@ -119,9 +156,12 @@ function LessonReading({
   lesson: LessonMeta;
   body: PublicLessonBody;
 }) {
-  // Prose up to the first exercise: what the lesson teaches, never what it asks.
-  const firstExercise = body.blocks.findIndex((b) => b.kind !== "text" && b.kind !== "callout");
-  const reading = body.blocks.slice(0, firstExercise === -1 ? undefined : firstExercise);
+  // Everything the lesson teaches, none of what it asks: questions and challenges
+  // need the workspace, and are what a crawler shouldn't index as the content.
+  const reading = body.blocks.filter(
+    (b): b is Extract<PublicLessonBlock, { kind: "text" | "callout" | "code" }> =>
+      b.kind === "text" || b.kind === "callout" || b.kind === "code",
+  );
   return (
     <AppShell>
       <article aria-busy="true" className="mx-auto max-w-3xl space-y-6">
@@ -135,13 +175,9 @@ function LessonReading({
           <p className="mt-2 text-chalk">{body.summary}</p>
         </header>
         <div className="card-surface space-y-6 p-6 sm:p-8">
-          {reading.map((block, i) =>
-            block.kind === "text" || block.kind === "callout" ? (
-              <p key={i} className="text-[15px] leading-7 text-foreground">
-                <InlineText text={block.body} />
-              </p>
-            ) : null,
-          )}
+          {reading.map((block, i) => (
+            <TeachingBlock key={i} block={block} />
+          ))}
           <p role="status" className="text-sm text-chalk">
             Loading your workspace…
           </p>
@@ -659,36 +695,8 @@ function Block({
   onSolved,
   onResult,
 }: BlockProps) {
-  if (block.kind === "text") {
-    return (
-      <p className="text-[15px] leading-7 text-foreground">
-        <InlineText text={block.body} />
-      </p>
-    );
-  }
-
-  if (block.kind === "callout") {
-    return (
-      <div className="flex gap-3 rounded-[14px] border border-ember/25 bg-ember/5 p-4">
-        <Lightbulb className="mt-0.5 size-4 shrink-0 text-ember" />
-        <p className="text-sm leading-6">
-          <InlineText text={block.body} />
-        </p>
-      </div>
-    );
-  }
-
-  if (block.kind === "code") {
-    return (
-      <div className="overflow-hidden rounded-[14px] bg-ink">
-        <div className="border-b border-white/10 px-4 py-2 font-mono text-[11px] uppercase tracking-wider text-white/50">
-          {block.caption ?? block.language}
-        </div>
-        <pre className="overflow-x-auto p-4 font-mono text-[13px] leading-6 text-white/90">
-          {block.code}
-        </pre>
-      </div>
-    );
+  if (block.kind === "text" || block.kind === "callout" || block.kind === "code") {
+    return <TeachingBlock block={block} />;
   }
 
   if (block.kind === "mcq") {
