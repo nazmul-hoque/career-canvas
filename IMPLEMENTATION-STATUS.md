@@ -128,8 +128,16 @@ Two facts shape every item below:
       ordinary 404 for non-admins; the mentor panel shows the month's allowance
       before the first message and links to Pro when a Free learner is low;
       `site.webmanifest`, app icons and a 1200×630 `og-image.png` on every page.
-      Still open from that review: Terms/Privacy/About (need the business's
-      details).
+- [x] **Terms, Privacy, About** (2026-10-09) — `/terms`, `/privacy` and
+      `/about` for Equawire Inc. (Ontario), linked from a footer now on every
+      page, from sign-up ("16 or over" and the Terms) and from checkout (the
+      14-day refund). The company facts, refund window and minimum age live in
+      `src/lib/company.ts`; the Privacy Policy names only processors the code
+      actually calls (Supabase, Gemini, Google sign-in, Stripe, Resend, browser
+      push, jsDelivr). Change it when a provider changes, and bump
+      `LEGAL_UPDATED`. **Not legal advice: have a lawyer review both before
+      relying on them.** Also paste `https://ascent.withcloud.io/privacy` and
+      `/terms` into the Google OAuth consent screen.
 - [x] **Per-page share images** (2026-10-09) — every course and path has its
       own 1200×630 card in `public/og/`, rendered by `bun run og:images`
       (headless Chrome; set `CHROME_PATH` if it isn't found) from

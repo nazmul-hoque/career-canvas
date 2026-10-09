@@ -15,6 +15,7 @@ import {
   switchToFreeFn,
 } from "@/lib/billing.functions";
 import { TRIAL_DAYS } from "@/lib/entitlements";
+import { REFUND_DAYS } from "@/lib/company";
 import { useEntitlements } from "@/hooks/useEntitlements";
 import { AppShell } from "@/components/layout/AppShell";
 import { StatPill } from "@/components/common/StatPill";
@@ -622,6 +623,13 @@ function Pricing() {
               <p className="text-sm text-chalk">
                 Free retains your completed lessons and issued certificates. New Pro lessons and
                 project submissions require paid access or an active trial.
+              </p>
+              <p className="text-sm text-chalk">
+                Full refund within {REFUND_DAYS} days of any payment, no questions asked. See the{" "}
+                <Link to="/terms" className="font-semibold text-foreground hover:underline">
+                  Terms of Service
+                </Link>
+                .
               </p>
 
               <Button

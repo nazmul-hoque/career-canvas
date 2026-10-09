@@ -30,6 +30,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { COMPANY } from "@/lib/company";
 import { cn } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -246,12 +247,84 @@ export function MobileTabBar() {
 
 export function AppShell({ children, bare }: { children: ReactNode; bare?: boolean }) {
   return (
-    <div className="min-h-screen bg-canvas">
+    <div className="flex min-h-screen flex-col bg-canvas">
       <AppHeader />
-      <main className={cn(bare ? "" : "mx-auto max-w-[1400px] px-4 pb-28 pt-8 sm:px-6 md:pb-16")}>
+      <main
+        className={cn(
+          "flex-1",
+          bare ? "" : "mx-auto w-full max-w-[1400px] px-4 pb-12 pt-8 sm:px-6 md:pb-16",
+        )}
+      >
         {children}
       </main>
+      <SiteFooter clearTabBar />
       <MobileTabBar />
     </div>
+  );
+}
+
+const footerLink = "hover:text-foreground";
+
+/**
+ * On every page, because the Terms, Privacy Policy and contact address have to
+ * be reachable from anywhere someone signs up or pays. `clearTabBar` pads it
+ * above the fixed mobile tab bar, which would otherwise cover the legal links.
+ */
+export function SiteFooter({ clearTabBar = false }: { clearTabBar?: boolean }) {
+  return (
+    <footer className={cn("border-t border-border bg-card", clearTabBar && "pb-20 md:pb-0")}>
+      <div className="mx-auto max-w-[1400px] px-4 py-10 sm:px-6">
+        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+          <div>
+            <Wordmark />
+            <p className="mt-3 max-w-sm text-sm text-chalk">
+              Practice-first learning for people changing what they do for a living.
+            </p>
+          </div>
+          <nav
+            aria-label="Site"
+            className="flex flex-wrap gap-x-8 gap-y-3 text-sm font-semibold text-chalk"
+          >
+            <Link to="/learn" className={footerLink}>
+              Courses
+            </Link>
+            <Link to="/paths" className={footerLink}>
+              Career paths
+            </Link>
+            <Link to="/projects" className={footerLink}>
+              Projects
+            </Link>
+            <Link to="/community" className={footerLink}>
+              Community
+            </Link>
+            <Link to="/pricing" className={footerLink}>
+              Pricing
+            </Link>
+          </nav>
+        </div>
+        <div className="mt-8 flex flex-col gap-3 border-t border-border pt-6 text-xs text-chalk sm:flex-row sm:items-center sm:justify-between">
+          <p>
+            © {new Date().getFullYear()} {COMPANY.name}
+          </p>
+          <nav aria-label="Legal" className="flex flex-wrap gap-x-6 gap-y-2 font-semibold">
+            <Link to="/about" className={footerLink}>
+              About
+            </Link>
+            <a href={`mailto:${COMPANY.email}`} className={footerLink}>
+              Contact
+            </a>
+            <Link to="/terms" className={footerLink}>
+              Terms
+            </Link>
+            <Link to="/privacy" className={footerLink}>
+              Privacy
+            </Link>
+            <Link to="/verify" className={footerLink}>
+              Verify a certificate
+            </Link>
+          </nav>
+        </div>
+      </div>
+    </footer>
   );
 }

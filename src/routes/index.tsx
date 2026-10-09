@@ -12,7 +12,7 @@ import {
   Trophy,
   Zap,
 } from "lucide-react";
-import { AppHeader, Wordmark } from "@/components/layout/AppShell";
+import { AppHeader, SiteFooter } from "@/components/layout/AppShell";
 import { StatPill } from "@/components/common/StatPill";
 import { Button } from "@/components/ui/button";
 import { careerPaths, courses, pathCourses, pathWeeks } from "@/content/curriculum";
@@ -377,33 +377,7 @@ function Landing() {
         </div>
       </section>
 
-      <footer className="border-t border-border bg-card">
-        <div className="mx-auto flex max-w-[1400px] flex-col gap-6 px-4 py-10 sm:px-6 md:flex-row md:items-center md:justify-between">
-          <div>
-            <Wordmark />
-            <p className="mt-3 max-w-sm text-sm text-chalk">
-              Practice-first learning for people changing what they do for a living.
-            </p>
-          </div>
-          <nav className="flex flex-wrap gap-x-8 gap-y-3 text-sm font-semibold text-chalk">
-            <Link to="/learn" className="hover:text-foreground">
-              Courses
-            </Link>
-            <Link to="/paths" className="hover:text-foreground">
-              Career paths
-            </Link>
-            <Link to="/projects" className="hover:text-foreground">
-              Projects
-            </Link>
-            <Link to="/community" className="hover:text-foreground">
-              Community
-            </Link>
-            <Link to="/pricing" className="hover:text-foreground">
-              Pricing
-            </Link>
-          </nav>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

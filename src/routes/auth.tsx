@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { track } from "@/lib/analytics";
+import { MINIMUM_AGE } from "@/lib/company";
 import { ArrowLeft, Loader2, Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -320,6 +321,21 @@ function AuthPage() {
                   : "Send reset link"}
             </Button>
           </form>
+
+          {/* Google sign-in from either tab can create an account, so both show this. */}
+          {mode !== "forgot" ? (
+            <p className="mt-4 text-center text-xs leading-5 text-chalk">
+              By continuing, you confirm you're {MINIMUM_AGE} or over and agree to our{" "}
+              <Link to="/terms" className="font-semibold text-foreground hover:underline">
+                Terms of Service
+              </Link>{" "}
+              and{" "}
+              <Link to="/privacy" className="font-semibold text-foreground hover:underline">
+                Privacy Policy
+              </Link>
+              .
+            </p>
+          ) : null}
 
           <p className="mt-6 text-center text-sm text-chalk">
             {mode === "signup" ? (
