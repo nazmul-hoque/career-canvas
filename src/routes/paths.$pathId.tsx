@@ -1,4 +1,5 @@
-import { seoHead, breadcrumbs } from "@/lib/seo";
+import { seoHead, breadcrumbs, shareImage } from "@/lib/seo";
+import { ogFile } from "@/lib/og-cards";
 import { useMemo } from "react";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import {
@@ -56,6 +57,7 @@ export const Route = createFileRoute("/paths/$pathId")({
       path: `/paths/${path.id}`,
       title: `${path.name} career path — Ascent`,
       description: path.overview,
+      image: shareImage(ogFile("path", path.id)),
       schema: [
         breadcrumbs([
           { name: "Home", path: "/" },

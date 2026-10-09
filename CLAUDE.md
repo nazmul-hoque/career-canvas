@@ -25,6 +25,7 @@ bun run lint       # eslint (prettier runs as an eslint rule)
 bun run format     # prettier --write .
 bun run test       # bun test — unit tests in tests/, outside src/
 bunx tsc --noEmit  # typecheck — no script for this; run it before finishing work
+bun run og:images  # re-render public/og/ share cards after renaming or adding a course/path
 ```
 
 Tests live in `tests/` rather than `src/` on purpose: `tsconfig.json` only

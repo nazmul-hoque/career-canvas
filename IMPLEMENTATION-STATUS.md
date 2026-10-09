@@ -129,7 +129,13 @@ Two facts shape every item below:
       before the first message and links to Pro when a Free learner is low;
       `site.webmanifest`, app icons and a 1200×630 `og-image.png` on every page.
       Still open from that review: Terms/Privacy/About (need the business's
-      details), per-page share images.
+      details).
+- [x] **Per-page share images** (2026-10-09) — every course and path has its
+      own 1200×630 card in `public/og/`, rendered by `bun run og:images`
+      (headless Chrome; set `CHROME_PATH` if it isn't found) from
+      `src/lib/og-cards.ts`. Lesson pages use their course's card.
+      `tests/og-cards.test.ts` fails when a title, summary, level or skill
+      list changes without a re-render, or a card is left over.
 - [x] **Crawl review of 2026-10-09, group 3: thin courses** — Node.js & APIs
       4 → 11 lessons (middleware and an error boundary, config and secrets,
       cursor pagination, idempotency keys, rate limiting, structured logging,

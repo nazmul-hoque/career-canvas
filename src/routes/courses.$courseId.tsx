@@ -1,4 +1,5 @@
-import { seoHead, breadcrumbs, canonicalUrl, SITE_URL } from "@/lib/seo";
+import { seoHead, breadcrumbs, canonicalUrl, shareImage, SITE_URL } from "@/lib/seo";
+import { ogFile } from "@/lib/og-cards";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import {
   Clock,
@@ -45,6 +46,7 @@ export const Route = createFileRoute("/courses/$courseId")({
       path: `/courses/${course.id}`,
       title: `${course.title} — Ascent`,
       description: course.summary,
+      image: shareImage(ogFile("course", course.id)),
       schema: [
         breadcrumbs([
           { name: "Home", path: "/" },

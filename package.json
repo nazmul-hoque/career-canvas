@@ -16,6 +16,7 @@
     "lessons:manifest": "bun scripts/build-lesson-manifest.ts",
     "lessons:verify": "bun scripts/verify-challenges.ts",
     "git:verify": "bun scripts/verify-git-sandbox.ts",
+    "og:images": "bun scripts/build-og-images.ts",
     "format": "prettier --write ."
   },
   "overrides": {

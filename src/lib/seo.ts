@@ -1,6 +1,8 @@
 export const SITE_URL = "https://ascent.withcloud.io";
 // Absolute: LinkedIn, WhatsApp and Slack ignore a relative og:image.
 export const OG_IMAGE = `${SITE_URL}/og-image.png`;
+/** A per-page card rendered by `bun run og:images` into public/og/. */
+export const shareImage = (file: string) => `${SITE_URL}/og/${file}`;
 export const SITE_DESCRIPTION =
   "Learn coding, data, design and AI with interactive courses, career roadmaps, hands-on challenges and portfolio projects on Ascent.";
 
@@ -13,11 +15,14 @@ export function seoHead({
   title,
   description,
   path,
+  image = OG_IMAGE,
   schema = [],
 }: {
   title: string;
   description: string;
   path: string;
+  /** Absolute URL; LinkedIn, WhatsApp and Slack ignore a relative og:image. */
+  image?: string | undefined;
   schema?: Record<string, unknown>[];
 }) {
   const url = canonicalUrl(path);
@@ -31,11 +36,11 @@ export function seoHead({
       { property: "og:title", content: title },
       { property: "og:description", content: description },
       { property: "og:url", content: url },
-      { property: "og:image", content: OG_IMAGE },
+      { property: "og:image", content: image },
       { property: "og:image:width", content: "1200" },
       { property: "og:image:height", content: "630" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:image", content: OG_IMAGE },
+      { name: "twitter:image", content: image },
       { name: "twitter:title", content: title },
       { name: "twitter:description", content: description },
     ],

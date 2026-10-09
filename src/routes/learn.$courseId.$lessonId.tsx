@@ -1,4 +1,5 @@
-import { breadcrumbs, seoHead } from "@/lib/seo";
+import { breadcrumbs, seoHead, shareImage } from "@/lib/seo";
+import { ogFile } from "@/lib/og-cards";
 import {
   Sheet,
   SheetContent,
@@ -89,6 +90,7 @@ export const Route = createFileRoute("/learn/$courseId/$lessonId")({
       path: `/learn/${course.id}/${lesson.id}`,
       title: `${lesson.title} — ${course.title} — Ascent`,
       description: body.summary,
+      image: shareImage(ogFile("course", course.id)),
       schema: [
         breadcrumbs([
           { name: "Home", path: "/" },
