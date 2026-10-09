@@ -138,6 +138,12 @@ Two facts shape every item below:
       `LEGAL_UPDATED`. **Not legal advice: have a lawyer review both before
       relying on them.** Also paste `https://ascent.withcloud.io/privacy` and
       `/terms` into the Google OAuth consent screen.
+- [x] **Self-serve account deletion** (2026-10-09) — "Delete account" on
+      `/profile`, typed confirmation checked on the server too. A Pro learner's
+      Stripe subscription is cancelled first; if it can't be found, the account
+      is left alone. Verified end to end against the real project with a
+      throwaway user (mock payments; the Stripe branch is untested until
+      `PAYMENTS_PROVIDER=stripe` has test keys). Privacy and Terms updated.
 - [x] **Per-page share images** (2026-10-09) — every course and path has its
       own 1200×630 card in `public/og/`, rendered by `bun run og:images`
       (headless Chrome; set `CHROME_PATH` if it isn't found) from

@@ -163,10 +163,11 @@ function Terms() {
 
       <Section title="Ending your account">
         <P>
-          You can stop using Ascent at any time, and ask us to delete your account by emailing{" "}
-          <ContactLink />. We may suspend or close an account that seriously or repeatedly breaks
-          these terms. If we close an account without such a reason, we'll refund any unused portion
-          of a paid period.
+          You can stop using Ascent at any time, and delete your account from your profile page or
+          by emailing <ContactLink />. Deleting an account with a Pro subscription cancels the
+          subscription immediately. We may suspend or close an account that seriously or repeatedly
+          breaks these terms. If we close an account without such a reason, we'll refund any unused
+          portion of a paid period.
         </P>
       </Section>
 

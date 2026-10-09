@@ -26,6 +26,18 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "@/hooks/useAuth";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { useDeleteAccount } from "@/hooks/useDeleteAccount";
+import { DELETE_CONFIRMATION } from "@/lib/account.functions";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   useAchievements,
   useProfile,
@@ -572,9 +584,94 @@ function ProfilePage() {
             </label>
             <PushReminderToggle push={push} />
           </section>
+
+          <DeleteAccountSection plan={profile.plan} />
         </aside>
       </div>
     </AppShell>
+  );
+}
+
+function DeleteAccountSection({ plan }: { plan: string }) {
+  const [open, setOpen] = useState(false);
+  const [typed, setTyped] = useState("");
+  const deleteAccount = useDeleteAccount();
+  const confirmed = typed.trim() === DELETE_CONFIRMATION;
+
+  return (
+    <section className="card-surface p-5">
+      <h2 className="font-display text-lg font-bold">Delete account</h2>
+      <p className="mt-1.5 text-sm text-chalk">
+        Permanently removes your profile, progress, certificates, mentor history and community
+        posts. {plan === "pro" ? "Your Pro subscription is cancelled first. " : ""}This can't be
+        undone.{" "}
+        <Link to="/privacy" className="font-semibold text-foreground hover:underline">
+          What we keep
+        </Link>
+      </p>
+      <AlertDialog
+        open={open}
+        onOpenChange={(next) => {
+          if (deleteAccount.isPending) return;
+          setOpen(next);
+          if (!next) setTyped("");
+        }}
+      >
+        <AlertDialogTrigger asChild>
+          <Button variant="outline" className="mt-4 text-destructive hover:text-destructive">
+            Delete my account
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete your account?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your XP, streak, progress, certificates, mentor conversations, posts and projects will
+              be deleted, and certificate links will stop verifying.
+              {plan === "pro"
+                ? " Your Pro subscription will be cancelled immediately, with no further charges."
+                : ""}{" "}
+              There is no undo.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="confirm-delete">
+              Type <span className="font-mono font-bold">{DELETE_CONFIRMATION}</span> to confirm
+            </Label>
+            <Input
+              id="confirm-delete"
+              value={typed}
+              autoComplete="off"
+              onChange={(e) => setTyped(e.target.value)}
+              disabled={deleteAccount.isPending}
+            />
+            {deleteAccount.isError ? (
+              <p role="alert" className="text-sm text-destructive">
+                {deleteAccount.error instanceof Error
+                  ? deleteAccount.error.message
+                  : "Your account couldn't be deleted. Please try again."}
+              </p>
+            ) : null}
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteAccount.isPending}>
+              Keep my account
+            </AlertDialogCancel>
+            <Button
+              variant="destructive"
+              disabled={!confirmed || deleteAccount.isPending}
+              onClick={() =>
+                deleteAccount.mutate(undefined, {
+                  onSuccess: () => toast.success("Your account has been deleted."),
+                })
+              }
+            >
+              {deleteAccount.isPending ? "Deleting…" : "Delete account permanently"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </section>
   );
 }
 

@@ -174,9 +174,10 @@ function Privacy() {
 
       <Section title="How long we keep it">
         <P>
-          We keep your account data for as long as you have an account. When you ask us to delete
-          your account, we delete your profile, progress, mentor conversations and other personal
-          data within 30 days, including your community posts and replies. Payment and tax records
+          We keep your account data for as long as you have an account. You can delete your account
+          yourself from your profile page; that removes your profile, progress, certificates, mentor
+          conversations and other personal data straight away, including your community posts and
+          replies. If you'd rather, email us and we'll do it within 30 days. Payment and tax records
           are kept for as long as the law requires, by us or our payment processor. Copies in
           backups are overwritten on their normal cycle.
         </P>
@@ -195,7 +196,7 @@ function Privacy() {
           </li>
           <li>Ask for a copy of the personal data we hold about you.</li>
           <li>Ask us to correct anything that's wrong.</li>
-          <li>Ask us to delete your account and data.</li>
+          <li>Delete your account and data, from your profile page or by asking us.</li>
           <li>Withdraw consent you've given, without affecting what we did before.</li>
         </List>
         <P>

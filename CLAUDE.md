@@ -303,6 +303,14 @@ through the `admin_user_directory` SQL function, since PostgREST can't reach
 `auth.users`. Course content is deliberately read-only there — see
 "The answer key never reaches the browser".
 
+**Account deletion.** Learners delete themselves from `/profile` through
+`deleteAccountFn` (`src/lib/account.functions.ts`); deleting the auth user
+cascades everything else. Billing comes first: a Pro learner's Stripe
+subscriptions are cancelled (`cancelSubscriptionsFor`, found by the `user_id`
+checkout writes into metadata) and if none can be found, nothing is deleted —
+a deleted account would otherwise keep being charged with no way to trace it.
+Admins can't self-delete.
+
 **Status tracking.** `IMPLEMENTATION-STATUS.md` tracks what's done and what's
 left from the product review. Update it when an item moves.
 

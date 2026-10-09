@@ -63,6 +63,37 @@ async function stripeGet<T>(path: string, params: Record<string, string>): Promi
   return response.json() as Promise<T>;
 }
 
+/**
+ * Cancels, immediately, every live subscription checkout created for this
+ * learner — `createCheckoutSession` writes their id into the subscription's
+ * metadata. Returns how many it cancelled.
+ *
+ * Search is eventually consistent (Stripe: usually under a minute, up to an
+ * hour in an outage), so finding none is not proof there are none. The caller
+ * decides what that means for a learner whose plan says they're paying.
+ */
+export async function cancelSubscriptionsFor(userId: string): Promise<number> {
+  // https://docs.stripe.com/api/subscriptions/search — userId is a validated
+  // uuid, so it can't break out of the quoted query value.
+  const found = await stripeGet<{ data: { id: string; status: string }[] }>(
+    "subscriptions/search",
+    { query: `metadata['user_id']:'${userId}'`, limit: "100" },
+  );
+  const live = found.data.filter(
+    (s) => s.status !== "canceled" && s.status !== "incomplete_expired",
+  );
+  for (const subscription of live) {
+    // https://docs.stripe.com/api/subscriptions/cancel
+    const response = await fetch(`https://api.stripe.com/v1/subscriptions/${subscription.id}`, {
+      method: "DELETE",
+      headers: { authorization: `Bearer ${stripeSecret()}` },
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!response.ok) throw new Error("Your subscription couldn't be cancelled. Please try again.");
+  }
+  return live.length;
+}
+
 /** Email narrows the lookup; a server-authored account reference proves ownership. */
 export async function createBillingPortal(input: {
   userId: string;
