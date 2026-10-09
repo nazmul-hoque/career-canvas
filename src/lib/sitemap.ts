@@ -1,4 +1,5 @@
 import { careerPaths, courses } from "../content/curriculum";
+import { liveLessons } from "../content/lessons";
 import { projects } from "../content/projects";
 import { canonicalUrl } from "./seo";
 
@@ -10,9 +11,15 @@ export function sitemapPaths() {
     "/learn",
     "/pricing",
     "/projects",
+    "/community",
+    "/leaderboard",
     ...careerPaths.map((path) => `/paths/${path.id}`),
     ...courses.map((course) => `/courses/${course.id}`),
     ...projects.map((project) => `/projects/${project.id}`),
+    // Live lessons only: an unwritten slot renders "coming soon" and is noindex.
+    ...courses.flatMap((course) =>
+      liveLessons(course).map((lesson) => `/learn/${course.id}/${lesson.id}`),
+    ),
   ];
 }
 

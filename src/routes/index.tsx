@@ -9,7 +9,6 @@ import {
   MessageCircle,
   Play,
   Sparkles,
-  Star,
   Trophy,
   Zap,
 } from "lucide-react";
@@ -139,7 +138,7 @@ function Landing() {
                 <Check className="size-4 text-brand" /> First module free on every path
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <Star className="size-4 fill-ember text-ember" /> 4.8 average course rating
+                <Check className="size-4 text-brand" /> Certificates anyone can verify
               </span>
             </div>
           </div>

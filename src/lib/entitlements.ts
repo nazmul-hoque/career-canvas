@@ -101,6 +101,14 @@ export function entitlementsFor(plan: PlanId): Entitlements {
   return PLANS[plan] ?? PLANS.free;
 }
 
+/**
+ * Start of the mentor allowance's month, UTC. Shared so the panel's "N left"
+ * and the server's cap count the same rows.
+ */
+export function mentorMonthStart(now = new Date()): string {
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
+}
+
 /** Entitlements as written, ignoring the override flag — for pricing copy. */
 export function planFeatures(plan: PlanId): Entitlements {
   return PLANS[plan] ?? PLANS.free;

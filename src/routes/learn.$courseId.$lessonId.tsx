@@ -1,3 +1,4 @@
+import { breadcrumbs, seoHead } from "@/lib/seo";
 import {
   Sheet,
   SheetContent,
@@ -83,14 +84,20 @@ export const Route = createFileRoute("/learn/$courseId/$lessonId")({
         ],
       };
     }
-    return {
-      meta: [
-        { title: `${loaderData.lesson.title} — ${loaderData.course.title} — Ascent` },
-        { name: "description", content: loaderData.body.summary },
-        { property: "og:title", content: `${loaderData.lesson.title} — Ascent` },
-        { property: "og:description", content: loaderData.body.summary },
+    const { course, lesson, body } = loaderData;
+    return seoHead({
+      path: `/learn/${course.id}/${lesson.id}`,
+      title: `${lesson.title} — ${course.title} — Ascent`,
+      description: body.summary,
+      schema: [
+        breadcrumbs([
+          { name: "Home", path: "/" },
+          { name: "Courses", path: "/learn" },
+          { name: course.title, path: `/courses/${course.id}` },
+          { name: lesson.title, path: `/learn/${course.id}/${lesson.id}` },
+        ]),
       ],
-    };
+    });
   },
   notFoundComponent: LessonMissing,
   errorComponent: ({ reset }) => (
@@ -100,6 +107,47 @@ export const Route = createFileRoute("/learn/$courseId/$lessonId")({
   ),
   component: LessonRoute,
 });
+
+function LessonReading({
+  course,
+  lesson,
+  body,
+}: {
+  course: Course;
+  lesson: LessonMeta;
+  body: PublicLessonBody;
+}) {
+  // Prose up to the first exercise: what the lesson teaches, never what it asks.
+  const firstExercise = body.blocks.findIndex((b) => b.kind !== "text" && b.kind !== "callout");
+  const reading = body.blocks.slice(0, firstExercise === -1 ? undefined : firstExercise);
+  return (
+    <AppShell>
+      <article aria-busy="true" className="mx-auto max-w-3xl space-y-6">
+        <header className="card-surface p-6 sm:p-8">
+          <p className="eyebrow">
+            {course.title} · {lesson.minutes} min · {body.xp} XP
+          </p>
+          <h1 className="mt-2 font-display text-2xl font-bold tracking-tight sm:text-4xl">
+            {lesson.title}
+          </h1>
+          <p className="mt-2 text-chalk">{body.summary}</p>
+        </header>
+        <div className="card-surface space-y-6 p-6 sm:p-8">
+          {reading.map((block, i) =>
+            block.kind === "text" || block.kind === "callout" ? (
+              <p key={i} className="text-[15px] leading-7 text-foreground">
+                <InlineText text={block.body} />
+              </p>
+            ) : null,
+          )}
+          <p role="status" className="text-sm text-chalk">
+            Loading your workspace…
+          </p>
+        </div>
+      </article>
+    </AppShell>
+  );
+}
 
 function LessonMissing() {
   return (
@@ -124,12 +172,9 @@ function LessonRoute() {
   if (!isLessonUnlocked(course, lesson.id, entitlements)) {
     return <LessonLocked course={course} lesson={lesson} trialUsed={trialUsed} />;
   }
-  if (sessionLoading)
-    return (
-      <AppShell>
-        <p role="status">Loading your workspace…</p>
-      </AppShell>
-    );
+  // Auth is client-side, so the server always lands here. Render the lesson's
+  // reading so search engines and link previews get the lesson, not a spinner.
+  if (sessionLoading) return <LessonReading course={course} lesson={lesson} body={body} />;
   return (
     <LessonWorkspace
       key={`${user?.id ?? "guest"}:${lesson.id}`}

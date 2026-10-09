@@ -64,7 +64,13 @@ export const Route = createFileRoute("/learn/")({
   component: Catalog,
 });
 
-const levels: (SkillLevel | "All")[] = ["All", "Beginner", "Intermediate", "Advanced"];
+// Only levels some course actually has: an Advanced chip that always returns
+// nothing reads as a broken filter, not as a promise.
+const allLevels: SkillLevel[] = ["Beginner", "Intermediate", "Advanced"];
+const levels: (SkillLevel | "All")[] = [
+  "All",
+  ...allLevels.filter((l) => courses.some((c) => c.level === l)),
+];
 const sorts = [
   { id: "recommended", label: "Featured" },
   { id: "written", label: "Most lessons available" },

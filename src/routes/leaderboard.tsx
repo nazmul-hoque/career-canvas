@@ -1,3 +1,4 @@
+import { seoHead } from "@/lib/seo";
 import { AuthLink } from "@/components/common/AuthLink";
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -11,24 +12,16 @@ import { useLeaderboard, useProfile } from "@/hooks/useLearner";
 import { levelTitle } from "@/content/gamification";
 import { leaderboardSeed } from "@/content/community";
 import { pathById } from "@/content/curriculum";
-import { cn } from "@/lib/utils";
+import { cn, plural } from "@/lib/utils";
 
 export const Route = createFileRoute("/leaderboard")({
-  head: () => ({
-    meta: [
-      { title: "Leaderboard — Ascent" },
-      {
-        name: "description",
-        content:
-          "Where you stand this week: XP, level and streak across every learner on Ascent. Ranked by experience earned.",
-      },
-      { property: "og:title", content: "Leaderboard — Ascent" },
-      {
-        property: "og:description",
-        content: "XP, level and streak rankings across every learner.",
-      },
-    ],
-  }),
+  head: () =>
+    seoHead({
+      path: "/leaderboard",
+      title: "Leaderboard — Ascent",
+      description:
+        "Where you stand this week: XP, level and streak across every learner on Ascent. Ranked by experience earned.",
+    }),
   component: Leaderboard,
 });
 
@@ -116,9 +109,13 @@ function Leaderboard() {
 
   // Your rank is against real learners only — a sample row must never push a
   // real person down a place.
-  const myRank = rows.filter((r) => r.live).findIndex((r) => r.id === user?.id);
-  const podium = rows.slice(0, 3);
-  const rest = rows.slice(3);
+  const liveIds = rows.filter((r) => r.live).map((r) => r.id);
+  const liveRank = (id: string) => liveIds.indexOf(id);
+  const myRank = user ? liveRank(user.id) : -1;
+  // No podium while samples are on the board: a crown over a sample, or your
+  // own "#1" card beside samples with ten times your XP, reads as a contradiction.
+  const podium = samplesVisible ? [] : rows.slice(0, 3);
+  const rest = samplesVisible ? rows : rows.slice(3);
 
   return (
     <AppShell>
@@ -201,6 +198,11 @@ function Leaderboard() {
               <div className="font-display text-2xl font-bold text-white">
                 {myRank >= 0 ? `#${myRank + 1}` : "—"}
               </div>
+              {myRank >= 0 && samplesVisible ? (
+                <div className="text-xs text-white/50">
+                  of {liveIds.length} {plural(liveIds.length, "real learner")}
+                </div>
+              ) : null}
             </div>
             <div>
               <div className="text-[11px] font-semibold uppercase tracking-wider text-white/50">
@@ -231,52 +233,54 @@ function Leaderboard() {
       ) : (
         <>
           {/* Podium */}
-          <div className="mt-7 grid gap-4 sm:grid-cols-3">
-            {podium.map((row, i) => (
-              <div
-                key={row.id}
-                className={cn(
-                  "card-surface flex flex-col items-center p-6 text-center",
-                  i === 0 && "sm:order-2 sm:scale-105 ring-2 ring-ember/40",
-                  i === 1 && "sm:order-1",
-                  i === 2 && "sm:order-3",
-                )}
-              >
-                <span
+          {podium.length > 0 ? (
+            <div className="mt-7 grid gap-4 sm:grid-cols-3">
+              {podium.map((row, i) => (
+                <div
+                  key={row.id}
                   className={cn(
-                    "grid size-9 place-items-center rounded-full",
-                    i === 0 && "bg-ember/15 text-ember",
-                    i === 1 && "bg-secondary text-chalk",
-                    i === 2 && "bg-secondary text-chalk",
+                    "card-surface flex flex-col items-center p-6 text-center",
+                    i === 0 && "sm:order-2 sm:scale-105 ring-2 ring-ember/40",
+                    i === 1 && "sm:order-1",
+                    i === 2 && "sm:order-3",
                   )}
                 >
-                  {i === 0 ? <Crown className="size-4" /> : <Medal className="size-4" />}
-                </span>
-                <Avatar className="mt-3 size-16 border border-border">
-                  <AvatarFallback className="bg-ink text-sm font-bold text-white">
-                    {row.initials}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="mt-3 flex items-center gap-2 font-display text-lg font-bold">
-                  {row.name}
-                  {row.live ? null : <SampleBadge />}
-                </div>
-                <div className="text-xs text-chalk">{row.path}</div>
-                <div className="mt-3 flex items-center gap-3 text-sm font-bold">
-                  <span className="inline-flex items-center gap-1 text-brand">
-                    <Zap className="size-3.5" /> {row.xp.toLocaleString()}
+                  <span
+                    className={cn(
+                      "grid size-9 place-items-center rounded-full",
+                      i === 0 && "bg-ember/15 text-ember",
+                      i === 1 && "bg-secondary text-chalk",
+                      i === 2 && "bg-secondary text-chalk",
+                    )}
+                  >
+                    {i === 0 ? <Crown className="size-4" /> : <Medal className="size-4" />}
                   </span>
-                  <span className="inline-flex items-center gap-1 text-ember">
-                    <Flame className="size-3.5" /> {row.streak}
-                  </span>
+                  <Avatar className="mt-3 size-16 border border-border">
+                    <AvatarFallback className="bg-ink text-sm font-bold text-white">
+                      {row.initials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="mt-3 flex items-center gap-2 font-display text-lg font-bold">
+                    {row.name}
+                    {row.live ? null : <SampleBadge />}
+                  </div>
+                  <div className="text-xs text-chalk">{row.path}</div>
+                  <div className="mt-3 flex items-center gap-3 text-sm font-bold">
+                    <span className="inline-flex items-center gap-1 text-brand">
+                      <Zap className="size-3.5" /> {row.xp.toLocaleString()}
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-ember">
+                      <Flame className="size-3.5" /> {row.streak}
+                    </span>
+                  </div>
+                  <StatPill className="mt-3">Level {row.level}</StatPill>
                 </div>
-                <StatPill className="mt-3">Level {row.level}</StatPill>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : null}
 
           {/* Table */}
-          <div className="card-surface mt-5 overflow-hidden">
+          <div className={cn("card-surface overflow-hidden", podium.length > 0 ? "mt-5" : "mt-7")}>
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border text-left">
@@ -298,7 +302,7 @@ function Leaderboard() {
                 </tr>
               </thead>
               <tbody>
-                {rest.map((row, i) => {
+                {rest.map((row) => {
                   const isMe = row.id === user?.id;
                   return (
                     <tr
@@ -306,7 +310,7 @@ function Leaderboard() {
                       className={cn("border-b border-border last:border-0", isMe && "bg-brand/8")}
                     >
                       <td className="px-5 py-3.5 font-mono text-sm font-bold text-chalk">
-                        {i + 4}
+                        {row.live ? liveRank(row.id) + 1 : "—"}
                       </td>
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">

@@ -1,14 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ShieldCheck } from "lucide-react";
-import { AuthLink } from "@/components/common/AuthLink";
-import { EmptyState } from "@/components/common/StatPill";
+import { NotFoundPage } from "@/components/common/NotFoundPage";
 import { AppShell } from "@/components/layout/AppShell";
 import { AdminContent } from "@/components/admin/AdminContent";
 import { AdminLog } from "@/components/admin/AdminLog";
 import { AdminMetrics } from "@/components/admin/AdminMetrics";
 import { AdminModeration } from "@/components/admin/AdminModeration";
 import { AdminUsers } from "@/components/admin/AdminUsers";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSession } from "@/hooks/useAuth";
@@ -22,11 +19,9 @@ import { useIsAdmin } from "@/hooks/useAdmin";
 export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
-      { title: "Admin — Ascent" },
-      { name: "description", content: "Manage learners, moderate the community and track usage." },
+      // Server-rendered for everyone, so it names nothing.
+      { title: "Ascent" },
       { name: "robots", content: "noindex, nofollow" },
-      { property: "og:title", content: "Admin — Ascent" },
-      { property: "og:description", content: "Ascent's admin console." },
     ],
   }),
   component: Admin,
@@ -44,28 +39,10 @@ function Admin() {
     );
   }
 
-  if (!user || !isAdmin) {
-    return (
-      <AppShell>
-        <EmptyState
-          icon={<ShieldCheck className="size-6" />}
-          title="Admins only"
-          description={
-            user
-              ? "Your account doesn't have admin access."
-              : "Sign in with an admin account to open the console."
-          }
-          action={
-            user ? null : (
-              <Button asChild>
-                <AuthLink mode="login">Log in</AuthLink>
-              </Button>
-            )
-          }
-        />
-      </AppShell>
-    );
-  }
+  // Non-admins get the ordinary 404, not an "Admins only" card: there's no
+  // reason to tell visitors a console exists. This is presentation only — the
+  // data behind it is guarded server-side in admin.functions.ts.
+  if (!user || !isAdmin) return <NotFoundPage />;
 
   return (
     <AppShell>

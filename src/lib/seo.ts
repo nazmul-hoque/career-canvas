@@ -1,4 +1,6 @@
 export const SITE_URL = "https://ascent.withcloud.io";
+// Absolute: LinkedIn, WhatsApp and Slack ignore a relative og:image.
+export const OG_IMAGE = `${SITE_URL}/og-image.png`;
 export const SITE_DESCRIPTION =
   "Learn coding, data, design and AI with interactive courses, career roadmaps, hands-on challenges and portfolio projects on Ascent.";
 
@@ -29,7 +31,11 @@ export function seoHead({
       { property: "og:title", content: title },
       { property: "og:description", content: description },
       { property: "og:url", content: url },
-      { name: "twitter:card", content: "summary" },
+      { property: "og:image", content: OG_IMAGE },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: OG_IMAGE },
       { name: "twitter:title", content: title },
       { name: "twitter:description", content: description },
     ],

@@ -1,3 +1,4 @@
+import { seoHead } from "@/lib/seo";
 import { PostActions } from "@/components/common/PostActions";
 import { QueryError } from "@/components/common/QueryError";
 import { AuthLink } from "@/components/common/AuthLink";
@@ -39,21 +40,13 @@ import { seedPosts, topics, type SeedPost } from "@/content/community";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/community")({
-  head: () => ({
-    meta: [
-      { title: "Community — Ascent" },
-      {
-        name: "description",
-        content:
-          "Ask questions, share what finally clicked, and read how other learners got unstuck on JavaScript, React, Python, design and the job search.",
-      },
-      { property: "og:title", content: "Community — Ascent" },
-      {
-        property: "og:description",
-        content: "Questions, answers and progress from people learning the same thing you are.",
-      },
-    ],
-  }),
+  head: () =>
+    seoHead({
+      path: "/community",
+      title: "Community — Ascent",
+      description:
+        "Ask questions, share what finally clicked, and read how other learners got unstuck on JavaScript, React, Python, design and the job search.",
+    }),
   component: Community,
 });
 

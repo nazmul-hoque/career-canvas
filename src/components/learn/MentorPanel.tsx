@@ -7,10 +7,13 @@ import { suggestedPrompts, type MentorContext, type MentorMessage } from "@/lib/
 import { mentorReplyFn } from "@/lib/mentor.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/useAuth";
+import { useMentorAllowance } from "@/hooks/useMentorAllowance";
+import { planFeatures } from "@/lib/entitlements";
+import { Link } from "@tanstack/react-router";
 import { track } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import { cn, plural } from "@/lib/utils";
 
 export function MentorPanel({
   context,
@@ -33,9 +36,11 @@ export function MentorPanel({
   const [thinking, setThinking] = useState(false);
   const [failedQuestion, setFailedQuestion] = useState<string | null>(null);
   const qc = useQueryClient();
-  const [remaining, setRemaining] = useState<number | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const { user } = useSession();
+  const allowance = useMentorAllowance();
+  const remaining = allowance?.remaining ?? null;
+  const outOfMessages = remaining === 0;
 
   // Conversations persist per lesson, so a learner can come back to how they got
   // unstuck last time.
@@ -110,8 +115,8 @@ export function MentorPanel({
           failingTests: context.failingTests ?? [],
         },
       });
-      setRemaining(result.remaining);
       void qc.invalidateQueries({ queryKey: ["mentor", user?.id, context.lessonId] });
+      void qc.invalidateQueries({ queryKey: ["mentor-usage", user?.id] });
       setMessages((m) => [
         ...m,
         { id: crypto.randomUUID(), role: "mentor", content: result.reply, at: Date.now() },
@@ -142,11 +147,9 @@ export function MentorPanel({
         <div>
           <p className="text-sm font-bold">AI Mentor</p>
           <p className="text-[11px] text-chalk">
-            {remaining !== null && remaining <= 5
-              ? `${remaining} messages left this month`
-              : remaining !== null
-                ? `${remaining} messages left this month`
-                : "Knows what lesson you're on"}
+            {remaining !== null
+              ? `${remaining} of ${allowance!.cap} ${plural(allowance!.cap, "message")} left this month`
+              : "Knows what lesson you're on"}
           </p>
         </div>
       </header>
@@ -206,12 +209,23 @@ export function MentorPanel({
             Retry last message
           </Button>
         ) : null}
+        {allowance && allowance.plan === "free" && allowance.remaining <= 3 ? (
+          <p className="mb-2.5 rounded-lg bg-ember/10 px-3 py-2 text-xs text-foreground">
+            {outOfMessages
+              ? "You've used this month's mentor messages. They reset on the 1st — "
+              : `${allowance.remaining} mentor ${plural(allowance.remaining, "message")} left this month. `}
+            <Link to="/pricing" className="font-semibold text-brand hover:underline">
+              Pro includes {planFeatures("pro").mentorMessagesPerMonth} a month
+            </Link>
+            .
+          </p>
+        ) : null}
         <div className="mb-2.5 flex flex-wrap gap-1.5">
           {suggestedPrompts(context).map((p) => (
             <button
               key={p}
               onClick={() => send(p)}
-              disabled={!user || thinking}
+              disabled={!user || thinking || outOfMessages}
               className="rounded-full bg-secondary px-2.5 py-1 text-[11px] font-semibold text-chalk transition-colors hover:text-foreground disabled:opacity-50"
             >
               {p}
@@ -229,13 +243,13 @@ export function MentorPanel({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={user ? "Ask anything about this lesson…" : "Sign in to ask your mentor"}
-            disabled={!user}
+            disabled={!user || outOfMessages}
             aria-label="Message the AI mentor"
           />
           <Button
             type="submit"
             size="icon"
-            disabled={!user || thinking || !input.trim()}
+            disabled={!user || thinking || outOfMessages || !input.trim()}
             aria-label="Send"
           >
             <Send className="size-4" />

@@ -52,8 +52,10 @@ Two facts shape every item below:
       Google under Authentication → Sign In / Providers with a Google OAuth
       client ID and secret (its authorised redirect URI is
       `https://nqudmlzugtssfqaebaqb.supabase.co/auth/v1/callback`), set the Site
-      URL, and add `<your-domain>/dashboard` and
-      `http://localhost:8080/dashboard` to the redirect allow-list. Until then the
+      URL, and add `<your-domain>/auth**` and
+      `http://localhost:8080/auth**` to the redirect allow-list (the callback is
+      `/auth?complete=true`, which routes new learners to onboarding; a URL
+      missing from the list falls back to the Site URL and skips onboarding). Until then the
       button shows "Google sign-in is unavailable"; email sign-in is unaffected.
 - [ ] **Set `MENTOR_PROVIDER` and the matching API key** as secrets (see
       `.env.example`). Unset, the mentor falls back to the old scripted replies —
@@ -114,6 +116,20 @@ Two facts shape every item below:
 ---
 
 ## Done
+
+- [x] **Crawl review of 2026-10-09, group 1** — removed the unsupported "4.8
+      average course rating" from the homepage; lesson pages server-render
+      their title, summary and opening prose (auth is client-side, so SSR used
+      to send only "Loading your workspace…") with canonical and breadcrumb
+      metadata; the sitemap lists every live lesson plus `/community` and
+      `/leaderboard`; `/learn/$courseId` 301s to `/courses/$courseId`; the level
+      filter only offers levels a course has; the leaderboard drops its podium
+      and numbers only real learners while samples show; `/admin` renders the
+      ordinary 404 for non-admins; the mentor panel shows the month's allowance
+      before the first message and links to Pro when a Free learner is low;
+      `site.webmanifest`, app icons and a 1200×630 `og-image.png` on every page.
+      Still open from that review: Terms/Privacy/About (need the business's
+      details), thin Node/UX/Product courses, per-page share images.
 
 - [x] **Community examples step aside; trending is real** (2026-09-24) — the
       six example posts in `src/content/community.ts` now hide once 5 real

@@ -4,7 +4,7 @@ import { z } from "zod";
 import { findLesson } from "@/content/curriculum";
 import type { LessonBody } from "@/content/lessons";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { entitlementsFor, planState } from "@/lib/entitlements";
+import { entitlementsFor, mentorMonthStart, planState } from "@/lib/entitlements";
 import { scriptedMentorReply, type MentorContext } from "@/lib/mentor";
 import { summariseLearnerHistory } from "@/lib/mentor-history";
 
@@ -50,11 +50,6 @@ export type MentorReply = {
   provider: string;
   remaining: number;
 };
-
-function monthStart(): string {
-  const now = new Date();
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
-}
 
 function buildSystemPrompt(input: {
   courseTitle: string;
@@ -138,7 +133,7 @@ export const mentorReplyFn = createServerFn({ method: "POST" })
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId)
       .eq("role", "user")
-      .gte("created_at", monthStart());
+      .gte("created_at", mentorMonthStart());
 
     const used = usedThisMonth ?? 0;
     if (used >= cap) {

@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { canonicalUrl, seoHead, SITE_URL } from "../src/lib/seo";
+import { courses } from "../src/content/curriculum";
+import { liveLessons } from "../src/content/lessons";
 import { renderSitemap, sitemapPaths } from "../src/lib/sitemap";
 
 describe("public search metadata", () => {
@@ -30,7 +32,12 @@ describe("public search metadata", () => {
     expect(
       paths.some((path) => /^\/(auth|dashboard|profile|review|certificates)(\/|$)/.test(path)),
     ).toBe(false);
-    expect(paths.some((path) => path.startsWith("/learn/"))).toBe(false);
+    // Every live lesson is listed; an unwritten slot (noindex, "coming soon") never is.
+    const lessonPaths = paths.filter((path) => path.startsWith("/learn/"));
+    const live = courses.flatMap((c) => liveLessons(c).map((l) => `/learn/${c.id}/${l.id}`));
+    expect(lessonPaths.sort()).toEqual(live.sort());
+    expect(paths).toContain("/community");
+    expect(paths).toContain("/leaderboard");
     expect(renderSitemap().match(/<loc>/g)?.length).toBe(paths.length);
     expect(renderSitemap()).not.toContain("lovable");
   });
