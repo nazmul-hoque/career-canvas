@@ -454,17 +454,27 @@ export const courses: Course[] = [
     level: "Intermediate",
     recommended: false,
     summary: "Build the server side of the products you already design.",
-    description: "HTTP, routing, validation, persistence and the security basics that matter.",
-    skills: ["HTTP", "Routing", "Validation", "Auth", "Databases"],
+    description:
+      "HTTP, routing, middleware, validation, persistence, security basics, and what it takes to run an API in production.",
+    skills: ["HTTP", "Routing", "Validation", "Auth", "Databases", "Rate limiting", "Logging"],
     careers: ["fullstack"],
     modules: [
-      m("node-core", "Server fundamentals", "Requests, responses and routing.", [
+      m("node-core", "Server fundamentals", "Requests, responses, routing and configuration.", [
         ["http", "How an HTTP request travels", 10, "concept"],
         ["routes", "Building routes", 14, "challenge"],
+        ["middleware", "Middleware and one error boundary", 18, "challenge"],
+        ["config", "Configuration and secrets", 16, "challenge"],
       ]),
-      m("node-data", "Data and auth", "Persistence and protecting endpoints.", [
+      m("node-data", "Data and auth", "Persistence, protecting endpoints, and safe retries.", [
         ["db", "Talking to a database", 14, "practice"],
         ["auth", "Sessions and tokens", 13, "concept"],
+        ["pagination", "Lists that scale: cursor pagination", 18, "challenge"],
+        ["idempotency", "Retries and idempotency keys", 20, "challenge"],
+      ]),
+      m("node-ops", "Run it in production", "Limits, logs, and a complete API.", [
+        ["ratelimit", "Rate limiting and 429s", 18, "challenge"],
+        ["logging", "Logs you can debug from", 16, "challenge"],
+        ["capstone", "Capstone: a bookings API", 50, "challenge"],
       ]),
     ],
   },
@@ -564,15 +574,32 @@ export const courses: Course[] = [
     summary: "Research, flows and interfaces grounded in evidence.",
     description:
       "From problem framing to usability testing, with a portfolio case study at the end.",
-    skills: ["Research", "Flows", "Wireframes", "Usability testing", "Case studies"],
+    skills: [
+      "Research",
+      "Synthesis",
+      "Information architecture",
+      "Flows",
+      "Wireframes",
+      "UX writing",
+      "Usability testing",
+      "Case studies",
+    ],
     careers: ["uxui", "product"],
     modules: [
       m("ux-core", "Understand the problem", "Research without a lab.", [
         ["interviews", "Interviews that reveal something", 18, "concept"],
+        ["synthesis", "From notes to insight", 18, "practice"],
         ["flows", "Mapping user flows", 18, "practice"],
+      ]),
+      m("ux-shape", "Shape the solution", "Structure, sketches and words.", [
+        ["ia", "Information architecture people can find their way through", 18, "practice"],
+        ["wireframes", "Wireframes: low fidelity on purpose", 16, "practice"],
+        ["writing", "UX writing: labels, errors and empty states", 16, "practice"],
       ]),
       m("ux-test", "Test and iterate", "Evidence over opinion.", [
         ["usability", "Running a usability test", 20, "practice"],
+        ["heuristics", "Heuristic evaluation", 18, "practice"],
+        ["casestudy", "Capstone: a case study that shows your thinking", 45, "project"],
       ]),
     ],
   },
@@ -640,15 +667,31 @@ export const courses: Course[] = [
     recommended: false,
     summary: "Discovery, prioritisation and shipping with a team.",
     description: "Write specs people read, prioritise honestly and measure what shipped.",
-    skills: ["Discovery", "Specs", "Prioritisation", "Metrics", "Stakeholders"],
+    skills: [
+      "Discovery",
+      "Prioritisation",
+      "Specs",
+      "Roadmaps",
+      "Stakeholders",
+      "Launches",
+      "Metrics",
+      "Experiments",
+    ],
     careers: ["product"],
     modules: [
       m("pm-core", "From problem to spec", "Decide what is worth building.", [
         ["discovery", "Discovery in two weeks", 18, "concept"],
+        ["prioritise", "Prioritising with RICE, and its limits", 18, "practice"],
         ["spec", "Writing a one-page spec", 18, "practice"],
+      ]),
+      m("pm-team", "Plan with a team", "Direction people can rely on.", [
+        ["roadmap", "Roadmaps as outcomes, not dates", 18, "concept"],
+        ["stakeholders", "Stakeholders, decisions and saying no", 18, "concept"],
       ]),
       m("pm-ship", "Ship and measure", "Launch, learn, iterate.", [
         ["metrics", "Choosing a success metric", 20, "practice"],
+        ["launch", "Staged launches and the kill switch", 18, "practice"],
+        ["experiments", "A/B tests you can trust", 22, "practice"],
       ]),
     ],
   },

@@ -129,7 +129,17 @@ Two facts shape every item below:
       before the first message and links to Pro when a Free learner is low;
       `site.webmanifest`, app icons and a 1200×630 `og-image.png` on every page.
       Still open from that review: Terms/Privacy/About (need the business's
-      details), thin Node/UX/Product courses, per-page share images.
+      details), per-page share images.
+- [x] **Crawl review of 2026-10-09, group 3: thin courses** — Node.js & APIs
+      4 → 11 lessons (middleware and an error boundary, config and secrets,
+      cursor pagination, idempotency keys, rate limiting, structured logging,
+      and a bookings-API capstone; every new lesson ends in a graded
+      challenge). UX Design Fundamentals 3 → 9 (synthesis, information
+      architecture, wireframes, UX writing, heuristic evaluation, and the
+      case-study capstone its description already promised). Product
+      Management Craft 3 → 8 (RICE, roadmaps, stakeholders, staged launches,
+      A/B tests). All assessed, none attested. Path durations recompute from
+      the new minutes.
 
 - [x] **Community examples step aside; trending is real** (2026-09-24) — the
       six example posts in `src/content/community.ts` now hide once 5 real
