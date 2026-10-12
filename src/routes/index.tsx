@@ -40,7 +40,7 @@ function Landing() {
     <div className="min-h-screen bg-canvas">
       <AppHeader />
 
-      <section className="mx-auto grid max-w-[1280px] items-center gap-10 px-4 pb-14 pt-14 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:pt-20">
+      <section className="mx-auto grid max-w-[1280px] items-center gap-10 px-4 pb-14 pt-14 sm:px-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] lg:pt-20">
         <div className="min-w-0">
           <h1 className="font-display text-4xl font-bold leading-[1.08] tracking-tight sm:text-5xl">
             Learn to code by writing code, and find out why it broke.
@@ -64,30 +64,43 @@ function Landing() {
             No card needed. The first module of every path is free.
           </p>
         </div>
-        {/* A real capture of /learn/javascript/js-basics.values after a wrong first try.
-            It shows only the starter and a failing attempt, never the solution. Retake
-            both themes together if that lesson or the workspace changes. Below lg the
-            lesson excerpt further down does the same job, so the image is skipped. */}
-        <figure className="hidden min-w-0 lg:block">
-          <div className="overflow-hidden rounded-xl border border-border shadow-lift">
+        {/* Real captures of /learn/javascript/js-basics.values after a wrong first try:
+            editor-* is the editor and its failing tests at a readable size, and lesson-*
+            the whole workspace it links to. Both show only the starter and a failing
+            attempt, never the solution. Retake all four together if that lesson or the
+            workspace changes. Below lg the lesson excerpt further down does the same job,
+            so the image is skipped. */}
+        <figure className="hidden min-w-0 justify-self-center lg:block lg:w-full lg:max-w-[500px]">
+          <a
+            href="/landing/lesson-light.jpg"
+            target="_blank"
+            rel="noreferrer"
+            className="block overflow-hidden rounded-xl border border-border shadow-lift dark:hidden"
+          >
             <img
-              src="/landing/lesson-light.jpg"
-              width={1400}
-              height={939}
-              alt="The lesson workspace: course outline on the left, the Safe line totals exercise with a failing first try in the editor and its six failed tests in the middle, and the AI mentor on the right."
-              className="block h-auto w-full dark:hidden"
+              src="/landing/editor-light.jpg"
+              width={1028}
+              height={1273}
+              alt="The lesson editor with roundToCent returning amount.toFixed(2), and all six tests failing underneath, starting with Rounds to the nearest cent and Returns a number, not text."
+              className="block h-auto w-full"
             />
+          </a>
+          <a
+            href="/landing/lesson-dark.jpg"
+            target="_blank"
+            rel="noreferrer"
+            className="hidden overflow-hidden rounded-xl border border-border shadow-lift dark:block"
+          >
             <img
-              src="/landing/lesson-dark.jpg"
-              width={1400}
-              height={939}
-              alt="The lesson workspace: course outline on the left, the Safe line totals exercise with a failing first try in the editor and its six failed tests in the middle, and the AI mentor on the right."
-              loading="lazy"
-              className="hidden h-auto w-full dark:block"
+              src="/landing/editor-dark.jpg"
+              width={1028}
+              height={1273}
+              alt="The lesson editor with roundToCent returning amount.toFixed(2), and all six tests failing underneath, starting with Rounds to the nearest cent and Returns a number, not text."
+              className="block h-auto w-full"
             />
-          </div>
+          </a>
           <figcaption className="mt-2 text-xs text-chalk">
-            A screenshot of the first JavaScript lesson after a wrong first try.
+            The first JavaScript lesson after a wrong first try. Click it to see the whole page.
           </figcaption>
         </figure>
       </section>
