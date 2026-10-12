@@ -1575,7 +1575,7 @@ GROUP BY week_start;
       { kind: "heading", text: "Two averages, both true" },
       {
         kind: "text",
-        body: "Each week has 7 days but only 6 rows, because Leeds is closed on Sundays and a closed day has **no row at all**. So `AVG(revenue)` divides by the days Leeds traded, not the days that passed. Over 2025, that's the difference between these two:",
+        body: "Each week has 7 days but only 6 rows, because Leeds is closed on Sundays and a closed day has **no row at all**. So `AVG(revenue)` divides by the days Leeds traded, not the days that passed. In 2025 that's 310 days: 365, less 52 Sundays and the three holidays it always closes for, 1 January and 25–26 December. The difference it makes:",
       },
       {
         kind: "table",
@@ -1952,7 +1952,7 @@ ORDER BY c.day;`,
     blocks: [
       {
         kind: "text",
-        body: '"Up 12% on last month" needs two numbers on the same row: this month and last. `LAG(x) OVER (ORDER BY ...)` fetches `x` from the previous row, without a self-join. `LEAD` fetches the next one. `LAG(x, 12)` reaches back 12 rows, and a third argument, as in `LAG(x, 1, 0)`, is what to use when there\'s no row that far back.',
+        body: '"Up 12% on last month" needs two numbers on the same row: this month and last. `LAG(x) OVER (ORDER BY ...)` fetches `x` from the previous row, without a self-join. `LEAD` fetches the next one. `LAG(x, 12)` reaches back 12 rows. A third argument, as in `LAG(x, 1, 0)`, is the value to use when there\'s no row that far back. Keep it for a count that really was 0 then, never as a stand-in for a period nobody measured: the next section explains why.',
       },
       {
         kind: "table",
@@ -2028,14 +2028,9 @@ LIMIT 4;
         kind: "text",
         body: "January 2024 has nothing before it, so its change is NULL, and NULL is the honest answer. Don't `COALESCE` it to 0: a 0 claims the month was flat, when in fact nobody knows.",
       },
-      { kind: "heading", text: "Two arithmetic traps" },
       {
-        kind: "text",
-        body: "**Integer division.** Write `100.0 *`, not `100 *`, when the columns are whole numbers. `orders` is an INTEGER, and dividing one integer by another gives an integer, so every month-on-month change under 100%, up or down, comes out as 0.",
-      },
-      {
-        kind: "text",
-        body: "**Dividing by zero.** If the previous value can be 0, write `NULLIF(prev, 0)` in the denominator, which turns a 0 into NULL. SQLite already returns NULL when you divide by zero, but PostgreSQL and most other databases stop with an error.",
+        kind: "callout",
+        body: "**Watch out for two arithmetic traps.** Write `100.0 *`, not `100 *`: `orders` is an INTEGER, and dividing one integer by another gives an integer, so every change under 100% comes out as 0. And if the previous value can be 0, divide by `NULLIF(prev, 0)`. SQLite returns NULL when you divide by zero, but PostgreSQL and most other databases stop with an error.",
       },
       { kind: "heading", text: "The previous row isn't always the previous period" },
       {
