@@ -18,7 +18,7 @@ export const projects: PortfolioProject[] = [
   {
     id: "landing-page",
     title: "Conversion-ready landing page",
-    tagline: "Your first shippable piece of the web",
+    tagline: "A one-page site for a small business, with a contact form that checks its input",
     brief:
       "Design and build a one-page site for a small business: a hero that states the offer, three proof sections and a contact form that validates input.",
     difficulty: "Beginner",
@@ -37,7 +37,7 @@ export const projects: PortfolioProject[] = [
   {
     id: "ecommerce-site",
     title: "E-commerce storefront",
-    tagline: "Catalogue, cart and checkout flow",
+    tagline: "A product grid, a cart that survives a refresh, and a checkout in steps",
     brief:
       "Build a storefront with a filterable product grid, a persistent cart and a multi-step checkout. Cart state must survive a refresh.",
     difficulty: "Intermediate",
@@ -56,7 +56,7 @@ export const projects: PortfolioProject[] = [
   {
     id: "dashboard-ui",
     title: "Analytics dashboard",
-    tagline: "Dense data, calm interface",
+    tagline: "Cards, a chart and a sortable table, all driven by one date filter",
     brief:
       "Build a dashboard with KPI cards, a time-series chart, a sortable table and a date-range filter that drives all of them.",
     difficulty: "Intermediate",
@@ -75,7 +75,7 @@ export const projects: PortfolioProject[] = [
   {
     id: "weather-app",
     title: "Weather app",
-    tagline: "Your first real API integration",
+    tagline: "Search a city for its forecast, and cope when the network fails",
     brief:
       "Search any city and show current conditions plus a five-day outlook, handling the network failing gracefully.",
     difficulty: "Beginner",
@@ -94,7 +94,7 @@ export const projects: PortfolioProject[] = [
   {
     id: "game-2048",
     title: "2048 game",
-    tagline: "Pure logic, no library",
+    tagline: "The tile-merging game, written from scratch",
     brief:
       "Implement the grid, the merge rules, keyboard controls, scoring and a game-over state from scratch.",
     difficulty: "Intermediate",
@@ -113,7 +113,7 @@ export const projects: PortfolioProject[] = [
   {
     id: "data-dashboard",
     title: "Data analytics report",
-    tagline: "From raw CSV to a decision",
+    tagline: "Clean a messy sales export and write a one-page recommendation",
     brief:
       "Clean a messy sales export, explore it, and produce a dashboard plus a one-page written recommendation.",
     difficulty: "Intermediate",
@@ -132,7 +132,7 @@ export const projects: PortfolioProject[] = [
   {
     id: "mobile-app-design",
     title: "Mobile app design case study",
-    tagline: "Research, flows, screens, rationale",
+    tagline: "Design a habit tracker and write up why it works the way it does",
     brief:
       "Design a mobile habit-tracking app end to end and present it as a portfolio case study with your reasoning visible.",
     difficulty: "Beginner",
@@ -151,7 +151,7 @@ export const projects: PortfolioProject[] = [
   {
     id: "ai-chatbot",
     title: "AI assistant with retrieval",
-    tagline: "An LLM that answers from your own documents",
+    tagline: "A chat that answers from a few documents, cites them, and says when it doesn't know",
     brief:
       "Build a chat interface that answers questions grounded in a small document set, with citations and a graceful 'I don't know'.",
     difficulty: "Advanced",
