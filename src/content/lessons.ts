@@ -6,7 +6,7 @@ import {
   type LessonMeta,
 } from "./curriculum";
 import { lessonManifest } from "./lesson-manifest.gen";
-import type { ChallengeLanguage } from "@/lib/code-runner";
+import type { ChallengeLanguage, TestSpec } from "@/lib/code-runner";
 import type { SqlDataset } from "./datasets/sql";
 
 export type LessonBlock =
@@ -80,7 +80,7 @@ export type LessonBlock =
       starter: string;
       hint: string;
       solution: string;
-      tests: { name: string; expression: string }[];
+      tests: TestSpec[];
     };
 
 /**

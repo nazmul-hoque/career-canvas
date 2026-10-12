@@ -10,6 +10,13 @@ export interface TestSpec {
   name: string;
   /** An expression (or, for React, an async function body) in the challenge's terms. */
   expression: string;
+  /**
+   * Python and SQL: an expression whose value is shown under the test when it
+   * fails ("Your query gives 10"), so a learner fixing one problem at a time
+   * can see what's still wrong. Its value is the learner's own result, never
+   * the answer.
+   */
+  show?: string | undefined;
 }
 
 /** What every engine hands back before code-runner turns it into a RunResult. */

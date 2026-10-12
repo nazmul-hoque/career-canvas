@@ -111,7 +111,7 @@ the bodies from a route, hook or component, and never reveal the right option on
 a wrong answer. What a wrong pick may get is its own option's `whyNot` note
 (an mcq option can be `{ text, whyNot }`): why that option fails, never which
 one is right. `tests/lessons.test.ts` requires one on every wrong option in the
-courses listed in `NOTED_COURSES`, and rejects a note that quotes the answer.
+courses listed in `FEEDBACK_COURSES`, and rejects a note that quotes the answer.
 The same rule covers bulk, not just secrecy: the Claude course's authored task
 prose lives in `claude-levels.server.ts` and only its skeleton
 (ids, titles, lengths, types) is generated into `claude-course.gen.ts` for the
@@ -250,7 +250,10 @@ itself gets the 15s "loop that never ends" limit. Never let a
 simulated run present itself as a real one. Python challenge `tests` are real
 Python expressions evaluated against the learner's namespace; JavaScript ones are
 JS expressions. SQL runs on Pyodide's sqlite3 against the challenge's dataset (no
-simulation). React challenges (`language: "react"`) render the learner's JSX with
+simulation). A Python or SQL test can carry `show`, an expression evaluated only
+when the test fails and printed under it ("Your query gives 7"); it must be the
+learner's own result, never the expected one, and `lessons:verify` fails on a
+`show` that raises (`--shows` prints what each starter would see). React challenges (`language: "react"`) render the learner's JSX with
 the app's own React via `src/lib/react-runtime.ts` — sucrase compiles it, loaded
 lazily; a visible Preview mounts `App`. React `tests` are async function bodies
 using user-level helpers (`render`, `getByRole`, `getByLabelText`, `click`, `fill`,

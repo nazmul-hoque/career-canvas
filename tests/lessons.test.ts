@@ -643,8 +643,14 @@ function namesTheAnswer(note: string, right: string): boolean {
   return new RegExp(`(?<![\\w.,])${escaped}(?!\\w|[.,]\\d)`).test(note);
 }
 
-/** Courses where every wrong option must say why it's wrong. */
-const NOTED_COURSES = ["sql-analysis"];
+/**
+ * Courses held to the full feedback standard: every wrong mcq option says why
+ * it's wrong, and every challenge test shows what the learner's code gave.
+ */
+const FEEDBACK_COURSES = ["sql-analysis"];
+
+const courseLessonIds = (courseId: string) =>
+  new Set(courseLessons(courses.find((c) => c.id === courseId)!).map((l) => l.id));
 
 describe("wrong-option notes", () => {
   const mcqs = Object.entries(bodies).flatMap(([id, body]) =>
@@ -677,17 +683,47 @@ describe("wrong-option notes", () => {
     }
   });
 
-  for (const courseId of NOTED_COURSES) {
+  for (const courseId of FEEDBACK_COURSES) {
     test(`${courseId}: every wrong option says why`, () => {
-      const lessonIds = new Set(
-        courseLessons(courses.find((c) => c.id === courseId)!).map((l) => l.id),
-      );
+      const lessonIds = courseLessonIds(courseId);
       const ours = mcqs.filter(({ id }) => lessonIds.has(id));
       expect(ours.length).toBeGreaterThan(0);
       const missing = ours.flatMap(({ where, b }) =>
         b.options.flatMap((option, i) =>
           i !== b.answer && !optionWhyNot(option) ? [`${where} option ${i}`] : [],
         ),
+      );
+      expect(missing).toEqual([]);
+    });
+  }
+});
+
+/**
+ * A test's `show` is evaluated by the Python driver, so it only means something
+ * on a Python or SQL challenge; anywhere else it would be silently ignored.
+ * Whether each one evaluates is checked by `bun run lessons:verify`.
+ */
+describe("shown test values", () => {
+  const challenges = Object.entries(bodies).flatMap(([id, body]) =>
+    body.blocks.flatMap((b) => (b.kind === "challenge" ? [{ id, b }] : [])),
+  );
+
+  test("only on challenges the Python driver runs", () => {
+    const stray = challenges.flatMap(({ id, b }) =>
+      b.language === "python" || b.language === "sql"
+        ? []
+        : b.tests.filter((t) => t.show).map((t) => `${id}: ${t.name}`),
+    );
+    expect(stray).toEqual([]);
+  });
+
+  for (const courseId of FEEDBACK_COURSES) {
+    test(`${courseId}: every challenge test shows what the code gave`, () => {
+      const lessonIds = courseLessonIds(courseId);
+      const ours = challenges.filter(({ id }) => lessonIds.has(id));
+      expect(ours.length).toBeGreaterThan(0);
+      const missing = ours.flatMap(({ id, b }) =>
+        b.tests.filter((t) => !t.show?.trim()).map((t) => `${id}: ${t.name}`),
       );
       expect(missing).toEqual([]);
     });

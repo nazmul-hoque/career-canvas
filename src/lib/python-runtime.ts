@@ -29,7 +29,19 @@ const RUN_TIMEOUT_MS = 15_000;
 export interface PythonRunOutcome {
   logs: string[];
   error: string | null;
-  results: boolean[];
+  /** `detail` is the test's `show` value, formatted, when it failed and has one. */
+  results: { passed: boolean; detail: string | null }[];
+}
+
+/**
+ * A test as the driver takes it. `show` is evaluated only when the test fails,
+ * and `noneAs` is how a None reads in that value: "NULL" for SQL, where None
+ * is what a NULL arrived as.
+ */
+export interface PythonTest {
+  expression: string;
+  show?: string | undefined;
+  noneAs?: string | undefined;
 }
 
 /** Pyodide's package names, e.g. ["scikit-learn", "scipy", "numpy", …]. */
@@ -81,15 +93,39 @@ export const PYTHON_DRIVER = [
   "    sys.stdout, sys.stderr = stdout, stderr",
   "# What the program printed, so a test can check output as well as values.",
   'namespace["__stdout__"] = buffer.getvalue()',
+  "# A failed test's `show` value, as the learner reads it: None as the",
+  "# language names it, and a bare string without quotes.",
+  "def __ascent_format(value, none_as, top=True):",
+  "    if value is None:",
+  "        return none_as",
+  "    if isinstance(value, str):",
+  "        return value if top else repr(value)",
+  "    if isinstance(value, (list, tuple)):",
+  "        inner = ', '.join(__ascent_format(v, none_as, False) for v in value)",
+  "        if isinstance(value, list):",
+  "            return '[' + inner + ']'",
+  "        return '(' + inner + (',' if len(value) == 1 else '') + ')'",
+  "    if isinstance(value, dict):",
+  "        return '{' + ', '.join(__ascent_format(k, none_as, False) + ': ' + __ascent_format(v, none_as, False) for k, v in value.items()) + '}'",
+  "    return repr(value)",
   "results = []",
-  'for expression in payload["tests"]:',
+  'for test in payload["tests"]:',
   "    if error is not None:",
-  "        results.append(False)",
+  '        results.append({"passed": False, "detail": None})',
   "        continue",
   "    try:",
-  "        results.append(bool(eval(expression, namespace)))",
+  '        passed = bool(eval(test["expression"], namespace))',
   "    except BaseException:",
-  "        results.append(False)",
+  "        passed = False",
+  "    detail = None",
+  '    if not passed and test.get("show"):',
+  "        try:",
+  '            detail = __ascent_format(eval(test["show"], namespace), test.get("noneAs") or "None")',
+  "            if len(detail) > 160:",
+  '                detail = detail[:157] + "..."',
+  "        except BaseException:",
+  "            detail = None",
+  '    results.append({"passed": passed, "detail": detail})',
   "os.chdir(home)",
   "shutil.rmtree(workdir, ignore_errors=True)",
   "__ascent_result = json.dumps({",
@@ -184,7 +220,7 @@ export function pythonRuntimeBooted(): boolean {
  */
 export async function runPythonInPyodide(
   code: string,
-  expressions: string[],
+  tests: PythonTest[],
   onProgress?: (progress: PythonProgress) => void,
 ): Promise<PythonRunOutcome | null> {
   if (!pythonRuntimeAvailable()) return null;
@@ -215,7 +251,7 @@ export async function runPythonInPyodide(
         resolve({
           logs: [],
           error: `Your code was still running after ${RUN_TIMEOUT_MS / 1000}s and was stopped. Check for a loop that never ends.`,
-          results: expressions.map(() => false),
+          results: tests.map(() => ({ passed: false, detail: null })),
         });
       }
 
@@ -259,7 +295,7 @@ export async function runPythonInPyodide(
 
       instance.addEventListener("message", onMessage);
       instance.addEventListener("error", onError);
-      instance.postMessage({ id, base: PYODIDE_BASE, code, tests: expressions });
+      instance.postMessage({ id, base: PYODIDE_BASE, code, tests });
     });
 
     return outcome;

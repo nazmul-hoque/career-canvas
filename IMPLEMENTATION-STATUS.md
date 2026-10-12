@@ -117,6 +117,39 @@ Two facts shape every item below:
 
 ## Done
 
+- [x] **SQL for Analysis is hard to follow** (reader review, 2026-10-12). The
+      SQL and the traps are right; the presentation isn't. Lessons quote facts
+      the reader can't see, string figures together in prose, pack 4–6 ideas
+      into one unbroken page (`sql-time.dates` is two lessons), and a wrong quiz
+      pick says only "Try again". Plan, in order:
+      1. ~~Blocks for it~~ — done 2026-10-12: `heading` and `table` lesson
+         blocks (`LessonTable.tsx`). A table can be `collapsed` ("see the
+         data") and carry a `source` query that `tests/lessons.test.ts` re-runs
+         on its dataset, so a quoted figure fails the suite if it drifts.
+      2. ~~Wrong-answer notes~~ — done 2026-10-12: an mcq option can be
+         `{ text, whyNot }`; `answerVerdict` (`lesson-grading.ts`) returns the
+         picked option's note on a miss, shown in the lesson, `/review` and
+         placement. All 45 wrong options in SQL for Analysis have one; other
+         courses opt in through `FEEDBACK_COURSES` in `tests/lessons.test.ts`.
+      3. ~~Content~~ — done 2026-10-12: `sql-time.dates` split into *Dates,
+         weeks and months* (new challenge: two averages per month) and
+         `sql-time.calendars` (2 learners had finished the old lesson; agreed
+         to let them see the new one as unfinished). Every lesson has a
+         folded "see the data" panel; lessons 1 and 3–6 have subheadings and
+         query-checked tables in place of number-heavy prose (grain defined
+         and the duplicated rows shown in 1, ROW_NUMBER/RANK/DENSE_RANK side
+         by side in 3, like-for-like and Harrogate's partial month in 5, the
+         per-order reconciliation in 6, its query kept back as the challenge's
+         answer). Challenge prompts say each test checks one thing; the
+         capstone's interpretation question now follows its challenge.
+      4. ~~Say what a failing test got~~ — done 2026-10-12: a Python/SQL test
+         can carry `show`, evaluated by the driver only on failure and printed
+         under it ("Your query gives 7", NULL for None). Only `PYTHON_DRIVER`
+         changed; the worker string forwards tests untouched. All 49 SQL for
+         Analysis tests have one; `lessons:verify` fails on a `show` that
+         raises, and `--shows` prints each starter's messages. Checked in
+         Chrome on real Pyodide (SQL and a plain Python challenge).
+
 - [x] **Crawl review of 2026-10-09, group 1** — removed the unsupported "4.8
       average course rating" from the homepage; lesson pages server-render
       their title, summary and opening prose (auth is client-side, so SSR used
@@ -763,33 +796,6 @@ Two facts shape every item below:
       channel.
 
 ### Left to implement
-
-- [ ] **SQL for Analysis is hard to follow** (reader review, 2026-10-12). The
-      SQL and the traps are right; the presentation isn't. Lessons quote facts
-      the reader can't see, string figures together in prose, pack 4–6 ideas
-      into one unbroken page (`sql-time.dates` is two lessons), and a wrong quiz
-      pick says only "Try again". Plan, in order:
-      1. ~~Blocks for it~~ — done 2026-10-12: `heading` and `table` lesson
-         blocks (`LessonTable.tsx`). A table can be `collapsed` ("see the
-         data") and carry a `source` query that `tests/lessons.test.ts` re-runs
-         on its dataset, so a quoted figure fails the suite if it drifts.
-      2. ~~Wrong-answer notes~~ — done 2026-10-12: an mcq option can be
-         `{ text, whyNot }`; `answerVerdict` (`lesson-grading.ts`) returns the
-         picked option's note on a miss, shown in the lesson, `/review` and
-         placement. All 45 wrong options in SQL for Analysis have one; other
-         courses opt in through `NOTED_COURSES` in `tests/lessons.test.ts`.
-      3. ~~Content~~ — done 2026-10-12: `sql-time.dates` split into *Dates,
-         weeks and months* (new challenge: two averages per month) and
-         `sql-time.calendars` (2 learners had finished the old lesson; agreed
-         to let them see the new one as unfinished). Every lesson has a
-         folded "see the data" panel; lessons 1 and 3–6 have subheadings and
-         query-checked tables in place of number-heavy prose (grain defined
-         and the duplicated rows shown in 1, ROW_NUMBER/RANK/DENSE_RANK side
-         by side in 3, like-for-like and Harrogate's partial month in 5, the
-         per-order reconciliation in 6, its query kept back as the challenge's
-         answer). Challenge prompts say each test checks one thing; the
-         capstone's interpretation question now follows its challenge.
-      4. Maybe: show what a failing SQL test got (touches the Pyodide worker).
 
 - [ ] **Component and integration tests** — the unit layer is covered, and
       happy-dom now runs React in tests (`tests/react-runtime.test.ts`), so

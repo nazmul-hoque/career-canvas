@@ -986,23 +986,32 @@ ORDER BY total_spent DESC;`,
           {
             name: "Returns name, orders and total_spent",
             expression: 'columns == ["name", "orders", "total_spent"]',
+            show: "columns",
           },
-          { name: "Seven customers have paid orders", expression: "len(rows) == 7" },
+          {
+            name: "Seven customers have paid orders",
+            expression: "len(rows) == 7",
+            show: "len(rows)",
+          },
           {
             name: "orders counts orders, not item lines",
             expression: 'dict((r[0], r[1]) for r in rows).get("Maja Berg") == 3',
+            show: 'dict((r[0], r[1]) for r in rows).get("Maja Berg", "no row for Maja Berg")',
           },
           {
             name: "Each order's shipping is counted once",
             expression: 'abs(dict((r[0], r[2]) for r in rows).get("Maja Berg", 0) - 557) < 0.01',
+            show: 'dict((r[0], r[2]) for r in rows).get("Maja Berg", "no row for Maja Berg")',
           },
           {
             name: "Totals reconcile with items (1,628) plus shipping (25)",
             expression: "abs(sum(r[2] for r in rows) - 1653) < 0.01",
+            show: "sum(r[2] for r in rows)",
           },
           {
             name: "Highest spender first",
             expression: "[r[2] for r in rows] == sorted((r[2] for r in rows), reverse=True)",
+            show: "[r[2] for r in rows]",
           },
         ],
       },
@@ -1184,24 +1193,29 @@ ORDER BY month;`,
           {
             name: "Returns month, orders, paid, refunded, pending and paid_pct",
             expression: 'columns == ["month", "orders", "paid", "refunded", "pending", "paid_pct"]',
+            show: "columns",
           },
-          { name: "One row per month", expression: "len(rows) == 3" },
+          { name: "One row per month", expression: "len(rows) == 3", show: "len(rows)" },
           {
             name: "The status columns add up to orders",
             expression: "all(r[1] == r[2] + r[3] + r[4] for r in rows)",
+            show: "[r[1:5] for r in rows]",
           },
           {
             name: "January had no pending orders: 0, not NULL",
             expression: 'rows[0][0] == "2026-01" and rows[0][4] == 0',
+            show: 'rows[0] if rows else "no rows"',
           },
           {
             name: "March: 4 of 6 paid, 66.7%",
             expression:
               'any(r[0] == "2026-03" and r[2] == 4 and abs(r[5] - 66.7) < 0.05 for r in rows)',
+            show: '[r for r in rows if r[0] == "2026-03"]',
           },
           {
             name: "In month order",
             expression: "[r[0] for r in rows] == sorted(r[0] for r in rows)",
+            show: "[r[0] for r in rows]",
           },
         ],
       },
@@ -1427,22 +1441,27 @@ ORDER BY name;`,
           {
             name: "Returns name, order_id and order_date",
             expression: 'columns == ["name", "order_id", "order_date"]',
+            show: "columns",
           },
           {
             name: "One row for each of the 7 customers with a paid order",
             expression: "len(rows) == 7 and len(set(r[0] for r in rows)) == 7",
+            show: "len(rows)",
           },
           {
             name: "Liam's later pending order doesn't count",
             expression: '("Liam Walsh", 102, "2026-01-09") in rows',
+            show: '[r for r in rows if r[0] == "Liam Walsh"]',
           },
           {
             name: "Maja's latest is her March order",
             expression: 'any(r[0] == "Maja Berg" and r[1] == 114 for r in rows)',
+            show: '[r for r in rows if r[0] == "Maja Berg"]',
           },
           {
             name: "Sorted by name",
             expression: "[r[0] for r in rows] == sorted(r[0] for r in rows)",
+            show: "[r[0] for r in rows]",
           },
         ],
       },
@@ -1681,28 +1700,34 @@ ORDER BY month;`,
             name: "Returns month, trading_days, revenue, per_trading_day and per_calendar_day",
             expression:
               'columns == ["month", "trading_days", "revenue", "per_trading_day", "per_calendar_day"]',
+            show: "columns",
           },
           {
             name: "The 12 months of 2025, labelled like 2025-06, in order",
             expression: '[r[0] for r in rows] == [f"2025-{m:02d}" for m in range(1, 13)]',
+            show: "[r[0] for r in rows]",
           },
           {
             name: "June: 25 trading days at 1,227.08 each",
             expression: "any(r[1] == 25 and abs(r[3] - 1227.08) < 0.01 for r in rows)",
+            show: '[r[:4] for r in rows if str(r[0]).endswith("06")]',
           },
           {
             name: "June's per_calendar_day divides by its 30 days: 1,022.57",
             expression:
               "any(abs(r[3] - 1227.08) < 0.01 and abs(r[4] - 1022.57) < 0.01 for r in rows)",
+            show: '[r[3:5] for r in rows if str(r[0]).endswith("06")]',
           },
           {
             name: "February's divides by 28: 649.21",
             expression:
               "any(abs(r[3] - 757.42) < 0.01 and abs(r[4] - 649.21) < 0.01 for r in rows)",
+            show: '[r[3:5] for r in rows if str(r[0]).endswith("02")]',
           },
           {
             name: "Every month earns less per calendar day than per trading day",
             expression: "all(r[4] < r[3] for r in rows)",
+            show: "[r[3:5] for r in rows][:3]",
           },
         ],
       },
@@ -1891,20 +1916,31 @@ LEFT JOIN daily_sales AS s
   ON s.day = c.day AND s.store_id = 1
 ORDER BY c.day;`,
         tests: [
-          { name: "Returns day and revenue", expression: 'columns == ["day", "revenue"]' },
-          { name: "One row for each of June's 30 days", expression: "len(rows) == 30" },
+          {
+            name: "Returns day and revenue",
+            expression: 'columns == ["day", "revenue"]',
+            show: "columns",
+          },
+          {
+            name: "One row for each of June's 30 days",
+            expression: "len(rows) == 30",
+            show: "len(rows)",
+          },
           {
             name: "The outage days show 0, not NULL",
             expression:
               'all(dict(rows).get(d, -1) == 0 for d in ("2025-06-10", "2025-06-11", "2025-06-12"))',
+            show: '[dict(rows).get(d, "no row") for d in ("2025-06-10", "2025-06-11", "2025-06-12")]',
           },
           {
             name: "Only the website's sales: 37,381 in total",
             expression: "abs(sum(r[1] or 0 for r in rows) - 37381) < 0.01",
+            show: "sum(r[1] or 0 for r in rows)",
           },
           {
             name: "Every day from 1 to 30 June, in order",
             expression: '[r[0] for r in rows] == [f"2025-06-{d:02d}" for d in range(1, 31)]',
+            show: "[str(r[0])[-2:] for r in rows]",
           },
         ],
       },
@@ -2208,26 +2244,32 @@ ORDER BY month;`,
           {
             name: "Returns month, revenue, last_year and growth_pct",
             expression: 'columns == ["month", "revenue", "last_year", "growth_pct"]',
+            show: "columns",
           },
           {
             name: "The 12 months of 2025",
             expression: 'len(rows) == 12 and all(r[0].startswith("2025-") for r in rows)',
+            show: "[r[0] for r in rows]",
           },
           {
             name: "Every month has last year's figure",
             expression: "all(r[2] is not None for r in rows)",
+            show: "[r[2] for r in rows][:4]",
           },
           {
             name: "Harrogate is left out: July is 79,832",
             expression: 'abs(dict((r[0], r[1]) for r in rows).get("2025-07", 0) - 79832) < 0.01',
+            show: 'dict((r[0], r[1]) for r in rows).get("2025-07", "no row for 2025-07")',
           },
           {
             name: "July grew 18.6% on July 2024",
             expression: 'abs((dict((r[0], r[3]) for r in rows).get("2025-07") or 0) - 18.6) < 0.05',
+            show: 'dict((r[0], r[3]) for r in rows).get("2025-07", "no row for 2025-07")',
           },
           {
             name: "In month order",
             expression: "[r[0] for r in rows] == sorted(r[0] for r in rows)",
+            show: "[r[0] for r in rows]",
           },
         ],
       },
@@ -2546,30 +2588,37 @@ ORDER BY t.order_id;`,
           {
             name: "Returns order_id, order_total and collected",
             expression: 'columns == ["order_id", "order_total", "collected"]',
+            show: "columns",
           },
           {
             name: "Finds the four orders that don't reconcile: 106, 112, 113 and 114",
             expression: "sorted(r[0] for r in rows) == [106, 112, 113, 114]",
+            show: "sorted(r[0] for r in rows)",
           },
           {
             name: "Doesn't flag 104 or 110, whose status is only spelled differently",
             expression: "not any(r[0] in (104, 110) for r in rows)",
+            show: "[r for r in rows if r[0] in (104, 110)]",
           },
           {
             name: "Each order's total counts its items once: 106 is 154",
             expression: "dict((r[0], r[1]) for r in rows).get(106) == 154",
+            show: 'dict((r[0], r[1]) for r in rows).get(106, "no row for 106")',
           },
           {
             name: "The duplicate shows up: 106 collected 308",
             expression: "dict((r[0], r[2]) for r in rows).get(106) == 308",
+            show: 'dict((r[0], r[2]) for r in rows).get(106, "no row for 106")',
           },
           {
             name: "Order 114, with no payment, shows 0 collected",
             expression: "dict((r[0], r[2]) for r in rows).get(114) == 0",
+            show: 'dict((r[0], r[2]) for r in rows).get(114, "no row for 114")',
           },
           {
             name: "In order of order_id",
             expression: "[r[0] for r in rows] == sorted(r[0] for r in rows)",
+            show: "[r[0] for r in rows]",
           },
         ],
       },
@@ -2645,35 +2694,43 @@ ORDER BY month;`,
           {
             name: "Returns month, web, stores, web_share and share_change",
             expression: 'columns == ["month", "web", "stores", "web_share", "share_change"]',
+            show: "columns",
           },
           {
             name: "The 12 months of 2025",
             expression: 'len(rows) == 12 and all(r[0].startswith("2025-") for r in rows)',
+            show: "[r[0] for r in rows]",
           },
           {
             name: "Website and stores reconcile with the chain's 2025 revenue: 921,587",
             expression: "abs(sum(r[1] + r[2] for r in rows) - 921587) < 0.01",
+            show: "sum(r[1] + r[2] for r in rows)",
           },
           {
             name: "stores counts Harrogate: April is 38,428",
             expression: 'abs(dict((r[0], r[2]) for r in rows).get("2025-04", 0) - 38428) < 0.01',
+            show: 'dict((r[0], r[2]) for r in rows).get("2025-04", "no row for 2025-04")',
           },
           {
             name: "June's web_share is 40.5",
             expression: 'abs((dict((r[0], r[3]) for r in rows).get("2025-06") or 0) - 40.5) < 0.05',
+            show: 'dict((r[0], r[3]) for r in rows).get("2025-06", "no row for 2025-06")',
           },
           {
             name: "January is compared with December 2024: -0.2",
             expression: 'abs((dict((r[0], r[4]) for r in rows).get("2025-01") or 99) + 0.2) < 0.11',
+            show: 'dict((r[0], r[4]) for r in rows).get("2025-01", "no row for 2025-01")',
           },
           {
             name: "April shows the fall when Harrogate opened: -10.7",
             expression:
               'abs((dict((r[0], r[4]) for r in rows).get("2025-04") or 99) + 10.7) < 0.11',
+            show: 'dict((r[0], r[4]) for r in rows).get("2025-04", "no row for 2025-04")',
           },
           {
             name: "In month order",
             expression: "[r[0] for r in rows] == sorted(r[0] for r in rows)",
+            show: "[r[0] for r in rows]",
           },
         ],
       },

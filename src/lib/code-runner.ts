@@ -12,7 +12,7 @@
  * network call without changing the shape.
  */
 import { sqlDataset, type SqlDataset } from "@/content/datasets/sql";
-import { runPythonInPyodide, type PythonProgress } from "./python-runtime";
+import { runPythonInPyodide, type PythonProgress, type PythonTest } from "./python-runtime";
 import {
   captureConsole,
   errorMessage,
@@ -175,11 +175,7 @@ async function runPython(
   onProgress: ((progress: PythonProgress) => void) | undefined,
 ): Promise<RunResult> {
   const started = performance.now();
-  const outcome = await runPythonInPyodide(
-    code,
-    tests.map((t) => t.expression),
-    onProgress,
-  );
+  const outcome = await runPythonInPyodide(code, pythonTests(tests), onProgress);
 
   if (!outcome) return runPythonSimulated(code, tests, started);
 
@@ -189,11 +185,18 @@ async function runPython(
     {
       logs: outcome.logs.length ? outcome.logs : ["(no output)"],
       error: outcome.error,
-      results: outcome.results.map((passed) => ({ passed, detail: null })),
+      results: withShown(outcome.results, "Your code gives"),
     },
     started,
   );
 }
+
+export const pythonTests = (tests: TestSpec[], noneAs?: string): PythonTest[] =>
+  tests.map(({ expression, show }) => ({ expression, show, noneAs }));
+
+/** A failed test's shown value, as a sentence under the test. */
+const withShown = (results: { passed: boolean; detail: string | null }[], lead: string) =>
+  results.map(({ passed, detail }) => ({ passed, detail: detail ? `${lead} ${detail}` : null }));
 
 /** Longest result the output panel prints; tests still see every row. */
 const SQL_PRINT_ROWS = 25;
@@ -235,9 +238,10 @@ async function runSql(
 
   if (!query.replace(/--.*$/gm, "").trim()) return failed("Write a query first.");
 
+  // A NULL reaches the tests as Python's None; the learner knows it as NULL.
   const outcome = await runPythonInPyodide(
     sqlProgram(query, dataset),
-    tests.map((t) => t.expression),
+    pythonTests(tests, "NULL"),
     onProgress,
   );
   // No simulation for SQL: guessing a result table from the query text would
@@ -255,7 +259,7 @@ async function runSql(
       logs: outcome.logs,
       // "sqlite3.OperationalError: no such column: nme" → "no such column: nme"
       error: outcome.error?.replace(/^sqlite3\.\w+:\s*/, "") ?? null,
-      results: outcome.results.map((passed) => ({ passed, detail: null })),
+      results: withShown(outcome.results, "Your query gives"),
     },
     started,
   );
