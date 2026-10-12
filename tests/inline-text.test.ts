@@ -38,3 +38,34 @@ describe("code inside bold and emphasis", () => {
     expect(out.replace(/<code[^>]*>.*?<\/code>/g, "")).not.toContain("`");
   });
 });
+
+describe("links", () => {
+  test("an https link becomes a link that opens in a new tab", () => {
+    const out = html(
+      "See [narrowing](https://www.typescriptlang.org/docs/handbook/2/narrowing.html).",
+    );
+    expect(out).toContain(
+      '<a href="https://www.typescriptlang.org/docs/handbook/2/narrowing.html" target="_blank" rel="noreferrer"',
+    );
+    expect(out).toContain(">narrowing</a>");
+    expect(out).not.toContain("](");
+  });
+
+  test("its label can hold code", () => {
+    expect(html("[`noUncheckedIndexedAccess`](https://example.com/x)")).toContain("<code");
+  });
+
+  test("anything but https stays text", () => {
+    for (const url of ["javascript:alert(1)", "http://example.com", "data:text/html,hi"]) {
+      expect(html(`[click](${url})`)).not.toContain("<a");
+    }
+  });
+});
+
+describe("long code tokens", () => {
+  test("may break, so a JSON string can't widen a quiz option past a phone", () => {
+    expect(html('`{"name":"Ada","joined":"2026-01-05T00:00:00.000Z"}`')).toContain(
+      "[overflow-wrap:anywhere]",
+    );
+  });
+});
