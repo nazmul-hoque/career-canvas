@@ -704,7 +704,7 @@ export const careerPaths: CareerPath[] = [
   {
     id: "chatgpt-operator",
     name: "ChatGPT Operator",
-    tagline: "Prompts · Research · Workflows · Autonomy",
+    tagline: "Get real work done in the ChatGPT app, and check what comes back",
     overview:
       "Go from your first ChatGPT prompt to repeatable workflows with verified sources, useful deliverables, clear permissions, and human review. This is the shorter operator path, and it all happens in the ChatGPT app. Take Claude Operator for the terminal and real permission boundaries.",
     difficulty: "Beginner",
@@ -724,7 +724,7 @@ export const careerPaths: CareerPath[] = [
   {
     id: "claude-operator",
     name: "Claude Operator",
-    tagline: "Prompts · Tools · Agents · Autonomy",
+    tagline: "Use Claude and Claude Code on real work, inside limits you set",
     overview:
       "Go from asking Claude useful questions to running bounded, observable AI workflows, with permissions, verification and human approval built in. This is the longer operator path. Beyond prompting, it adds the terminal, connected tools, subagents and permission rules.",
     difficulty: "Beginner",

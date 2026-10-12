@@ -304,7 +304,7 @@ export function SiteFooter({ clearTabBar = false }: { clearTabBar?: boolean }) {
         </div>
         <div className="mt-8 flex flex-col gap-3 border-t border-border pt-6 text-xs text-chalk sm:flex-row sm:items-center sm:justify-between">
           <p>
-            © {new Date().getFullYear()} {COMPANY.name}
+            © {new Date().getFullYear()} {COMPANY.name}. Made in Canada by Nazmul.
           </p>
           <nav aria-label="Legal" className="flex flex-wrap gap-x-6 gap-y-2 font-semibold">
             <Link to="/about" className={footerLink}>

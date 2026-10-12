@@ -40,34 +40,62 @@ function Landing() {
     <div className="min-h-screen bg-canvas">
       <AppHeader />
 
-      <section className="mx-auto max-w-[1100px] px-4 pb-14 pt-14 sm:px-6 lg:pt-20">
-        <h1 className="max-w-3xl font-display text-4xl font-bold leading-[1.08] tracking-tight sm:text-5xl">
-          Learn to code by writing code, and find out why it broke.
-        </h1>
-        <p className="mt-5 max-w-2xl text-lg leading-relaxed text-chalk">
-          {totalLessons} lessons across {liveCourses} courses so far, in programming, data, design
-          and AI. Most of them end with code you write in the browser, checked by real tests. We're
-          still writing the rest, and the roadmap shows which ones are coming.
-        </p>
-        <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-3">
-          <Button asChild size="lg" className="h-12 px-6 text-base">
-            <AuthLink mode="signup">
-              Start free <ArrowRight className="ml-1 size-4" />
-            </AuthLink>
-          </Button>
-          <Link to="/learn" className="font-medium text-brand underline-offset-4 hover:underline">
-            or browse the catalog
-          </Link>
+      <section className="mx-auto grid max-w-[1280px] items-center gap-10 px-4 pb-14 pt-14 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:pt-20">
+        <div className="min-w-0">
+          <h1 className="font-display text-4xl font-bold leading-[1.08] tracking-tight sm:text-5xl">
+            Learn to code by writing code, and find out why it broke.
+          </h1>
+          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-chalk">
+            {totalLessons} lessons across {liveCourses} courses so far, in programming, data, design
+            and AI. Most of them end with code you write in the browser, checked by real tests.
+            We're still writing the rest, and the roadmap shows which ones are coming.
+          </p>
+          <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-3">
+            <Button asChild size="lg" className="h-12 px-6 text-base">
+              <AuthLink mode="signup">
+                Start free <ArrowRight className="ml-1 size-4" />
+              </AuthLink>
+            </Button>
+            <Link to="/learn" className="font-medium text-brand underline-offset-4 hover:underline">
+              or browse the catalog
+            </Link>
+          </div>
+          <p className="mt-4 text-sm text-chalk">
+            No card needed. The first module of every path is free.
+          </p>
         </div>
-        <p className="mt-4 text-sm text-chalk">
-          No card needed. The first module of every path is free.
-        </p>
+        {/* A real capture of /learn/javascript/js-basics.values after a wrong first try.
+            It shows only the starter and a failing attempt, never the solution. Retake
+            both themes together if that lesson or the workspace changes. Below lg the
+            lesson excerpt further down does the same job, so the image is skipped. */}
+        <figure className="hidden min-w-0 lg:block">
+          <div className="overflow-hidden rounded-xl border border-border shadow-lift">
+            <img
+              src="/landing/lesson-light.jpg"
+              width={1400}
+              height={939}
+              alt="The lesson workspace: course outline on the left, the Safe line totals exercise with a failing first try in the editor and its six failed tests in the middle, and the AI mentor on the right."
+              className="block h-auto w-full dark:hidden"
+            />
+            <img
+              src="/landing/lesson-dark.jpg"
+              width={1400}
+              height={939}
+              alt="The lesson workspace: course outline on the left, the Safe line totals exercise with a failing first try in the editor and its six failed tests in the middle, and the AI mentor on the right."
+              loading="lazy"
+              className="hidden h-auto w-full dark:block"
+            />
+          </div>
+          <figcaption className="mt-2 text-xs text-chalk">
+            A screenshot of the first JavaScript lesson after a wrong first try.
+          </figcaption>
+        </figure>
       </section>
 
       {/* Quoted from js-basics.values, the first JavaScript lesson. Keep it in step with
           that lesson, and never show its solution or its right answers here, since this
           page ships to the browser. */}
-      <section className="mx-auto max-w-[1100px] px-4 py-10 sm:px-6">
+      <section className="mx-auto max-w-[1280px] px-4 py-10 sm:px-6">
         <h2 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
           What a lesson looks like
         </h2>
@@ -130,7 +158,7 @@ function Landing() {
         </p>
       </section>
 
-      <section className="mx-auto max-w-[1100px] px-4 py-10 sm:px-6">
+      <section className="mx-auto max-w-[1280px] px-4 py-10 sm:px-6">
         <h2 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">Career paths</h2>
         <p className="mt-2 max-w-2xl text-chalk">
           A path is a set of courses in the order we'd take them. Some are further along than
@@ -158,7 +186,7 @@ function Landing() {
         </ul>
       </section>
 
-      <section className="mx-auto max-w-[1100px] px-4 py-10 sm:px-6">
+      <section className="mx-auto max-w-[1280px] px-4 py-10 sm:px-6">
         <h2 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">Projects</h2>
         <p className="mt-2 max-w-2xl text-chalk">
           Each project is a brief with a list of requirements. You build it on your own machine,
@@ -183,7 +211,7 @@ function Landing() {
         </ul>
       </section>
 
-      <section className="mx-auto max-w-[1100px] px-4 pb-20 pt-10 sm:px-6">
+      <section className="mx-auto max-w-[1280px] px-4 pb-20 pt-10 sm:px-6">
         <div className="border-t border-border pt-10">
           <h2 className="font-display text-2xl font-bold tracking-tight">
             The first lesson takes about ten minutes.
