@@ -7,7 +7,7 @@ export const Route = createFileRoute("/contact")({
   head: () =>
     seoHead({
       path: "/contact",
-      title: "Contact — Ascent",
+      title: "Contact | Ascent",
       description: `How to reach the team behind Ascent, ${COMPANY.name}: support, billing, privacy requests and feedback.`,
     }),
   component: Contact,

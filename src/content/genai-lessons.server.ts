@@ -24,7 +24,7 @@ export const genaiLessonBodies: Record<string, LessonBody> = {
     blocks: [
       {
         kind: "text",
-        body: "Before any of the craft in this course matters, it helps to know what you are actually talking to. A model API is one HTTP request. You send a model name, some messages and a ceiling on how much text you want back; you get a reply, a reason it stopped, and a count of what it used. Everything else in this course — prompt specs, validation, retrieval, tools, evals — is what you wrap around that one call.",
+        body: "Before any of the craft in this course matters, it helps to know what you are actually talking to. A model API is one HTTP request. You send a model name, some messages and a ceiling on how much text you want back; you get a reply, a reason it stopped, and a count of what it used. Everything else in this course (prompt specs, validation, retrieval, tools, evals) is what you wrap around that one call.",
       },
       {
         kind: "code",
@@ -49,7 +49,7 @@ export const genaiLessonBodies: Record<string, LessonBody> = {
       },
       {
         kind: "text",
-        body: '**The system prompt is usually not a message.** In some APIs it is a separate top-level field, as above, and there is no `system` role in the messages array at all; in others it is the first message with `role: "system"`. Same idea, different place — check the one you are using rather than assuming, because sending it the wrong way is a silent behaviour change, not an error.',
+        body: '**The system prompt is usually not a message.** In some APIs it is a separate top-level field, as above, and there is no `system` role in the messages array at all; in others it is the first message with `role: "system"`. Same idea, different place. Check the one you are using rather than assuming, because sending it the wrong way is a silent behaviour change, not an error.',
       },
       {
         kind: "fill",
@@ -61,7 +61,7 @@ export const genaiLessonBodies: Record<string, LessonBody> = {
         answer: "assistant",
         accept: ["assistant "],
         explanation:
-          "A conversation is user and assistant turns. You write the assistant turns into the array yourself, copying what came back last time — the API does not remember it for you.",
+          "A conversation is user and assistant turns. You write the assistant turns into the array yourself, copying what came back last time. The API does not remember it for you.",
       },
       {
         kind: "code",
@@ -77,7 +77,7 @@ export const genaiLessonBodies: Record<string, LessonBody> = {
       },
       {
         kind: "text",
-        body: "Two fields there earn their keep. **`content` is a list, not a string** — a reply can be several blocks, and once you add tools it will be. Reaching straight for the text without looking at the shape is the first thing that breaks. And **`stop_reason` tells you whether the reply is finished**: `end_turn` means the model chose to stop, `max_tokens` means you cut it off mid-sentence. A truncated reply is not a short reply, and a parser that ignores the difference will retry forever against the same ceiling.",
+        body: "Two fields there earn their keep. **`content` is a list, not a string.** A reply can be several blocks, and once you add tools it will be. Reaching straight for the text without looking at the shape is the first thing that breaks. And **`stop_reason` tells you whether the reply is finished**: `end_turn` means the model chose to stop, `max_tokens` means you cut it off mid-sentence. A truncated reply is not a short reply, and a parser that ignores the difference will retry forever against the same ceiling.",
       },
       {
         kind: "mcq",
@@ -96,7 +96,7 @@ export const genaiLessonBodies: Record<string, LessonBody> = {
       },
       {
         kind: "text",
-        body: "**Tokens are the unit of everything.** Models read and write tokens, not characters — roughly four characters or three-quarters of a word of English apiece. `usage` reports what each request cost you in input and output tokens, and the two are not priced the same: output is typically several times more expensive than input. The **context window** is the ceiling on the whole request plus the reply it generates — system prompt, every message, tool definitions, and the output.",
+        body: "**Tokens are the unit of everything.** Models read and write tokens, not characters: roughly four characters or three-quarters of a word of English apiece. `usage` reports what each request cost you in input and output tokens, and the two are not priced the same: output is typically several times more expensive than input. The **context window** is the ceiling on the whole request plus the reply it generates: system prompt, every message, tool definitions, and the output.",
       },
       {
         kind: "text",
@@ -104,11 +104,11 @@ export const genaiLessonBodies: Record<string, LessonBody> = {
       },
       {
         kind: "callout",
-        body: "More context is not better context. As a request grows, models get measurably worse at recalling what is inside it — so trimming a conversation is not only a way to save money, it is a way to keep the answers good.",
+        body: "More context is not better context. As a request grows, models get measurably worse at recalling what is inside it. So trimming a conversation is not only a way to save money, it is a way to keep the answers good.",
       },
       {
         kind: "text",
-        body: "So conversations get **trimmed**: drop the oldest turns until the rest fits the budget you are willing to pay for. Two pieces of Python make that easy. `while` repeats for as long as something is true, rather than once per item. And `items[1:]` is a **slice** — a new list holding everything from position 1 onwards, which is to say everything except the first.",
+        body: "So conversations get **trimmed**: drop the oldest turns until the rest fits the budget you are willing to pay for. Two pieces of Python make that easy. `while` repeats for as long as something is true, rather than once per item. And `items[1:]` is a **slice**: a new list holding everything from position 1 onwards, which is to say everything except the first.",
       },
       {
         kind: "code",
@@ -128,7 +128,7 @@ print(notes)               # ['middle', 'newest']`,
           "Your support bot resends the whole conversation each turn. Turn 20 costs roughly twenty times what turn 1 did, and no prompt changed. Why?",
         options: [
           "Longer conversations are billed at a higher rate per token",
-          "The API is stateless, so every turn resends all previous turns as input — the input grows by one turn each time",
+          "The API is stateless, so every turn resends all previous turns as input, so the input grows by one turn each time",
           "The model gets slower as it goes, and slower requests cost more",
           "The replies themselves get longer as the conversation goes on",
         ],
@@ -141,7 +141,7 @@ print(notes)               # ['middle', 'newest']`,
         id: "c1",
         title: "Build a request that fits its budget",
         prompt:
-          'Write `build_request(system, history, user_text, budget)`. Append the new user turn to `history`, then, while the estimated tokens of the system prompt plus every message exceed `budget`, drop the oldest message. Never drop the last message — the customer\'s newest question goes even if it busts the budget on its own — and never change the caller\'s `history` list. Return `{"model": MODEL, "max_tokens": MAX_TOKENS, "system": system, "messages": messages}`.',
+          'Write `build_request(system, history, user_text, budget)`. Append the new user turn to `history`, then, while the estimated tokens of the system prompt plus every message exceed `budget`, drop the oldest message. Never drop the last message (the customer\'s newest question goes even if it busts the budget on its own), and never change the caller\'s `history` list. Return `{"model": MODEL, "max_tokens": MAX_TOKENS, "system": system, "messages": messages}`.',
         language: "python",
         starter: `MODEL = "a-model-name"
 MAX_TOKENS = 1024
@@ -164,7 +164,7 @@ HISTORY = [
 ]
 
 print(build_request("You triage tickets.", HISTORY, "Has it been delivered?", 25))`,
-        hint: 'Start with `messages = history + [{"role": "user", "content": user_text}]` — adding two lists makes a new one, so the caller\'s list is untouched. Total the estimates with a `for` loop, then `while used > budget and len(messages) > 1:` subtract the first message\'s estimate and reassign `messages = messages[1:]`.',
+        hint: 'Start with `messages = history + [{"role": "user", "content": user_text}]`. Adding two lists makes a new one, so the caller\'s list is untouched. Total the estimates with a `for` loop, then `while used > budget and len(messages) > 1:` subtract the first message\'s estimate and reassign `messages = messages[1:]`.',
         solution: `MODEL = "a-model-name"
 MAX_TOKENS = 1024
 

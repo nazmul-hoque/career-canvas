@@ -43,13 +43,13 @@ export const Route = createFileRoute("/projects/$projectId")({
   head: ({ loaderData }) => {
     if (!loaderData) {
       return {
-        meta: [{ title: "Project unavailable — Ascent" }, { name: "robots", content: "noindex" }],
+        meta: [{ title: "Project unavailable | Ascent" }, { name: "robots", content: "noindex" }],
       };
     }
     const { project } = loaderData;
     return seoHead({
       path: `/projects/${project.id}`,
-      title: `${project.title} — Ascent`,
+      title: `${project.title} | Ascent`,
       description: project.brief,
       schema: [
         breadcrumbs([
@@ -190,8 +190,8 @@ function ProjectDetail() {
           <section className="card-surface p-6">
             <h2 className="font-display text-xl font-bold">Milestones</h2>
             <p className="mt-1 text-sm text-chalk">
-              Tick these off as you go — it's only for your own sense of pace, and they're saved to
-              your account.
+              Tick these off as you go. They're only for your own sense of pace, and they're saved
+              to your account.
             </p>
             <ol className="mt-4 space-y-2">
               {project.milestones.map((m, i) => {
@@ -227,7 +227,7 @@ function ProjectDetail() {
           <section className="card-surface p-6" id="submit">
             <h2 className="font-display text-xl font-bold">Submit your work</h2>
             <p className="mt-1 text-sm text-chalk">
-              Links are optional. The notes are not — explain your decisions to receive automated
+              Links are optional. The notes are not: explain your decisions to receive automated
               feedback on your write-up. Your repository and live application are not inspected.
             </p>
 
@@ -252,7 +252,7 @@ function ProjectDetail() {
                   Portfolio projects are part of Pro
                 </p>
                 <p className="mt-1.5 text-sm text-chalk">
-                  The brief and milestones stay open on Free — submitting for review, and the
+                  The brief and milestones stay open on Free. Submitting for review, and the
                   feedback that comes back, come with Pro.
                 </p>
                 <Button asChild className="mt-4">
@@ -294,7 +294,7 @@ function ProjectDetail() {
                 </div>
                 <div>
                   <Label htmlFor="notes">
-                    Notes <span className="font-normal text-chalk">— what you built and why</span>
+                    Notes <span className="font-normal text-chalk">(what you built and why)</span>
                   </Label>
                   <Textarea
                     id="notes"

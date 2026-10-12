@@ -38,13 +38,13 @@ export const Route = createFileRoute("/courses/$courseId")({
   head: ({ loaderData }) => {
     if (!loaderData) {
       return {
-        meta: [{ title: "Course unavailable — Ascent" }, { name: "robots", content: "noindex" }],
+        meta: [{ title: "Course unavailable | Ascent" }, { name: "robots", content: "noindex" }],
       };
     }
     const { course } = loaderData;
     return seoHead({
       path: `/courses/${course.id}`,
-      title: `${course.title} — Ascent`,
+      title: `${course.title} | Ascent`,
       description: course.summary,
       image: shareImage(ogFile("course", course.id)),
       schema: [

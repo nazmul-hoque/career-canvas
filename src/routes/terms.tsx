@@ -8,7 +8,7 @@ export const Route = createFileRoute("/terms")({
   head: () =>
     seoHead({
       path: "/terms",
-      title: "Terms of Service — Ascent",
+      title: "Terms of Service | Ascent",
       description:
         "The agreement for using Ascent: accounts, plans and refunds, acceptable use, your content, the AI mentor and certificates.",
     }),

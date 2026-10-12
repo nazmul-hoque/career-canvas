@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/profile/$userId")({
   head: () => ({
     meta: [
-      { title: "Learner profile — Ascent" },
+      { title: "Learner profile | Ascent" },
       {
         name: "description",
         content:
@@ -272,7 +272,7 @@ function PublicProfile() {
                 return (
                   <span
                     key={a.key}
-                    title={`${a.name} — ${a.description}`}
+                    title={`${a.name}: ${a.description}`}
                     className={cn(
                       "grid aspect-square place-items-center rounded-xl",
                       has ? "bg-brand/12 text-brand" : "bg-secondary text-chalk opacity-40",

@@ -231,7 +231,7 @@ return result.rows[0] ?? null;`,
       },
       {
         kind: "callout",
-        body: "A query passing in development is not enough. Test the not-found path, constraint failures, concurrent updates and rollback. Log query identity and duration—not passwords, tokens or full sensitive records.",
+        body: "A query passing in development is not enough. Test the not-found path, constraint failures, concurrent updates and rollback. Log query identity and duration, but not passwords, tokens or full sensitive records.",
       },
       {
         kind: "mcq",

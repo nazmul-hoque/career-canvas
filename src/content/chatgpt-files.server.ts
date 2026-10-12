@@ -22,12 +22,12 @@ export const chatgptFilesLessons: AuthoredLesson[] = [
       blocks: [
         {
           kind: "text",
-          body: "Start every data task with a set small enough that you can do the sums in your head. Not because the tool can't handle more, but because **you can only learn how much to trust it on work you can independently check** — and on a hundred rows, you can't.",
+          body: "Start every data task with a set small enough that you can do the sums in your head. Not because the tool can't handle more, but because **you can only learn how much to trust it on work you can independently check**, and on a hundred rows you can't.",
         },
         {
           kind: "code",
           language: "text",
-          caption: "supplies.csv — three rows, checkable by eye",
+          caption: "supplies.csv: three rows, checkable by eye",
           code: `item,quantity,unit_price
 tables,2,3
 chairs,4,2
@@ -35,15 +35,15 @@ boxes,3,5`,
         },
         {
           kind: "text",
-          body: "**Ask what the columns are before asking for a calculation.** Is `unit_price` per item or per pack? Is the currency stated anywhere? It isn't — and a total that arrives with a currency symbol has invented one. Establishing what the data means is a separate step from computing on it, and skipping it is how a confident total ends up measuring the wrong thing.",
+          body: "**Ask what the columns are before asking for a calculation.** Is `unit_price` per item or per pack? Is the currency stated anywhere? It isn't, and a total that arrives with a currency symbol has invented one. Establishing what the data means is a separate step from computing on it, and skipping it is how a confident total ends up measuring the wrong thing.",
         },
         {
           kind: "text",
-          body: "Then the line totals and the grand total: 2×3 = 6, 4×2 = 8, 3×5 = 15, giving **29**. Do that yourself and compare. The habit you're building isn't distrust of arithmetic — it's the reflex of having an independent answer before you look at the provided one, which is the only way to notice a plausible-but-wrong result.",
+          body: "Then the line totals and the grand total: 2×3 = 6, 4×2 = 8, 3×5 = 15, giving **29**. Do that yourself and compare. The habit you're building isn't distrust of arithmetic. It's the reflex of having an independent answer before you look at the provided one, which is the only way to notice a plausible-but-wrong result.",
         },
         {
           kind: "text",
-          body: "**Now break it deliberately.** Make a copy with one missing quantity and one duplicated row, and ask for problems to be flagged. What you're testing is whether they come back as *reported* — a missing quantity is not a zero, and a duplicate row is not something to silently drop. Either fix might be right, and both are your call.",
+          body: "**Now break it deliberately.** Make a copy with one missing quantity and one duplicated row, and ask for problems to be flagged. What you're testing is whether they come back as *reported*. A missing quantity is not a zero, and a duplicate row is not something to silently drop. Either fix might be right, and both are your call.",
         },
         {
           kind: "text",
@@ -59,14 +59,14 @@ boxes,3,5`,
           question:
             'The supplies data has no currency column. The total comes back as "$29.00". What\'s wrong?',
           options: [
-            "Nothing — dollars are a reasonable default",
+            "Nothing, because dollars are a reasonable default",
             "The formatting should match the input's precision",
             "A currency was supplied that the data never stated, so an assumption is presented as a fact",
             "The total should have been rounded differently",
           ],
           answer: 2,
           explanation:
-            "29 is right; the dollar sign is invented. It's the same gap-filling from Level 1 wearing a numeric disguise — and a number carries more authority than a sentence, so it gets questioned less.",
+            "29 is right; the dollar sign is invented. It's the same gap-filling from Level 1 wearing a numeric disguise, and a number carries more authority than a sentence, so it gets questioned less.",
         },
         {
           kind: "mcq",
@@ -80,7 +80,7 @@ boxes,3,5`,
           ],
           answer: 2,
           explanation:
-            "A wrong total doesn't look wrong — that's the whole problem. Having your own figure before you read theirs is what converts a number you were given into one you know.",
+            "A wrong total doesn't look wrong. That's the whole problem. Having your own figure before you read theirs is what converts a number you were given into one you know.",
         },
         {
           kind: "mcq",
@@ -110,23 +110,23 @@ boxes,3,5`,
       blocks: [
         {
           kind: "text",
-          body: "A bar chart of your three supplies should start its value axis at **zero**, label its units, and total to the same 29 as the table. A truncated axis makes a small difference look dramatic — which is occasionally a legitimate choice and far more often an accident you'd never have made deliberately.",
+          body: "A bar chart of your three supplies should start its value axis at **zero**, label its units, and total to the same 29 as the table. A truncated axis makes a small difference look dramatic, which is occasionally a legitimate choice and far more often an accident you'd never have made deliberately.",
         },
         {
           kind: "text",
-          body: "Check the chart against the source table rather than against your impression of it. Bars in the right order, values matching, nothing rounded into a different story. If chart generation isn't available in your account, build it in a spreadsheet from the verified table — the checking discipline is the lesson, not the tool.",
+          body: "Check the chart against the source table rather than against your impression of it. Bars in the right order, values matching, nothing rounded into a different story. If chart generation isn't available in your account, build it in a spreadsheet from the verified table. The checking discipline is the lesson, not the tool.",
         },
         {
           kind: "text",
-          body: '**Then the summary, which is where claims escape the data.** "Boxes contribute $15 of the $29 total" is in the dataset. "Boxes cost the most because people buy more storage than furniture" is not — there is no customer, no behaviour and no time series in three rows of supplies. It\'s a plausible sentence describing a world the data says nothing about.',
+          body: '**Then the summary, which is where claims escape the data.** "Boxes contribute $15 of the $29 total" is in the dataset. "Boxes cost the most because people buy more storage than furniture" is not. There is no customer, no behaviour and no time series in three rows of supplies. It\'s a plausible sentence describing a world the data says nothing about.',
         },
         {
           kind: "text",
-          body: "Ask for explanations bounded by the source: which item contributes most, and by how much. If a cause is offered, it should be marked as a hypothesis to test, not delivered as a finding. This is the same instinct as a source-bound answer in Level 2 — the boundary just happens to be a table this time.",
+          body: "Ask for explanations bounded by the source: which item contributes most, and by how much. If a cause is offered, it should be marked as a hypothesis to test, not delivered as a finding. This is the same instinct as a source-bound answer in Level 2. The boundary just happens to be a table this time.",
         },
         {
           kind: "callout",
-          body: "**Practice.** Request a bar chart of supply costs with a zero baseline and labelled units, and check every bar against the table. Then ask which supply contributes most to cost and why, and reject any explanation involving customers, demand or behaviour — confirm the answer identifies boxes at $15 of the $29 total without inventing a cause.",
+          body: "**Practice.** Request a bar chart of supply costs with a zero baseline and labelled units, and check every bar against the table. Then ask which supply contributes most to cost and why, and reject any explanation involving customers, demand or behaviour, and confirm the answer identifies boxes at $15 of the $29 total without inventing a cause.",
         },
         {
           kind: "mcq",
@@ -172,7 +172,7 @@ boxes,3,5`,
       blocks: [
         {
           kind: "text",
-          body: "Turning five event notes into a one-page volunteer brief is the most ordinary useful thing these tools do. The check that makes it trustworthy is **accounting for all five** — a brief that reads beautifully while silently dropping the note about the key collection is worse than no brief, because it will be used.",
+          body: "Turning five event notes into a one-page volunteer brief is the most ordinary useful thing these tools do. The check that makes it trustworthy is **accounting for all five**. A brief that reads beautifully while silently dropping the note about the key collection is worse than no brief, because it will be used.",
         },
         {
           kind: "text",
@@ -180,11 +180,11 @@ boxes,3,5`,
         },
         {
           kind: "text",
-          body: "**Then open the result outside the chat.** A document that looks fine in a conversation can lose its table formatting, wrap badly, or quietly drop a heading on export. Save it, open it in whatever will actually be used to read it, and look — this is a five-second check that catches an embarrassing class of problem.",
+          body: "**Then open the result outside the chat.** A document that looks fine in a conversation can lose its table formatting, wrap badly, or quietly drop a heading on export. Save it, open it in whatever will actually be used to read it, and look. This is a five-second check that catches an embarrassing class of problem.",
         },
         {
           kind: "text",
-          body: "**Revise surgically.** Give feedback on one section, then compare versions to confirm nothing else moved. This is the failure that catches people out: you ask for a clearer timings section and get a regenerated document where an approved quantity has quietly changed. Diff the two versions rather than re-reading the new one — you're looking for unrequested changes, and re-reading is exactly how you miss them.",
+          body: "**Revise surgically.** Give feedback on one section, then compare versions to confirm nothing else moved. This is the failure that catches people out: you ask for a clearer timings section and get a regenerated document where an approved quantity has quietly changed. Diff the two versions rather than re-reading the new one. You're looking for unrequested changes, and re-reading is exactly how you miss them.",
         },
         {
           kind: "callout",
@@ -203,7 +203,7 @@ boxes,3,5`,
           ],
           answer: 2,
           explanation:
-            "Re-reading tests whether the document is good, not whether it's the same. The risk is an unrequested change elsewhere, and only a comparison surfaces that — asking whether anything changed relies on the same process that changed it.",
+            "Re-reading tests whether the document is good, not whether it's the same. The risk is an unrequested change elsewhere, and only a comparison surfaces that. Asking whether anything changed relies on the same process that changed it.",
         },
         {
           kind: "mcq",
@@ -218,7 +218,7 @@ boxes,3,5`,
           ],
           answer: 2,
           explanation:
-            "Omissions are invisible from the output side — the prose closes over the gap. Working from the inputs is the only direction that can detect something missing, which is why the review runs note by note.",
+            "Omissions are invisible from the output side, because the prose closes over the gap. Working from the inputs is the only direction that can detect something missing, which is why the review runs note by note.",
         },
       ],
     },
@@ -239,7 +239,7 @@ boxes,3,5`,
         },
         {
           kind: "text",
-          body: "Every shared number has to agree across all three. The total in the table, the total implied by the chart, and any figure quoted in the brief are the same number — and event details like the date and venue match everywhere they appear. Inconsistency across documents is the characteristic failure of generating them separately, and nothing warns you about it.",
+          body: "Every shared number has to agree across all three. The total in the table, the total implied by the chart, and any figure quoted in the brief are the same number, and event details like the date and venue match everywhere they appear. Inconsistency across documents is the characteristic failure of generating them separately, and nothing warns you about it.",
         },
         {
           kind: "callout",

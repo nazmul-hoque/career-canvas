@@ -55,7 +55,7 @@ import { cn, plural } from "@/lib/utils";
 export const Route = createFileRoute("/profile/")({
   head: () => ({
     meta: [
-      { title: "Your profile — Ascent" },
+      { title: "Your profile | Ascent" },
       {
         name: "description",
         content:
@@ -717,7 +717,7 @@ function PushReminderToggle({ push }: { push: ReturnType<typeof usePushNotificat
             push.test.mutate(undefined, {
               onSuccess: ({ delivered }) =>
                 delivered > 0
-                  ? toast.success("Sent — it should appear in a few seconds")
+                  ? toast.success("Sent. It should appear in a few seconds")
                   : toast.error("The push service didn't accept it. Try turning push off and on."),
               onError: (error) =>
                 toast.error(error instanceof Error ? error.message : "Could not send a test."),

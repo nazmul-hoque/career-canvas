@@ -3354,7 +3354,7 @@ def share_by_month(table):
       },
       {
         kind: "text",
-        body: '**A number alone means nothing.** Revenue 613 — is that good? Give every tile a comparison: the previous period, the same month last year, or a target. Show amounts as a **% change** and rates as a **change in points** (refund rate 0% → 20% is +20 points; "+∞%" helps nobody). When there\'s nothing to divide by, show a dash rather than an error or a zero.',
+        body: '**A number alone means nothing.** Revenue 613: is that good? Give every tile a comparison: the previous period, the same month last year, or a target. Show amounts as a **% change** and rates as a **change in points** (refund rate 0% → 20% is +20 points; "+∞%" helps nobody). When there\'s nothing to divide by, show a dash rather than an error or a zero.',
       },
       {
         kind: "code",

@@ -15,7 +15,7 @@ export const Route = createFileRoute("/unsubscribe")({
   validateSearch: (search) => searchSchema.parse(search),
   head: () => ({
     meta: [
-      { title: "Unsubscribe — Ascent" },
+      { title: "Unsubscribe | Ascent" },
       { name: "description", content: "Stop receiving learning reminders from Ascent." },
       { name: "robots", content: "noindex" },
     ],
@@ -60,7 +60,7 @@ function Unsubscribe() {
             <>
               <h1 className="mt-5 font-display text-2xl font-bold">You're unsubscribed</h1>
               <p className="mt-2 text-sm text-chalk">
-                No more learning reminders. Your account, progress and streak are untouched — this
+                No more learning reminders. Your account, progress and streak are untouched. This
                 only stops the email. You can turn reminders back on from your profile whenever you
                 want.
               </p>
@@ -75,7 +75,7 @@ function Unsubscribe() {
               </h1>
               <p className="mt-2 text-sm text-chalk">
                 {linkComplete
-                  ? "You'll still get account email — password resets and receipts — but no streak or roadmap nudges."
+                  ? "You'll still get account email, like password resets and receipts, but no streak or roadmap nudges."
                   : "This link is missing part of its address. Open the unsubscribe link from the email again, or turn reminders off from your profile."}
               </p>
               {state === "error" ? (

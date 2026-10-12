@@ -28,15 +28,15 @@ export const claudeSkillsSafetyLessons: AuthoredLesson[] = [
         },
         {
           kind: "text",
-          body: "**The prompt** is for this request only. **`CLAUDE.md`** is for facts that are true of this project in every session — the package manager, the generated directory, the test command. **A skill** is for a repeatable procedure that applies when a particular kind of request comes up, in any project.",
+          body: "**The prompt** is for this request only. **`CLAUDE.md`** is for facts that are true of this project in every session: the package manager, the generated directory, the test command. **A skill** is for a repeatable procedure that applies when a particular kind of request comes up, in any project.",
         },
         {
           kind: "text",
-          body: "The test is frequency against scope. Something you'll say once goes in the prompt. Something always true of this codebase goes in `CLAUDE.md` — it loads every session, so it should be short and only contain what's always relevant. Something you do repeatedly, with steps worth getting right each time, is a skill: it loads only when it's needed, which is exactly why a procedure belongs there rather than in a file that's always in context.",
+          body: "The test is frequency against scope. Something you'll say once goes in the prompt. Something always true of this codebase goes in `CLAUDE.md`. It loads every session, so it should be short and only contain what's always relevant. Something you do repeatedly, with steps worth getting right each time, is a skill: it loads only when it's needed, which is exactly why a procedure belongs there rather than in a file that's always in context.",
         },
         {
           kind: "text",
-          body: "Skills live in `.claude/skills/<name>/SKILL.md` for a project, or `~/.claude/skills/<name>/SKILL.md` for everything you do on this machine — the same project-versus-personal split as subagents.",
+          body: "Skills live in `.claude/skills/<name>/SKILL.md` for a project, or `~/.claude/skills/<name>/SKILL.md` for everything you do on this machine. It's the same project-versus-personal split as subagents.",
         },
         {
           kind: "text",
@@ -59,7 +59,7 @@ export const claudeSkillsSafetyLessons: AuthoredLesson[] = [
           ],
           answer: 0,
           explanation:
-            "The one-line convention is always relevant and cheap to carry. The checklist is only relevant when adding an error type, and a skill loads on demand — putting it in CLAUDE.md spends context in every session to be useful in a few.",
+            "The one-line convention is always relevant and cheap to carry. The checklist is only relevant when adding an error type, and a skill loads on demand. Putting it in CLAUDE.md spends context in every session to be useful in a few.",
         },
         {
           kind: "mcq",
@@ -114,11 +114,11 @@ If the diff is empty, say there are no uncommitted changes.`,
         },
         {
           kind: "text",
-          body: "Two things are worth noticing. The description names the situations that should trigger it, in the words a person would actually use. And the `` !`git diff HEAD` `` line runs a command and substitutes its output *before* Claude sees the skill — so the instructions arrive with the current diff already in them, rather than asking Claude to go and fetch it.",
+          body: "Two things are worth noticing. The description names the situations that should trigger it, in the words a person would actually use. And the `` !`git diff HEAD` `` line runs a command and substitutes its output *before* Claude sees the skill, so the instructions arrive with the current diff already in them, rather than asking Claude to go and fetch it.",
         },
         {
           kind: "text",
-          body: "There are two ways in. **Automatic discovery**: you describe your situation, and the description matches. **Explicit invocation**: you name the skill directly. Test both. If automatic discovery doesn't fire on a request that obviously should match, the description is the thing to fix — and the fix is usually adding the words a person would really use, not making the description longer or more formal.",
+          body: "There are two ways in. **Automatic discovery**: you describe your situation, and the description matches. **Explicit invocation**: you name the skill directly. Test both. If automatic discovery doesn't fire on a request that obviously should match, the description is the thing to fix, and the fix is usually adding the words a person would really use, not making the description longer or more formal.",
         },
         {
           kind: "text",
@@ -126,7 +126,7 @@ If the diff is empty, say there are no uncommitted changes.`,
         },
         {
           kind: "callout",
-          body: "**Practice.** Build a small skill with valid frontmatter, a clear purpose, its inputs, its steps and its output, and confirm it produces the promised result on a sample request. Trigger it without naming it, by describing your situation the way you naturally would. Then invoke it explicitly by name and compare the two results — they should run the same core workflow.",
+          body: "**Practice.** Build a small skill with valid frontmatter, a clear purpose, its inputs, its steps and its output, and confirm it produces the promised result on a sample request. Trigger it without naming it, by describing your situation the way you naturally would. Then invoke it explicitly by name and compare the two results. They should run the same core workflow.",
         },
         {
           kind: "mcq",
@@ -155,7 +155,7 @@ If the diff is empty, say there are no uncommitted changes.`,
           ],
           answer: 3,
           explanation:
-            "It's dynamic context injection — the substitution happens first, so the instructions arrive with real current data inlined. That's different from asking Claude to run something, which it might do differently or skip.",
+            "It's dynamic context injection. The substitution happens first, so the instructions arrive with real current data inlined. That's different from asking Claude to run something, which it might do differently or skip.",
         },
       ],
     },
@@ -175,7 +175,7 @@ If the diff is empty, say there are no uncommitted changes.`,
         },
         {
           kind: "text",
-          body: "**One example, chosen carefully.** The same rule as prompting: one representative input and output sets the pattern. The risk specific to skills is overfitting — give a single example with a very particular shape and the skill starts treating its incidentals as requirements. Pair the example with a general rule so the two can be told apart, and test with a case that's meaningfully different.",
+          body: "**One example, chosen carefully.** The same rule as prompting: one representative input and output sets the pattern. The risk specific to skills is overfitting. Give a single example with a very particular shape and the skill starts treating its incidentals as requirements. Pair the example with a general rule so the two can be told apart, and test with a case that's meaningfully different.",
         },
         {
           kind: "text",
@@ -183,11 +183,11 @@ If the diff is empty, say there are no uncommitted changes.`,
         },
         {
           kind: "text",
-          body: "**A template is a skeleton, not sample content.** Put the stable output structure in the skill and say when to copy it. Two outputs should share the structure without sharing the example's details — if the second one mentions the first one's subject matter, the template has example content baked into it.",
+          body: "**A template is a skeleton, not sample content.** Put the stable output structure in the skill and say when to copy it. Two outputs should share the structure without sharing the example's details. If the second one mentions the first one's subject matter, the template has example content baked into it.",
         },
         {
           kind: "text",
-          body: "**A helper script is for what shouldn't be improvised.** A deterministic transformation — reformatting, validating, extracting — is better done by code that behaves identically every time than by a model re-deriving it. Document its inputs and outputs, and make sure it fails clearly on bad input rather than silently producing something wrong.",
+          body: "**A helper script is for what shouldn't be improvised.** A deterministic transformation (reformatting, validating, extracting) is better done by code that behaves identically every time than by a model re-deriving it. Document its inputs and outputs, and make sure it fails clearly on bad input rather than silently producing something wrong.",
         },
         {
           kind: "callout",
@@ -206,7 +206,7 @@ If the diff is empty, say there are no uncommitted changes.`,
           ],
           answer: 2,
           explanation:
-            "One example teaches the whole pattern, including the parts you didn't mean. The fix is stating the general rule beside it — more examples help, but only once the rule says which features are essential.",
+            "One example teaches the whole pattern, including the parts you didn't mean. The fix is stating the general rule beside it. More examples help, but only once the rule says which features are essential.",
         },
         {
           kind: "mcq",
@@ -220,7 +220,7 @@ If the diff is empty, say there are no uncommitted changes.`,
           ],
           answer: 1,
           explanation:
-            "Deterministic work is exactly what code is for — a validator that behaves the same on every input, every run. Judgement, phrasing and anything context-dependent belongs in the instructions.",
+            "Deterministic work is exactly what code is for: a validator that behaves the same on every input, every run. Judgement, phrasing and anything context-dependent belongs in the instructions.",
         },
       ],
     },
@@ -240,7 +240,7 @@ If the diff is empty, say there are no uncommitted changes.`,
         },
         {
           kind: "text",
-          body: "**Define what done means.** Add objective checks the skill must run before claiming success — the tests pass, the file parses, the output contains the required sections. Without them, \"done\" is the model's opinion that it has finished, and a skill that reports success it didn't verify is worse than one that reports nothing, because you stop checking.",
+          body: "**Define what done means.** Add objective checks the skill must run before claiming success: the tests pass, the file parses, the output contains the required sections. Without them, \"done\" is the model's opinion that it has finished, and a skill that reports success it didn't verify is worse than one that reports nothing, because you stop checking.",
         },
         {
           kind: "text",
@@ -248,7 +248,7 @@ If the diff is empty, say there are no uncommitted changes.`,
         },
         {
           kind: "text",
-          body: "**Change it like code.** One behaviour at a time, with a note on why and a before/after test. Skills drift — someone adds a clause to fix one case and three other cases change quietly, because nothing here has a type checker.",
+          body: "**Change it like code.** One behaviour at a time, with a note on why and a before/after test. Skills drift. Someone adds a clause to fix one case and three other cases change quietly, because nothing here has a type checker.",
         },
         {
           kind: "text",
@@ -256,7 +256,7 @@ If the diff is empty, say there are no uncommitted changes.`,
         },
         {
           kind: "callout",
-          body: "**Practice.** Make a skill require a critical input and return a useful question when it's missing — confirm it refuses to guess. Add objective completion checks and prove a failed check prevents a false success message. Write three near-miss requests and confirm the skill stays out of scope on all three. Change one behaviour with a reviewable diff and a before/after test. Then review a third-party skill's instructions, scripts, network use and permissions, and write a go/no-go.",
+          body: "**Practice.** Make a skill require a critical input and return a useful question when it's missing, and confirm it refuses to guess. Add objective completion checks and prove a failed check prevents a false success message. Write three near-miss requests and confirm the skill stays out of scope on all three. Change one behaviour with a reviewable diff and a before/after test. Then review a third-party skill's instructions, scripts, network use and permissions, and write a go/no-go.",
         },
         {
           kind: "mcq",
@@ -270,7 +270,7 @@ If the diff is empty, say there are no uncommitted changes.`,
           ],
           answer: 1,
           explanation:
-            "Under-triggering is visible — you notice nothing happened and invoke it by name. Over-triggering is invisible: you get an answer shaped by instructions you forgot were there, and nothing flags it.",
+            "Under-triggering is visible: you notice nothing happened and invoke it by name. Over-triggering is invisible: you get an answer shaped by instructions you forgot were there, and nothing flags it.",
         },
         {
           kind: "mcq",
@@ -296,7 +296,7 @@ If the diff is empty, say there are no uncommitted changes.`,
     minutes: 20,
     type: "concept",
     body: {
-      summary: "Deny, then ask, then allow — and specificity does not break the tie.",
+      summary: "Deny, then ask, then allow. Specificity does not break the tie.",
       xp: 150,
       blocks: [
         {
@@ -309,7 +309,7 @@ If the diff is empty, say there are no uncommitted changes.`,
         },
         {
           kind: "text",
-          body: "That last clause is the one that catches people, because almost every other system you know works the other way. CSS, routing tables, `.gitignore` — the more specific rule usually wins. Here it does not. A broad `Bash(aws *)` deny blocks `aws s3 ls` even when you've explicitly allowed `Bash(aws s3 ls)`. **An allow rule cannot carve an exception out of a deny rule.** The same holds between ask and allow: a matching ask rule prompts even when a more specific allow rule also matches.",
+          body: "That last clause is the one that catches people, because almost every other system you know works the other way. In CSS, routing tables and `.gitignore`, the more specific rule usually wins. Here it does not. A broad `Bash(aws *)` deny blocks `aws s3 ls` even when you've explicitly allowed `Bash(aws s3 ls)`. **An allow rule cannot carve an exception out of a deny rule.** The same holds between ask and allow: a matching ask rule prompts even when a more specific allow rule also matches.",
         },
         {
           kind: "code",
@@ -325,11 +325,11 @@ rule is never reached.`,
         },
         {
           kind: "text",
-          body: "Settings come from several files, highest precedence first: **managed settings**, then the **command line**, then **project-local** (`.claude/settings.local.json`), then **shared project** (`.claude/settings.json`), then **user** (`~/.claude/settings.json`). Two consequences worth holding on to. Managed settings outrank the command line — an organisation policy is not something a flag can argue with. And deny rules are evaluated before allow rules *across scopes too*, so a user-level deny blocks a project-level allow, and vice versa.",
+          body: "Settings come from several files, highest precedence first: **managed settings**, then the **command line**, then **project-local** (`.claude/settings.local.json`), then **shared project** (`.claude/settings.json`), then **user** (`~/.claude/settings.json`). Two consequences worth holding on to. Managed settings outrank the command line, because an organisation policy is not something a flag can argue with. And deny rules are evaluated before allow rules *across scopes too*, so a user-level deny blocks a project-level allow, and vice versa.",
         },
         {
           kind: "text",
-          body: "Which makes reading a permission prompt a real skill rather than a formality. The prompt names the tool, the exact arguments and the target. Read the arguments — that's where the difference between the command you expected and a similar one lives. \"Allow once\" for the specific thing in front of you is almost always the right answer over a blanket allow you'll forget you granted.",
+          body: "Which makes reading a permission prompt a real skill rather than a formality. The prompt names the tool, the exact arguments and the target. Read the arguments. That's where the difference between the command you expected and a similar one lives. \"Allow once\" for the specific thing in front of you is almost always the right answer over a blanket allow you'll forget you granted.",
         },
         {
           kind: "callout",
@@ -341,14 +341,14 @@ rule is never reached.`,
           question:
             "Your settings contain `deny: Bash(git push *)` and `allow: Bash(git push origin docs)`. You run `git push origin docs`. What happens?",
           options: [
-            "It's allowed — the more specific rule wins",
+            "It's allowed, because the more specific rule wins",
             "You're prompted, because the rules conflict",
             "It's allowed, because allow rules are evaluated last and override",
-            "It's denied — deny is evaluated first and matches",
+            "It's denied, because deny is evaluated first and matches",
           ],
           answer: 3,
           explanation:
-            "Order beats specificity, and deny comes first. To allow a narrow exception you must narrow the *deny* rule — an allow can never cut a hole in one.",
+            "Order beats specificity, and deny comes first. To allow a narrow exception you must narrow the *deny* rule. An allow can never cut a hole in one.",
         },
         {
           kind: "mcq",
@@ -362,7 +362,7 @@ rule is never reached.`,
           ],
           answer: 0,
           explanation:
-            "Managed settings sit above the command line — otherwise an organisation policy would be a suggestion that any flag could override. Below that: command line, project-local, shared project, then user.",
+            "Managed settings sit above the command line. Otherwise an organisation policy would be a suggestion that any flag could override. Below that: command line, project-local, shared project, then user.",
         },
         {
           kind: "mcq",
@@ -373,7 +373,7 @@ rule is never reached.`,
             "The user setting, since it's your machine",
             "The project setting denies it: deny rules from any scope are evaluated before allow rules",
             "Whichever scope is higher in the precedence list, so project-local wins",
-            "Neither — conflicting scopes produce a prompt",
+            "Neither. Conflicting scopes produce a prompt",
           ],
           answer: 1,
           explanation:
@@ -416,7 +416,7 @@ rule is never reached.`,
         },
         {
           kind: "text",
-          body: "**Allow the command, not the tool.** `Bash(*)` removes the prompt entirely and with it your last chance to notice something unexpected. A handful of specific patterns covers the commands you run constantly, and everything else still asks — which is the point, because the prompt is doing work precisely on the commands you didn't anticipate.",
+          body: "**Allow the command, not the tool.** `Bash(*)` removes the prompt entirely and with it your last chance to notice something unexpected. A handful of specific patterns covers the commands you run constantly, and everything else still asks. That's the point, because the prompt is doing work precisely on the commands you didn't anticipate.",
         },
         {
           kind: "text",
@@ -424,7 +424,7 @@ rule is never reached.`,
         },
         {
           kind: "text",
-          body: "Test both directions. A rule you haven't tested is a belief. Confirm the intended command works *and* that a neighbouring risky one doesn't — write the rule, run the thing it should permit, then run the thing it should stop.",
+          body: "Test both directions. A rule you haven't tested is a belief. Confirm the intended command works *and* that a neighbouring risky one doesn't. Write the rule, run the thing it should permit, then run the thing it should stop.",
         },
         {
           kind: "callout",
@@ -447,7 +447,7 @@ rule is never reached.`,
           id: "q1",
           question: "What's wrong with allowing `Bash(git *)` to stop the constant prompting?",
           options: [
-            "Nothing — git commands are inherently safe",
+            "Nothing, because git commands are inherently safe",
             "Wildcards aren't supported in Bash rules",
             "It only works if you also allow the Read tool",
             "It allows `git push`, `git reset --hard` and `git clean -fd` along with `git status`",
@@ -462,14 +462,14 @@ rule is never reached.`,
           question:
             "You add a deny rule with a path pattern that isn't valid as a gitignore pattern. What happens?",
           options: [
-            "It still guards that exact path — deny and ask rules fail towards safety",
+            "It still guards that exact path, because deny and ask rules fail towards safety",
             "The rule is ignored, so the path is unprotected",
             "Claude Code refuses to start until it's fixed",
             "It silently becomes an allow rule",
           ],
           answer: 0,
           explanation:
-            "Deny and ask rules still guard the exact path; an *allow* rule with an unusable pattern approves nothing. Both behaviours lean the same way — a malformed rule can't accidentally grant access.",
+            "Deny and ask rules still guard the exact path; an *allow* rule with an unusable pattern approves nothing. Both behaviours lean the same way: a malformed rule can't accidentally grant access.",
         },
       ],
     },
@@ -485,7 +485,7 @@ rule is never reached.`,
       blocks: [
         {
           kind: "text",
-          body: "**Plan mode** is a boundary in time: investigate now, implement after approval. Run a real task in it and check the working tree afterwards — a useful plan and an unchanged tree is the outcome you're looking for, and confirming it once is how you learn to trust the mode.",
+          body: "**Plan mode** is a boundary in time: investigate now, implement after approval. Run a real task in it and check the working tree afterwards. A useful plan and an unchanged tree is the outcome you're looking for, and confirming it once is how you learn to trust the mode.",
         },
         {
           kind: "text",
@@ -493,11 +493,11 @@ rule is never reached.`,
         },
         {
           kind: "text",
-          body: "**And then there's `--dangerously-skip-permissions`.** It's named that for a reason. A narrow allow rule says \"this specific safe thing needn't ask\". Skipping permissions says \"nothing needs to ask\" — including the operations you have never seen, the ones you'd have caught, and the ones an injected instruction produces. It's not a stronger version of an allow rule; it's the absence of the whole system.",
+          body: "**And then there's `--dangerously-skip-permissions`.** It's named that for a reason. A narrow allow rule says \"this specific safe thing needn't ask\". Skipping permissions says \"nothing needs to ask\", including the operations you have never seen, the ones you'd have caught, and the ones an injected instruction produces. It's not a stronger version of an allow rule; it's the absence of the whole system.",
         },
         {
           kind: "text",
-          body: "The honest version of the need behind it is \"I'm being prompted constantly and it's breaking my flow\". That's a real problem with a real fix: allow the handful of commands you run every few minutes, by name. Ten minutes writing rules buys you a quiet session that still stops for the unexpected — which is the only part that was ever protecting you.",
+          body: "The honest version of the need behind it is \"I'm being prompted constantly and it's breaking my flow\". That's a real problem with a real fix: allow the handful of commands you run every few minutes, by name. Ten minutes writing rules buys you a quiet session that still stops for the unexpected, and that's the only part that was ever protecting you.",
         },
         {
           kind: "callout",
@@ -516,7 +516,7 @@ rule is never reached.`,
           ],
           answer: 0,
           explanation:
-            "Review after the fact detects; a prompt prevents. For anything reversible that's a survivable trade, and for a deletion, a send or a push it isn't — those are exactly the cases the prompt existed for.",
+            "Review after the fact detects; a prompt prevents. For anything reversible that's a survivable trade, and for a deletion, a send or a push it isn't. Those are exactly the cases the prompt existed for.",
         },
         {
           kind: "mcq",
@@ -542,7 +542,7 @@ rule is never reached.`,
     minutes: 22,
     type: "practice",
     body: {
-      summary: "Shell commands wired to events — powerful, and worth reading before enabling.",
+      summary: "Shell commands wired to events. Powerful, and worth reading before enabling.",
       xp: 140,
       blocks: [
         {
@@ -576,11 +576,11 @@ rule is never reached.`,
         },
         {
           kind: "text",
-          body: "They don't loosen anything, though. Hook decisions don't bypass permission rules — a matching deny rule still blocks the call, and a matching ask rule still prompts, even if the hook returned `allow`. Hooks can tighten; they can't override a deny.",
+          body: "They don't loosen anything, though. Hook decisions don't bypass permission rules. A matching deny rule still blocks the call, and a matching ask rule still prompts, even if the hook returned `allow`. Hooks can tighten; they can't override a deny.",
         },
         {
           kind: "text",
-          body: "**Two failure modes to design out.** Recursion: a formatting hook that edits a file can trigger the event that runs it again, so guard against re-entry or scope the matcher tightly. And noise: a hook that prints its whole output on every edit buries the one message that mattered. Reduce it to an actionable error and the minimum context — a concise failure with a next step is what makes a hook something you keep.",
+          body: "**Two failure modes to design out.** Recursion: a formatting hook that edits a file can trigger the event that runs it again, so guard against re-entry or scope the matcher tightly. And noise: a hook that prints its whole output on every edit buries the one message that mattered. Reduce it to an actionable error and the minimum context. A concise failure with a next step is what makes a hook something you keep.",
         },
         {
           kind: "callout",
@@ -608,13 +608,13 @@ rule is never reached.`,
             "A PreToolUse hook returns 'allow' for a call that a deny rule matches. What happens?",
           options: [
             "The call is denied: hook decisions don't bypass deny rules",
-            "The call proceeds — the hook is closer to the action",
+            "The call proceeds, because the hook is closer to the action",
             "The user is prompted to break the tie",
             "The hook's decision applies but is logged as an override",
           ],
           answer: 0,
           explanation:
-            "Hooks can tighten but never loosen. Deny and ask rules are evaluated regardless of what a hook returned, which keeps deny-first precedence intact — including denies set in managed settings.",
+            "Hooks can tighten but never loosen. Deny and ask rules are evaluated regardless of what a hook returned, which keeps deny-first precedence intact, including denies set in managed settings.",
         },
       ],
     },
@@ -626,12 +626,12 @@ rule is never reached.`,
     type: "concept",
     body: {
       summary:
-        "Assets, actors, entry points and gates — the reasoning behind every rule in this level.",
+        "Assets, actors, entry points and gates: the reasoning behind every rule in this level.",
       xp: 140,
       blocks: [
         {
           kind: "text",
-          body: "Everything so far has been individual controls. A threat model is what tells you which ones you need — five questions, answered for one real workflow.",
+          body: "Everything so far has been individual controls. A threat model is what tells you which ones you need. It's five questions, answered for one real workflow.",
         },
         {
           kind: "text",
@@ -647,7 +647,7 @@ rule is never reached.`,
         },
         {
           kind: "text",
-          body: 'And put a **human approval gate** in front of the irreversible actions: external communication, money, deletion, publishing. A gate is only real if it\'s specific — the approver sees the exact recipients, the exact change, the evidence behind it. "Proceed?" with no payload is a button people learn to press. The gate is also your backstop when a prevention control fails, which is why the two belong together.',
+          body: 'And put a **human approval gate** in front of the irreversible actions: external communication, money, deletion, publishing. A gate is only real if it\'s specific: the approver sees the exact recipients, the exact change, the evidence behind it. "Proceed?" with no payload is a button people learn to press. The gate is also your backstop when a prevention control fails, which is why the two belong together.',
         },
         {
           kind: "callout",
@@ -657,16 +657,16 @@ rule is never reached.`,
           kind: "mcq",
           id: "q1",
           question:
-            "A workflow has tight allow lists, denied secret paths and a sandbox — but no logging. What's missing?",
+            "A workflow has tight allow lists, denied secret paths and a sandbox, but no logging. What's missing?",
           options: [
             "Nothing: prevention is the strongest control",
-            "Detection — there's no way to know whether a control failed or was bypassed",
+            "Detection. There's no way to know whether a control failed or was bypassed",
             "Recovery, which logging would provide",
             "Nothing, as long as the allow lists are reviewed regularly",
           ],
           answer: 1,
           explanation:
-            "Every control is preventive, so the workflow is blind to its own failures. You'd learn something went wrong from its consequences rather than from the system — and you'd have nothing to reconstruct what happened.",
+            "Every control is preventive, so the workflow is blind to its own failures. You'd learn something went wrong from its consequences rather than from the system, and you'd have nothing to reconstruct what happened.",
         },
         {
           kind: "mcq",
@@ -680,7 +680,7 @@ rule is never reached.`,
           ],
           answer: 3,
           explanation:
-            "A gate with no payload becomes a reflex — and a gate on every action guarantees that, by making approval constant. Few gates, each carrying enough detail to actually decide on, is what keeps the decision genuine.",
+            "A gate with no payload becomes a reflex, and a gate on every action guarantees that, by making approval constant. Few gates, each carrying enough detail to actually decide on, is what keeps the decision genuine.",
         },
       ],
     },
@@ -697,7 +697,7 @@ rule is never reached.`,
       blocks: [
         {
           kind: "text",
-          body: "Audit your practice environment end to end: every skill, every settings scope that applies, every MCP server still connected from Level 3, and every hook. For each one — do you still need it, does it have the narrowest scope that works, and could you explain to someone else why it's there?",
+          body: "Audit your practice environment end to end: every skill, every settings scope that applies, every MCP server still connected from Level 3, and every hook. For each one, ask: do you still need it, does it have the narrowest scope that works, and could you explain to someone else why it's there?",
         },
         {
           kind: "text",
@@ -705,7 +705,7 @@ rule is never reached.`,
         },
         {
           kind: "callout",
-          body: "**Do it now, in your own tools.** Keep this evidence: the audit with a keep/narrow/remove decision per item, the corrected configuration, and a recovery note describing the drill and what you'd do differently. No secrets in any of it — if your notes need a token to make sense, that's a finding in itself.",
+          body: "**Do it now, in your own tools.** Keep this evidence: the audit with a keep/narrow/remove decision per item, the corrected configuration, and a recovery note describing the drill and what you'd do differently. No secrets in any of it. If your notes need a token to make sense, that's a finding in itself.",
         },
         {
           kind: "code",

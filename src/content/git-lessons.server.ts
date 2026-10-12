@@ -48,7 +48,7 @@ export const gitLessonBodies: Record<string, LessonBody> = {
         kind: "code",
         language: "bash",
         caption: "Check git is installed, then set it up (once per computer)",
-        code: `git --version\n# git version 2.46.0  — any 2.28 or later works for this course\n\ngit config --global user.name "Alex Rivera"\ngit config --global user.email "alex@example.com"\ngit config --global init.defaultBranch main\ngit config --global pull.rebase false`,
+        code: `git --version\n# git version 2.46.0  (any 2.28 or later works for this course)\n\ngit config --global user.name "Alex Rivera"\ngit config --global user.email "alex@example.com"\ngit config --global init.defaultBranch main\ngit config --global pull.rebase false`,
       },
       {
         kind: "callout",

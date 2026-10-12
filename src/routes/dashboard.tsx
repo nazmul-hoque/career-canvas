@@ -43,13 +43,13 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
-      { title: "Your learning dashboard — Ascent" },
+      { title: "Your learning dashboard | Ascent" },
       {
         name: "description",
         content:
           "Your streak, XP, next lesson and weekly progress in one view. Pick up your roadmap exactly where you stopped.",
       },
-      { property: "og:title", content: "Your learning dashboard — Ascent" },
+      { property: "og:title", content: "Your learning dashboard | Ascent" },
       {
         property: "og:description",
         content: "Streak, XP, next lesson and weekly progress in one view.",
@@ -241,7 +241,7 @@ function Dashboard() {
           <p className="mt-1.5 text-chalk">
             {!streakHeldToday
               ? streak > 0
-                ? `Finish one lesson — or one review — to keep your ${streak}-day streak alive.`
+                ? `Finish one lesson or one review to keep your ${streak}-day streak going.`
                 : "Finish one lesson today to start a streak."
               : todayXp >= dailyGoal
                 ? `Streak safe and the ${dailyGoal} XP goal cleared. Anything else today is a bonus.`
@@ -398,7 +398,7 @@ function Dashboard() {
           <p className="mt-1 text-xs text-chalk">
             {profile?.hours_per_week
               ? `Sized from the ${profile.hours_per_week} hours a week you said you had.`
-              : "Using the default goal — set your weekly hours in onboarding to size it to you."}
+              : "This is the default goal. Set your weekly hours in onboarding to size it to you."}
           </p>
           <div className="mt-6 flex h-32 items-end gap-2">
             {week.map((d, i) => (
@@ -441,7 +441,7 @@ function Dashboard() {
             </ul>
           ) : (
             <p className="mt-4 text-sm text-chalk">
-              Nothing yet. Finishing one lesson unlocks your first badge — it takes about ten
+              Nothing yet. Finishing one lesson unlocks your first badge. It takes about ten
               minutes.
             </p>
           )}
@@ -491,7 +491,7 @@ function Dashboard() {
             </ul>
           ) : (
             <p className="mt-4 text-sm text-chalk">
-              Course finished — choose your next one from the catalog.
+              Course finished. Choose your next one from the catalog.
             </p>
           )}
         </section>

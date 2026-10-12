@@ -28,7 +28,7 @@ export function MentorPanel({
     {
       id: "intro",
       role: "mentor",
-      content: `I'm your mentor for ${context.lessonTitle ?? "this lesson"}. I won't hand you answers — I'll ask the question you're missing. Stuck, curious, or want your code reviewed? Start anywhere.`,
+      content: `I'm your mentor for ${context.lessonTitle ?? "this lesson"}. I won't hand you answers. I'll ask the question you're missing. Stuck, curious, or want your code reviewed? Start anywhere.`,
       at: Date.now(),
     },
   ]);
@@ -212,7 +212,7 @@ export function MentorPanel({
         {allowance && allowance.plan === "free" && allowance.remaining <= 3 ? (
           <p className="mb-2.5 rounded-lg bg-ember/10 px-3 py-2 text-xs text-foreground">
             {outOfMessages
-              ? "You've used this month's mentor messages. They reset on the 1st — "
+              ? "You've used this month's mentor messages. They reset on the 1st. "
               : `${allowance.remaining} mentor ${plural(allowance.remaining, "message")} left this month. `}
             <Link to="/pricing" className="font-semibold text-brand hover:underline">
               Pro includes {planFeatures("pro").mentorMessagesPerMonth} a month

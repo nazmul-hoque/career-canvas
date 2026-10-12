@@ -39,9 +39,9 @@ const ENGINE_LABELS: Partial<Record<RunEngine, string>> = {
 
 /** Shown while an engine that downloads on first use is starting. */
 const STARTING_MESSAGES: Partial<Record<ChallengeLanguage, string>> = {
-  typescript: "Starting the TypeScript compiler — the first run loads it in your browser.",
-  python: "Starting Python — the first run downloads the interpreter.",
-  sql: "Starting the database — the first run downloads it.",
+  typescript: "Starting the TypeScript compiler. The first run loads it in your browser.",
+  python: "Starting Python. The first run downloads the interpreter.",
+  sql: "Starting the database. The first run downloads it.",
 };
 
 const PANEL_HEADER =

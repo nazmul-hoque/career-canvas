@@ -43,7 +43,7 @@ export const Route = createFileRoute("/community")({
   head: () =>
     seoHead({
       path: "/community",
-      title: "Community — Ascent",
+      title: "Community | Ascent",
       description:
         "Ask questions, share what finally clicked, and read how other learners got unstuck on JavaScript, React, Python, design and the job search.",
     }),
@@ -201,7 +201,7 @@ function Community() {
             <DialogHeader>
               <DialogTitle>Start a discussion</DialogTitle>
               <DialogDescription>
-                Include what you tried and what happened — that's what gets a useful reply.
+                Include what you tried and what happened. That's what gets a useful reply.
               </DialogDescription>
             </DialogHeader>
             <form
@@ -326,7 +326,7 @@ function Community() {
                 </p>
                 <p className="mt-1 text-sm text-chalk">
                   {user
-                    ? "Start one — someone else is stuck on the same thing."
+                    ? "Start one. Someone else is probably stuck on the same thing."
                     : "Sign in to start one."}
                 </p>
               </div>
@@ -576,7 +576,7 @@ function PostCard({
 
               {!item.live ? (
                 <p className="text-xs text-chalk">
-                  This is a seeded example thread — replies are shown read-only.
+                  This is a sample thread, so replies are read-only.
                 </p>
               ) : null}
             </div>

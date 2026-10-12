@@ -49,13 +49,13 @@ export const Route = createFileRoute("/paths/$pathId")({
   head: ({ loaderData }) => {
     if (!loaderData) {
       return {
-        meta: [{ title: "Path unavailable — Ascent" }, { name: "robots", content: "noindex" }],
+        meta: [{ title: "Path unavailable | Ascent" }, { name: "robots", content: "noindex" }],
       };
     }
     const { path } = loaderData;
     return seoHead({
       path: `/paths/${path.id}`,
-      title: `${path.name} career path — Ascent`,
+      title: `${path.name} career path | Ascent`,
       description: path.overview,
       image: shareImage(ogFile("path", path.id)),
       schema: [
@@ -118,7 +118,7 @@ function PathDetail() {
       caption: `${completed} of ${live} ${words.plural} done`,
     },
     unwritten: {
-      blurb: `This path is still being written — ${live} of its ${total} ${words.plural} are live. No certificate is issued for a roadmap that isn't finished, so keep going and we'll open this the moment the last one lands.`,
+      blurb: `This path is still being written: ${live} of its ${total} ${words.plural} are live. No certificate is issued for a roadmap that isn't finished, so keep going and we'll open this the moment the last one lands.`,
       caption: `${completed} of ${live} live ${words.plural} done`,
     },
     "in-progress": {
@@ -240,8 +240,8 @@ function PathDetail() {
                   className="font-semibold text-brand underline-offset-4 hover:underline"
                 >
                   Take the placement check
-                </Link>{" "}
-                — it awards nothing and marks nothing complete, it only suggests a starting module.
+                </Link>
+                . It awards nothing and marks nothing complete. It only suggests a starting module.
               </p>
             ) : null}
           </div>

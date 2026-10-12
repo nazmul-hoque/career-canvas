@@ -27,7 +27,7 @@ export const claudeCliLessons: AuthoredLesson[] = [
         },
         {
           kind: "text",
-          body: "So the first habit is the practice folder. Make a throwaway directory with a few files you would not mind losing, and `cd` into it before you type `claude`. Everything in this level is safe to do there and nowhere else — not because Claude is reckless, but because you are about to be, and learning where the edges are is the point.",
+          body: "So the first habit is the practice folder. Make a throwaway directory with a few files you would not mind losing, and `cd` into it before you type `claude`. Everything in this level is safe to do there and nowhere else. That's not because Claude is reckless, but because you are about to be, and learning where the edges are is the point.",
         },
         {
           kind: "code",
@@ -41,7 +41,7 @@ claude doctor          # diagnoses a broken or partial setup`,
         },
         {
           kind: "text",
-          body: "Install from Anthropic's own setup page for your operating system. This is worth being fussy about: an agent that can read your files and run commands is exactly the thing an attacker would like you to install from a stranger's copy-pasted script. `claude doctor` is the diagnostic to run when something behaves oddly later — it checks the installation and reports what is wrong rather than leaving you guessing.",
+          body: "Install from Anthropic's own setup page for your operating system. This is worth being fussy about: an agent that can read your files and run commands is exactly the thing an attacker would like you to install from a stranger's copy-pasted script. `claude doctor` is the diagnostic to run when something behaves oddly later. It checks the installation and reports what is wrong rather than leaving you guessing.",
         },
         {
           kind: "text",
@@ -53,7 +53,7 @@ claude doctor          # diagnoses a broken or partial setup`,
         },
         {
           kind: "callout",
-          body: "**Practice.** Open a terminal and name the shell and folder your prompt is showing. Create a disposable practice project and `cd` into it. Install from the official page, run `claude --version` and `claude doctor`, and record anything the check flags. Sign in with the account you intend to use. Start a session and ask what it can see before requesting any change. Then run `claude --help` and find the flags for print mode, model choice and continuing a session — you'll use all three in this level.",
+          body: "**Practice.** Open a terminal and name the shell and folder your prompt is showing. Create a disposable practice project and `cd` into it. Install from the official page, run `claude --version` and `claude doctor`, and record anything the check flags. Sign in with the account you intend to use. Start a session and ask what it can see before requesting any change. Then run `claude --help` and find the flags for print mode, model choice and continuing a session. You'll use all three in this level.",
         },
         {
           kind: "mcq",
@@ -61,14 +61,14 @@ claude doctor          # diagnoses a broken or partial setup`,
           question:
             "You keep your side projects in ~/projects and your notes in ~/Documents. You start Claude with `cd ~ && claude`. What have you done?",
           options: [
-            "Nothing unusual — Claude only reads files you mention",
+            "Nothing unusual, because Claude only reads files you mention",
             "Started a session with no working directory until you name one",
             "Given the session your whole home folder as its working directory, notes and all",
             "Limited Claude to ~/projects, since that's where the code is",
           ],
           answer: 2,
           explanation:
-            "The launch directory is the working directory, and everything beneath it is in scope. That's why the practice habit is to `cd` into a small folder first — the boundary is set by where you start, not by what you ask about.",
+            "The launch directory is the working directory, and everything beneath it is in scope. That's why the practice habit is to `cd` into a small folder first. The boundary is set by where you start, not by what you ask about.",
         },
         {
           kind: "mcq",
@@ -82,7 +82,7 @@ claude doctor          # diagnoses a broken or partial setup`,
           ],
           answer: 3,
           explanation:
-            "It's a health check on the tool itself, not on your project. Reach for it when Claude Code is behaving strangely — a wrong install path or a stale version explains a surprising number of odd sessions.",
+            "It's a health check on the tool itself, not on your project. Reach for it when Claude Code is behaving strangely. A wrong install path or a stale version explains a surprising number of odd sessions.",
         },
       ],
     },
@@ -98,11 +98,11 @@ claude doctor          # diagnoses a broken or partial setup`,
       blocks: [
         {
           kind: "text",
-          body: 'The most useful thing Claude Code does in an unfamiliar project is not write code. It\'s answer "what is this?" — and it can do that without changing a byte. Read-only work is free in the sense that matters: nothing needs reviewing, nothing needs undoing.',
+          body: 'The most useful thing Claude Code does in an unfamiliar project is not write code. It\'s answer "what is this?", and it can do that without changing a byte. Read-only work is free in the sense that matters: nothing needs reviewing, nothing needs undoing.',
         },
         {
           kind: "text",
-          body: "Ask for a map first. The top-level files, the likely entry point, where configuration lives, and the command that runs the tests. Then **check the map against the filesystem yourself**. This is not a ritual — it's how you calibrate. A project map that gets the test command wrong tells you something useful about how much to trust the next answer.",
+          body: "Ask for a map first. The top-level files, the likely entry point, where configuration lives, and the command that runs the tests. Then **check the map against the filesystem yourself**. This is not a ritual. It's how you calibrate. A project map that gets the test command wrong tells you something useful about how much to trust the next answer.",
         },
         {
           kind: "text",
@@ -125,7 +125,7 @@ confident about and what you're guessing.`,
         },
         {
           kind: "text",
-          body: 'Three parts do the work there: the command, the expectation, and the actual output. Most unhelpful debugging sessions are unhelpful because only the third was supplied — without the expectation, Claude has to guess what "working" meant, and without the command it has to guess how you got there.',
+          body: 'Three parts do the work there: the command, the expectation, and the actual output. Most unhelpful debugging sessions are unhelpful because only the third was supplied. Without the expectation, Claude has to guess what "working" meant, and without the command it has to guess how you got there.',
         },
         {
           kind: "text",
@@ -133,7 +133,7 @@ confident about and what you're guessing.`,
         },
         {
           kind: "callout",
-          body: "**Practice.** In your practice project, ask Claude to describe the top-level files, the likely entry point and the test command without editing anything — then verify each claim against the filesystem. Ask one focused question about one small file and confirm the answer by reading it. Finally, take a real error, supply the command, the expectation and the output, and ask for a diagnosis that separates evidence from guesses.",
+          body: "**Practice.** In your practice project, ask Claude to describe the top-level files, the likely entry point and the test command without editing anything, then verify each claim against the filesystem. Ask one focused question about one small file and confirm the answer by reading it. Finally, take a real error, supply the command, the expectation and the output, and ask for a diagnosis that separates evidence from guesses.",
         },
         {
           kind: "mcq",
@@ -148,7 +148,7 @@ confident about and what you're guessing.`,
           ],
           answer: 2,
           explanation:
-            "`npm test` is the most common answer to that question, which is exactly why it appears when the real answer isn't there. One checkable claim failing is a calibration signal for the rest of the map — that's why you check the map.",
+            "`npm test` is the most common answer to that question, which is exactly why it appears when the real answer isn't there. One checkable claim failing is a calibration signal for the rest of the map. That's why you check the map.",
         },
         {
           kind: "mcq",
@@ -162,7 +162,7 @@ confident about and what you're guessing.`,
           ],
           answer: 2,
           explanation:
-            'Checking "the config type allows undefined but the function requires a string" is quick and decisive. Evaluating a diff means reconstructing the reasoning anyway — and a wrong fix you accept is far more expensive than a wrong claim you reject.',
+            'Checking "the config type allows undefined but the function requires a string" is quick and decisive. Evaluating a diff means reconstructing the reasoning anyway, and a wrong fix you accept is far more expensive than a wrong claim you reject.',
         },
       ],
     },
@@ -178,23 +178,23 @@ confident about and what you're guessing.`,
       blocks: [
         {
           kind: "text",
-          body: "A session accumulates. Everything you've asked, every file that's been read, every command's output stays in view — which is what makes follow-up questions work. You can say \"now do the same for the other handler\" and it knows what \"the same\" means. Re-pasting the context every time is the beginner's tax, and staying in one session is how you stop paying it.",
+          body: "A session accumulates. Everything you've asked, every file that's been read, every command's output stays in view. That's what makes follow-up questions work. You can say \"now do the same for the other handler\" and it knows what \"the same\" means. Re-pasting the context every time is the beginner's tax, and staying in one session is how you stop paying it.",
         },
         {
           kind: "text",
-          body: "The same accumulation is a liability when you change subject. Switch from a CSS bug to a database migration in the same session and the earlier material is still there, quietly shaping answers — the model has been primed to think in terms of a problem you have finished with. **A new topic deserves a new session.** It costs you one command and removes a whole class of confusing answer.",
+          body: "The same accumulation is a liability when you change subject. Switch from a CSS bug to a database migration in the same session and the earlier material is still there, quietly shaping answers. The model has been primed to think in terms of a problem you have finished with. **A new topic deserves a new session.** It costs you one command and removes a whole class of confusing answer.",
         },
         {
           kind: "text",
-          body: "For long work on one topic there's a middle option: compaction, which summarises the conversation so far and continues with the summary in place of the transcript. It buys room, and it is lossy by definition. After compacting, ask Claude to restate the current goal and constraints — if the restatement has drifted, correct it immediately rather than discovering the drift three edits later.",
+          body: "For long work on one topic there's a middle option: compaction, which summarises the conversation so far and continues with the summary in place of the transcript. It buys room, and it is lossy by definition. After compacting, ask Claude to restate the current goal and constraints. If the restatement has drifted, correct it immediately rather than discovering the drift three edits later.",
         },
         {
           kind: "callout",
-          body: "**Find the commands in your own install.** Interactive commands change more often than flags do. Type `/help` inside a session and read the list your version prints, rather than trusting a command name you read somewhere — including here.",
+          body: "**Find the commands in your own install.** Interactive commands change more often than flags do. Type `/help` inside a session and read the list your version prints, rather than trusting a command name you read somewhere, including here.",
         },
         {
           kind: "callout",
-          body: "**Practice.** Hold one session across a two-turn exchange where the follow-up clearly relies on what came before. Then switch to an unrelated task and deliberately start fresh, noticing what you no longer have to explain — and what you no longer have to undo. On a long session, run your version's compaction command and check that the goal survived it.",
+          body: "**Practice.** Hold one session across a two-turn exchange where the follow-up clearly relies on what came before. Then switch to an unrelated task and deliberately start fresh, noticing what you no longer have to explain, and what you no longer have to undo. On a long session, run your version's compaction command and check that the goal survived it.",
         },
         {
           kind: "mcq",
@@ -202,7 +202,7 @@ confident about and what you're guessing.`,
           question:
             "You've spent an hour on a failing test. Now you want help naming some CSS variables. What's the better move?",
           options: [
-            "Stay in the session — more context always helps Claude understand your project",
+            "Stay in the session, because more context always helps Claude understand your project",
             "Start a fresh session, so an hour of test debugging doesn't colour an unrelated question",
             "Compact the session first, then ask",
             "Ask in the same session but tell Claude to ignore everything above",
@@ -239,7 +239,7 @@ confident about and what you're guessing.`,
       blocks: [
         {
           kind: "text",
-          body: "For anything beyond a one-line change, split the work in two: decide what should happen, then let it happen. Claude Code has a **plan mode** for exactly this — it investigates and proposes without touching files. You can start a session in it with `--permission-mode plan`, or switch modes inside a session.",
+          body: "For anything beyond a one-line change, split the work in two: decide what should happen, then let it happen. Claude Code has a **plan mode** for exactly this. It investigates and proposes without touching files. You can start a session in it with `--permission-mode plan`, or switch modes inside a session.",
         },
         {
           kind: "code",
@@ -249,15 +249,15 @@ confident about and what you're guessing.`,
         },
         {
           kind: "text",
-          body: 'A plan worth approving names the files it will touch, the check it will run afterwards, and what it is unsure about. A plan that says "I\'ll refactor the auth module and improve error handling" has told you nothing you can evaluate — send it back and ask which files.',
+          body: 'A plan worth approving names the files it will touch, the check it will run afterwards, and what it is unsure about. A plan that says "I\'ll refactor the auth module and improve error handling" has told you nothing you can evaluate. Send it back and ask which files.',
         },
         {
           kind: "text",
-          body: "Then review the diff. Not the description of the diff — the diff. The failure mode here is social rather than technical: a confident summary of a change is pleasant to read and reviewing the change is work, so the summary quietly becomes the thing you approve. Read what actually changed, and if it's larger than the plan said, that discrepancy is the most interesting thing on your screen.",
+          body: "Then review the diff. Not the description of the diff, the diff itself. The failure mode here is social rather than technical: a confident summary of a change is pleasant to read and reviewing the change is work, so the summary quietly becomes the thing you approve. Read what actually changed, and if it's larger than the plan said, that discrepancy is the most interesting thing on your screen.",
         },
         {
           kind: "text",
-          body: "Finish by running the project's own checks — the narrowest relevant one, not the whole suite. \"Run the tests for the file you changed\" is a tighter loop than a full CI run, and a failure points somewhere specific. The project's existing test command is the authority on whether the change worked; Claude's opinion that it looks correct is not.",
+          body: "Finish by running the project's own checks: the narrowest relevant one, not the whole suite. \"Run the tests for the file you changed\" is a tighter loop than a full CI run, and a failure points somewhere specific. The project's existing test command is the authority on whether the change worked; Claude's opinion that it looks correct is not.",
         },
         {
           kind: "callout",
@@ -280,14 +280,14 @@ confident about and what you're guessing.`,
           question:
             "The plan named two files. The diff touches five, and the extra three are 'related cleanups'. What should you do?",
           options: [
-            "Accept it — cleanups are an improvement and the tests pass",
+            "Accept it. Cleanups are an improvement and the tests pass",
             "Accept the change but ask for the cleanups to be a separate commit",
             "Accept it if the three extra files are small",
             "Reject or revert it: the change exceeded what you approved, and passing tests don't tell you what else moved",
           ],
           answer: 3,
           explanation:
-            "You approved a scope. Work outside it hasn't been reviewed by anyone, and a green test suite only says nothing you already test for broke. The discrepancy is the signal — treat it as one.",
+            "You approved a scope. Work outside it hasn't been reviewed by anyone, and a green test suite only says nothing you already test for broke. The discrepancy is the signal, so treat it as one.",
         },
         {
           kind: "mcq",
@@ -301,7 +301,7 @@ confident about and what you're guessing.`,
           ],
           answer: 0,
           explanation:
-            "It names the files, the behaviour change, the check, and the thing it isn't sure about — so you can disagree with it specifically. The others describe an intention, which you can only approve or not on faith.",
+            "It names the files, the behaviour change, the check, and the thing it isn't sure about, so you can disagree with it specifically. The others describe an intention, which you can only approve or not on faith.",
         },
       ],
     },
@@ -317,7 +317,7 @@ confident about and what you're guessing.`,
       blocks: [
         {
           kind: "text",
-          body: "Not every question deserves a session. `--print` (or `-p`) sends one prompt, prints the answer and exits — which makes Claude Code an ordinary command, and ordinary commands compose.",
+          body: "Not every question deserves a session. `--print` (or `-p`) sends one prompt, prints the answer and exits. That makes Claude Code an ordinary command, and ordinary commands compose.",
         },
         {
           kind: "code",
@@ -331,7 +331,7 @@ claude -p "List this project's entry points" --output-format json`,
         },
         {
           kind: "text",
-          body: "Piping is where this earns its place: anything your shell can produce, Claude can read. A log excerpt, a diff, a CSV sample. Keep what you pipe small and non-sensitive — a pipeline makes it very easy to send a great deal more than you intended, and `cat .env | claude -p ...` is a mistake you only get to make once.",
+          body: "Piping is where this earns its place: anything your shell can produce, Claude can read. A log excerpt, a diff, a CSV sample. Keep what you pipe small and non-sensitive. A pipeline makes it very easy to send a great deal more than you intended, and `cat .env | claude -p ...` is a mistake you only get to make once.",
         },
         {
           kind: "text",
@@ -339,7 +339,7 @@ claude -p "List this project's entry points" --output-format json`,
         },
         {
           kind: "callout",
-          body: "**Practice.** Send a one-shot question that exits after printing. Pipe a small, safe local text sample into print mode and ask for a transformation. Then run a one-shot query with JSON output and pass it through another command — `jq` or a formatter — to confirm it parses, noting which fields your version returns.",
+          body: "**Practice.** Send a one-shot question that exits after printing. Pipe a small, safe local text sample into print mode and ask for a transformation. Then run a one-shot query with JSON output and pass it through another command (`jq` or a formatter) to confirm it parses, noting which fields your version returns.",
         },
         {
           kind: "fill",
@@ -411,11 +411,11 @@ claude --model sonnet    # start on a specific model`,
             "Claude asks which of the two sessions you meant",
             "Both sessions are merged so nothing is lost",
             "You resume the migration, because it was the larger task",
-            "You resume the CSS session, because it was the most recent — which may not be what you wanted",
+            "You resume the CSS session, because it was the most recent, which may not be what you wanted",
           ],
           answer: 3,
           explanation:
-            "`--continue` means most recent, not most important — and it won't ask. `--resume` is the deliberate choice, which is why the habit of asking it to restate the goal catches the mistake before you act on it.",
+            "`--continue` means most recent, not most important, and it won't ask. `--resume` is the deliberate choice, which is why the habit of asking it to restate the goal catches the mistake before you act on it.",
         },
       ],
     },
@@ -431,7 +431,7 @@ claude --model sonnet    # start on a specific model`,
       blocks: [
         {
           kind: "text",
-          body: "Everything so far assumed you're watching. Once a run is unattended — a script, a scheduled job, anything non-interactive — the bounds have to be in the command instead of in your judgement. There are three worth knowing.",
+          body: "Everything so far assumed you're watching. Once a run is unattended (a script, a scheduled job, anything non-interactive), the bounds have to be in the command instead of in your judgement. There are three worth knowing.",
         },
         {
           kind: "code",
@@ -446,7 +446,7 @@ claude -p "audit the config" --max-turns 5`,
         },
         {
           kind: "text",
-          body: "**`--add-dir`** extends the working directory to a named folder — the right tool when a task genuinely spans two projects. Add the one folder you need, not its parent. Note that it grants file access; it doesn't pull in most `.claude/` configuration from that directory.",
+          body: "**`--add-dir`** extends the working directory to a named folder. It's the right tool when a task genuinely spans two projects. Add the one folder you need, not its parent. Note that it grants file access; it doesn't pull in most `.claude/` configuration from that directory.",
         },
         {
           kind: "text",
@@ -454,7 +454,7 @@ claude -p "audit the config" --max-turns 5`,
         },
         {
           kind: "text",
-          body: "**`--max-turns`** caps how many agentic turns a print-mode run may take. It's the ceiling that stops a confused run from continuing indefinitely — the loop that can't find the file and keeps looking. `--verbose` is the companion for when a run does something surprising and you need to see why.",
+          body: "**`--max-turns`** caps how many agentic turns a print-mode run may take. It's the ceiling that stops a confused run from continuing indefinitely, like the loop that can't find the file and keeps looking. `--verbose` is the companion for when a run does something surprising and you need to see why.",
         },
         {
           kind: "callout",
@@ -499,7 +499,7 @@ claude -p "audit the config" --max-turns 5`,
           ],
           answer: 1,
           explanation:
-            "The first and third both hand over every sibling project at once. Copying works but leaves a stale duplicate to go wrong later. Name the one folder — the flag takes multiple paths when you genuinely need more.",
+            "The first and third both hand over every sibling project at once. Copying works but leaves a stale duplicate to go wrong later. Name the one folder. The flag takes multiple paths when you genuinely need more.",
         },
       ],
     },
@@ -532,15 +532,15 @@ claude -p "audit the config" --max-turns 5`,
         },
         {
           kind: "text",
-          body: 'Notice what those lines have in common: each one prevents a specific, plausible mistake, and each is *verifiably true today*. That\'s the bar. A guidance file full of aspirations — "write clean, well-tested code" — costs context and prevents nothing. And it contains no secrets: this file is read by every session and usually committed to the repository.',
+          body: 'Notice what those lines have in common: each one prevents a specific, plausible mistake, and each is *verifiably true today*. That\'s the bar. A guidance file full of aspirations ("write clean, well-tested code") costs context and prevents nothing. And it contains no secrets: this file is read by every session and usually committed to the repository.',
         },
         {
           kind: "text",
-          body: "The other habit worth building is asking Claude to explain a diff. Make a small change yourself, then ask what it does and what might break. You're using it as a reviewer rather than an author, and it's a good one — it will mention the caller you forgot. Check the explanation against the actual diff, the same as always.",
+          body: "The other habit worth building is asking Claude to explain a diff. Make a small change yourself, then ask what it does and what might break. You're using it as a reviewer rather than an author, and it's a good one. It will mention the caller you forgot. Check the explanation against the actual diff, the same as always.",
         },
         {
           kind: "text",
-          body: "**Publishing stays yours.** Running the checks and drafting a commit message is work worth delegating; `git push` is not. The distinction isn't about capability, it's about reversibility — a local commit is a thing you can amend, and a pushed commit is a thing other people have. Keep the irreversible step behind a human.",
+          body: "**Publishing stays yours.** Running the checks and drafting a commit message is work worth delegating; `git push` is not. The distinction isn't about capability, it's about reversibility. A local commit is a thing you can amend, and a pushed commit is a thing other people have. Keep the irreversible step behind a human.",
         },
         {
           kind: "text",
@@ -556,7 +556,7 @@ claude -p "audit the config" --max-turns 5`,
           question: "Which line earns its place in a CLAUDE.md?",
           options: [
             '"Always write clean, maintainable, well-tested code"',
-            '"Package manager is pnpm — `npm install` creates a second lockfile and breaks CI"',
+            '"Package manager is pnpm. `npm install` creates a second lockfile and breaks CI"',
             '"This project uses modern JavaScript and follows best practices"',
             '"Be careful when editing files in the src directory"',
           ],
@@ -594,7 +594,7 @@ claude -p "audit the config" --max-turns 5`,
       blocks: [
         {
           kind: "text",
-          body: "Pick a practice repository you did not write — a small open-source project is ideal — and use Claude Code to produce the onboarding brief you'd want if you were joining it on Monday: what it does, how it's laid out, how to run it, how to test it, and the three things that would surprise a newcomer.",
+          body: "Pick a practice repository you did not write (a small open-source project is ideal) and use Claude Code to produce the onboarding brief you'd want if you were joining it on Monday: what it does, how it's laid out, how to run it, how to test it, and the three things that would surprise a newcomer.",
         },
         {
           kind: "text",
@@ -602,7 +602,7 @@ claude -p "audit the config" --max-turns 5`,
         },
         {
           kind: "callout",
-          body: "**Do it now, in your own tools.** The brief only counts if you checked it. Keep this evidence: the file itself, a note of at least one claim you verified against the source and at least one you had to correct, the exact commands you ran, and the reviewed diff. Nothing is graded here — but a brief you didn't verify is precisely the artefact this level exists to stop you shipping.",
+          body: "**Do it now, in your own tools.** The brief only counts if you checked it. Keep this evidence: the file itself, a note of at least one claim you verified against the source and at least one you had to correct, the exact commands you ran, and the reviewed diff. Nothing is graded here, but a brief you didn't verify is precisely the artefact this level exists to stop you shipping.",
         },
         {
           kind: "code",

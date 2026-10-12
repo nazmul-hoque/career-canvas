@@ -7,7 +7,7 @@ export const Route = createFileRoute("/privacy")({
   head: () =>
     seoHead({
       path: "/privacy",
-      title: "Privacy Policy — Ascent",
+      title: "Privacy Policy | Ascent",
       description:
         "What Ascent collects, why, who processes it for us, what is public, and how to see, correct or delete your data.",
     }),

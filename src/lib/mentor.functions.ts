@@ -73,7 +73,7 @@ function buildSystemPrompt(input: {
       ? [
           "What you know about this learner from their progress and reviews:",
           input.learnerHistory,
-          "Use it only where it helps — connect to something they keep forgetting, or build on something they know. Never recite it back to them.",
+          "Use it only where it helps: connect to something they keep forgetting, or build on something they know. Never recite it back to them.",
           "",
         ]
       : []),

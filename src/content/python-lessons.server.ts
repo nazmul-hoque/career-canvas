@@ -192,7 +192,7 @@ def fare_label(name, age, member=False):
     blocks: [
       {
         kind: "text",
-        body: "A `for` loop runs an indented block once for each item. Name the current item directly: `for temperature in temperatures:`. When you also need its position, `enumerate(values)` gives an index and value together. `range(1, 5)` produces 1, 2, 3 and 4—the end is not included.",
+        body: "A `for` loop runs an indented block once for each item. Name the current item directly: `for temperature in temperatures:`. When you also need its position, `enumerate(values)` gives an index and value together. `range(1, 5)` produces 1, 2, 3 and 4. The end is not included.",
       },
       {
         kind: "code",
@@ -456,7 +456,7 @@ print(sales_path)`,
         id: "c1",
         title: "Put the report beside its input",
         prompt:
-          "Write `report_path(input_path)`. Return a `Path` in the same folder whose filename adds `-summary` before the extension. `data/april.sales.csv` becomes `data/april.sales-summary.csv`; `sales` becomes `sales-summary.csv`. Do not manually split on `/` or `\\`—use `pathlib`.",
+          "Write `report_path(input_path)`. Return a `Path` in the same folder whose filename adds `-summary` before the extension. `data/april.sales.csv` becomes `data/april.sales-summary.csv`; `sales` becomes `sales-summary.csv`. Do not manually split on `/` or `\\`. Use `pathlib`.",
         language: "python",
         starter: `from pathlib import Path
 

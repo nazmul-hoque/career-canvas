@@ -29,7 +29,8 @@ export interface GoalShape {
 const GOALS: Record<GoalId, GoalShape> = {
   "first-job": {
     label: "Getting your first tech job",
-    effect: "Portfolio projects are pushed alongside lessons — hiring managers read those.",
+    effect:
+      "Portfolio projects are pushed alongside lessons, because hiring managers look at those.",
     emphasis: "projects",
   },
   switch: {
@@ -49,7 +50,7 @@ const GOALS: Record<GoalId, GoalShape> = {
   },
   fun: {
     label: "Learning for the enjoyment of it",
-    effect: "Short sessions and the streak matter more than volume — your goals are modest.",
+    effect: "Short sessions and the streak matter more than volume, so your goals are modest.",
     emphasis: "community",
   },
 };

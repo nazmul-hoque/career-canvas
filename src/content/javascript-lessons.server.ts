@@ -752,7 +752,7 @@ function checkoutLabel(priceText, quantityText, member = false) {
       {
         kind: "code",
         language: "html",
-        caption: "Two correct loading patterns—choose one, not both",
+        caption: "Two correct loading patterns. Choose one, not both",
         code: `<!-- A classic script -->
 <script src="./app.js" defer></script>
 
@@ -765,7 +765,7 @@ function checkoutLabel(priceText, quantityText, member = false) {
       },
       {
         kind: "text",
-        body: "Use DevTools as evidence. Console shows logs and uncaught errors. Sources shows the file the browser executed and supports breakpoints. Network answers whether app.js loaded at all—a 404 means debugging the JavaScript body cannot help. Modules and fetch requests should be served over your project's local development server rather than opened as a file URL.",
+        body: "Use DevTools as evidence. Console shows logs and uncaught errors. Sources shows the file the browser executed and supports breakpoints. Network answers whether app.js loaded at all. A 404 means debugging the JavaScript body cannot help. Modules and fetch requests should be served over your project's local development server rather than opened as a file URL.",
       },
       {
         kind: "text",

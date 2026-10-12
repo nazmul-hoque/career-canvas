@@ -39,7 +39,7 @@ export const Route = createFileRoute("/pricing")({
   head: () =>
     seoHead({
       path: "/pricing",
-      title: "Ascent Pricing \u2014 Free, Pro & Lifetime Plans",
+      title: "Ascent Pricing: Free, Pro & Lifetime Plans",
       description:
         "Compare Ascent Free, Pro and Lifetime plans for interactive learning, AI mentor support, portfolio projects and certificates. Start learning for free.",
     }),
@@ -105,7 +105,7 @@ const plans: Plan[] = [
     features: [
       `All ${courses.length} courses, every module`,
       "Unlimited practice and challenges",
-      "AI mentor — 500 messages a month",
+      "AI mentor, 500 messages a month",
       "All 8 portfolio projects with feedback",
       "Career path certificates",
       "Public portfolio profile",
@@ -123,7 +123,7 @@ const plans: Plan[] = [
     features: [
       "Everything in Pro, permanently",
       "All future courses and paths",
-      "AI mentor — 500 messages a month, forever",
+      "AI mentor, 500 messages a month, forever",
       "All projects and certificates",
       "Early access to new paths",
     ],
@@ -280,7 +280,7 @@ function Pricing() {
       });
       setStage("done");
       toast.success(`You're on ${checkout.name}`, {
-        description: "No card was charged — this is a demo checkout.",
+        description: "No card was charged. This is a demo checkout.",
       });
     } catch (error) {
       setStage("form");
@@ -332,7 +332,7 @@ function Pricing() {
       {user && !trialUsed ? (
         <div className="mx-auto mt-6 flex max-w-2xl flex-wrap items-center justify-center gap-3 rounded-2xl bg-brand/10 px-5 py-4 text-center">
           <p className="text-sm font-semibold text-foreground">
-            Try Pro free for {TRIAL_DAYS} days — no card, cancels itself.
+            Try Pro free for {TRIAL_DAYS} days. No card needed, and it ends by itself.
           </p>
           <Button size="sm" onClick={beginTrial} disabled={busy}>
             Start free trial
@@ -477,7 +477,7 @@ function Pricing() {
       {!user ? (
         <div className="card-surface mt-6 flex flex-wrap items-center justify-between gap-4 p-5">
           <p className="text-sm text-chalk">
-            Create a free account first — you can upgrade from inside the app any time.
+            Create a free account first. You can upgrade from inside the app any time.
           </p>
           <Button asChild size="sm">
             <AuthLink mode="signup">Start free</AuthLink>
@@ -542,7 +542,7 @@ function Pricing() {
           },
           {
             q: "What does the AI mentor actually do?",
-            a: "It reads your submitted code, points at the line that's wrong and asks you a question about it. It won't hand you the answer — that's the point.",
+            a: "It reads your submitted code, points at the line that's wrong and asks you a question about it. It won't hand you the answer, on purpose.",
           },
           {
             q: "Do I keep my certificates if I downgrade?",
@@ -576,7 +576,7 @@ function Pricing() {
               <DialogHeader className="mt-4">
                 <DialogTitle className="text-center">You're on {checkout?.name}</DialogTitle>
                 <DialogDescription className="text-center">
-                  Nothing was charged — this is a demo checkout. Every course, project and the AI
+                  Nothing was charged. This is a demo checkout. Every course, project and the AI
                   mentor are unlocked on your account.
                 </DialogDescription>
               </DialogHeader>
@@ -592,7 +592,7 @@ function Pricing() {
           ) : (
             <>
               <DialogHeader>
-                <DialogTitle>Checkout — {checkout?.name}</DialogTitle>
+                <DialogTitle>Checkout: {checkout?.name}</DialogTitle>
                 <DialogDescription>
                   {demo
                     ? "Demo checkout: no payment or card details are required."
@@ -651,7 +651,7 @@ function Pricing() {
               </Button>
               <p className="text-center text-xs text-chalk">
                 {demo
-                  ? "Demo only — nothing will be charged."
+                  ? "Demo only. Nothing will be charged."
                   : "Payment details are entered only on Stripe."}
               </p>
             </>

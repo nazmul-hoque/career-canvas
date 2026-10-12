@@ -65,7 +65,7 @@ export const seedPosts: SeedPost[] = [
     initials: "SM",
     level: 6,
     topic: "python",
-    title: "Comprehension or loop — when do you pick which?",
+    title: "Comprehension or loop: when do you pick which?",
     body: "My comprehensions keep growing three clauses long. Is there a rule you use for when to go back to a plain for loop?",
     likes: 54,
     ago: "9h",

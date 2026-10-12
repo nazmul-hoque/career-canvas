@@ -13,7 +13,7 @@ export const Route = createFileRoute("/projects/")({
   head: () =>
     seoHead({
       path: "/projects",
-      title: "Hands-on Portfolio Project Briefs \u2014 Ascent",
+      title: "Hands-on Portfolio Project Briefs | Ascent",
       description:
         "Build your portfolio with practical project briefs in software, data, design and AI. Follow requirements and milestones to create work you can share.",
     }),

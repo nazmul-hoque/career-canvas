@@ -8,13 +8,13 @@ import { Input } from "@/components/ui/input";
 export const Route = createFileRoute("/verify/")({
   head: () => ({
     meta: [
-      { title: "Verify a certificate — Ascent" },
+      { title: "Verify a certificate | Ascent" },
       {
         name: "description",
         content:
           "Enter an Ascent certificate ID to check who it was awarded to, for which career path, and when.",
       },
-      { property: "og:title", content: "Verify a certificate — Ascent" },
+      { property: "og:title", content: "Verify a certificate | Ascent" },
       {
         property: "og:description",
         content: "Check an Ascent certificate ID against the issuing record.",

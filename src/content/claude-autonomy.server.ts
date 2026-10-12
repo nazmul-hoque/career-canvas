@@ -26,11 +26,11 @@ export const claudeAutonomyLessons: AuthoredLesson[] = [
         },
         {
           kind: "text",
-          body: "The pattern is straightforward once written down. Frequent, clear, reversible, low-damage, cheap to verify — automate it. Rare or ambiguous — leave it manual, because you'll spend more specifying it than doing it. Frequent but irreversible or expensive to check — that's the interesting middle, and the answer is usually *assist*: the workflow prepares, a human commits. Most valuable automation lives there rather than at either extreme.",
+          body: "The pattern is straightforward once written down. Frequent, clear, reversible, low-damage, cheap to verify: automate it. Rare or ambiguous: leave it manual, because you'll spend more specifying it than doing it. Frequent but irreversible or expensive to check: that's the interesting middle, and the answer is usually *assist*: the workflow prepares, a human commits. Most valuable automation lives there rather than at either extreme.",
         },
         {
           kind: "text",
-          body: "**Verification cost is the one people underweight.** A workflow whose output takes as long to check as the task took to do has saved nothing — it has moved the work and added a layer. If you can't verify cheaply, that's a reason not to automate yet, not a detail to sort out later.",
+          body: "**Verification cost is the one people underweight.** A workflow whose output takes as long to check as the task took to do has saved nothing. It has moved the work and added a layer. If you can't verify cheaply, that's a reason not to automate yet, not a detail to sort out later.",
         },
         {
           kind: "text",
@@ -38,7 +38,7 @@ export const claudeAutonomyLessons: AuthoredLesson[] = [
         },
         {
           kind: "callout",
-          body: "**Practice.** Score one recurring task you'd like to automate on all five dimensions and decide: automate, assist, or leave manual — with reasons. Then take a vague objective and rewrite it with inputs, constraints, success checks and a stop condition, until another operator could run it without asking you what 'done' means.",
+          body: "**Practice.** Score one recurring task you'd like to automate on all five dimensions and decide: automate, assist, or leave manual, with reasons. Then take a vague objective and rewrite it with inputs, constraints, success checks and a stop condition, until another operator could run it without asking you what 'done' means.",
         },
         {
           kind: "mcq",
@@ -46,14 +46,14 @@ export const claudeAutonomyLessons: AuthoredLesson[] = [
           question:
             "A task is frequent, well-specified and high-value, but every run sends a customer-facing email. What's the right level?",
           options: [
-            "Automate it fully — it's frequent and well-specified",
+            "Automate it fully, since it's frequent and well-specified",
             "Leave it manual, since it touches customers",
             "Assist: automate the preparation and keep the send behind human approval",
             "Automate it but add a five-minute delay before sending",
           ],
           answer: 2,
           explanation:
-            "The preparation is exactly what you want automated; the irreversible step is exactly what you don't. A delay is a weak substitute — it assumes someone is watching during it, which is the thing autonomy removed.",
+            "The preparation is exactly what you want automated; the irreversible step is exactly what you don't. A delay is a weak substitute. It assumes someone is watching during it, which is the thing autonomy removed.",
         },
         {
           kind: "mcq",
@@ -67,7 +67,7 @@ export const claudeAutonomyLessons: AuthoredLesson[] = [
           ],
           answer: 2,
           explanation:
-            "It names the inputs, the definition of flaky, the constraint, the output and the stop condition — so the run either satisfied it or didn't. The others require someone to judge afterwards whether the spirit was met.",
+            "It names the inputs, the definition of flaky, the constraint, the output and the stop condition, so the run either satisfied it or didn't. The others require someone to judge afterwards whether the spirit was met.",
         },
       ],
     },
@@ -83,7 +83,7 @@ export const claudeAutonomyLessons: AuthoredLesson[] = [
       blocks: [
         {
           kind: "text",
-          body: "**The first version of any workflow changes nothing.** It inspects state, decides what it would do, and reports. That's not a stepping stone you discard — it's the mode you'll keep returning to, and the thing you run after every change to the prompt.",
+          body: "**The first version of any workflow changes nothing.** It inspects state, decides what it would do, and reports. That's not a stepping stone you discard. It's the mode you'll keep returning to, and the thing you run after every change to the prompt.",
         },
         {
           kind: "text",
@@ -117,7 +117,7 @@ export const claudeAutonomyLessons: AuthoredLesson[] = [
         },
         {
           kind: "text",
-          body: "Four fields carry the load: **status**, **evidence** for the reasoning, **proposed_actions** as discrete reviewable items, and **errors** kept separate so a partial failure isn't hidden inside a success. Document the shape and validate against it — a workflow that returns free-form JSON drifts, and the consumer breaks on the day the field it wanted became optional.",
+          body: "Four fields carry the load: **status**, **evidence** for the reasoning, **proposed_actions** as discrete reviewable items, and **errors** kept separate so a partial failure isn't hidden inside a success. Document the shape and validate against it. A workflow that returns free-form JSON drifts, and the consumer breaks on the day the field it wanted became optional.",
         },
         {
           kind: "callout",
@@ -136,7 +136,7 @@ export const claudeAutonomyLessons: AuthoredLesson[] = [
           ],
           answer: 1,
           explanation:
-            "A run that did four of five things and hit one error is the normal case. With a single status field it's reported as success or failure, and either answer is misleading — so the detail has to live somewhere a consumer can check.",
+            "A run that did four of five things and hit one error is the normal case. With a single status field it's reported as success or failure, and either answer is misleading. So the detail has to live somewhere a consumer can check.",
         },
         {
           kind: "mcq",
@@ -150,7 +150,7 @@ export const claudeAutonomyLessons: AuthoredLesson[] = [
           ],
           answer: 0,
           explanation:
-            "Repetition against real inputs is the thing writes take away. Once a workflow acts, each test changes the state it's tested against — so the dry run is where you build confidence in its judgement.",
+            "Repetition against real inputs is the thing writes take away. Once a workflow acts, each test changes the state it's tested against, so the dry run is where you build confidence in its judgement.",
         },
       ],
     },
@@ -166,7 +166,7 @@ export const claudeAutonomyLessons: AuthoredLesson[] = [
       blocks: [
         {
           kind: "text",
-          body: "An unattended run needs a ceiling, because the failure mode is not a crash — it's a loop that keeps trying. Searching for a file that doesn't exist, retrying a call that will never succeed, refining an answer nobody will read.",
+          body: "An unattended run needs a ceiling, because the failure mode is not a crash. It's a loop that keeps trying. Searching for a file that doesn't exist, retrying a call that will never succeed, refining an answer nobody will read.",
         },
         {
           kind: "code",
@@ -183,7 +183,7 @@ export const claudeAutonomyLessons: AuthoredLesson[] = [
         },
         {
           kind: "text",
-          body: "Decide a per-run and a per-day budget, and decide what happens as you approach each. A run that stops at the limit and **reports honestly what it didn't finish** is behaving correctly — the thing to design against is a run that quietly reports success having done a third of the work. Incomplete and honest is recoverable; complete-looking and partial is not.",
+          body: "Decide a per-run and a per-day budget, and decide what happens as you approach each. A run that stops at the limit and **reports honestly what it didn't finish** is behaving correctly. The thing to design against is a run that quietly reports success having done a third of the work. Incomplete and honest is recoverable; complete-looking and partial is not.",
         },
         {
           kind: "callout",
@@ -232,11 +232,11 @@ export const claudeAutonomyLessons: AuthoredLesson[] = [
       blocks: [
         {
           kind: "text",
-          body: "Unattended workflows get run twice. A retry after a timeout, a scheduler firing while the last run is still going, someone re-running it to see what it does. So the question isn't whether it happens — it's what the second run does.",
+          body: "Unattended workflows get run twice. A retry after a timeout, a scheduler firing while the last run is still going, someone re-running it to see what it does. So the question isn't whether it happens. It's what the second run does.",
         },
         {
           kind: "text",
-          body: '**Idempotent** means running it again produces no additional change. The usual mechanism is checking before acting: does this issue already exist, has this file already been written, was this message already sent? A workflow that posts a summary should look for today\'s summary before posting one, and the check needs a stable identifier — a date, a run id, a content hash — rather than "something that looks similar".',
+          body: '**Idempotent** means running it again produces no additional change. The usual mechanism is checking before acting: does this issue already exist, has this file already been written, was this message already sent? A workflow that posts a summary should look for today\'s summary before posting one, and the check needs a stable identifier (a date, a run id, a content hash) rather than "something that looks similar".',
         },
         {
           kind: "text",
@@ -255,7 +255,7 @@ export const claudeAutonomyLessons: AuthoredLesson[] = [
         },
         {
           kind: "text",
-          body: "**Resuming** then has two failure modes, and you have to test for both: repeating a completed side effect, and skipping pending work. Stop a run between steps, restart it, and confirm neither happened. The subtle case is a step that completed its action but died before recording it — which is exactly why the idempotency check matters. Checkpoints tell you where you probably are; the check before acting is what makes being wrong about that survivable.",
+          body: "**Resuming** then has two failure modes, and you have to test for both: repeating a completed side effect, and skipping pending work. Stop a run between steps, restart it, and confirm neither happened. The subtle case is a step that completed its action but died before recording it, which is exactly why the idempotency check matters. Checkpoints tell you where you probably are; the check before acting is what makes being wrong about that survivable.",
         },
         {
           kind: "callout",
@@ -274,7 +274,7 @@ export const claudeAutonomyLessons: AuthoredLesson[] = [
           ],
           answer: 0,
           explanation:
-            "Checkpoint-before-action just moves the window — now it can record a post that never happened. Checking the real target is the only thing that survives a crash at any point, which is why idempotency is a property of the action, not the bookkeeping.",
+            "Checkpoint-before-action just moves the window. Now it can record a post that never happened. Checking the real target is the only thing that survives a crash at any point, which is why idempotency is a property of the action, not the bookkeeping.",
         },
         {
           kind: "mcq",
@@ -308,15 +308,15 @@ export const claudeAutonomyLessons: AuthoredLesson[] = [
         },
         {
           kind: "text",
-          body: "**Transient** — a timeout, a 503, a rate limit. The same call may well succeed shortly. Retry with backoff. **Permission** — a 401 or 403. Retrying changes nothing; something has to be granted first. Stop and report. **Validation and logic** — a malformed request, a missing field, a wrong assumption. The identical call will fail identically forever. Stop and report.",
+          body: "**Transient:** a timeout, a 503, a rate limit. The same call may well succeed shortly. Retry with backoff. **Permission:** a 401 or 403. Retrying changes nothing; something has to be granted first. Stop and report. **Validation and logic:** a malformed request, a missing field, a wrong assumption. The identical call will fail identically forever. Stop and report.",
         },
         {
           kind: "text",
-          body: "Only the first class is retryable, and even then with a bounded number of attempts and **exponential backoff** — one second, two, four, eight — so a struggling service isn't hammered by your recovery. A service returning 429 is telling you to slow down; retrying immediately is the one response guaranteed to make things worse. Cap the attempts and stop.",
+          body: "Only the first class is retryable, and even then with a bounded number of attempts and **exponential backoff** (one second, two, four, eight), so a struggling service isn't hammered by your recovery. A service returning 429 is telling you to slow down; retrying immediately is the one response guaranteed to make things worse. Cap the attempts and stop.",
         },
         {
           kind: "text",
-          body: 'Then the habit that catches everything the classes don\'t: **read back every side effect.** After a write, fetch the thing and compare it to what you asked for. APIs accept requests and do something slightly different more often than you\'d like — a field ignored, a value coerced, a partial success reported as a whole one. A verification record per changed item is what turns "I sent the request" into "the state is what I intended".',
+          body: 'Then the habit that catches everything the classes don\'t: **read back every side effect.** After a write, fetch the thing and compare it to what you asked for. APIs accept requests and do something slightly different more often than you\'d like: a field ignored, a value coerced, a partial success reported as a whole one. A verification record per changed item is what turns "I sent the request" into "the state is what I intended".',
         },
         {
           kind: "callout",
@@ -328,7 +328,7 @@ export const claudeAutonomyLessons: AuthoredLesson[] = [
           question: "A call returns 403 Forbidden. How many times should the workflow retry?",
           options: [
             "Three times with backoff, in case it's transient",
-            "Zero — retrying can't grant a permission; stop and report",
+            "Zero. Retrying can't grant a permission, so stop and report",
             "Once, to rule out a temporary glitch",
             "Until the run's turn limit is reached",
           ],
@@ -343,12 +343,12 @@ export const claudeAutonomyLessons: AuthoredLesson[] = [
           options: [
             "Success responses are frequently fabricated by APIs",
             "To generate an audit log entry",
-            "Because accepted doesn't mean applied as intended — fields get ignored, coerced or partially written",
+            "Because accepted doesn't mean applied as intended. Fields get ignored, coerced or partially written",
             "Because writes are asynchronous and may not have started",
           ],
           answer: 2,
           explanation:
-            "A 200 says the request was accepted, not that the resulting state matches your intent. Reading back is what makes the difference detectable — and in an unattended workflow, nothing else will notice.",
+            "A 200 says the request was accepted, not that the resulting state matches your intent. Reading back is what makes the difference detectable, and in an unattended workflow, nothing else will notice.",
         },
       ],
     },
@@ -364,19 +364,19 @@ export const claudeAutonomyLessons: AuthoredLesson[] = [
       blocks: [
         {
           kind: "text",
-          body: "**An approval queue** is where a dry run's proposals wait. Each item names its target, the exact change, the evidence behind it and the risk — the same four fields, every time, so approving is a scan rather than an investigation.",
+          body: "**An approval queue** is where a dry run's proposals wait. Each item names its target, the exact change, the evidence behind it and the risk. It's the same four fields, every time, so approving is a scan rather than an investigation.",
         },
         {
           kind: "text",
-          body: "Queue design is about the reviewer's attention, and it fails in two directions. Too much detail per item and nobody reads it. Too many items and it becomes a rubber stamp — which is worse than having no gate, because now there's a signature on work nobody examined. If your queue is consistently long, the workflow is proposing too much, and that's the thing to fix.",
+          body: "Queue design is about the reviewer's attention, and it fails in two directions. Too much detail per item and nobody reads it. Too many items and it becomes a rubber stamp, which is worse than having no gate, because now there's a signature on work nobody examined. If your queue is consistently long, the workflow is proposing too much, and that's the thing to fix.",
         },
         {
           kind: "text",
-          body: "**A kill switch** stops new work immediately: one documented way to halt the workflow and prevent queued writes. A flag file the run checks, a disabled schedule, a revoked credential — the mechanism matters less than that it's one action, documented, and **rehearsed**. An untested kill switch is a belief about your system, and you'll be testing it for the first time during the incident it exists for.",
+          body: "**A kill switch** stops new work immediately: one documented way to halt the workflow and prevent queued writes. A flag file the run checks, a disabled schedule, a revoked credential: the mechanism matters less than that it's one action, documented, and **rehearsed**. An untested kill switch is a belief about your system, and you'll be testing it for the first time during the incident it exists for.",
         },
         {
           kind: "text",
-          body: "**An escalation path** handles what the workflow can't decide: ambiguity, a policy conflict, the third consecutive failure. Route it to a named person with a compact packet — what it was doing, what happened, what it needs — and **one answerable question**. \"Something went wrong, please advise\" is not escalation, it's abandonment with extra steps.",
+          body: "**An escalation path** handles what the workflow can't decide: ambiguity, a policy conflict, the third consecutive failure. Route it to a named person with a compact packet (what it was doing, what happened, what it needs) and **one answerable question**. \"Something went wrong, please advise\" is not escalation, it's abandonment with extra steps.",
         },
         {
           kind: "callout",
@@ -424,11 +424,11 @@ export const claudeAutonomyLessons: AuthoredLesson[] = [
       blocks: [
         {
           kind: "text",
-          body: "Autonomy means nobody watched. Everything you'll know afterwards is what the run recorded, so the logs are not a debugging nicety — they're the entire record of what your system did.",
+          body: "Autonomy means nobody watched. Everything you'll know afterwards is what the run recorded, so the logs are not a debugging nicety. They're the entire record of what your system did.",
         },
         {
           kind: "text",
-          body: "Log the **decisions**: timestamp, goal, action chosen, result, error. Enough to reconstruct why it did what it did, not a transcript of everything it saw. And **redact** — credentials, tokens, personal data and sensitive payloads have no business in a log file that will be read casually, copied into a ticket and kept for a year. Run a secret scan over your own logs before you consider this done.",
+          body: "Log the **decisions**: timestamp, goal, action chosen, result, error. Enough to reconstruct why it did what it did, not a transcript of everything it saw. And **redact**: credentials, tokens, personal data and sensitive payloads have no business in a log file that will be read casually, copied into a ticket and kept for a year. Run a secret scan over your own logs before you consider this done.",
         },
         {
           kind: "text",
@@ -436,7 +436,7 @@ export const claudeAutonomyLessons: AuthoredLesson[] = [
         },
         {
           kind: "text",
-          body: "Then alert on **four conditions, each with a named owner**: budget exceeded, repeated failure, an approval sitting unactioned, and unexpected scope growth. That last one is the interesting alert — a run that suddenly proposes forty changes where it usually proposes three has either found something real or gone wrong, and either way someone should look.",
+          body: "Then alert on **four conditions, each with a named owner**: budget exceeded, repeated failure, an approval sitting unactioned, and unexpected scope growth. That last one is the interesting alert. A run that suddenly proposes forty changes where it usually proposes three has either found something real or gone wrong, and either way someone should look.",
         },
         {
           kind: "text",
@@ -444,7 +444,7 @@ export const claudeAutonomyLessons: AuthoredLesson[] = [
         },
         {
           kind: "callout",
-          body: "**Practice.** Log timestamp, goal, action, result and error for a practice workflow while redacting credentials and sensitive payloads — then run a secret scan over the output. Track runs, success rate, duration, retries, approvals and cost in a small report. Then define four alert conditions with an owner each, test that they fire, and confirm none of them fires on a normal run.",
+          body: "**Practice.** Log timestamp, goal, action, result and error for a practice workflow while redacting credentials and sensitive payloads, then run a secret scan over the output. Track runs, success rate, duration, retries, approvals and cost in a small report. Then define four alert conditions with an owner each, test that they fire, and confirm none of them fires on a normal run.",
         },
         {
           kind: "mcq",
@@ -458,14 +458,14 @@ export const claudeAutonomyLessons: AuthoredLesson[] = [
           ],
           answer: 2,
           explanation:
-            "Single retries are normal, so this fires constantly and trains everyone to dismiss the channel. The damage isn't the noise itself — it's that the budget and scope alerts now arrive somewhere nobody reads.",
+            "Single retries are normal, so this fires constantly and trains everyone to dismiss the channel. The damage isn't the noise itself. It's that the budget and scope alerts now arrive somewhere nobody reads.",
         },
         {
           kind: "mcq",
           id: "q2",
           question: "Why does 'unexpected scope growth' deserve an alert of its own?",
           options: [
-            "A sudden jump in proposed changes means something changed — a real event or a fault — and both need a human",
+            "A sudden jump in proposed changes means something changed (a real event or a fault), and both need a human",
             "Large runs are more expensive",
             "It indicates the approval queue is full",
             "Scope growth always indicates a bug",
@@ -488,23 +488,23 @@ export const claudeAutonomyLessons: AuthoredLesson[] = [
       blocks: [
         {
           kind: "text",
-          body: "**Isolate the work.** Anything that changes code runs in a temporary branch or worktree, never on the main branch. An isolated diff is one you can discard entirely — which is what makes reviewing it a real decision rather than a formality.",
+          body: "**Isolate the work.** Anything that changes code runs in a temporary branch or worktree, never on the main branch. An isolated diff is one you can discard entirely, which is what makes reviewing it a real decision rather than a formality.",
         },
         {
           kind: "text",
-          body: "**Schedule something harmless first.** A read-only report on a timer, with a documented and tested way to disable it. Scheduling is where a workflow stops being something you run and becomes something that runs — so the first one should be something you'd be relaxed about running wrong at 3am.",
+          body: "**Schedule something harmless first.** A read-only report on a timer, with a documented and tested way to disable it. Scheduling is where a workflow stops being something you run and becomes something that runs, so the first one should be something you'd be relaxed about running wrong at 3am.",
         },
         {
           kind: "text",
-          body: "**In CI, the environment is the control surface.** Pin versions so a run is reproducible. Give the job the minimum token permissions it needs. Bound the commands. And treat anything from a pull request — title, description, branch name, diff — as untrusted input, because on a public repository it's written by a stranger who knows your automation reads it. That's the same prompt injection from Level 3, in a place where nobody is watching.",
+          body: "**In CI, the environment is the control surface.** Pin versions so a run is reproducible. Give the job the minimum token permissions it needs. Bound the commands. And treat anything from a pull request (title, description, branch name, diff) as untrusted input, because on a public repository it's written by a stranger who knows your automation reads it. That's the same prompt injection from Level 3, in a place where nobody is watching.",
         },
         {
           kind: "text",
-          body: "**Then graduate in four stages.** Manual. Suggested — it proposes, you do. Approved execution — it acts after you approve each action. Bounded autonomy — it acts within limits and reports. Move up when the current stage has been boring for a while, and define in advance what sends you back down: a wrong action that reached production, a budget surprise, an alert nobody understood.",
+          body: "**Then graduate in four stages.** Manual. Suggested: it proposes, you do. Approved execution: it acts after you approve each action. Bounded autonomy: it acts within limits and reports. Move up when the current stage has been boring for a while, and define in advance what sends you back down: a wrong action that reached production, a budget surprise, an alert nobody understood.",
         },
         {
           kind: "text",
-          body: "**Measure quality across the stages.** Keep a small evaluation set — a dozen real inputs with known-good outcomes — and re-run it after every prompt or skill change. Without it, a change that fixes today's case and breaks three old ones looks exactly like an improvement, and you won't find out until the workflow is autonomous.",
+          body: "**Measure quality across the stages.** Keep a small evaluation set (a dozen real inputs with known-good outcomes) and re-run it after every prompt or skill change. Without it, a change that fixes today's case and breaks three old ones looks exactly like an improvement, and you won't find out until the workflow is autonomous.",
         },
         {
           kind: "callout",
@@ -562,7 +562,7 @@ export const claudeAutonomyLessons: AuthoredLesson[] = [
         },
         {
           kind: "callout",
-          body: "**Do it now, in your own tools.** Demonstrate it end to end and keep the evidence: the dry-run report, the approval queue and what you approved, the execution log, the verification records, the metrics, and a kill-switch drill you actually performed. Finish with a short retrospective — which control you'd add first if this handled something that mattered, and which one you were tempted to skip. That temptation is the most useful thing you'll learn here.",
+          body: "**Do it now, in your own tools.** Demonstrate it end to end and keep the evidence: the dry-run report, the approval queue and what you approved, the execution log, the verification records, the metrics, and a kill-switch drill you actually performed. Finish with a short retrospective: which control you'd add first if this handled something that mattered, and which one you were tempted to skip. That temptation is the most useful thing you'll learn here.",
         },
         {
           kind: "code",

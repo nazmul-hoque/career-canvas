@@ -36,16 +36,16 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/review")({
   head: () => ({
     meta: [
-      { title: "Daily review — Ascent" },
+      { title: "Daily review | Ascent" },
       {
         name: "description",
         content:
           "Revisit what you've already learned on a spaced schedule. Questions come back just before you'd forget them, and keep your streak alive.",
       },
-      { property: "og:title", content: "Daily review — Ascent" },
+      { property: "og:title", content: "Daily review | Ascent" },
       {
         property: "og:description",
-        content: "Spaced review of lessons you've completed — the second pass that makes it stick.",
+        content: "Spaced review of lessons you've completed, so they stick.",
       },
     ],
   }),
@@ -161,9 +161,9 @@ function Review() {
           </h1>
           <p className="mt-2 text-chalk">
             {reviewed.length
-              ? `${reviewed.length} ${reviewed.length === 1 ? "lesson" : "lessons"} revisited. The next ones are scheduled below — coming back early doesn't pay XP, and doesn't help you remember either.`
+              ? `${reviewed.length} ${reviewed.length === 1 ? "lesson" : "lessons"} revisited. The next ones are scheduled below. Coming back early doesn't pay XP, and doesn't help you remember either.`
               : items.length
-                ? "Reviews come back on a widening schedule — a day, then three, then a week. Coming back early doesn't pay XP, and doesn't help you remember either."
+                ? "Reviews come back on a widening schedule: a day, then three, then a week. Coming back early doesn't pay XP, and doesn't help you remember either."
                 : "Finish a lesson with questions in it and it joins this queue, first check-in tomorrow."}
           </p>
         </header>
@@ -241,7 +241,7 @@ function Review() {
             {waiting.length + 1} {waiting.length === 0 ? "lesson" : "lessons"} left to review
           </h1>
           <p className="mt-2 text-chalk">
-            Answer from memory — the lesson is one click away, but looking it up teaches you less
+            Answer from memory. The lesson is one click away, but looking it up teaches you less
             than getting it wrong does. A review holds your streak just like a lesson.
           </p>
         </div>
@@ -302,7 +302,7 @@ function Review() {
             </span>
             <div className="flex-1">
               <p className="text-sm font-semibold">
-                {outcome.correct ? "Still there." : "Gone fuzzy — that's what this is for."}
+                {outcome.correct ? "Still there." : "Gone fuzzy. That's what this is for."}
               </p>
               <p className="text-xs text-chalk">
                 {outcome.gained > 0 ? `+${outcome.gained} XP · ` : "No XP this time · "}
@@ -439,7 +439,7 @@ function Question({
       {feedback ? (
         <p className="mt-3 text-sm text-chalk">
           {wrong ? "Not quite. " : "Correct. "}
-          Answer: <span className="font-mono font-semibold">{feedback.answer}</span> —{" "}
+          Answer: <span className="font-mono font-semibold">{feedback.answer}</span>.{" "}
           <InlineText text={feedback.explanation} />
         </p>
       ) : null}

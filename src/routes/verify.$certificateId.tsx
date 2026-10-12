@@ -15,13 +15,13 @@ export const Route = createFileRoute("/verify/$certificateId")({
     verifyCertificateFn({ data: { certificateId: params.certificateId } }).catch(() => null),
   head: ({ params }) => ({
     meta: [
-      { title: `Verify certificate ${params.certificateId} — Ascent` },
+      { title: `Verify certificate ${params.certificateId} | Ascent` },
       {
         name: "description",
         content: `Check whether certificate ${params.certificateId} was issued by Ascent, who holds it, and when it was awarded.`,
       },
       { name: "robots", content: "noindex" },
-      { property: "og:title", content: "Certificate verification — Ascent" },
+      { property: "og:title", content: "Certificate verification | Ascent" },
       {
         property: "og:description",
         content: "Check an Ascent certificate ID against the issuing record.",
@@ -74,7 +74,7 @@ function Verify() {
             {result === null ? (
               <>
                 The verification service didn't answer. That is a fault on our side, not a verdict
-                on the certificate — please try again in a moment.
+                on the certificate. Please try again in a moment.
               </>
             ) : valid ? (
               <>
@@ -84,8 +84,8 @@ function Verify() {
             ) : (
               <>
                 Nothing has been issued under <span className="font-mono">{certificateId}</span>.
-                Check for a typo — IDs look like <span className="font-mono">ASC-FRON-A1B2C3D</span>{" "}
-                — or ask the holder for the certificate link.
+                Check for a typo (IDs look like <span className="font-mono">ASC-FRON-A1B2C3D</span>
+                ), or ask the holder for the certificate link.
               </>
             )}
           </p>
@@ -114,9 +114,9 @@ function Verify() {
 
           {valid && !signature ? (
             <p className="mt-4 text-xs text-chalk">
-              The issuing record is genuine, but its cryptographic signature could not be confirmed
-              — usually because the certificate predates signing or the signing key was rotated. The
-              record above is still authoritative.
+              The issuing record is genuine, but its cryptographic signature could not be confirmed.
+              This usually means the certificate predates signing or the signing key was rotated.
+              The record above is still authoritative.
             </p>
           ) : null}
 

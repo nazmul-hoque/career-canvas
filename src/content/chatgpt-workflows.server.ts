@@ -23,23 +23,23 @@ export const chatgptWorkflowsLessons: AuthoredLesson[] = [
       blocks: [
         {
           kind: "text",
-          body: "A workflow is worth building once you've done something twice and expect to again. The first move is separating what stays the same from what changes: turning event notes into a volunteer brief has stable steps — extract timings, assign owners, list unknowns — and variable inputs, which are the notes themselves.",
+          body: "A workflow is worth building once you've done something twice and expect to again. The first move is separating what stays the same from what changes: turning event notes into a volunteer brief has stable steps (extract timings, assign owners, list unknowns) and variable inputs, which are the notes themselves.",
         },
         {
           kind: "text",
-          body: "Write those two lists down separately. The stable half becomes your instructions; the variable half becomes the slots you fill each run. Most failed templates are failed because something variable got written into the stable half — a venue name, a date, an assumption about how many volunteers there are.",
+          body: "Write those two lists down separately. The stable half becomes your instructions; the variable half becomes the slots you fill each run. Most failed templates are failed because something variable got written into the stable half: a venue name, a date, an assumption about how many volunteers there are.",
         },
         {
           kind: "text",
-          body: '**Then define the input contract.** Which fields are required, and — the question people skip — what should happen when one is missing? A time, an owner and a venue are not equally optional, and "do your best" is not a policy.',
+          body: '**Then define the input contract.** Which fields are required, and (the question people skip) what should happen when one is missing? A time, an owner and a venue are not equally optional, and "do your best" is not a policy.',
         },
         {
           kind: "text",
-          body: 'The default without a stated policy is invention, because you asked for a brief and a brief has a venue in it. Say explicitly: if the venue is missing, stop and ask for it; if an owner is missing, write "unassigned" and list it under open questions. Different fields can have different rules — that\'s the point of writing them down.',
+          body: 'The default without a stated policy is invention, because you asked for a brief and a brief has a venue in it. Say explicitly: if the venue is missing, stop and ask for it; if an owner is missing, write "unassigned" and list it under open questions. Different fields can have different rules. That\'s the point of writing them down.',
         },
         {
           kind: "callout",
-          body: "**Practice.** Choose a task you've genuinely done twice and write what repeats beside what changes each run. Then list the required fields for your volunteer brief and decide, field by field, what should happen when a time, an owner or a venue is missing — including which ones should stop the run entirely.",
+          body: "**Practice.** Choose a task you've genuinely done twice and write what repeats beside what changes each run. Then list the required fields for your volunteer brief and decide, field by field, what should happen when a time, an owner or a venue is missing, including which ones should stop the run entirely.",
         },
         {
           kind: "mcq",
@@ -48,7 +48,7 @@ export const chatgptWorkflowsLessons: AuthoredLesson[] = [
             "Your template produces good briefs for the community hall and odd ones everywhere else. What's the likely cause?",
           options: [
             "The instructions are too general to handle a second venue",
-            "Something variable — a venue detail or assumption — got written into the stable instructions",
+            "Something variable, like a venue detail or assumption, got written into the stable instructions",
             "The input notes for other venues are lower quality",
             "The template needs a second example to learn from",
           ],
@@ -68,7 +68,7 @@ export const chatgptWorkflowsLessons: AuthoredLesson[] = [
           ],
           answer: 1,
           explanation:
-            'You asked for a complete brief, so a complete brief is what gets produced — gap included. Naming the behaviour per field is what turns that into a stop-and-ask or an explicit "unassigned".',
+            'You asked for a complete brief, so a complete brief is what gets produced, gap included. Naming the behaviour per field is what turns that into a stop-and-ask or an explicit "unassigned".',
         },
       ],
     },
@@ -84,7 +84,7 @@ export const chatgptWorkflowsLessons: AuthoredLesson[] = [
       blocks: [
         {
           kind: "text",
-          body: "A reusable prompt has four sections: **inputs** (what you paste in), **instructions** (the stable steps), **output format** (what comes back), and **checks** (what must be true before it claims to be done). Save it somewhere you control — a note on your own machine works regardless of what your account offers.",
+          body: "A reusable prompt has four sections: **inputs** (what you paste in), **instructions** (the stable steps), **output format** (what comes back), and **checks** (what must be true before it claims to be done). Save it somewhere you control. A note on your own machine works regardless of what your account offers.",
         },
         {
           kind: "code",
@@ -92,7 +92,7 @@ export const chatgptWorkflowsLessons: AuthoredLesson[] = [
           caption: "The skeleton",
           code: `INPUTS
   Event notes: <paste>
-  Venue: <required — if missing, stop and ask>
+  Venue: <required; if missing, stop and ask>
   Date: <required>
 
 INSTRUCTIONS
@@ -111,11 +111,11 @@ CHECKS
         },
         {
           kind: "text",
-          body: 'The **checks** section is what separates a template from a long prompt. Without it, "done" means the output looks finished. With it, there are stated conditions — and you can run them yourself even if the template doesn\'t.',
+          body: 'The **checks** section is what separates a template from a long prompt. Without it, "done" means the output looks finished. With it, there are stated conditions, and you can run them yourself even if the template doesn\'t.',
         },
         {
           kind: "text",
-          body: "**Then test it on a second, different event.** Not a variation on the first — a genuinely different one. Every assumption inherited from example one will surface here, and that's the point of the exercise rather than a sign you wrote it badly.",
+          body: "**Then test it on a second, different event.** Not a variation on the first, but a genuinely different one. Every assumption inherited from example one will surface here, and that's the point of the exercise rather than a sign you wrote it badly.",
         },
         {
           kind: "text",
@@ -137,7 +137,7 @@ CHECKS
           ],
           answer: 3,
           explanation:
-            "Instructions describe the work; checks describe the finish line. It's the difference between a claim of completion and a claim you can test — and you can run the checks yourself either way.",
+            "Instructions describe the work; checks describe the finish line. It's the difference between a claim of completion and a claim you can test, and you can run the checks yourself either way.",
         },
         {
           kind: "mcq",
@@ -151,7 +151,7 @@ CHECKS
           ],
           answer: 1,
           explanation:
-            "A policy in a template is a sentence until something tests it. The failure it exposes — a confident brief containing a venue nobody supplied — is exactly the one that would go unnoticed in normal use.",
+            "A policy in a template is a sentence until something tests it. The failure it exposes (a confident brief containing a venue nobody supplied) is exactly the one that would go unnoticed in normal use.",
         },
       ],
     },
@@ -168,27 +168,27 @@ CHECKS
       blocks: [
         {
           kind: "text",
-          body: "**Draft and review in separate conversations.** A conversation that produced a brief is a poor judge of it — the reasoning that made the choices is still in view, so the choices look justified. A fresh chat given only the source inputs and a rubric is genuinely checking.",
+          body: "**Draft and review in separate conversations.** A conversation that produced a brief is a poor judge of it. The reasoning that made the choices is still in view, so the choices look justified. A fresh chat given only the source inputs and a rubric is genuinely checking.",
         },
         {
           kind: "text",
-          body: "Then treat the reviewer as what it is: another fallible model. Take its findings one at a time and decide accept or reject against the source yourself. A reviewer that flags a missing owner is right or wrong about a fact you can check in ten seconds — and reviewers invent problems as readily as drafters invent facts.",
+          body: "Then treat the reviewer as what it is: another fallible model. Take its findings one at a time and decide accept or reject against the source yourself. A reviewer that flags a missing owner is right or wrong about a fact you can check in ten seconds, and reviewers invent problems as readily as drafters invent facts.",
         },
         {
           kind: "text",
-          body: "**Connected tools change the stakes**, because now something can reach real data. Before granting anything, read what an integration says it reads and what it can change, and write the two lists down. Do this without granting new access — inspecting a description costs nothing and is the only moment you're deciding freely. If your account has no integrations, design a mock one on paper; the reasoning is the transferable part.",
+          body: "**Connected tools change the stakes**, because now something can reach real data. Before granting anything, read what an integration says it reads and what it can change, and write the two lists down. Do this without granting new access. Inspecting a description costs nothing and is the only moment you're deciding freely. If your account has no integrations, design a mock one on paper; the reasoning is the transferable part.",
         },
         {
           kind: "text",
-          body: '**Here is the sentence to carry out of this level.** Writing "read only" in your prompt is not a read-only permission. Instructions describe desired behaviour; they do not enforce access control. If an integration is authorised to write, then the thing standing between it and a write is a sentence — and you already know from Level 3 that a sentence can be argued with by text arriving from outside. **The scope you granted is the boundary; the prompt is a preference.**',
+          body: '**Here is the sentence to carry out of this level.** Writing "read only" in your prompt is not a read-only permission. Instructions describe desired behaviour; they do not enforce access control. If an integration is authorised to write, then the thing standing between it and a write is a sentence, and you already know from Level 3 that a sentence can be argued with by text arriving from outside. **The scope you granted is the boundary; the prompt is a preference.**',
         },
         {
           kind: "text",
-          body: "So draw the **approval boundary** explicitly. Two columns: what the workflow may prepare on its own, and what requires you. Preparation — drafting, extracting, summarising, proposing — is the whole left column. Sending, publishing, deleting and anything a stranger will see belongs on the right, always.",
+          body: "So draw the **approval boundary** explicitly. Two columns: what the workflow may prepare on its own, and what requires you. Preparation (drafting, extracting, summarising, proposing) is the whole left column. Sending, publishing, deleting and anything a stranger will see belongs on the right, always.",
         },
         {
           kind: "callout",
-          body: "**Practice.** Draft a brief in one conversation and check it in another using only the source inputs and a rubric, then accept or reject each finding yourself against the source. Inspect one available integration's description and permissions without granting access, recording what it reads and what it can change — or specify a clearly labelled mock. With an already-authorised practice connection, retrieve one named non-sensitive note and verify its identity, or paste a labelled fictional note and do the same check by hand. Then write your boundary table and rehearse asking the workflow to email the draft, confirming it returns a draft for review instead.",
+          body: "**Practice.** Draft a brief in one conversation and check it in another using only the source inputs and a rubric, then accept or reject each finding yourself against the source. Inspect one available integration's description and permissions without granting access, recording what it reads and what it can change, or specify a clearly labelled mock. With an already-authorised practice connection, retrieve one named non-sensitive note and verify its identity, or paste a labelled fictional note and do the same check by hand. Then write your boundary table and rehearse asking the workflow to email the draft, confirming it returns a draft for review instead.",
         },
         {
           kind: "mcq",
@@ -196,14 +196,14 @@ CHECKS
           question:
             'Your prompt says "only read data, never modify anything", and the connected tool is authorised to write. How protected are you?',
           options: [
-            "Fully — the instruction governs what the tool does",
+            "Fully, because the instruction governs what the tool does",
             "Mostly: the instruction holds unless the tool malfunctions",
             "Not really: the granted scope is the boundary, and the instruction is a preference that text from outside can argue with",
             "It depends whether the tool supports read-only mode",
           ],
           answer: 2,
           explanation:
-            "Instructions describe desired behaviour; scopes enforce it. With write access granted, a write is one persuasive input away — and Level 3 showed where persuasive inputs come from. Narrow the grant rather than describing the restraint.",
+            "Instructions describe desired behaviour; scopes enforce it. With write access granted, a write is one persuasive input away, and Level 3 showed where persuasive inputs come from. Narrow the grant rather than describing the restraint.",
         },
         {
           kind: "mcq",
@@ -231,7 +231,7 @@ CHECKS
           ],
           answer: 3,
           explanation:
-            "The first three produce something you can read and discard. Sending is the one that reaches other people and can't be recalled — and irreversibility, not difficulty, is what puts an action on the right-hand side.",
+            "The first three produce something you can read and discard. Sending is the one that reaches other people and can't be recalled, and irreversibility, not difficulty, is what puts an action on the right-hand side.",
         },
       ],
     },
@@ -252,11 +252,11 @@ CHECKS
         },
         {
           kind: "text",
-          body: "Then run three cases and write down what actually happened, not what should have. **Normal** — complete inputs. **Missing** — a required field absent. **Conflicting** — two inputs that disagree, such as two different start times. That third case is the one that finds the gap in your contract, because most templates say what to do about absence and nothing about contradiction.",
+          body: "Then run three cases and write down what actually happened, not what should have. **Normal:** complete inputs. **Missing:** a required field absent. **Conflicting:** two inputs that disagree, such as two different start times. That third case is the one that finds the gap in your contract, because most templates say what to do about absence and nothing about contradiction.",
         },
         {
           kind: "callout",
-          body: "**Do it now, in your own account.** Keep this evidence: the kit, the three run results with observed behaviour, and an honest list of known limitations. The limitations list is the most valuable page — a workflow whose failure modes are written down can be trusted within them.",
+          body: "**Do it now, in your own account.** Keep this evidence: the kit, the three run results with observed behaviour, and an honest list of known limitations. The limitations list is the most valuable page. A workflow whose failure modes are written down can be trusted within them.",
         },
         {
           kind: "code",

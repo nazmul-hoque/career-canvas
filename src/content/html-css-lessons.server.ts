@@ -166,7 +166,7 @@ export const htmlCssLessonBodies: Record<string, LessonBody> = {
       },
       {
         kind: "text",
-        body: "Pseudo-classes describe state. `:hover` means a pointing device is over an element; `:focus-visible` means keyboard focus needs a visible indicator; `:checked`, `:disabled` and `:required` describe form state. Never put essential information behind hover alone—touchscreens and keyboards do not have the same hover interaction.",
+        body: "Pseudo-classes describe state. `:hover` means a pointing device is over an element; `:focus-visible` means keyboard focus needs a visible indicator; `:checked`, `:disabled` and `:required` describe form state. Never put essential information behind hover alone. Touchscreens and keyboards do not have the same hover interaction.",
       },
       {
         kind: "mcq",
@@ -190,7 +190,7 @@ export const htmlCssLessonBodies: Record<string, LessonBody> = {
         id: "c1",
         title: "Target the notice, not the whole page",
         prompt:
-          "Style only the `.notice`: give it a pale background, `1rem` padding and a border. Make its `strong` text dark red without changing other strong text. Keep its link underlined, make the underline thicker on hover, and add a visible outline on `:focus-visible`. Use class-based selectors—no ids, inline styles or `!important`.",
+          "Style only the `.notice`: give it a pale background, `1rem` padding and a border. Make its `strong` text dark red without changing other strong text. Keep its link underlined, make the underline thicker on hover, and add a visible outline on `:focus-visible`. Use class-based selectors, with no ids, inline styles or `!important`.",
         language: "web",
         starter: `<style>
   /* Write focused, reusable rules here. */
@@ -431,7 +431,7 @@ export const htmlCssLessonBodies: Record<string, LessonBody> = {
         id: "c1",
         title: "Style a resilient product card",
         prompt:
-          "Write the CSS for the supplied markup. Apply a global `border-box` reset. Give `body` rem-based text, at least `1.5` line-height, no default margin, and a light background. Centre `.product-card` with a max-width from 40ch to 65ch, rem padding, border and rounded corners—no fixed width. Keep the image inside the card. Make `.buy` an inline-flex action with relative-unit padding, at least `2.75rem` minimum height, dark-blue background and white text. Add a visible `.buy:focus-visible` outline. Use no ids, inline styles or `!important`.",
+          "Write the CSS for the supplied markup. Apply a global `border-box` reset. Give `body` rem-based text, at least `1.5` line-height, no default margin, and a light background. Centre `.product-card` with a max-width from 40ch to 65ch, rem padding, border and rounded corners, but no fixed width. Keep the image inside the card. Make `.buy` an inline-flex action with relative-unit padding, at least `2.75rem` minimum height, dark-blue background and white text. Add a visible `.buy:focus-visible` outline. Use no ids, inline styles or `!important`.",
         language: "web",
         starter: `<style>
   /* Write the component styles from the brief. */

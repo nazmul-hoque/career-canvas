@@ -13,7 +13,7 @@ import type { LessonBody } from "./lessons";
 export const uxDesignLessonBodies: Record<string, LessonBody> = {
   "ux-core.interviews": {
     summary:
-      "Ask about what people actually did, not what they say they would do — and know when you have heard enough.",
+      "Ask about what people actually did, not what they say they would do, and know when you have heard enough.",
     xp: 120,
     blocks: [
       {
@@ -41,15 +41,15 @@ export const uxDesignLessonBodies: Record<string, LessonBody> = {
       },
       {
         kind: "text",
-        body: "**Compliments are not data.** “That's a great idea” and “I'd definitely use that” feel like progress and mean nothing — Rob Fitzpatrick's *The Mom Test* is the short book on why. The useful currency is specifics people give up without being prompted: what they've already tried, what they've already paid for, who else they had to ask, what they do in the meantime.",
+        body: "**Compliments are not data.** “That's a great idea” and “I'd definitely use that” feel like progress and mean nothing. Rob Fitzpatrick's *The Mom Test* is the short book on why. The useful currency is specifics people give up without being prompted: what they've already tried, what they've already paid for, who else they had to ask, what they do in the meantime.",
       },
       {
         kind: "text",
-        body: "**Talk to people who have the problem**, not people who are easy to reach. Your colleagues, your Twitter followers and your most enthusiastic customer are all convenient and all wrong in the same direction. A two-question screener — have you done this thing, and when was the last time — is usually enough to keep the sample honest.",
+        body: "**Talk to people who have the problem**, not people who are easy to reach. Your colleagues, your Twitter followers and your most enthusiastic customer are all convenient and all wrong in the same direction. A two-question screener (have you done this thing, and when was the last time?) is usually enough to keep the sample honest.",
       },
       {
         kind: "callout",
-        body: "**When to stop:** when new interviews stop surprising you. That point is called **saturation**, and in one reasonably narrow group it usually arrives somewhere around the fifth to eighth conversation. It's a signal to watch for, not a quota to hit — a second, different group of users resets the clock.",
+        body: "**When to stop:** when new interviews stop surprising you. That point is called **saturation**, and in one reasonably narrow group it usually arrives somewhere around the fifth to eighth conversation. It's a signal to watch for, not a quota to hit. A second, different group of users resets the clock.",
       },
       {
         kind: "mcq",
@@ -64,14 +64,14 @@ export const uxDesignLessonBodies: Record<string, LessonBody> = {
         ],
         answer: 1,
         explanation:
-          "It asks about an event that actually happened, so the answer contains detail you did not think to ask for — who was involved, how long it took, what they did when the person was on holiday. The other three ask for predictions or ratings, which people produce on demand and which correlate poorly with behaviour.",
+          "It asks about an event that actually happened, so the answer contains detail you did not think to ask for: who was involved, how long it took, what they did when the person was on holiday. The other three ask for predictions or ratings, which people produce on demand and which correlate poorly with behaviour.",
       },
       {
         kind: "mcq",
         id: "q2",
         question: "An interviewee says “Honestly, I'd pay for that tomorrow.” What is that worth?",
         options: [
-          "Strong evidence of demand — record it as a validated signal",
+          "Strong evidence of demand, so record it as a validated signal",
           "Enough to justify building a prototype",
           "Very little on its own; follow it with what they pay for today and what they tried last",
           "Nothing, and you should end the interview",
@@ -100,7 +100,7 @@ export const uxDesignLessonBodies: Record<string, LessonBody> = {
 
   "ux-core.flows": {
     summary:
-      "Draw the path, the branches and the ways out — the states you would otherwise discover in production.",
+      "Draw the path, the branches and the ways out: the states you would otherwise discover in production.",
     xp: 120,
     blocks: [
       {
@@ -130,15 +130,15 @@ export const uxDesignLessonBodies: Record<string, LessonBody> = {
       },
       {
         kind: "text",
-        body: "**Most flows are drawn as though everyone starts at the home screen.** They don't. People arrive from an email link, a push notification, a shared URL, a bookmark two versions old, or a back button. Each of those is an entry point, and each one can land somewhere the flow never planned for — which is how you get a signed-out user staring at an empty dashboard.",
+        body: "**Most flows are drawn as though everyone starts at the home screen.** They don't. People arrive from an email link, a push notification, a shared URL, a bookmark two versions old, or a back button. Each of those is an entry point, and each one can land somewhere the flow never planned for, which is how you get a signed-out user staring at an empty dashboard.",
       },
       {
         kind: "text",
-        body: "The branches worth drawing every time are the ones that produce screens nobody designs: **nothing here yet**, **not permitted**, **it failed**, **you already did this**, and **you left halfway through**. That last one has a question attached — is their progress saved? The flow is where you decide, rather than the sprint where someone notices.",
+        body: "The branches worth drawing every time are the ones that produce screens nobody designs: **nothing here yet**, **not permitted**, **it failed**, **you already did this**, and **you left halfway through**. That last one has a question attached: is their progress saved? The flow is where you decide, rather than the sprint where someone notices.",
       },
       {
         kind: "callout",
-        body: "A finished flow is a shopping list for the design file. Every rectangle is a screen or a state you now owe, which is exactly the checklist the handoff lesson asks for — empty, loading, error, extremes, permissions.",
+        body: "A finished flow is a shopping list for the design file. Every rectangle is a screen or a state you now owe, which is exactly the checklist the handoff lesson asks for: empty, loading, error, extremes, permissions.",
       },
       {
         kind: "mcq",
@@ -153,7 +153,7 @@ export const uxDesignLessonBodies: Record<string, LessonBody> = {
         ],
         answer: 0,
         explanation:
-          "Missing screens hide behind decisions — expired, not permitted, already done. A task flow deliberately omits branches, a journey map is too coarse to name screens, and a sitemap shows what exists rather than what should.",
+          "Missing screens hide behind decisions: expired, not permitted, already done. A task flow deliberately omits branches, a journey map is too coarse to name screens, and a sitemap shows what exists rather than what should.",
       },
       {
         kind: "mcq",
@@ -168,7 +168,7 @@ export const uxDesignLessonBodies: Record<string, LessonBody> = {
         ],
         answer: 3,
         explanation:
-          "Testing starts from the home screen; real invites start from an email, often in a browser with no session. The flow needs that arrow drawn, ending at sign-in and returning to the invite — otherwise nobody specifies what happens in between.",
+          "Testing starts from the home screen; real invites start from an email, often in a browser with no session. The flow needs that arrow drawn, ending at sign-in and returning to the invite. Otherwise nobody specifies what happens in between.",
       },
       {
         kind: "fill",
@@ -198,7 +198,7 @@ export const uxDesignLessonBodies: Record<string, LessonBody> = {
       },
       {
         kind: "text",
-        body: "Before anyone sits down, write a **script**. It doesn't need to be clever: a sentence about what this is and that you're testing the design rather than them, permission to record, one easy warm-up task, the real tasks in order, and a wrap-up question. Reading from a script is what makes five sessions comparable — without one you will unconsciously run the last session better than the first.",
+        body: "Before anyone sits down, write a **script**. It doesn't need to be clever: a sentence about what this is and that you're testing the design rather than them, permission to record, one easy warm-up task, the real tasks in order, and a wrap-up question. Reading from a script is what makes five sessions comparable. Without one you will unconsciously run the last session better than the first.",
       },
       {
         kind: "text",
@@ -228,7 +228,7 @@ P3  Invite    Stopped at the seat limit, no idea   "Does this cost me
       },
       {
         kind: "text",
-        body: "Afterwards, group the rows **by problem, not by participant**. Five per-person summaries are five stories; one list of problems with the people who hit each is a decision-making document. Then rate each problem's **severity** — Nielsen Norman Group's familiar 0–4 scale works fine — by combining how many people hit it, how badly it blocked them, and whether they got past it on a second try.",
+        body: "Afterwards, group the rows **by problem, not by participant**. Five per-person summaries are five stories; one list of problems with the people who hit each is a decision-making document. Then rate each problem's **severity** (Nielsen Norman Group's familiar 0–4 scale works fine) by combining how many people hit it, how badly it blocked them, and whether they got past it on a second try.",
       },
       {
         kind: "callout",
@@ -242,7 +242,7 @@ P3  Invite    Stopped at the seat limit, no idea   "Does this cost me
         options: [
           "The button colour, because three people mentioned it",
           "The failed checkout, because it blocked a core task even though only one person hit it",
-          "Neither — one participant is not a large enough sample",
+          "Neither, because one participant is not a large enough sample",
           "Whichever is cheaper to change",
         ],
         answer: 1,
@@ -261,7 +261,7 @@ P3  Invite    Stopped at the seat limit, no idea   "Does this cost me
         ],
         answer: 0,
         explanation:
-          "It records what happened, with enough detail to group later. The other three are conclusions or solutions written before the evidence is in — and once they're on the page, you stop looking for anything that contradicts them.",
+          "It records what happened, with enough detail to group later. The other three are conclusions or solutions written before the evidence is in. And once they're on the page, you stop looking for anything that contradicts them.",
       },
       {
         kind: "mcq",
@@ -275,7 +275,7 @@ P3  Invite    Stopped at the seat limit, no idea   "Does this cost me
         ],
         answer: 2,
         explanation:
-          "A pilot tests the *session*, not the design. Your colleague's data isn't usable — they know too much — but the twenty minutes they save you is one of only five real participants.",
+          "A pilot tests the *session*, not the design. Your colleague's data isn't usable (they know too much), but the twenty minutes they save you is one of only five real participants.",
       },
       {
         kind: "fill",

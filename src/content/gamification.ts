@@ -66,7 +66,7 @@ export const achievements: Achievement[] = [
   {
     key: "mentor-chat",
     name: "Asked for Help",
-    description: "You used the AI mentor — smart move.",
+    description: "You asked the AI mentor for help.",
     icon: "MessageCircle",
     xp: 30,
   },

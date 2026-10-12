@@ -30,14 +30,14 @@ export const Route = createFileRoute("/certificates/$pathId")({
     if (!loaderData) {
       return {
         meta: [
-          { title: "Certificate unavailable — Ascent" },
+          { title: "Certificate unavailable | Ascent" },
           { name: "robots", content: "noindex" },
         ],
       };
     }
     return {
       meta: [
-        { title: `${loaderData.path.name} certificate — Ascent` },
+        { title: `${loaderData.path.name} certificate | Ascent` },
         {
           name: "description",
           content: `Certificate of completion for the ${loaderData.path.name} career path on Ascent.`,
@@ -124,8 +124,9 @@ function Certificate() {
           </div>
           <h1 className="mt-5 font-display text-2xl font-bold">Certificates come with Pro</h1>
           <p className="mt-2 text-sm text-chalk">
-            Keep learning on Free as long as you like — a certificate for the {path.name} path is
-            part of Pro. Anything you earn while subscribed stays yours if you downgrade later.
+            You can keep learning on Free as long as you like. A certificate for the {path.name}{" "}
+            path is part of Pro. Anything you earn while subscribed stays yours if you downgrade
+            later.
           </p>
           <Button asChild className="mt-7">
             <Link to="/pricing">{trialUsed ? "See plans" : "Start your free trial"}</Link>
@@ -141,14 +142,14 @@ function Certificate() {
     const locked: Record<Exclude<CredentialState, "eligible">, { title: string; body: string }> = {
       "self-directed": {
         title: "This path doesn't carry a certificate",
-        body: `The ${path.name} path is self-directed — the work happens in your own tools and nothing on it is marked. We'll only put our name to a credential we can actually check, so this path issues none. You're at ${completed} of ${live}, and it still builds your streak and XP.`,
+        body: `The ${path.name} path is self-directed: the work happens in your own tools and nothing on it is marked. We'll only put our name to a credential we can actually check, so this path issues none. You're at ${completed} of ${live}, and it still builds your streak and XP.`,
       },
       unwritten: {
         title: "This path is still being written",
         body: `${live} of the ${total} lessons on the ${path.name} path are live so far. A certificate that says you completed a path we haven't finished writing wouldn't be worth anything, so this stays locked until the roadmap is complete. You're at ${completed} of ${live} live lessons.`,
       },
       "in-progress": {
-        title: "Not yet — but close enough to see it",
+        title: "Not yet, but you're getting close",
         body: `The ${path.name} certificate unlocks when every lesson on the path is complete. You're at ${completed} of ${total}.`,
       },
     };
@@ -269,7 +270,7 @@ function Certificate() {
         <div className="card-surface mt-5 flex flex-wrap items-center justify-between gap-4 p-5 print:hidden">
           <p className="max-w-lg text-sm text-chalk">
             Put the ID on your CV or LinkedIn. Anyone can check it at{" "}
-            <span className="font-mono text-foreground">/verify/{id}</span> without an account — the
+            <span className="font-mono text-foreground">/verify/{id}</span> without an account. The
             answer comes from our issuing record, not from this page.
           </p>
           <div className="flex gap-2">

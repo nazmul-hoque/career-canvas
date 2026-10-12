@@ -11,9 +11,9 @@ import { Wordmark } from "@/components/layout/AppShell";
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
     meta: [
-      { title: "Choose a new password — Ascent" },
+      { title: "Choose a new password | Ascent" },
       { name: "description", content: "Set a new password for your Ascent learning account." },
-      { property: "og:title", content: "Choose a new password — Ascent" },
+      { property: "og:title", content: "Choose a new password | Ascent" },
       {
         property: "og:description",
         content: "Set a new password for your Ascent learning account.",

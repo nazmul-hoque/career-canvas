@@ -77,13 +77,13 @@ export const Route = createFileRoute("/learn/$courseId/$lessonId")({
   head: ({ loaderData }) => {
     if (!loaderData) {
       return {
-        meta: [{ title: "Lesson unavailable — Ascent" }, { name: "robots", content: "noindex" }],
+        meta: [{ title: "Lesson unavailable | Ascent" }, { name: "robots", content: "noindex" }],
       };
     }
     if (!loaderData.body) {
       return {
         meta: [
-          { title: `${loaderData.lesson.title} — coming soon — Ascent` },
+          { title: `${loaderData.lesson.title} (coming soon) | Ascent` },
           { name: "robots", content: "noindex" },
         ],
       };
@@ -91,7 +91,7 @@ export const Route = createFileRoute("/learn/$courseId/$lessonId")({
     const { course, lesson, body } = loaderData;
     return seoHead({
       path: `/learn/${course.id}/${lesson.id}`,
-      title: `${lesson.title} — ${course.title} — Ascent`,
+      title: `${lesson.title} · ${course.title} | Ascent`,
       description: body.summary,
       image: shareImage(ogFile("course", course.id)),
       schema: [
@@ -257,8 +257,8 @@ function LessonLocked({
             {lesson.title}
           </h1>
           <p className="mt-3 text-sm text-chalk">
-            Free covers the first module of every course. The rest of {course.title} — along with
-            the mentor, portfolio projects and certificates — comes with Pro.
+            Free covers the first module of every course. The rest of {course.title}, along with the
+            mentor, portfolio projects and certificates, comes with Pro.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-2">
             <Button asChild>
@@ -315,8 +315,8 @@ function LessonComingSoon({ course, lesson }: { course: Course; lesson: LessonMe
           </h1>
           <p className="mt-3 text-sm text-chalk">
             This lesson is on the {course.title} roadmap but hasn't been written yet. It doesn't
-            award XP and doesn't count towards your progress or a certificate — we'd rather leave
-            the slot visibly empty than fill it with something that teaches you nothing.
+            award XP and doesn't count towards your progress or a certificate. We'd rather leave the
+            slot visibly empty than fill it with something that teaches you nothing.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-2">
             {next ? (
@@ -446,10 +446,11 @@ function LessonWorkspace({
   const selfAttested = body.attested === true;
   const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
   const status = (() => {
-    if (isDone) return `You've already completed this ${words.singular} — revisit it any time.`;
+    if (isDone)
+      return `You've already completed this ${words.singular}. You can revisit it any time.`;
     // Second, not last: a self-attested lesson has no questions and no
     // challenge, so every test below it is necessarily false anyway.
-    if (selfAttested) return "Nothing here is marked for you — mark it done once you've done it.";
+    if (selfAttested) return "Nothing here is marked for you. Mark it done once you've done it.";
     if (unanswered > 0)
       return `${plural(unanswered, "question still needs", "questions still need")} an answer.`;
     if (wrong > 0)
@@ -501,7 +502,7 @@ function LessonWorkspace({
         const misses = unchecked.filter((id) => !verdicts[id]?.correct).length;
         if (misses) {
           toast.error(
-            `${plural(misses, "answer isn't", "answers aren't")} right yet — it's marked above.`,
+            `${plural(misses, "answer isn't", "answers aren't")} right yet. It's marked above.`,
           );
           return;
         }

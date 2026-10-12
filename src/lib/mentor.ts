@@ -63,7 +63,7 @@ export async function scriptedMentorReply(
   const lesson = ctx.lessonTitle ? `"${ctx.lessonTitle}"` : "this lesson";
 
   if (ctx.lastError) {
-    return `That error — \`${ctx.lastError}\` — is the program telling you exactly where its expectation broke. Read it as a sentence: what was it trying to do, and to what value? Point me at the line you think it refers to and we will check your theory together.`;
+    return `That error, \`${ctx.lastError}\`, is the program telling you exactly where its expectation broke. Read it as a sentence: what was it trying to do, and to what value? Point me at the line you think it refers to and we will check your theory together.`;
   }
 
   if (ctx.failingTests?.length) {
@@ -80,11 +80,11 @@ export async function scriptedMentorReply(
   }
 
   if (/explain|what is|what does|how does|why is/.test(q)) {
-    return `Short version, then a question back. In ${lesson}, the idea you are asking about exists to remove repetition and make behaviour predictable: you describe *what* should happen once, and the runtime handles *when*. Now you tell me — where in your current code does that same idea already appear, even if it is written differently?`;
+    return `Short version, then a question back. In ${lesson}, the idea you are asking about exists to remove repetition and make behaviour predictable: you describe *what* should happen once, and the runtime handles *when*. Now you tell me: where in your current code does that same idea already appear, even if it is written differently?`;
   }
 
   if (/review|check my|is this right|feedback/.test(q)) {
-    return `${codeNote ?? "Structurally this reads well — naming is clear and the shape matches the task."} Two things I would ask you before calling it done: what happens with an empty input, and what happens with an unexpected type? Try both and tell me what you see.`;
+    return `${codeNote ?? "Structurally this reads well. The naming is clear and the shape matches the task."} Two things I would ask you before calling it done: what happens with an empty input, and what happens with an unexpected type? Try both and tell me what you see.`;
   }
 
   if (/next|what should i|study/.test(q)) {

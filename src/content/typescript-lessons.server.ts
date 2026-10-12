@@ -922,7 +922,7 @@ displayName({ id: "u1", name: "Mina" }); // "Mina"`,
       },
       {
         kind: "callout",
-        body: "`any` turns checking off and lets mistakes spread. When a value really is unknown—JSON, local storage, a message from another system—start with `unknown`, check what it is, and only then use it.",
+        body: "`any` turns checking off and lets mistakes spread. When a value really is unknown (JSON, local storage, a message from another system), start with `unknown`, check what it is, and only then use it.",
       },
       {
         kind: "mcq",
@@ -940,7 +940,7 @@ displayName({ id: "u1", name: "Mina" }); // "Mina"`,
         options: [
           "Every local constant, including `const open: boolean = true`",
           "Only after TypeScript reports an error",
-          "Nowhere—TypeScript can always infer intent",
+          "Nowhere, because TypeScript can always infer intent",
           "A function parameter that enters your code from another part of the app",
         ],
         answer: 3,

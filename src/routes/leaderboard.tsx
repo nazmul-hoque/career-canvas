@@ -18,7 +18,7 @@ export const Route = createFileRoute("/leaderboard")({
   head: () =>
     seoHead({
       path: "/leaderboard",
-      title: "Leaderboard — Ascent",
+      title: "Leaderboard | Ascent",
       description:
         "Where you stand this week: XP, level and streak across every learner on Ascent. Ranked by experience earned.",
     }),
@@ -127,7 +127,7 @@ function Leaderboard() {
           </h1>
           <p className="mt-2 text-chalk">
             XP comes from finished lessons and passed challenges, and it is written by the server
-            against the lesson you finished — there is no way to farm it from a console.
+            against the lesson you finished. There's no way to farm it from a console.
           </p>
           {samplesVisible ? (
             <p className="mt-2 text-sm text-chalk">

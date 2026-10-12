@@ -31,24 +31,24 @@ export const claudePromptingLessons: AuthoredLesson[] = [
         },
         {
           kind: "text",
-          body: "A working prompt has three parts. **The request** — what you want done, stated with a verb: explain, draft, compare, list, rewrite. **The context** — what Claude cannot guess: your audience, your constraints, what you already tried. **The shape** — what a good answer looks like: its format, its length, the level it's pitched at.",
+          body: "A working prompt has three parts. **The request** is what you want done, stated with a verb: explain, draft, compare, list, rewrite. **The context** is what Claude cannot guess: your audience, your constraints, what you already tried. **The shape** is what a good answer looks like: its format, its length, the level it's pitched at.",
         },
         {
           kind: "code",
           language: "text",
-          caption: "The same question, missing its context and shape — then carrying both",
+          caption: "The same question, missing its context and shape, then carrying both",
           code: `Weak:
   Explain database indexes.
 
 Strong:
   Explain database indexes to a junior developer on my team who
   writes SQL daily but has never tuned a slow query. We're on
-  Postgres. Six bullets, no code samples — I want them to
+  Postgres. Six bullets, no code samples. I want them to
   understand when an index helps before they start adding any.`,
         },
         {
           kind: "text",
-          body: "Notice what the strong version did not do: it didn't say \"please\", it didn't say \"you are an expert\", and it isn't longer for the sake of being longer. Every clause it added removes a guess Claude would otherwise have had to make — about the reader's level, the database, and whether code would help or distract.",
+          body: "Notice what the strong version did not do: it didn't say \"please\", it didn't say \"you are an expert\", and it isn't longer for the sake of being longer. Every clause it added removes a guess Claude would otherwise have had to make about the reader's level, the database, and whether code would help or distract.",
         },
         {
           kind: "text",
@@ -56,7 +56,7 @@ Strong:
         },
         {
           kind: "text",
-          body: '**Constraints work when they remove work.** "No code samples", "assume I know SQL", "under 200 words" each cut something out, so each one changes the answer. Constraints that only sound demanding — "be concise but thorough and highly detailed" — pull in opposite directions and cancel, leaving Claude to pick for you.',
+          body: '**Constraints work when they remove work.** "No code samples", "assume I know SQL", "under 200 words" each cut something out, so each one changes the answer. Constraints that only sound demanding ("be concise but thorough and highly detailed") pull in opposite directions and cancel, leaving Claude to pick for you.',
         },
         {
           kind: "callout",
@@ -75,7 +75,7 @@ Strong:
           ],
           answer: 0,
           explanation:
-            "That one fact rules out whole categories of answer — you now need stable error codes and backward compatibility, not just try/catch advice. The other three leave Claude guessing at exactly the same things it was guessing at before.",
+            "That one fact rules out whole categories of answer. You now need stable error codes and backward compatibility, not just try/catch advice. The other three leave Claude guessing at exactly the same things it was guessing at before.",
         },
         {
           kind: "mcq",
@@ -106,7 +106,7 @@ Strong:
       blocks: [
         {
           kind: "text",
-          body: "Some things are far easier to show than to describe. Try writing instructions precise enough to reproduce your team's commit message style — the capitalisation, how long the first line runs, whether the body explains what or why — and you'll end up with a paragraph that still misses. One real example carries all of it at once.",
+          body: "Some things are far easier to show than to describe. Try writing instructions precise enough to reproduce your team's commit message style (the capitalisation, how long the first line runs, whether the body explains what or why) and you'll end up with a paragraph that still misses. One real example carries all of it at once.",
         },
         {
           kind: "code",
@@ -124,11 +124,11 @@ uploaded CSV has no header row.`,
         },
         {
           kind: "text",
-          body: "This is worth reaching for whenever the thing you want is a *pattern* — a tone, a structure, a level of detail. Give one example, not six: a single clear case sets the pattern, while a pile of them tends to get averaged, and any accidental feature they happen to share gets copied along with the ones you meant.",
+          body: "This is worth reaching for whenever the thing you want is a *pattern*: a tone, a structure, a level of detail. Give one example, not six: a single clear case sets the pattern, while a pile of them tends to get averaged, and any accidental feature they happen to share gets copied along with the ones you meant.",
         },
         {
           kind: "text",
-          body: '**Roles are the same idea aimed at judgement.** "You are a skeptical editor" is useful because a skeptical editor *disagrees with you* — it changes which things get flagged. "You are a world-class expert" changes vocabulary and confidence, not judgement, so the answer sounds more authoritative while containing the same content. If you can\'t say what the role would push back on, it isn\'t doing anything.',
+          body: '**Roles are the same idea aimed at judgement.** "You are a skeptical editor" is useful because a skeptical editor *disagrees with you*. It changes which things get flagged. "You are a world-class expert" changes vocabulary and confidence, not judgement, so the answer sounds more authoritative while containing the same content. If you can\'t say what the role would push back on, it isn\'t doing anything.',
         },
         {
           kind: "text",
@@ -136,7 +136,7 @@ uploaded CSV has no header row.`,
         },
         {
           kind: "callout",
-          body: "**Practice.** Give Claude a small example of a style or structure you use — a commit message, a bug report, a standup update — and ask for a new one that follows it. Then pick a role that adds a genuine viewpoint, such as patient tutor or skeptical editor, state the audience too, and check whether the advice actually changed or only the vocabulary did.",
+          body: "**Practice.** Give Claude a small example of a style or structure you use (a commit message, a bug report, a standup update) and ask for a new one that follows it. Then pick a role that adds a genuine viewpoint, such as patient tutor or skeptical editor, state the audience too, and check whether the advice actually changed or only the vocabulary did.",
         },
         {
           kind: "mcq",
@@ -146,7 +146,7 @@ uploaded CSV has no header row.`,
           options: [
             "It makes the answer shorter",
             "It stops Claude from asking clarifying questions",
-            "It carries the details you'd never think to write down — ordering, tone, how much detail each section gets",
+            "It carries the details you'd never think to write down: ordering, tone, how much detail each section gets",
             "It guarantees the format is followed exactly every time",
           ],
           answer: 2,
@@ -181,7 +181,7 @@ uploaded CSV has no header row.`,
       blocks: [
         {
           kind: "text",
-          body: "The first answer is a draft. That isn't a failure — you gave an incomplete brief, and Claude filled the gaps to produce something. The skill is reading the result for **what it had to guess**, because every guess marks a piece of context you didn't supply.",
+          body: "The first answer is a draft. That isn't a failure. You gave an incomplete brief, and Claude filled the gaps to produce something. The skill is reading the result for **what it had to guess**, because every guess marks a piece of context you didn't supply.",
         },
         {
           kind: "text",
@@ -189,7 +189,7 @@ uploaded CSV has no header row.`,
         },
         {
           kind: "text",
-          body: "**Make it ask first.** For anything underspecified, require questions before the answer: \"Ask me up to three questions before you start.\" This inverts the failure mode — instead of a confident answer built on wrong assumptions, you get the assumptions surfaced while they're still cheap to fix. It's most valuable exactly when you're least sure what you want.",
+          body: "**Make it ask first.** For anything underspecified, require questions before the answer: \"Ask me up to three questions before you start.\" This inverts the failure mode. Instead of a confident answer built on wrong assumptions, you get the assumptions surfaced while they're still cheap to fix. It's most valuable exactly when you're least sure what you want.",
         },
         {
           kind: "code",
@@ -205,11 +205,11 @@ Asking:
         },
         {
           kind: "text",
-          body: "**Break down what feels too big.** An intimidating goal usually hides an unclear first step. Ask for a sequence of steps where the first one is small enough to start now — a plan you can begin in fifteen minutes is worth more than a complete one you postpone.",
+          body: "**Break down what feels too big.** An intimidating goal usually hides an unclear first step. Ask for a sequence of steps where the first one is small enough to start now. A plan you can begin in fifteen minutes is worth more than a complete one you postpone.",
         },
         {
           kind: "text",
-          body: "**Compare fairly.** When you test two versions of a prompt, change exactly one thing — the context, the format, or the constraint — and keep everything else identical. Change two and you learn that something helped without learning what, which is the same as learning nothing.",
+          body: "**Compare fairly.** When you test two versions of a prompt, change exactly one thing (the context, the format, or the constraint) and keep everything else identical. Change two and you learn that something helped without learning what, which is the same as learning nothing.",
         },
         {
           kind: "callout",
@@ -243,7 +243,7 @@ Asking:
           ],
           answer: 0,
           explanation:
-            "Two variables, one result — the improvement can't be attributed, and either change might even have hurt while the other more than made up for it. Change one thing at a time when you're trying to learn something that will transfer.",
+            "Two variables, one result: the improvement can't be attributed, and either change might even have hurt while the other more than made up for it. Change one thing at a time when you're trying to learn something that will transfer.",
         },
       ],
     },
@@ -263,7 +263,7 @@ Asking:
         },
         {
           kind: "text",
-          body: '**Summarising loses decisions.** "Summarise this thread" averages everything: a settled decision and an offhand aside come out weighted the same, and the one line you needed — who agreed to what — dissolves into the general sense of the discussion. Ask for the parts instead: the decisions, the actions and their owners, and the questions still open.',
+          body: '**Summarising loses decisions.** "Summarise this thread" averages everything: a settled decision and an offhand aside come out weighted the same, and the one line you needed (who agreed to what) dissolves into the general sense of the discussion. Ask for the parts instead: the decisions, the actions and their owners, and the questions still open.',
         },
         {
           kind: "code",
@@ -282,7 +282,7 @@ Ask for:
         },
         {
           kind: "text",
-          body: "**Rewriting drifts.** A message rewritten for a busy manager and the same message rewritten for a new starter should differ in what they *include*, not just in vocabulary — the manager's version can drop the explanation and keep the ask; the new starter's needs the reverse. If both versions say the same things in different words, the rewrite hasn't happened yet.",
+          body: "**Rewriting drifts.** A message rewritten for a busy manager and the same message rewritten for a new starter should differ in what they *include*, not just in vocabulary. The manager's version can drop the explanation and keep the ask; the new starter's needs the reverse. If both versions say the same things in different words, the rewrite hasn't happened yet.",
         },
         {
           kind: "text",
@@ -290,7 +290,7 @@ Ask for:
         },
         {
           kind: "text",
-          body: '**Brainstorming converges.** Ask for ten ideas and the first three will be the obvious ones. Push past them explicitly: ask what a competitor with half the budget would do, or what you\'d try if the obvious option were banned. For critique, ask for the strongest objection rather than "feedback" — feedback comes back agreeable, while an objection has to argue.',
+          body: '**Brainstorming converges.** Ask for ten ideas and the first three will be the obvious ones. Push past them explicitly: ask what a competitor with half the budget would do, or what you\'d try if the obvious option were banned. For critique, ask for the strongest objection rather than "feedback". Feedback comes back agreeable, while an objection has to argue.',
         },
         {
           kind: "callout",
@@ -308,7 +308,7 @@ Ask for:
           ],
           answer: 3,
           explanation:
-            'Nothing in the word "summary" says decisions matter more than pleasantries, so they get flattened together. Naming the parts you want — decisions, owners, open questions — is what preserves them.',
+            'Nothing in the word "summary" says decisions matter more than pleasantries, so they get flattened together. Naming the parts you want (decisions, owners, open questions) is what preserves them.',
         },
         {
           kind: "mcq",
@@ -316,7 +316,7 @@ Ask for:
           question:
             "You're extracting contact details from messy notes. Some records have no phone number. What should the prompt say?",
           options: [
-            "Nothing — Claude will leave it blank if it isn't there",
+            "Nothing, because Claude will leave it blank if it isn't there",
             '"If a field isn\'t stated in the source, write null rather than inferring it"',
             '"Be accurate and don\'t make anything up"',
             '"Only extract records that have every field"',
@@ -348,8 +348,7 @@ Ask for:
     minutes: 18,
     type: "practice",
     body: {
-      summary:
-        "Fluency isn't accuracy — check the claims that matter, and redact before you paste.",
+      summary: "Fluency isn't accuracy. Check the claims that matter, and redact before you paste.",
       xp: 130,
       blocks: [
         {
@@ -358,7 +357,7 @@ Ask for:
         },
         {
           kind: "text",
-          body: "**Check by consequence, not by doubt.** Most claims in an answer don't matter: if a date is off by a year in a paragraph of background, nothing downstream changes. Find the one or two load-bearing claims — the ones your decision rests on — and verify those against a source that isn't Claude. A plan that checks everything gets abandoned; a plan that checks two things gets done.",
+          body: "**Check by consequence, not by doubt.** Most claims in an answer don't matter: if a date is off by a year in a paragraph of background, nothing downstream changes. Find the one or two load-bearing claims (the ones your decision rests on) and verify those against a source that isn't Claude. A plan that checks everything gets abandoned; a plan that checks two things gets done.",
         },
         {
           kind: "text",
@@ -366,7 +365,7 @@ Ask for:
         },
         {
           kind: "text",
-          body: "**Redact before you paste, not after.** Once text is sent it's sent. Replace sensitive details with realistic placeholders — and keep them *consistent*, so the answer still makes sense coming back: the same customer as `CUSTOMER_A` throughout, not deleted. Deleting details makes the answer generic; consistent placeholders keep the structure intact while the real values stay with you.",
+          body: "**Redact before you paste, not after.** Once text is sent it's sent. Replace sensitive details with realistic placeholders, and keep them *consistent*, so the answer still makes sense coming back: the same customer as `CUSTOMER_A` throughout, not deleted. Deleting details makes the answer generic; consistent placeholders keep the structure intact while the real values stay with you.",
         },
         {
           kind: "code",
@@ -384,11 +383,11 @@ The shape of the problem survives; the identity doesn't.`,
         },
         {
           kind: "callout",
-          body: "**Safety.** Passwords, API keys, customer records, health information and anything under NDA don't go into a chat, on any provider. Work in a practice space with invented data while you're learning — realistic placeholders behave the same way and cost you nothing if you get it wrong.",
+          body: "**Safety.** Passwords, API keys, customer records, health information and anything under NDA don't go into a chat, on any provider. Work in a practice space with invented data while you're learning. Realistic placeholders behave the same way and cost you nothing if you get it wrong.",
         },
         {
           kind: "text",
-          body: "**Keep what worked.** When a prompt earns its keep, save it with the variable parts marked — `[audience]`, `[format]`, `[constraint]` — and you've turned one good result into a tool you reuse. This is the ancestor of the skills you'll write in Level 5.",
+          body: "**Keep what worked.** When a prompt earns its keep, save it with the variable parts marked (`[audience]`, `[format]`, `[constraint]`) and you've turned one good result into a tool you reuse. This is the ancestor of the skills you'll write in Level 5.",
         },
         {
           kind: "callout",
@@ -403,7 +402,7 @@ The shape of the problem survives; the identity doesn't.`,
             "The two that appear earliest, since later steps depend on them",
             "The two the plan would fail on if they were wrong",
             "The two you personally find most surprising",
-            "Any two — checking a sample tells you the overall reliability",
+            "Any two, because checking a sample tells you the overall reliability",
           ],
           answer: 1,
           explanation:
@@ -415,7 +414,7 @@ The shape of the problem survives; the identity doesn't.`,
           question:
             "You need help with a bug in code that contains a live API key and a customer's email. What do you do?",
           options: [
-            "Paste it as-is — the conversation is private to your account",
+            "Paste it as-is, because the conversation is private to your account",
             "Delete the key and the email entirely, leaving gaps",
             "Describe the code in words instead of pasting any of it",
             "Replace the key and email with realistic fake values, keeping them consistent through the snippet",
@@ -440,7 +439,7 @@ The shape of the problem survives; the identity doesn't.`,
       blocks: [
         {
           kind: "text",
-          body: "Put the whole level together into one prompt you'll keep. The job: turn a pile of raw input you actually have — notes, a message thread, a task list, a changelog — into a short daily brief you would genuinely act on.",
+          body: "Put the whole level together into one prompt you'll keep. The job: turn a pile of raw input you actually have (notes, a message thread, a task list, a changelog) into a short daily brief you would genuinely act on.",
         },
         {
           kind: "text",
@@ -448,7 +447,7 @@ The shape of the problem survives; the identity doesn't.`,
         },
         {
           kind: "callout",
-          body: "**Do it now, in your own tools.** Run it on three different days' worth of real input. Keep this evidence: the template with its variable parts marked, the three briefs it produced, and one note on what you changed after the first run and why. Nothing here is marked by us — this one is yours, and it's the prompt you'll still be using in Level 2.",
+          body: "**Do it now, in your own tools.** Run it on three different days' worth of real input. Keep this evidence: the template with its variable parts marked, the three briefs it produced, and one note on what you changed after the first run and why. Nothing here is marked by us. This one is yours, and it's the prompt you'll still be using in Level 2.",
         },
         {
           kind: "code",

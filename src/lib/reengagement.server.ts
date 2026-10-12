@@ -89,7 +89,7 @@ function copyFor(kind: Kind, name: string, streak: number, link: string) {
       return {
         subject: `${first}, your ${streak}-day streak ends tonight`,
         heading: `Your ${streak}-day streak is still alive`,
-        body: `One lesson holds it — that's ten minutes, not an evening. You don't need to hit your daily XP goal, just finish something.`,
+        body: `One lesson keeps it going. That's ten minutes, not an evening. You don't need to hit your daily XP goal, just finish something.`,
         cta: "Finish one lesson",
         link,
       };
@@ -97,7 +97,7 @@ function copyFor(kind: Kind, name: string, streak: number, link: string) {
       return {
         subject: `${first}, pick your roadmap back up`,
         heading: "Your roadmap is exactly where you left it",
-        body: `It's been a week. Nothing has expired and nothing has moved — your next lesson is waiting, and the first one back is always the hardest.`,
+        body: `It's been a week. Nothing has expired and nothing has moved. Your next lesson is waiting, and the first one back is always the hardest.`,
         cta: "Resume where you stopped",
         link,
       };
@@ -105,7 +105,7 @@ function copyFor(kind: Kind, name: string, streak: number, link: string) {
       return {
         subject: `${first}, we'll stop emailing you about this`,
         heading: "Last nudge from us",
-        body: `It's been a month, so this is the last reminder we'll send. Your progress stays on your account for whenever you want it — no expiry, no penalty.`,
+        body: `It's been a month, so this is the last reminder we'll send. Your progress stays on your account for whenever you want it. There's no expiry and no penalty.`,
         cta: "Open my dashboard",
         link,
       };
@@ -118,7 +118,7 @@ function pushCopyFor(kind: Kind, streak: number) {
     case "streak_at_risk":
       return {
         title: `Your ${streak}-day streak ends tonight`,
-        body: "One lesson holds it — ten minutes, not an evening.",
+        body: "One lesson keeps it going. Ten minutes, not an evening.",
       };
     case "dormant_7d":
       return {

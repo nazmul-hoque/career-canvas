@@ -14,7 +14,7 @@ export const Route = createFileRoute("/")({
   head: () =>
     seoHead({
       path: "/",
-      title: "Ascent \u2014 Learn Coding, Data, Design & AI",
+      title: "Ascent | Learn Coding, Data, Design & AI",
       description:
         "Learn coding, data, design and AI through interactive career paths. Practice with hands-on challenges, get AI mentor feedback and build portfolio projects.",
       schema: [

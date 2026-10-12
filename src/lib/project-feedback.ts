@@ -24,11 +24,11 @@ export function mockProjectFeedback(projectId: string, notes: string): string {
   );
   if (missing.length) {
     lines.push(
-      `I can't tell from your notes how you handled: ${missing.slice(0, 2).join("; ")}. Add a sentence on each — if you skipped one, say why. A deliberate omission reads better than a silent one.`,
+      `I can't tell from your notes how you handled: ${missing.slice(0, 2).join("; ")}. Add a sentence on each, and if you skipped one, say why. A deliberate omission reads better than a silent one.`,
     );
   }
   lines.push(
-    `Two questions before you call it done: what breaks if the data is empty, and what would you change if this had to serve ten times the traffic? Write the answers in your README — that helps explain your reasoning to a reviewer.`,
+    `Two questions before you call it done: what breaks if the data is empty, and what would you change if this had to serve ten times the traffic? Write the answers in your README. That helps explain your reasoning to a reviewer.`,
   );
   return lines.join("\n\n");
 }

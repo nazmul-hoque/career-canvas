@@ -22,11 +22,11 @@ export const chatgptPromptingLessons: AuthoredLesson[] = [
       blocks: [
         {
           kind: "text",
-          body: "\"Help me study\" gets you something. It's just not something you can use — because nothing in that request says what subject, how long you have, or what you're studying *for*. ChatGPT filled those in with the most average possible answers, and an average answer to an unasked question is what a vague prompt buys.",
+          body: "\"Help me study\" gets you something. It's just not something you can use, because nothing in that request says what subject, how long you have, or what you're studying *for*. ChatGPT filled those in with the most average possible answers, and an average answer to an unasked question is what a vague prompt buys.",
         },
         {
           kind: "text",
-          body: "Three things fix most of it. **The outcome** — what you want to end up holding: a plan, a table, an explanation, a draft. **The reader** — who has to understand it, which is often you but is frequently someone else. **The shape** — how long, what format, what to leave out.",
+          body: "Three things fix most of it. **The outcome** is what you want to end up holding: a plan, a table, an explanation, a draft. **The reader** is who has to understand it, which is often you but is frequently someone else. **The shape** is how long, what format, what to leave out.",
         },
         {
           kind: "code",
@@ -44,15 +44,15 @@ Specific:
         },
         {
           kind: "text",
-          body: "**Naming the reader changes the content, not just the words.** Ask for an explanation of the same idea for a nine-year-old and for a colleague, and a good answer keeps the facts identical while changing which ones need unpacking. If only the vocabulary moves — the same explanation in shorter words — you've been given a rewrite rather than an explanation aimed at someone.",
+          body: "**Naming the reader changes the content, not just the words.** Ask for an explanation of the same idea for a nine-year-old and for a colleague, and a good answer keeps the facts identical while changing which ones need unpacking. If only the vocabulary moves (the same explanation in shorter words), you've been given a rewrite rather than an explanation aimed at someone.",
         },
         {
           kind: "text",
-          body: "**Asking for a table is a decision about checking.** A table forces one value per cell, which means you can see a gap. Ask for five errands as prose and a missing duration reads as a smooth sentence; ask for a table and the empty cell is obvious. Requiring estimates to be *labelled* as estimates does the same job — it separates what you told it from what it supplied.",
+          body: "**Asking for a table is a decision about checking.** A table forces one value per cell, which means you can see a gap. Ask for five errands as prose and a missing duration reads as a smooth sentence; ask for a table and the empty cell is obvious. Requiring estimates to be *labelled* as estimates does the same job. It separates what you told it from what it supplied.",
         },
         {
           kind: "callout",
-          body: '**Practice.** Ask ChatGPT to explain a hobby you know well to a beginner in three steps, then correct one thing it got wrong from your own knowledge. Compare "help me study" with a version naming your subject, time and target, and write down two concrete differences in the answers. Get the same everyday concept explained for a child and for a colleague, and check the facts stayed consistent. Then give it five invented errands and ask for a table of task, duration and priority — with every guessed duration labelled as an estimate.',
+          body: '**Practice.** Ask ChatGPT to explain a hobby you know well to a beginner in three steps, then correct one thing it got wrong from your own knowledge. Compare "help me study" with a version naming your subject, time and target, and write down two concrete differences in the answers. Get the same everyday concept explained for a child and for a colleague, and check the facts stayed consistent. Then give it five invented errands and ask for a table of task, duration and priority, with every guessed duration labelled as an estimate.',
         },
         {
           kind: "callout",
@@ -86,7 +86,7 @@ Specific:
           ],
           answer: 2,
           explanation:
-            "Prose hides gaps well — a sentence reads fine whether or not it contains the number you needed. The grid makes an absence structural, which is why the format is a checking decision rather than a styling one.",
+            "Prose hides gaps well. A sentence reads fine whether or not it contains the number you needed. The grid makes an absence structural, which is why the format is a checking decision rather than a styling one.",
         },
       ],
     },
@@ -103,7 +103,7 @@ Specific:
       blocks: [
         {
           kind: "text",
-          body: 'Describing a tone is hard. Showing one is easy. Write two sentences in the voice you want and ask for something new that follows it — that carries the rhythm, the formality and the length all at once, and none of those survive being described as "friendly but professional".',
+          body: 'Describing a tone is hard. Showing one is easy. Write two sentences in the voice you want and ask for something new that follows it. That carries the rhythm, the formality and the length all at once, and none of those survive being described as "friendly but professional".',
         },
         {
           kind: "text",
@@ -111,7 +111,7 @@ Specific:
         },
         {
           kind: "text",
-          body: "**Constraints are only real if you can check them.** A weekend plan with a fixed budget, a location and a step-free access requirement gives you three things to test each suggestion against — and the test is the point, because a plan that quietly includes a venue with stairs looks exactly like one that doesn't. Run the checklist yourself rather than asking whether the constraints were met.",
+          body: "**Constraints are only real if you can check them.** A weekend plan with a fixed budget, a location and a step-free access requirement gives you three things to test each suggestion against, and the test is the point, because a plan that quietly includes a venue with stairs looks exactly like one that doesn't. Run the checklist yourself rather than asking whether the constraints were met.",
         },
         {
           kind: "text",
@@ -138,7 +138,7 @@ Specific:
           ],
           answer: 0,
           explanation:
-            "An example carries everything at once, and the boundary between pattern and content isn't marked. Saying the facts are new — or giving a sample from a clearly unrelated subject — is what draws that line.",
+            "An example carries everything at once, and the boundary between pattern and content isn't marked. Saying the facts are new, or giving a sample from a clearly unrelated subject, is what draws that line.",
         },
         {
           kind: "mcq",
@@ -148,7 +148,7 @@ Specific:
             '"Make this better and more professional"',
             '"Try again, I don\'t like it"',
             '"Rewrite this with more detail throughout"',
-            "\"Step two uses 'hazard window' without explaining it, and 20 minutes is unrealistic for a beginner — fix those two and leave the rest\"",
+            "\"Step two uses 'hazard window' without explaining it, and 20 minutes is unrealistic for a beginner. Fix those two and leave the rest\"",
           ],
           answer: 3,
           explanation:
@@ -172,7 +172,7 @@ Specific:
         },
         {
           kind: "text",
-          body: "This is the single most expensive failure in everyday use, because an invented value is indistinguishable from a real one. You can't spot it by reading carefully — a fabricated date is written in exactly the same confident prose as a correct one.",
+          body: "This is the single most expensive failure in everyday use, because an invented value is indistinguishable from a real one. You can't spot it by reading carefully. A fabricated date is written in exactly the same confident prose as a correct one.",
         },
         {
           kind: "code",
@@ -206,7 +206,7 @@ rather than supplying a likely value.`,
           ],
           answer: 0,
           explanation:
-            "Fluency is uniform: nothing about the writing marks the fabricated value. That's why the defence is structural — asking for unknowns to be listed — rather than a matter of reading more attentively.",
+            "Fluency is uniform: nothing about the writing marks the fabricated value. That's why the defence is structural (asking for unknowns to be listed) rather than a matter of reading more attentively.",
         },
         {
           kind: "mcq",
@@ -242,11 +242,11 @@ rather than supplying a likely value.`,
         },
         {
           kind: "text",
-          body: "Then the test that makes it a template rather than a lucky prompt: **run it on a second, quite different subject.** The instruction that only worked for the first one will reveal itself — usually a step that assumed a textbook exists, or a practice test, or that the subject can be split into evenings at all. Fix that instruction and note what you changed.",
+          body: "Then the test that makes it a template rather than a lucky prompt: **run it on a second, quite different subject.** The instruction that only worked for the first one will reveal itself. Usually it's a step that assumed a textbook exists, or a practice test, or that the subject can be split into evenings at all. Fix that instruction and note what you changed.",
         },
         {
           kind: "callout",
-          body: "**Do it now, in your own account.** Keep this evidence: the final template with its slots marked, both trial outputs, and one sentence on the instruction you had to generalise and why. Nothing here is graded by us — the second subject is the grader.",
+          body: "**Do it now, in your own account.** Keep this evidence: the final template with its slots marked, both trial outputs, and one sentence on the instruction you had to generalise and why. Nothing here is graded by us. The second subject is the grader.",
         },
         {
           kind: "code",

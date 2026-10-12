@@ -34,7 +34,7 @@ function priceIdFor(plan: PlanId, interval: Interval): string {
         ? "STRIPE_PRICE_PRO_YEARLY"
         : "STRIPE_PRICE_PRO_MONTHLY";
   const price = process.env[name];
-  if (!price) throw new Error(`Missing ${name} — create the price in Stripe and set it in .env.`);
+  if (!price) throw new Error(`Missing ${name}. Create the price in Stripe and set it in .env.`);
   return price;
 }
 

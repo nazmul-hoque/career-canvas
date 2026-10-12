@@ -22,7 +22,7 @@ export const claudeSubagentsLessons: AuthoredLesson[] = [
       blocks: [
         {
           kind: "text",
-          body: "A subagent is a separate Claude with its own context, its own instructions and its own tool list. It gets the brief you hand it — not your conversation — and hands back a result. That isolation is the entire value and the entire constraint.",
+          body: "A subagent is a separate Claude with its own context, its own instructions and its own tool list. It gets the brief you hand it (not your conversation) and hands back a result. That isolation is the entire value and the entire constraint.",
         },
         {
           kind: "text",
@@ -30,15 +30,15 @@ export const claudeSubagentsLessons: AuthoredLesson[] = [
         },
         {
           kind: "text",
-          body: "The brief that follows should contain the goal, the paths that matter, the constraints, and the shape of the answer — and nothing else. Overlong delegations are the common beginner error: pasting the whole conversation in the hope that more context helps. It doesn't. It buries the actual question and spends the worker's context on your history rather than on the files it needs to read.",
+          body: "The brief that follows should contain the goal, the paths that matter, the constraints, and the shape of the answer, and nothing else. Overlong delegations are the common beginner error: pasting the whole conversation in the hope that more context helps. It doesn't. It buries the actual question and spends the worker's context on your history rather than on the files it needs to read.",
         },
         {
           kind: "text",
-          body: "The other judgement call is **when not to parallelise**. Independent questions run happily side by side. Dependent steps do not: if step two needs step one's answer, running them together means step two guessed. Map the dependencies before you fan out, and keep the dependent chain sequential — parallelism is a property of the work, not a setting you turn on.",
+          body: "The other judgement call is **when not to parallelise**. Independent questions run happily side by side. Dependent steps do not: if step two needs step one's answer, running them together means step two guessed. Map the dependencies before you fan out, and keep the dependent chain sequential. Parallelism is a property of the work, not a setting you turn on.",
         },
         {
           kind: "callout",
-          body: "**Practice.** Take a real project request and separate one self-contained research task from the work that needs shared context, naming the delegation's inputs and output. Take an overlong delegation brief and cut it to goal, paths, constraints and output format — then check the shorter one still produces the right result. Finally, map a three-step task's dependencies and mark which branch is genuinely safe to run in parallel.",
+          body: "**Practice.** Take a real project request and separate one self-contained research task from the work that needs shared context, naming the delegation's inputs and output. Take an overlong delegation brief and cut it to goal, paths, constraints and output format, then check the shorter one still produces the right result. Finally, map a three-step task's dependencies and mark which branch is genuinely safe to run in parallel.",
         },
         {
           kind: "mcq",
@@ -52,7 +52,7 @@ export const claudeSubagentsLessons: AuthoredLesson[] = [
           ],
           answer: 3,
           explanation:
-            "It's fully specified in one sentence, the output shape is obvious, and it needs no history. The other three depend on conversation the worker will never see — and would each come back confidently having guessed what you meant.",
+            "It's fully specified in one sentence, the output shape is obvious, and it needs no history. The other three depend on conversation the worker will never see, and would each come back confidently having guessed what you meant.",
         },
         {
           kind: "mcq",
@@ -60,14 +60,14 @@ export const claudeSubagentsLessons: AuthoredLesson[] = [
           question:
             "Three steps: find the slow query, propose an index, measure the improvement. What's safe to parallelise?",
           options: [
-            "All three — they're all about the same query",
+            "All three, because they're all about the same query",
             "None of them: each step needs the previous step's result",
             "Steps one and two, since both involve analysis",
             "Steps two and three, leaving step one to run first",
           ],
           answer: 1,
           explanation:
-            "You can't propose an index for a query you haven't identified, or measure an improvement you haven't made. Running them together produces two workers inventing plausible inputs — fast, parallel, and wrong.",
+            "You can't propose an index for a query you haven't identified, or measure an improvement you haven't made. Running them together produces two workers inventing plausible inputs: fast, parallel, and wrong.",
         },
       ],
     },
@@ -106,11 +106,11 @@ and best practices.`,
         },
         {
           kind: "text",
-          body: "**`tools` is the strongest line in the file.** Omit it and the agent inherits the full tool set; list tools and that's all it has. A researcher with `Read, Glob, Grep` cannot edit your files — not \"has been asked not to\", *cannot*. Write the list even when it feels redundant, because that's the field that makes a read-only agent actually read-only.",
+          body: "**`tools` is the strongest line in the file.** Omit it and the agent inherits the full tool set; list tools and that's all it has. A researcher with `Read, Glob, Grep` cannot edit your files. Not \"has been asked not to\", but *cannot*. Write the list even when it feels redundant, because that's the field that makes a read-only agent actually read-only.",
         },
         {
           kind: "text",
-          body: "**`model`** fits the worker to the job: a fast model for mechanical, well-specified work, a stronger one where the reasoning is the deliverable. `inherit` uses the parent session's model. The tradeoff is real in both directions — running everything on the most capable model is expensive for tasks that are essentially search, and running a subtle architectural review on the cheapest one wastes the whole delegation.",
+          body: "**`model`** fits the worker to the job: a fast model for mechanical, well-specified work, a stronger one where the reasoning is the deliverable. `inherit` uses the parent session's model. The tradeoff is real in both directions. Running everything on the most capable model is expensive for tasks that are essentially search, and running a subtle architectural review on the cheapest one wastes the whole delegation.",
         },
         {
           kind: "callout",
@@ -126,7 +126,7 @@ and best practices.`,
           answer: "tools",
           accept: ["tools"],
           explanation:
-            "Omitting `tools` entirely gives the agent the full set. Listing them is what makes the restriction real — the field is the enforcement, and the description is only documentation.",
+            "Omitting `tools` entirely gives the agent the full set. Listing them is what makes the restriction real. The field is the enforcement, and the description is only documentation.",
         },
         {
           kind: "mcq",
@@ -135,7 +135,7 @@ and best practices.`,
           options: [
             '"A helpful agent for code-related tasks"',
             '"Expert code reviewer with deep knowledge of software engineering"',
-            '"Reviews a written diff for correctness and security. Use after code is written. Does not write or fix code — hand fixes back to the caller."',
+            '"Reviews a written diff for correctness and security. Use after code is written. Does not write or fix code; hand fixes back to the caller."',
             '"Reviews code thoroughly and carefully"',
           ],
           answer: 2,
@@ -171,7 +171,7 @@ and best practices.`,
       blocks: [
         {
           kind: "text",
-          body: "A worker's output is only useful if the caller can evaluate it without re-doing the work. That means asking for a fixed shape up front — a **result contract**. Four parts carry almost everything you need.",
+          body: "A worker's output is only useful if the caller can evaluate it without re-doing the work. That means asking for a fixed shape up front: a **result contract**. Four parts carry almost everything you need.",
         },
         {
           kind: "code",
@@ -189,15 +189,15 @@ CONCLUSION rather than offering your best guess.`,
         },
         {
           kind: "text",
-          body: "The `UNCERTAINTY` line is the one people leave out, and it's the one that makes the rest trustworthy. Without a place to put doubt, a worker with an incomplete answer will produce a complete-sounding one — not from dishonesty, but because the format demanded a conclusion. Give it somewhere to say \"I couldn't check the mobile client\" and you find out which parts to lean on.",
+          body: "The `UNCERTAINTY` line is the one people leave out, and it's the one that makes the rest trustworthy. Without a place to put doubt, a worker with an incomplete answer will produce a complete-sounding one. That's not from dishonesty, but because the format demanded a conclusion. Give it somewhere to say \"I couldn't check the mobile client\" and you find out which parts to lean on.",
         },
         {
           kind: "text",
-          body: "The `EVIDENCE` line does something else useful: it makes verification cheap. When findings come back with file and line references, checking one is a ten-second job. **Do it.** Pick one load-bearing claim from every delegated result and confirm it yourself before it shapes a decision — the same habit as checking a project map, for the same reason. Evidence you never spot-check is decoration.",
+          body: "The `EVIDENCE` line does something else useful: it makes verification cheap. When findings come back with file and line references, checking one is a ten-second job. **Do it.** Pick one load-bearing claim from every delegated result and confirm it yourself before it shapes a decision. It's the same habit as checking a project map, for the same reason. Evidence you never spot-check is decoration.",
         },
         {
           kind: "callout",
-          body: "**Practice.** Give your researcher a result contract with conclusion, evidence, uncertainty and next step. Delegate one real architecture question about your project and require file citations. Then take one claim from the result and verify it yourself — confirm it or correct it with evidence, and notice which parts of the report you'd have accepted without checking.",
+          body: "**Practice.** Give your researcher a result contract with conclusion, evidence, uncertainty and next step. Delegate one real architecture question about your project and require file citations. Then take one claim from the result and verify it yourself (confirm it or correct it with evidence), and notice which parts of the report you'd have accepted without checking.",
         },
         {
           kind: "mcq",
@@ -220,14 +220,14 @@ CONCLUSION rather than offering your best guess.`,
           question:
             "A researcher returns five findings, each with file:line evidence. How much should you verify?",
           options: [
-            "None — the citations are the verification",
+            "None, because the citations are the verification",
             "All five, or the delegation saved you nothing",
             "At least the one your decision actually rests on",
             "A random one, to estimate the overall error rate",
           ],
           answer: 2,
           explanation:
-            "Verifying everything defeats the purpose; verifying nothing means citations you never tested. Check what's load-bearing — a wrong finding you don't act on costs little, and the one you're about to act on is worth ten seconds.",
+            "Verifying everything defeats the purpose; verifying nothing means citations you never tested. Check what's load-bearing. A wrong finding you don't act on costs little, and the one you're about to act on is worth ten seconds.",
         },
       ],
     },
@@ -247,7 +247,7 @@ CONCLUSION rather than offering your best guess.`,
         },
         {
           kind: "text",
-          body: "**A test specialist** can read the project and run the test command, but cannot edit production files. That asymmetry is the whole design — it reports exact commands and actual failures rather than quietly adjusting the code until things pass. An agent that can both run tests and edit source will sometimes make a test pass by changing what it tests, which is the single most expensive kind of help.",
+          body: "**A test specialist** can read the project and run the test command, but cannot edit production files. That asymmetry is the whole design. It reports exact commands and actual failures rather than quietly adjusting the code until things pass. An agent that can both run tests and edit source will sometimes make a test pass by changing what it tests, which is the single most expensive kind of help.",
         },
         {
           kind: "text",
@@ -286,7 +286,7 @@ CONCLUSION rather than offering your best guess.`,
       blocks: [
         {
           kind: "text",
-          body: "Two researchers asking non-overlapping questions can run at once with no ceremony — reads don't collide. The moment anything writes, parallelism needs a plan.",
+          body: "Two researchers asking non-overlapping questions can run at once with no ceremony, because reads don't collide. The moment anything writes, parallelism needs a plan.",
         },
         {
           kind: "text",
@@ -327,7 +327,7 @@ claude --worktree try-axios
           ],
           answer: 3,
           explanation:
-            "Separate contexts means neither knows what the other did. You get a file reflecting one agent's work, or a mangled blend — and no report describes the result, because each one reports what *it* did.",
+            "Separate contexts means neither knows what the other did. You get a file reflecting one agent's work, or a mangled blend, and no report describes the result, because each one reports what *it* did.",
         },
         {
           kind: "mcq",
@@ -341,7 +341,7 @@ claude --worktree try-axios
           ],
           answer: 3,
           explanation:
-            "Each worktree is its own directory with its own branch checked out, against the same repository. Either experiment can be thrown away cleanly — which is what makes running both worth doing.",
+            "Each worktree is its own directory with its own branch checked out, against the same repository. Either experiment can be thrown away cleanly, which is what makes running both worth doing.",
         },
       ],
     },
@@ -357,7 +357,7 @@ claude --worktree try-axios
       blocks: [
         {
           kind: "text",
-          body: 'Asking two specialists to analyse the same decision from named perspectives — "argue for keeping this dependency", "argue for removing it" — is one of the highest-value uses of delegation. Done well, it surfaces the assumptions each position needs, which is the part you couldn\'t easily produce alone.',
+          body: 'Asking two specialists to analyse the same decision from named perspectives ("argue for keeping this dependency", "argue for removing it") is one of the highest-value uses of delegation. Done well, it surfaces the assumptions each position needs, which is the part you couldn\'t easily produce alone.',
         },
         {
           kind: "text",
@@ -382,13 +382,13 @@ claude --worktree try-axios
             "Two subagents independently recommend the same library. What have you learned?",
           options: [
             "Less than it appears: they may share a training bias, a source, or your framing",
-            "That it's the right choice — independent agreement is strong evidence",
+            "That it's the right choice, since independent agreement is strong evidence",
             "That the question was too easy to be worth delegating",
             "Nothing at all, since agents always agree",
           ],
           answer: 0,
           explanation:
-            "Independence of *processes* isn't independence of *priors*. Agreement is worth noticing, but the reasoning is what you evaluate — two agents can be confidently wrong in exactly the same way.",
+            "Independence of *processes* isn't independence of *priors*. Agreement is worth noticing, but the reasoning is what you evaluate. Two agents can be confidently wrong in exactly the same way.",
         },
         {
           kind: "mcq",
@@ -403,7 +403,7 @@ claude --worktree try-axios
           ],
           answer: 3,
           explanation:
-            "The conflict is the finding. Majority-voting and averaging both discard it, producing a confident number nobody can trace — and a fourth opinion adds noise rather than evidence.",
+            "The conflict is the finding. Majority-voting and averaging both discard it, producing a confident number nobody can trace, and a fourth opinion adds noise rather than evidence.",
         },
       ],
     },
@@ -420,7 +420,7 @@ claude --worktree try-axios
       blocks: [
         {
           kind: "text",
-          body: "A worker without a stopping condition keeps going. Not maliciously — it was asked to find something and it hasn't found it, so it looks harder, broadens the search, and burns your budget on a file that isn't there. Every delegation needs three sentences: **when to stop, what not to attempt, and what to report if blocked.**",
+          body: "A worker without a stopping condition keeps going. Not maliciously. It was asked to find something and it hasn't found it, so it looks harder, broadens the search, and burns your budget on a file that isn't there. Every delegation needs three sentences: **when to stop, what not to attempt, and what to report if blocked.**",
         },
         {
           kind: "code",
@@ -436,7 +436,7 @@ and the single next place you'd look.`,
         },
         {
           kind: "text",
-          body: "\"If blocked, report what you checked\" converts a failure into information. The difference between a useless blocked report and a useful one is whether it lists the ground already covered — the useful one means you don't repeat it, and often tells you the thing genuinely isn't there, which was a real answer to the question.",
+          body: "\"If blocked, report what you checked\" converts a failure into information. The difference between a useless blocked report and a useful one is whether it lists the ground already covered. The useful one means you don't repeat it, and often tells you the thing genuinely isn't there, which was a real answer to the question.",
         },
         {
           kind: "text",
@@ -462,7 +462,7 @@ and the single next place you'd look.`,
           ],
           answer: 2,
           explanation:
-            "Covered ground is real information — it saves you the repeat search and sometimes answers the question by exhaustion. A report that only says it failed leaves you exactly where you started, minus the cost of the run.",
+            "Covered ground is real information. It saves you the repeat search and sometimes answers the question by exhaustion. A report that only says it failed leaves you exactly where you started, minus the cost of the run.",
         },
         {
           kind: "mcq",
@@ -476,7 +476,7 @@ and the single next place you'd look.`,
           ],
           answer: 2,
           explanation:
-            "Review is only worth something when a different party evaluates the work. Collapse the two roles and the recommendation and the decision come from the same place — which is the situation review exists to avoid.",
+            "Review is only worth something when a different party evaluates the work. Collapse the two roles and the recommendation and the decision come from the same place, which is the situation review exists to avoid.",
         },
       ],
     },
@@ -497,7 +497,7 @@ and the single next place you'd look.`,
         },
         {
           kind: "text",
-          body: "Then do the part that makes it an audit rather than three reports: produce one prioritised plan. Where the workers agree, say so. Where they conflict — and on a real repository at least one pair will — trace it to evidence rather than averaging. Keep confidence levels attached to the items.",
+          body: "Then do the part that makes it an audit rather than three reports: produce one prioritised plan. Where the workers agree, say so. Where they conflict (and on a real repository at least one pair will), trace it to evidence rather than averaging. Keep confidence levels attached to the items.",
         },
         {
           kind: "callout",

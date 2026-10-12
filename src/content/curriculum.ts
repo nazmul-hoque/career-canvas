@@ -706,7 +706,7 @@ export const careerPaths: CareerPath[] = [
     name: "ChatGPT Operator",
     tagline: "Prompts · Research · Workflows · Autonomy",
     overview:
-      "Go from your first ChatGPT prompt to repeatable workflows with verified sources, useful deliverables, clear permissions, and human review. The shorter operator path—it all happens in the ChatGPT app; take Claude Operator for the terminal and real permission boundaries.",
+      "Go from your first ChatGPT prompt to repeatable workflows with verified sources, useful deliverables, clear permissions, and human review. This is the shorter operator path, and it all happens in the ChatGPT app. Take Claude Operator for the terminal and real permission boundaries.",
     difficulty: "Beginner",
     skills: [
       "Prompting",
@@ -726,7 +726,7 @@ export const careerPaths: CareerPath[] = [
     name: "Claude Operator",
     tagline: "Prompts · Tools · Agents · Autonomy",
     overview:
-      "Go from asking Claude useful questions to running bounded, observable AI workflows—with permissions, verification and human approval built in. The longer operator path: past prompting it adds the terminal, connected tools, subagents and permission rules.",
+      "Go from asking Claude useful questions to running bounded, observable AI workflows, with permissions, verification and human approval built in. This is the longer operator path. Beyond prompting, it adds the terminal, connected tools, subagents and permission rules.",
     difficulty: "Beginner",
     skills: ["Prompting", "Claude Code", "MCP", "Subagents", "Skills", "Safety", "Autonomy"],
     courseIds: ["claude-operator"],
@@ -760,7 +760,7 @@ export const careerPaths: CareerPath[] = [
     name: "Python Developer",
     tagline: "Python · Automation · Data",
     overview:
-      "Learn the language that runs scripts, servers and models — then use it to automate real work.",
+      "Learn the language that runs scripts, servers and models, then use it to automate real work.",
     difficulty: "Beginner",
     skills: ["Python", "Collections", "Automation", "SQL", "Testing"],
     courseIds: ["python", "sql", "sql-analysis", "git", "genai"],

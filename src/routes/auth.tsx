@@ -15,13 +15,13 @@ import { Wordmark } from "@/components/layout/AppShell";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in or create your account — Ascent" },
+      { title: "Sign in or create your account | Ascent" },
       {
         name: "description",
         content:
           "Create a free Ascent account to follow a tech career roadmap, practise with real challenges and track your progress.",
       },
-      { property: "og:title", content: "Sign in or create your account — Ascent" },
+      { property: "og:title", content: "Sign in or create your account | Ascent" },
       {
         property: "og:description",
         content: "Join Ascent and start building job-ready tech skills by doing, not watching.",

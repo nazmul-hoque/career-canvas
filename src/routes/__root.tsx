@@ -60,10 +60,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Ascent — Interactive Career Learning" },
+      { title: "Ascent | Interactive Career Learning" },
       { name: "description", content: SITE_DESCRIPTION },
       { name: "author", content: "Ascent" },
-      { property: "og:title", content: "Ascent — Interactive Career Learning" },
+      { property: "og:title", content: "Ascent | Interactive Career Learning" },
       { property: "og:description", content: SITE_DESCRIPTION },
       { property: "og:type", content: "website" },
       { property: "og:image", content: OG_IMAGE },

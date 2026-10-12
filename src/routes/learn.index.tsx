@@ -26,7 +26,7 @@ export const Route = createFileRoute("/learn/")({
   head: () =>
     seoHead({
       path: "/learn",
-      title: "Interactive Coding, Data & AI Courses \u2014 Ascent",
+      title: "Interactive Coding, Data & AI Courses | Ascent",
       description:
         "Browse interactive courses in JavaScript, React, Python, SQL, data analytics, UX design and generative AI. Find courses by skill, level and career.",
     }),
@@ -154,7 +154,7 @@ function Catalog() {
               ref={input}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search a skill — React, SQL, Figma…"
+              placeholder="Search a skill: React, SQL, Figma…"
               className="pl-9"
               aria-label="Search courses"
             />

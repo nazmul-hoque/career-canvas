@@ -21,7 +21,7 @@ export const chatgptContextLessons: AuthoredLesson[] = [
       blocks: [
         {
           kind: "text",
-          body: "Once a piece of work outlives a single conversation, re-explaining it becomes the job. A **working brief** is the fix: one page holding the goal, the audience, the fixed constraints, and what's still undecided — written once, pasted into whatever chat needs it.",
+          body: "Once a piece of work outlives a single conversation, re-explaining it becomes the job. A **working brief** is the fix: one page holding the goal, the audience, the fixed constraints, and what's still undecided. You write it once and paste it into whatever chat needs it.",
         },
         {
           kind: "text",
@@ -29,7 +29,7 @@ export const chatgptContextLessons: AuthoredLesson[] = [
         },
         {
           kind: "text",
-          body: "**Before using a brief, make it restate the brief.** Ask for it back in its own words and read what came out. A restatement that promotes a maybe into a decision, or drops the constraint you care about, has just told you something for free — and it's much cheaper to catch there than three drafts later.",
+          body: "**Before using a brief, make it restate the brief.** Ask for it back in its own words and read what came out. A restatement that promotes a maybe into a decision, or drops the constraint you care about, has just told you something for free, and it's much cheaper to catch there than three drafts later.",
         },
         {
           kind: "text",
@@ -37,11 +37,11 @@ export const chatgptContextLessons: AuthoredLesson[] = [
         },
         {
           kind: "callout",
-          body: "**What your account actually has varies.** Some interfaces offer projects or saved instructions that hold a brief for you; others don't. Start by checking what yours has, and pick a plain-text fallback for anything missing — a note on your machine you paste in works everywhere and is what the rest of this level assumes.",
+          body: "**What your account actually has varies.** Some interfaces offer projects or saved instructions that hold a brief for you; others don't. Start by checking what yours has, and pick a plain-text fallback for anything missing. A note on your machine you paste in works everywhere and is what the rest of this level assumes.",
         },
         {
           kind: "callout",
-          body: "**Practice.** List which capabilities your account actually gives you — plain chat, files, research, projects — and name a text-only fallback for each gap. Invent a neighbourhood book swap and write its goal, audience, fixed constraints and open questions, then have ChatGPT restate it and correct whatever it got wrong. Then supply two fictional notes with titles and dates and ask for a combined summary that attributes every claim to one of them.",
+          body: "**Practice.** List which capabilities your account actually gives you (plain chat, files, research, projects) and name a text-only fallback for each gap. Invent a neighbourhood book swap and write its goal, audience, fixed constraints and open questions, then have ChatGPT restate it and correct whatever it got wrong. Then supply two fictional notes with titles and dates and ask for a combined summary that attributes every claim to one of them.",
         },
         {
           kind: "mcq",
@@ -55,7 +55,7 @@ export const chatgptContextLessons: AuthoredLesson[] = [
           ],
           answer: 0,
           explanation:
-            "The restatement is a cheap test of a shared understanding. The characteristic failure it catches is an open question being handed back as a settled decision — which is invisible once work is built on top of it.",
+            "The restatement is a cheap test of a shared understanding. The characteristic failure it catches is an open question being handed back as a settled decision, which is invisible once work is built on top of it.",
         },
         {
           kind: "mcq",
@@ -69,7 +69,7 @@ export const chatgptContextLessons: AuthoredLesson[] = [
           ],
           answer: 1,
           explanation:
-            "Attribution is what makes a summary checkable. Without it a wrong claim is just wrong somewhere, and your only recourse is re-reading both sources yourself — which is the work you were trying to avoid.",
+            "Attribution is what makes a summary checkable. Without it a wrong claim is just wrong somewhere, and your only recourse is re-reading both sources yourself, which is the work you were trying to avoid.",
         },
       ],
     },
@@ -85,7 +85,7 @@ export const chatgptContextLessons: AuthoredLesson[] = [
       blocks: [
         {
           kind: "text",
-          body: "Real source material contradicts itself. An old note says the event starts at 2pm; a later correction says 3pm. The wrong behaviour is to pick one silently — and note that picking the *newer* one is still picking silently, even though it's usually right.",
+          body: "Real source material contradicts itself. An old note says the event starts at 2pm; a later correction says 3pm. The wrong behaviour is to pick one silently. And picking the *newer* one is still picking silently, even though it's usually right.",
         },
         {
           kind: "text",
@@ -93,15 +93,15 @@ export const chatgptContextLessons: AuthoredLesson[] = [
         },
         {
           kind: "text",
-          body: "**Working preferences** are the standing instructions that save you repeating yourself — short paragraphs, metric units, explicit unknowns, no summary at the end. Write three, then test them across two different requests on the same brief. Preferences drift, especially in long conversations, and the only way to know whether yours survived is to check rather than assume.",
+          body: "**Working preferences** are the standing instructions that save you repeating yourself: short paragraphs, metric units, explicit unknowns, no summary at the end. Write three, then test them across two different requests on the same brief. Preferences drift, especially in long conversations, and the only way to know whether yours survived is to check rather than assume.",
         },
         {
           kind: "text",
-          body: "**Then cut the brief down.** Add some unrelated background, see how the answers change, and remove it again. The exercise teaches something durable: most of what feels like helpful context is noise that dilutes the parts that matter. Keep a fact only if you can say what it would change — that's the test, and it eliminates more than you'd expect.",
+          body: "**Then cut the brief down.** Add some unrelated background, see how the answers change, and remove it again. The exercise teaches something durable: most of what feels like helpful context is noise that dilutes the parts that matter. Keep a fact only if you can say what it would change. That's the test, and it eliminates more than you'd expect.",
         },
         {
           kind: "callout",
-          body: "**Practice.** Create an older note saying 2pm and a newer correction saying 3pm, and confirm the conflict is reported rather than silently resolved — then approve one and check the approved time is what gets used. Write three working preferences and test them across two requests, marking which were followed. Then pad your brief with unrelated background, compare the answers, and strip it back, giving a reason for every fact you kept.",
+          body: "**Practice.** Create an older note saying 2pm and a newer correction saying 3pm, and confirm the conflict is reported rather than silently resolved, then approve one and check the approved time is what gets used. Write three working preferences and test them across two requests, marking which were followed. Then pad your brief with unrelated background, compare the answers, and strip it back, giving a reason for every fact you kept.",
         },
         {
           kind: "mcq",
@@ -116,7 +116,7 @@ export const chatgptContextLessons: AuthoredLesson[] = [
           ],
           answer: 3,
           explanation:
-            "The heuristic is usually right, which is exactly what makes it dangerous — it works until the newer note is the mistaken one. Surfacing the conflict costs one question and keeps the decision with the person who knows the situation.",
+            "The heuristic is usually right, which is exactly what makes it dangerous. It works until the newer note is the mistaken one. Surfacing the conflict costs one question and keeps the decision with the person who knows the situation.",
         },
         {
           kind: "mcq",
@@ -146,7 +146,7 @@ export const chatgptContextLessons: AuthoredLesson[] = [
       blocks: [
         {
           kind: "text",
-          body: "When you supply a document and ask a question it doesn't cover, there are two possible answers: what the document says, and what venues generally do. The second is often useful and is never what you asked for. **Bind the answer to the source**: if the policy doesn't state it, the answer is \"not stated\" — optionally followed by general advice, clearly marked as such.",
+          body: "When you supply a document and ask a question it doesn't cover, there are two possible answers: what the document says, and what venues generally do. The second is often useful and is never what you asked for. **Bind the answer to the source**: if the policy doesn't state it, the answer is \"not stated\", optionally followed by general advice, clearly marked as such.",
         },
         {
           kind: "text",
@@ -154,11 +154,11 @@ export const chatgptContextLessons: AuthoredLesson[] = [
         },
         {
           kind: "text",
-          body: "**A decision log is the brief's other half.** The brief says where you're going; the log says what's been settled on the way. Four columns: the decision, the reason, the date, and what's still open. Then audit it — the failure mode is a suggestion from a conversation appearing as an approved decision. You wrote \"we could do evenings\"; the log says \"evenings confirmed\".",
+          body: "**A decision log is the brief's other half.** The brief says where you're going; the log says what's been settled on the way. Four columns: the decision, the reason, the date, and what's still open. Then audit it. The failure mode is a suggestion from a conversation appearing as an approved decision. You wrote \"we could do evenings\"; the log says \"evenings confirmed\".",
         },
         {
           kind: "text",
-          body: "**Handoff is the payoff.** Open a brand-new conversation with nothing but the brief and the log, and ask for the next three actions. If they're consistent with your recorded decisions and assume nothing you didn't write down, the pair is doing its job. If the answer needs something you never wrote, you just found the gap — and you found it in a new chat rather than in a month when you'd forgotten the context entirely.",
+          body: "**Handoff is the payoff.** Open a brand-new conversation with nothing but the brief and the log, and ask for the next three actions. If they're consistent with your recorded decisions and assume nothing you didn't write down, the pair is doing its job. If the answer needs something you never wrote, you just found the gap, and you found it in a new chat rather than in a month when you'd forgotten the context entirely.",
         },
         {
           kind: "callout",
@@ -177,7 +177,7 @@ export const chatgptContextLessons: AuthoredLesson[] = [
           ],
           answer: 0,
           explanation:
-            "The general advice may be perfectly sound — the defect is provenance. Presented in the same breath as answers drawn from the policy, it acquires the policy's authority, and you'll quote it back to someone as what the venue requires.",
+            "The general advice may be perfectly sound. The defect is provenance. Presented in the same breath as answers drawn from the policy, it acquires the policy's authority, and you'll quote it back to someone as what the venue requires.",
         },
         {
           kind: "mcq",
@@ -208,15 +208,15 @@ export const chatgptContextLessons: AuthoredLesson[] = [
       blocks: [
         {
           kind: "text",
-          body: "Assemble the book-swap materials into one kit: the brief, the labelled source notes, your working preferences, and the decision log. This is the artefact you'd hand someone — or hand yourself in three weeks.",
+          body: "Assemble the book-swap materials into one kit: the brief, the labelled source notes, your working preferences, and the decision log. This is the artefact you'd hand someone, or hand yourself in three weeks.",
         },
         {
           kind: "text",
-          body: "Use it in a completely fresh conversation to produce an organiser's checklist, then audit that checklist against every fixed constraint in the brief. Anything the checklist assumed that the kit didn't state is a gap in the kit, not a mistake in the answer — fix the kit.",
+          body: "Use it in a completely fresh conversation to produce an organiser's checklist, then audit that checklist against every fixed constraint in the brief. Anything the checklist assumed that the kit didn't state is a gap in the kit, not a mistake in the answer, so fix the kit.",
         },
         {
           kind: "callout",
-          body: "**Do it now, in your own account.** Keep this evidence: the assembled kit, the organiser checklist it produced cold, and the completed constraint audit naming anything you had to add to the kit afterwards. Use fictional material throughout — a brief is exactly the kind of document that tempts people to paste something real.",
+          body: "**Do it now, in your own account.** Keep this evidence: the assembled kit, the organiser checklist it produced cold, and the completed constraint audit naming anything you had to add to the kit afterwards. Use fictional material throughout. A brief is exactly the kind of document that tempts people to paste something real.",
         },
         {
           kind: "code",

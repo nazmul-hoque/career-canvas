@@ -12,7 +12,7 @@ import type { LessonBody } from "./lessons";
 export const productLessonBodies: Record<string, LessonBody> = {
   "pm-core.discovery": {
     summary:
-      "Find the assumption that would change your mind, and test that one — in two weeks, not two quarters.",
+      "Find the assumption that would change your mind, and test that one, in two weeks rather than two quarters.",
     xp: 120,
     blocks: [
       {
@@ -21,11 +21,11 @@ export const productLessonBodies: Record<string, LessonBody> = {
       },
       {
         kind: "text",
-        body: "Marty Cagan's framing of what can go wrong is the most useful checklist here. Any idea carries four risks:\n\n- **Value** — will anyone want it?\n- **Usability** — can they work out how to use it?\n- **Feasibility** — can we build it?\n- **Business viability** — does it work for us legally, commercially, operationally?\n\nMost teams test feasibility (engineers estimate it) and usability (designers test it), and simply hope about value. Value is the one that kills features.",
+        body: "Marty Cagan's framing of what can go wrong is the most useful checklist here. Any idea carries four risks:\n\n- **Value:** will anyone want it?\n- **Usability:** can they work out how to use it?\n- **Feasibility:** can we build it?\n- **Business viability:** does it work for us legally, commercially, operationally?\n\nMost teams test feasibility (engineers estimate it) and usability (designers test it), and simply hope about value. Value is the one that kills features.",
       },
       {
         kind: "text",
-        body: "So start by writing down what you are **assuming**. Not what you know — what has to be true for this to work. “Teams want a shared inbox.” “Admins will invite their colleagues.” “Support can handle the extra volume.” Then plot each one by how risky it is against how much evidence you actually have. The assumptions that are high-risk and evidence-free are the only ones worth spending a fortnight on.",
+        body: "So start by writing down what you are **assuming**. Not what you know, but what has to be true for this to work. “Teams want a shared inbox.” “Admins will invite their colleagues.” “Support can handle the extra volume.” Then plot each one by how risky it is against how much evidence you actually have. The assumptions that are high-risk and evidence-free are the only ones worth spending a fortnight on.",
       },
       {
         kind: "code",
@@ -46,11 +46,11 @@ export const productLessonBodies: Record<string, LessonBody> = {
       },
       {
         kind: "text",
-        body: "Then run the smallest thing that could **change your mind** — often called a riskiest assumption test. Not a small version of the product: a test of the belief. If the assumption is “teams will pay for this”, a landing page with a real price and a real button tests it in days. If it's “admins will invite colleagues”, look at whether they invite anyone today. An MVP is a small product; this is not a product at all.",
+        body: "Then run the smallest thing that could **change your mind**, often called a riskiest assumption test. Not a small version of the product: a test of the belief. If the assumption is “teams will pay for this”, a landing page with a real price and a real button tests it in days. If it's “admins will invite colleagues”, look at whether they invite anyone today. An MVP is a small product; this is not a product at all.",
       },
       {
         kind: "callout",
-        body: "**Timebox it and name the decision up front.** Two weeks, one question, and — written down before you start — what result would make you stop. Discovery without a pre-committed decision rule turns into research that confirms whatever the team already wanted to build.",
+        body: "**Timebox it and name the decision up front.** Two weeks, one question, and (written down before you start) what result would make you stop. Discovery without a pre-committed decision rule turns into research that confirms whatever the team already wanted to build.",
       },
       {
         kind: "mcq",
@@ -89,13 +89,13 @@ export const productLessonBodies: Record<string, LessonBody> = {
         ],
         answer: 0,
         explanation:
-          "It tests the belief “people will pay for this” without building the thing. The other three all require building the product first — they're useful, but they answer “does it work” after you have already spent the money.",
+          "It tests the belief “people will pay for this” without building the thing. The other three all require building the product first. They're useful, but they answer “does it work” after you have already spent the money.",
       },
       {
         kind: "fill",
         id: "f1",
         prompt:
-          "Name the risk that asks whether anyone actually wants the thing — the one teams most often skip.",
+          "Name the risk that asks whether anyone actually wants the thing. It's the one teams most often skip.",
         before: "The ",
         after: " risk",
         answer: "value",
@@ -148,15 +148,15 @@ Rollout      10% of team-plan accounts, one week, then all.`,
       },
       {
         kind: "text",
-        body: "**Non-goals is the highest-value section**, and it is the one people leave out. Every argument three weeks into a build is a scope argument, and almost all of them are avoidable by having written “no approval chains in v1” while everyone was calm. Naming what you are not doing also tells engineers what not to build for — a system that must eventually support chains is architected differently from one that must not.",
+        body: "**Non-goals is the highest-value section**, and it is the one people leave out. Every argument three weeks into a build is a scope argument, and almost all of them are avoidable by having written “no approval chains in v1” while everyone was calm. Naming what you are not doing also tells engineers what not to build for. A system that must eventually support chains is architected differently from one that must not.",
       },
       {
         kind: "text",
-        body: "**Open questions belong in the spec, with a name and a date.** A spec with no open questions is either trivial or dishonest. Writing “can an admin approve their own invoice? — Nadia, Friday” costs one line and stops the question being answered silently, in code, by whoever hits it first at 5pm.",
+        body: "**Open questions belong in the spec, with a name and a date.** A spec with no open questions is either trivial or dishonest. Writing “can an admin approve their own invoice? (Nadia, Friday)” costs one line and stops the question being answered silently, in code, by whoever hits it first at 5pm.",
       },
       {
         kind: "text",
-        body: "Two habits keep it useful. **Link the design, don't describe it** — pixels belong in Figma, and a prose description of a layout will disagree with the file within a week. And **write the problem with its evidence attached**: “finance can't tell who approved what” is an assertion, while the same sentence with “7 of 9 interviews, 40 tickets” is a reason.",
+        body: "Two habits keep it useful. **Link the design, don't describe it.** Pixels belong in Figma, and a prose description of a layout will disagree with the file within a week. And **write the problem with its evidence attached**: “finance can't tell who approved what” is an assertion, while the same sentence with “7 of 9 interviews, 40 tickets” is a reason.",
       },
       {
         kind: "callout",
@@ -184,7 +184,7 @@ Rollout      10% of team-plan accounts, one week, then all.`,
         ],
         answer: 3,
         explanation:
-          "Real features have edges nobody has decided yet. Unwritten ones don't disappear — they get settled by whichever engineer reaches them first, at the least convenient moment, with no one else aware a decision was made.",
+          "Real features have edges nobody has decided yet. Unwritten ones don't disappear. They get settled by whichever engineer reaches them first, at the least convenient moment, with no one else aware a decision was made.",
       },
       {
         kind: "mcq",
@@ -230,7 +230,7 @@ Rollout      10% of team-plan accounts, one week, then all.`,
       },
       {
         kind: "text",
-        body: "**The metric must be able to go down.** This one test eliminates most bad choices. Cumulative sign-ups, total documents created, hours of video watched all time — these only rise, so they cannot tell you whether the thing you shipped was good. Rates, shares and cohort figures can fall, which is exactly what makes them informative: *share of invoices approved within 30 days*, not *invoices approved*.",
+        body: "**The metric must be able to go down.** This one test eliminates most bad choices. Cumulative sign-ups, total documents created, hours of video watched all time: these only rise, so they cannot tell you whether the thing you shipped was good. Rates, shares and cohort figures can fall, which is exactly what makes them informative: *share of invoices approved within 30 days*, not *invoices approved*.",
       },
       {
         kind: "code",
@@ -241,7 +241,7 @@ Rollout      10% of team-plan accounts, one week, then all.`,
            Target    ≥ 60% within 30 days of rollout
 
 Guardrail  Median time from draft to sent
-           Baseline  6 min — must not exceed 8 min
+           Baseline  6 min, must not exceed 8 min
 
 Segment    Report team-plan and enterprise separately;
            enterprise already has an external approval process.
@@ -250,15 +250,15 @@ Read on    Day 30. Not day 3.`,
       },
       {
         kind: "text",
-        body: "**Every primary metric needs a guardrail** — a counter-metric that must not get worse. Almost any number can be moved by making something else worse: sign-ups rise if you remove email verification, engagement rises if you add notifications nobody asked for, approval rates rise if you make sending slower and more annoying. The guardrail is what stops a win that isn't one.",
+        body: "**Every primary metric needs a guardrail**: a counter-metric that must not get worse. Almost any number can be moved by making something else worse: sign-ups rise if you remove email verification, engagement rises if you add notifications nobody asked for, approval rates rise if you make sending slower and more annoying. The guardrail is what stops a win that isn't one.",
       },
       {
         kind: "callout",
-        body: "**Goodhart's law:** when a measure becomes a target, it ceases to be a good measure. The moment a number is attached to a team's quarter, people optimise it — usually honestly, occasionally not, and almost always at the expense of something unmeasured. Guardrails and segmentation are the practical defence.",
+        body: "**Goodhart's law:** when a measure becomes a target, it ceases to be a good measure. The moment a number is attached to a team's quarter, people optimise it. Usually honestly, occasionally not, and almost always at the expense of something unmeasured. Guardrails and segmentation are the practical defence.",
       },
       {
         kind: "text",
-        body: "Two last things. **Measure the baseline before you launch**, because afterwards you cannot — “it feels better than before” is not a result, and nobody remembers what before was. And **segment**, because an average across two groups that behave differently describes neither: a feature that delights small teams and annoys enterprise reads as “no change”.",
+        body: "Two last things. **Measure the baseline before you launch**, because afterwards you cannot. “It feels better than before” is not a result, and nobody remembers what before was. And **segment**, because an average across two groups that behave differently describes neither: a feature that delights small teams and annoys enterprise reads as “no change”.",
       },
       {
         kind: "mcq",
@@ -302,7 +302,7 @@ Read on    Day 30. Not day 3.`,
         ],
         answer: 1,
         explanation:
-          "Without a baseline there is no before, so there is no change to claim. Reporting the current number and saying plainly that it isn't a comparison is the only honest option — and it's why the baseline gets measured before the flag is switched on.",
+          "Without a baseline there is no before, so there is no change to claim. Reporting the current number and saying plainly that it isn't a comparison is the only honest option, and it's why the baseline gets measured before the flag is switched on.",
       },
       {
         kind: "fill",
@@ -317,7 +317,7 @@ Read on    Day 30. Not day 3.`,
       },
       {
         kind: "callout",
-        body: "**Do it this week:** for the next thing your team ships, write the primary metric, its guardrail and today's baseline on one line each — before the launch. Then agree the date you'll read it, and don't read it earlier.",
+        body: "**Do it this week:** for the next thing your team ships, write the primary metric, its guardrail and today's baseline on one line each, before the launch. Then agree the date you'll read it, and don't read it earlier.",
       },
     ],
   },

@@ -37,7 +37,7 @@ export const Route = createFileRoute("/placement/$pathId")({
   head: ({ loaderData }) => ({
     meta: [
       {
-        title: loaderData ? `${loaderData.path.name} placement check — Ascent` : "Placement check",
+        title: loaderData ? `${loaderData.path.name} placement check | Ascent` : "Placement check",
       },
       {
         name: "description",
@@ -118,7 +118,7 @@ function Placement() {
           <h1 className="font-display text-2xl font-bold">Not enough written lessons yet</h1>
           <p className="mt-2 text-sm text-chalk">
             A placement check only asks questions from lessons that exist, and the {path.name}{" "}
-            roadmap doesn't have enough of them written yet. Start at the beginning — you'll move
+            roadmap doesn't have enough of them written yet. Start at the beginning. You'll move
             fast through anything you already know.
           </p>
           <Button asChild className="mt-7">
@@ -140,7 +140,7 @@ function Placement() {
         </h1>
         <p className="mt-2 text-chalk">
           {questions.length} real questions from the roadmap. Nothing here is marked complete and no
-          XP is awarded — the only output is a suggested starting point. Guessing costs you nothing
+          XP is awarded. All you get is a suggested starting point. Guessing costs you nothing
           except a worse suggestion.
         </p>
       </header>
@@ -266,15 +266,15 @@ function Placement() {
               <>
                 The first thing you missed comes from{" "}
                 <span className="font-semibold text-foreground">{recommendedModule?.title}</span> in{" "}
-                {recommendedCourse?.title}. That's where the roadmap stops being revision for you —
-                start there, and treat anything earlier as optional.
+                {recommendedCourse?.title}. That's where the roadmap stops being revision for you,
+                so start there and treat anything earlier as optional.
               </>
             ) : (
               <>
                 You answered everything correctly, so the written part of this roadmap is revision.
                 Start from{" "}
                 <span className="font-semibold text-foreground">{recommendedModule?.title}</span>{" "}
-                and move fast — nothing is marked complete on your account, because answering ten
+                and move fast. Nothing is marked complete on your account, because answering ten
                 questions is not the same as doing the work.
               </>
             )}

@@ -16,13 +16,13 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/onboarding")({
   head: () => ({
     meta: [
-      { title: "Personalise your roadmap — Ascent" },
+      { title: "Personalise your roadmap | Ascent" },
       {
         name: "description",
         content:
           "Answer four quick questions and Ascent builds a learning plan around your goal, level and weekly time.",
       },
-      { property: "og:title", content: "Personalise your roadmap — Ascent" },
+      { property: "og:title", content: "Personalise your roadmap | Ascent" },
       {
         property: "og:description",
         content: "Four questions, one roadmap built around your goal.",
@@ -148,7 +148,7 @@ function Onboarding() {
     },
     {
       title: "Where are you starting from?",
-      subtitle: "Be honest — we adjust pacing, not respect.",
+      subtitle: "Be honest. This only changes the pace.",
       valid: Boolean(experience),
       body: (
         <div className="grid gap-3">
@@ -185,8 +185,8 @@ function Onboarding() {
     {
       title: "How many hours a week can you really give?",
       subtitle: weekly
-        ? `That's ${dailyXpGoal(weekly)} XP a day, ${weeklyXpGoal(weekly)} a week — and one lesson always holds the streak, whatever the goal says.`
-        : "We size your daily goal from this — literally: the number you pick sets it. Under-promise and keep the streak.",
+        ? `That's ${dailyXpGoal(weekly)} XP a day, ${weeklyXpGoal(weekly)} a week. One lesson always keeps your streak, whatever the goal says.`
+        : "The number you pick sets your daily goal. It's better to pick less and keep the streak.",
       valid: Boolean(weekly),
       body: (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">

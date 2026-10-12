@@ -20,7 +20,7 @@ export const Route = createFileRoute("/paths/")({
   head: () =>
     seoHead({
       path: "/paths",
-      title: "Tech Career Paths & Learning Roadmaps \u2014 Ascent",
+      title: "Tech Career Paths & Learning Roadmaps | Ascent",
       description:
         "Explore career roadmaps in software development, data, design, product and AI. Build skills with ordered courses, hands-on practice and portfolio projects.",
     }),

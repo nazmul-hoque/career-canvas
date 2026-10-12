@@ -141,7 +141,7 @@ export function gradeReview(body: LessonBody, answers: Answers): GradeResult {
 
   return {
     ok: wrongBlockIds.length === 0,
-    reason: wrongBlockIds.length ? "Not quite — this one comes back tomorrow." : null,
+    reason: wrongBlockIds.length ? "Not quite. This one comes back tomorrow." : null,
     wrongBlockIds,
   };
 }
