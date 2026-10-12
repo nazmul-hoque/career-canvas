@@ -1,17 +1,7 @@
 import { seoHead, SITE_URL, SITE_DESCRIPTION } from "@/lib/seo";
 import { AuthLink } from "@/components/common/AuthLink";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-  ArrowRight,
-  Check,
-  Code2,
-  Flame,
-  MessageCircle,
-  Play,
-  Sparkles,
-  Trophy,
-  Zap,
-} from "lucide-react";
+import { ArrowRight, Code2, Flame, MessageCircle, Play, Trophy, X, Zap } from "lucide-react";
 import { AppHeader, SiteFooter } from "@/components/layout/AppShell";
 import { StatPill } from "@/components/common/StatPill";
 import { Button } from "@/components/ui/button";
@@ -48,41 +38,41 @@ const featured = [
 const pillars = [
   {
     icon: Code2,
-    title: "You type from lesson one",
-    body: "Every module ends in a challenge you have to pass — a browser editor, real tests, a real console. Nothing unlocks because you watched it.",
+    title: "Most lessons end with an exercise",
+    body: "You write the code in the browser and tests run against it. To finish the lesson, the tests have to pass.",
   },
   {
     icon: MessageCircle,
-    title: "An AI mentor that asks first",
-    body: "Stuck code gets a question, not a copy-paste answer. It reads your submission, spots the bug and walks you to it.",
+    title: "Wrong answers come with a reason",
+    body: "Pick the wrong option in a quiz and you're told why that option fails. You still have to work out the right one yourself.",
   },
   {
     icon: Trophy,
-    title: "A portfolio, not a certificate wall",
-    body: "Eight real briefs with requirements and milestones. You finish with work you can show, plus the write-up recruiters actually read.",
+    title: "You can ask the mentor",
+    body: "The AI mentor reads the code you're stuck on and asks you questions that lead you to the bug. The free plan includes ten messages a month.",
   },
 ];
 
 const steps = [
   {
-    n: "01",
-    title: "Pick a destination",
-    body: `${careerPaths.length} career paths, each with a week-by-week roadmap and a clear finish line.`,
+    n: "1",
+    title: "Choose a path",
+    body: `There are ${careerPaths.length}. Each one lists its courses week by week, so you can see how long it will take.`,
   },
   {
-    n: "02",
-    title: "Learn in short reps",
-    body: "Ten-minute lessons that end in a challenge. Daily goal, streak, XP — enough to make you come back.",
+    n: "2",
+    title: "Do a lesson",
+    body: "Most take ten to twenty minutes. Its questions come back for review the next day, then at longer gaps each time you get them right.",
   },
   {
-    n: "03",
-    title: "Build the real thing",
-    body: "Portfolio projects with a brief, requirements and milestones. Submit, get feedback, iterate.",
+    n: "3",
+    title: "Build a project",
+    body: "Each project has a brief and a list of requirements. You submit your work and get feedback on it.",
   },
   {
-    n: "04",
-    title: "Show the evidence",
-    body: "A public profile, a project portfolio and a certificate with a verifiable ID.",
+    n: "4",
+    title: "Get the certificate",
+    body: "Once you finish a path, you get a certificate with an ID. Anyone can check it on the verify page.",
   },
 ];
 
@@ -104,17 +94,14 @@ function Landing() {
       <section className="relative overflow-hidden">
         <div className="mx-auto grid max-w-[1400px] items-center gap-12 px-4 pb-16 pt-14 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:pb-24 lg:pt-20">
           <div className="min-w-0 animate-rise">
-            <StatPill tone="brand">
-              <Sparkles className="size-3.5" />
-              {liveCourses} courses live · {totalLessons} hands-on lessons
-            </StatPill>
-            <h1 className="mt-5 font-display text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
-              Become job-ready by
-              <span className="text-brand"> building</span>, not watching.
+            <h1 className="font-display text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
+              Learn to code by writing code, and find out <span className="text-brand">why</span> it
+              broke.
             </h1>
             <p className="mt-5 max-w-xl text-lg leading-relaxed text-chalk">
-              Pick a career path, follow a roadmap that knows what you already finished, and prove
-              it with code you wrote yourself. An AI mentor sits beside you the whole way.
+              {totalLessons} lessons across {liveCourses} courses so far, in programming, data,
+              design and AI. Most of them end with code you write in the browser, checked by real
+              tests. We're still writing the rest, and the roadmap shows which ones are coming.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -130,58 +117,58 @@ function Landing() {
               </Button>
             </div>
 
-            <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-chalk">
-              <span className="inline-flex items-center gap-1.5">
-                <Check className="size-4 text-brand" /> No credit card
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Check className="size-4 text-brand" /> First module free on every path
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Check className="size-4 text-brand" /> Certificates anyone can verify
-              </span>
-            </div>
+            <p className="mt-6 text-sm text-chalk">
+              No card needed. The first module of every path is free.
+            </p>
           </div>
 
-          {/* Hero panel — a lesson in progress */}
+          {/* Hero panel: quoted from js-basics.values, the first JavaScript lesson. Keep it
+              in step with that lesson, and never show its solution or its right answers
+              here, since this page ships to the browser. */}
           <div className="min-w-0 animate-rise lg:justify-self-end">
             <div className="ink-surface diagonals relative w-full overflow-hidden rounded-[22px] p-5 shadow-lift">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-white/70">
-                  JavaScript · Challenge
+                  JavaScript From Zero · Lesson 1
                 </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-ember/20 px-3 py-1 text-xs font-bold text-ember">
-                  <Flame className="size-3.5" /> 12 day streak
-                </span>
+                <Link
+                  to="/learn/$courseId/$lessonId"
+                  params={{ courseId: "javascript", lessonId: "js-basics.values" }}
+                  className="text-xs font-semibold text-white/60 underline underline-offset-2 hover:text-white"
+                >
+                  Open this lesson
+                </Link>
               </div>
 
               <p className="mt-4 font-display text-lg font-semibold text-white">
-                Total the cart with reduce
+                A first try at "Safe line totals"
               </p>
 
               <pre className="mt-3 overflow-x-auto rounded-xl bg-black/35 p-4 font-mono text-[12.5px] leading-6 text-white/85">
-                <code>{`const total = cart.reduce(
-  (sum, item) => sum + item.price * item.qty,
-  0
-);`}</code>
+                <code>{`function roundToCent(amount) {
+  return amount.toFixed(2);
+}`}</code>
               </pre>
 
-              <div className="mt-3 rounded-xl bg-brand/15 p-3 text-[13px] text-white/90 ring-1 ring-brand/30">
-                <div className="flex items-center gap-2 font-semibold text-brand">
-                  <Check className="size-4" /> 3 / 3 tests passed
+              <div className="mt-3 space-y-1.5 rounded-xl bg-ember/10 p-3 text-[13px] text-white/85 ring-1 ring-ember/30">
+                <div className="flex items-start gap-2">
+                  <X className="mt-0.5 size-4 shrink-0 text-ember" /> Rounds to the nearest cent
                 </div>
-                <p className="mt-1 text-white/70">
-                  +75 XP · Achievement unlocked: First Coding Challenge
-                </p>
+                <div className="flex items-start gap-2">
+                  <X className="mt-0.5 size-4 shrink-0 text-ember" /> Returns a number, not text
+                </div>
               </div>
 
               <div className="mt-3 rounded-xl bg-white/5 p-3 text-[13px] text-white/80 ring-1 ring-white/10">
-                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-white/50">
-                  <MessageCircle className="size-3.5" /> AI mentor
+                <div className="text-xs font-semibold uppercase tracking-wider text-white/50">
+                  Same lesson, a quiz answer that's wrong
                 </div>
+                <p className="mt-1.5 font-mono text-[12.5px] text-white/90">
+                  const n = Number("12 apples"); n === NaN
+                </p>
                 <p className="mt-1.5 leading-relaxed">
-                  Nice. Before you move on — what happens if <span className="font-mono">cart</span>{" "}
-                  is empty? Try it and tell me why that second argument matters.
+                  NaN isn't equal to anything, itself included, so this is false even when{" "}
+                  <span className="font-mono">n</span> is NaN.
                 </p>
               </div>
             </div>
@@ -210,11 +197,11 @@ function Landing() {
           <div className="max-w-xl">
             <p className="eyebrow">Career paths</p>
             <h2 className="mt-1 font-display text-3xl font-bold tracking-tight sm:text-4xl">
-              {careerPaths.length} destinations. One roadmap each.
+              Pick a path
             </h2>
             <p className="mt-2 text-chalk">
-              Every path bundles the courses, the practice and the portfolio pieces a hiring manager
-              expects to see — in the order that makes them stick.
+              Each path puts its courses and projects in the order we'd learn them in. Some paths
+              are further along than others, and each card says how many lessons are ready.
             </p>
           </div>
           <Button asChild variant="outline">
@@ -258,7 +245,7 @@ function Landing() {
             How it works
           </p>
           <h2 className="mt-1 max-w-2xl font-display text-3xl font-bold tracking-tight text-white sm:text-4xl">
-            Four steps toward skills you can demonstrate.
+            How a path works
           </h2>
           <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {steps.map((s) => (
@@ -276,13 +263,13 @@ function Landing() {
       <section className="mx-auto max-w-[1400px] px-4 py-12 sm:px-6 lg:py-16">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="max-w-xl">
-            <p className="eyebrow">Portfolio</p>
+            <p className="eyebrow">Projects</p>
             <h2 className="mt-1 font-display text-3xl font-bold tracking-tight sm:text-4xl">
-              Finish with work, not just a transcript.
+              Something to show at the end
             </h2>
             <p className="mt-2 text-chalk">
-              Eight briefs with real requirements. Build them, submit them, get feedback, put them
-              on a public profile you can link from a CV.
+              {projects.length} project briefs, each with requirements and milestones. Finished
+              projects go on your public profile, which you can link from a CV.
             </p>
           </div>
           <Button asChild variant="outline">
@@ -324,14 +311,14 @@ function Landing() {
       <section className="mx-auto max-w-[1400px] px-4 py-12 sm:px-6 lg:py-16">
         <div className="card-surface grid gap-8 p-8 lg:grid-cols-[1fr_auto] lg:items-center lg:p-10">
           <div className="max-w-2xl">
-            <p className="eyebrow">Momentum</p>
+            <p className="eyebrow">Streaks</p>
             <h2 className="mt-1 font-display text-3xl font-bold tracking-tight">
-              The hard part isn't the syntax. It's tomorrow.
+              A little each day adds up
             </h2>
             <p className="mt-3 leading-relaxed text-chalk">
-              Streaks, daily goals, XP, levels and achievements exist for one reason: most people
-              quit in week three. A 150 XP daily goal is about twenty minutes — small enough to
-              keep, big enough to matter.
+              One lesson or one review a day keeps your streak going. There's also a daily XP goal,
+              sized from the hours a week you tell us you have. The default, 150 XP, is about twenty
+              minutes.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -358,11 +345,11 @@ function Landing() {
       <section className="mx-auto max-w-[1400px] px-4 pb-20 pt-6 sm:px-6">
         <div className="card-surface p-10 text-center">
           <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
-            Your first lesson takes ten minutes.
+            The first lesson takes about ten minutes.
           </h2>
           <p className="mx-auto mt-3 max-w-lg text-chalk">
-            Start free, keep the streak, and see where you are in a month. Upgrade only when you
-            want the AI mentor on every challenge.
+            The free plan covers the first module of every path. Pro adds the rest of the lessons,
+            the projects, certificates and more time with the mentor.
           </p>
           <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
             <Button asChild size="lg" className="h-12 px-7 text-base">
