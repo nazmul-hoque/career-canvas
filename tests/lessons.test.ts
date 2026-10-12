@@ -270,11 +270,12 @@ const LEARNING_DESIGNS = [
   },
   {
     courseId: "javascript",
-    lessonCount: 19,
+    lessonCount: 20,
     minMinutes: 330,
     lastLessonId: "js-project.catalog",
     minFills: 6,
     order: [
+      ["js-basics.values", "js-basics.coercion"],
       ["js-basics.functions", "js-basics.strings"],
       ["js-basics.strings", "js-basics.checkpoint"],
       ["js-basics.conditionals", "js-basics.checkpoint"],
@@ -645,9 +646,10 @@ function namesTheAnswer(note: string, right: string): boolean {
 
 /**
  * Courses held to the full feedback standard: every wrong mcq option says why
- * it's wrong, and every challenge test shows what the learner's code gave.
+ * it's wrong, and every Python or SQL challenge test shows what the learner's
+ * code gave (`show` runs only in the Python driver).
  */
-const FEEDBACK_COURSES = ["sql-analysis"];
+const FEEDBACK_COURSES = ["sql-analysis", "javascript"];
 
 const courseLessonIds = (courseId: string) =>
   new Set(courseLessons(courses.find((c) => c.id === courseId)!).map((l) => l.id));
@@ -718,10 +720,11 @@ describe("shown test values", () => {
   });
 
   for (const courseId of FEEDBACK_COURSES) {
-    test(`${courseId}: every challenge test shows what the code gave`, () => {
+    test(`${courseId}: every Python and SQL test shows what the code gave`, () => {
       const lessonIds = courseLessonIds(courseId);
-      const ours = challenges.filter(({ id }) => lessonIds.has(id));
-      expect(ours.length).toBeGreaterThan(0);
+      const ours = challenges.filter(
+        ({ id, b }) => lessonIds.has(id) && (b.language === "python" || b.language === "sql"),
+      );
       const missing = ours.flatMap(({ id, b }) =>
         b.tests.filter((t) => !t.show?.trim()).map((t) => `${id}: ${t.name}`),
       );

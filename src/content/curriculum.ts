@@ -141,7 +141,8 @@ export const courses: Course[] = [
     careers: ["frontend", "fullstack", "ai"],
     modules: [
       m("js-basics", "Values and logic", "The building blocks you will use every day.", [
-        ["values", "Variables, types and truthiness", 15, "practice"],
+        ["values", "Variables, types and numbers", 15, "practice"],
+        ["coercion", "Coercion, equality and truthiness", 14, "practice"],
         ["functions", "Functions and return values", 16, "practice"],
         ["strings", "Strings and template literals", 16, "practice"],
         ["conditionals", "Conditionals and guard clauses", 16, "challenge"],

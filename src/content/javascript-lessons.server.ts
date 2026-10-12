@@ -6,6 +6,338 @@ import type { LessonBody } from "./lessons";
  * async work with a real DOM rather than assessing those skills in isolation.
  */
 export const javascriptLessonBodies: Record<string, LessonBody> = {
+  "js-basics.values": {
+    summary:
+      "Store values with const and let, know their types, and handle numbers the way money needs.",
+    xp: 100,
+    blocks: [
+      {
+        kind: "text",
+        body: "`const` names a value that won't be reassigned; `let` names one that will. Use `const` by default and `let` only when you need to reassign. (You'll see `var` in old code; its scoping rules are confusing, so don't write new code with it.)",
+      },
+      {
+        kind: "code",
+        language: "javascript",
+        code: `const name = "Ada";        // string
+let count = 3;             // number (integers and decimals are both "number")
+const inStock = true;      // boolean
+let coupon = null;         // "deliberately nothing"
+let note;                  // undefined: declared, never given a value
+
+typeof count               // "number"
+typeof null                // "object", a famous historical mistake
+Array.isArray([1, 2])      // true (typeof [] is also "object")`,
+      },
+      { kind: "heading", text: "Numbers for prices and quantities" },
+      {
+        kind: "text",
+        body: "Prices, quantities and totals are all `number`. Three things about numbers catch people out, and every shop calculation in this course runs into them.",
+      },
+      {
+        kind: "text",
+        body: "**Decimals are approximate.** `0.1 + 0.2` is `0.30000000000000004`. For money, round the final answer to the cent with `Math.round(total * 100) / 100`: multiply into cents, round to a whole number, divide back. Round once, at the end, not after every step.",
+      },
+      {
+        kind: "text",
+        body: '**`toFixed` gives you text.** `(13.5).toFixed(2)` is the string `"13.50"`. That\'s right for showing a price and wrong for doing more maths with it, so keep numbers as numbers until the moment you display them.',
+      },
+      {
+        kind: "text",
+        body: '**Not every conversion works.** `Number("12")` is 12, but `Number("12 apples")` is `NaN`, "not a number", whose type is, confusingly, `"number"`. Test for it with `Number.isNaN(n)`; `n === NaN` is always false, because NaN isn\'t equal to anything, not even itself. `Number.isFinite(n)` is stricter, false for NaN and for `Infinity` too, and `Number.isInteger(n)` tells a whole number from a decimal.',
+      },
+      {
+        kind: "code",
+        language: "javascript",
+        code: `Math.round(4.99 * 3 * 0.9 * 100) / 100   // 13.47
+(13.5).toFixed(2)                        // "13.50", a string
+
+Number("12 apples")                      // NaN
+Number.isNaN(Number("12 apples"))        // true
+NaN === NaN                              // false
+
+Number.isFinite(1 / 0)                   // false: 1 / 0 is Infinity
+Number.isInteger(3)                      // true
+Number.isInteger(2.5)                    // false`,
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question: "`const label = (19.5).toFixed(2);` What's `label + 1`?",
+        options: [
+          {
+            text: "20.5",
+            whyNot:
+              "That would need `+` to add, but `toFixed` hands back text, not a number, so `+` doesn't add here.",
+          },
+          '"19.501"',
+          {
+            text: '"20.50"',
+            whyNot:
+              "That would mean the 1 was added before the formatting. `label` is already text by the time `+` sees it, and `+` with text joins.",
+          },
+          {
+            text: "NaN",
+            whyNot:
+              "NaN comes from maths that can't be done. `+` with a string on one side doesn't do maths at all, so it can't fail.",
+          },
+        ],
+        answer: 1,
+        explanation:
+          '`toFixed` returns the string `"19.50"`, and `+` with a string joins text. Format only for display, after the maths is done.',
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question: '`const n = Number("12 apples");` Which check tells you the conversion failed?',
+        options: [
+          {
+            text: "`n === NaN`",
+            whyNot:
+              "NaN isn't equal to anything, itself included, so this is false even when `n` is NaN.",
+          },
+          {
+            text: "`n === null`",
+            whyNot: "`Number` never returns null. A conversion that fails gives NaN instead.",
+          },
+          "`Number.isNaN(n)`",
+          {
+            text: '`typeof n !== "number"`',
+            whyNot:
+              'NaN\'s type is `"number"`, so this check lets the failed conversion straight through.',
+          },
+        ],
+        answer: 2,
+        explanation:
+          "`Number.isNaN` is the one reliable test. NaN is a number by type and unequal to itself, so the other checks miss it.",
+      },
+      {
+        kind: "fill",
+        id: "f1",
+        prompt: "Round a total to the nearest cent.",
+        before: "Math.",
+        after: "(total * 100) / 100",
+        answer: "round",
+        explanation:
+          "`Math.round` rounds to the nearest whole number, so working in cents first rounds to the nearest cent.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Safe line totals",
+        prompt:
+          "Write three helpers. `roundToCent(amount)` returns the amount rounded to the nearest cent, as a number. `isWholeQuantity(value)` is true for a whole number that's 0 or more, and false for anything else, including decimals, negatives, `NaN` and the string `\"3\"`. `lineTotal(price, qty)` returns price × qty rounded to the cent, or `null` when the price isn't a finite number of 0 or more or the quantity isn't whole.",
+        language: "javascript",
+        starter: `function roundToCent(amount) {
+  // your code here
+}
+
+function isWholeQuantity(value) {
+  // your code here
+}
+
+function lineTotal(price, qty) {
+  // your code here
+}
+
+console.log(roundToCent(0.1 + 0.2), lineTotal(4.99, 3));`,
+        hint: "`roundToCent` is `Math.round(amount * 100) / 100`. `isWholeQuantity` needs `Number.isInteger(value)` and `value >= 0`. In `lineTotal`, return `null` unless `Number.isFinite(price)`, `price >= 0` and `isWholeQuantity(qty)`; then round `price * qty`.",
+        solution: `function roundToCent(amount) {
+  return Math.round(amount * 100) / 100;
+}
+
+function isWholeQuantity(value) {
+  return Number.isInteger(value) && value >= 0;
+}
+
+function lineTotal(price, qty) {
+  if (!Number.isFinite(price) || price < 0 || !isWholeQuantity(qty)) return null;
+  return roundToCent(price * qty);
+}`,
+        tests: [
+          {
+            name: "Rounds to the nearest cent",
+            expression: "roundToCent(0.1 + 0.2) === 0.3 && roundToCent(4.99 * 3 * 0.9) === 13.47",
+          },
+          {
+            name: "Returns a number, not text",
+            expression: 'typeof roundToCent(1.234) === "number" && roundToCent(10) === 10',
+          },
+          {
+            name: "Whole quantities include 0",
+            expression: "isWholeQuantity(3) === true && isWholeQuantity(0) === true",
+          },
+          {
+            name: "Decimals, negatives, NaN and text aren't whole quantities",
+            expression: '[2.5, -1, NaN, "3"].every((value) => isWholeQuantity(value) === false)',
+          },
+          {
+            name: "Multiplies and rounds a line",
+            expression:
+              "lineTotal(4.99, 3) === 14.97 && lineTotal(0.1, 3) === 0.3 && lineTotal(5, 0) === 0",
+          },
+          {
+            name: "Refuses impossible prices and quantities",
+            expression:
+              "lineTotal(NaN, 2) === null && lineTotal(Infinity, 1) === null && lineTotal(-1, 2) === null && lineTotal(5, 2.5) === null",
+          },
+        ],
+      },
+    ],
+  },
+  "js-basics.coercion": {
+    summary:
+      "Know when JavaScript changes a value's type behind your back, and compare and test values safely.",
+    xp: 100,
+    blocks: [
+      {
+        kind: "text",
+        body: "Every value from the last lesson has a type. JavaScript will also change a value's type for you, without asking, and that's where most beginner bugs live.",
+      },
+      { kind: "heading", text: "`+` joins, `-` subtracts" },
+      {
+        kind: "text",
+        body: '`"5" + 1` is `"51"`: when either side of `+` is a string, `+` joins text. But `"5" - 1` is `4`, because `-` only does maths, so it converts the string first. Form fields always give you strings, so convert on purpose with `Number(text)`, and watch out: `Number("")` is `0`, not "nothing". `.trim()` removes spaces from both ends of a string, so `" 3.5 ".trim()` is `"3.5"`; the strings lesson covers more.',
+      },
+      {
+        kind: "code",
+        language: "javascript",
+        code: `"5" + 1          // "51"   joined
+"5" - 1          // 4      converted, then subtracted
+Number("5") + 1  // 6      converted on purpose
+Number("")       // 0      an empty field is not "nothing"
+" 3.5 ".trim()   // "3.5"`,
+      },
+      { kind: "heading", text: "Compare with `===`" },
+      {
+        kind: "text",
+        body: '`==` converts before comparing, so `0 == ""`, `"1" == 1` and `null == undefined` are all `true`. `===` compares the type as well as the value, and converts nothing. Always use `===`; then a comparison means exactly what it says.',
+      },
+      { kind: "heading", text: "Truthy and falsy" },
+      {
+        kind: "text",
+        body: 'In an `if`, these count as false: `false`, `0`, `""`, `null`, `undefined` and `NaN`. Everything else is true, including `"0"`, `[]` and `{}`. So `if (quantity)` treats a genuine quantity of 0 as missing. When 0 or an empty string is a real answer, test for what you mean, such as `quantity === null`; the conditionals lesson shows `??` for defaults.',
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question: 'A form gives you `const qty = "2"`. What\'s `qty + 1`?',
+        options: [
+          {
+            text: "3",
+            whyNot:
+              "That needs `+` to add, but with a string on one side it joins text. Nothing here converts `qty` to a number.",
+          },
+          {
+            text: '"3"',
+            whyNot: "Joining doesn't do any arithmetic: it puts one piece of text after the other.",
+          },
+          {
+            text: "NaN",
+            whyNot:
+              "NaN comes from maths that can't be done, like `\"two\" - 1`. `+` with a string doesn't do maths at all.",
+          },
+          '"21"',
+        ],
+        answer: 3,
+        explanation:
+          "With a string on either side, `+` joins text. Convert first: `Number(qty) + 1` is 3.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question: "Which of these values is truthy?",
+        options: [
+          {
+            text: "`0`",
+            whyNot:
+              "0 is one of the six falsy values, which is exactly why `if (quantity)` treats a real 0 as missing.",
+          },
+          {
+            text: '`""`',
+            whyNot: "The empty string is falsy. It's the only string that is.",
+          },
+          '`"0"`',
+          {
+            text: "`null`",
+            whyNot: "`null` is falsy, like `undefined`: both mean there's nothing there.",
+          },
+        ],
+        answer: 2,
+        explanation:
+          'Any non-empty string is truthy, including "0" and "false". Only the empty string is falsy.',
+      },
+      {
+        kind: "mcq",
+        id: "q3",
+        question: "Which of these comparisons is `true`?",
+        options: [
+          '`0 == ""`',
+          {
+            text: '`0 === ""`',
+            whyNot:
+              "`===` never converts, and a number and a string are different types, so it's false.",
+          },
+          {
+            text: '`"1" === 1`',
+            whyNot: "A string and a number are different types, and `===` checks the type too.",
+          },
+          {
+            text: "`null === undefined`",
+            whyNot:
+              "They're two different values with different types. Only the loose `==` treats them as equal.",
+          },
+        ],
+        answer: 0,
+        explanation:
+          '`==` converts the empty string to 0 before comparing, so `0 == ""` is true. That surprise is why the rule is to use `===`.',
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Numbers from a form",
+        prompt:
+          'Write `toNumber(input)`: trim the text, return `null` if it\'s empty or isn\'t a number, and the number otherwise. Watch the traps: `Number("")` is `0`, and `"0"` is a real answer. Then write `formatPrice(amount)`, which returns text like `$12.00`.',
+        language: "javascript",
+        starter: `function toNumber(input) {
+  // your code here
+}
+
+function formatPrice(amount) {
+  // your code here
+}
+
+console.log(toNumber(" 3.5 "), formatPrice(0.1 + 0.2));`,
+        hint: 'Trim with `String(input).trim()` and return `null` straight away if the result is `""`. Then `Number(text)`, checking `Number.isNaN(...)`. For the price: `"$" + amount.toFixed(2)`.',
+        solution: `function toNumber(input) {
+  const text = String(input).trim();
+  if (text === "") return null;
+  const n = Number(text);
+  return Number.isNaN(n) ? null : n;
+}
+
+function formatPrice(amount) {
+  return "$" + amount.toFixed(2);
+}`,
+        tests: [
+          { name: "Reads a whole number", expression: `toNumber("12") === 12` },
+          { name: "Trims spaces and reads decimals", expression: `toNumber(" 3.5 ") === 3.5` },
+          {
+            name: "Empty input is null, not 0",
+            expression: `toNumber("") === null && toNumber("   ") === null`,
+          },
+          {
+            name: "Text that isn't a number is null",
+            expression: `toNumber("12 apples") === null`,
+          },
+          { name: '"0" is a real zero', expression: `toNumber("0") === 0` },
+          {
+            name: "Formats prices to two decimals",
+            expression: `formatPrice(12) === "$12.00" && formatPrice(0.1 + 0.2) === "$0.30"`,
+          },
+        ],
+      },
+    ],
+  },
   "js-basics.strings": {
     summary:
       "Build text with template literals, clean up what people type, and remember that string methods hand back a new string.",
@@ -53,9 +385,21 @@ const total = 42.5;
         id: "q1",
         question: "`const name = \"Ada\"; console.log('Hi, ${name}');` What does it print?",
         options: [
-          "Hi, Ada",
-          "An error, because `name` isn't defined",
-          "Hi, undefined",
+          {
+            text: "Hi, Ada",
+            whyNot:
+              "That's what backticks would print. These are ordinary single quotes, which never fill anything in.",
+          },
+          {
+            text: "An error, because `name` isn't defined",
+            whyNot:
+              "`name` is defined on the line before. And inside ordinary quotes there's no variable at all, just text.",
+          },
+          {
+            text: "Hi, undefined",
+            whyNot:
+              "That would mean `name` was looked up and found empty. In single quotes, nothing is looked up at all.",
+          },
           "Hi, ${name}",
         ],
         answer: 3,
@@ -69,9 +413,21 @@ const total = 42.5;
           'A sign-up form runs `email.trim().toLowerCase();` on its own line, then saves `email`. The person typed `"  Ada@Example.com "`. What gets saved?',
         options: [
           '`"  Ada@Example.com "`, unchanged',
-          '`"ada@example.com"`',
-          '`"Ada@Example.com"`, trimmed but not lowercased',
-          "`undefined`",
+          {
+            text: '`"ada@example.com"`',
+            whyNot:
+              "That's what the cleaned-up string is, but the line never stores it anywhere. String methods return a new string and leave `email` alone.",
+          },
+          {
+            text: '`"Ada@Example.com"`, trimmed but not lowercased',
+            whyNot:
+              "Nothing applies halfway. Both methods ran, but their result, a new string, was thrown away.",
+          },
+          {
+            text: "`undefined`",
+            whyNot:
+              "`email` still holds what the person typed. Calling methods on it doesn't empty it.",
+          },
         ],
         answer: 0,
         explanation:
@@ -92,7 +448,7 @@ const total = 42.5;
         id: "c1",
         title: "Text for a shop",
         prompt:
-          'Write four small helpers, using template literals to build the text. `itemCount(n)` returns `"1 item"`, or `"0 items"`, `"3 items"` and so on. `receiptLine(name, qty, price)` returns a line like `"Headlamp × 2: $70.00"`, where `price` is the price of one and the total always shows two decimals. `matchesSearch(productName, query)` is true when the product name contains the query, ignoring case and any spaces around the query; an empty query matches everything. `maskCard(number)` returns `"•••• 4242"`: four dots, a space, and the last four digits, ignoring spaces around the number.',
+          'Write four small helpers, using template literals to build the text. `itemCount(n)` returns `"1 item"`, or `"0 items"`, `"3 items"` and so on. `receiptLine(name, qty, price)` returns a line like `"Headlamp × 2: $70.00"`, where `price` is the price of one and the total always shows two decimals. `matchesSearch(productName, query)` is true when the product name contains the query, ignoring case and any spaces around the query; an empty query matches everything. `maskCard(number)` returns `"•••• 4242"`: four dots, a space, and the last four digits, ignoring spaces around the number. The `×` and `•` characters are awkward to type, so plain `x` and `*` are fine too: `"Headlamp x 2: $70.00"`, `"**** 4242"`.',
         language: "javascript",
         starter: `function itemCount(n) {
   // your code here
@@ -136,11 +492,11 @@ function maskCard(number) {
           },
           {
             name: "A receipt line totals the quantity",
-            expression: `receiptLine("Headlamp", 2, 35) === "Headlamp × 2: $70.00"`,
+            expression: `["Headlamp × 2: $70.00", "Headlamp x 2: $70.00"].includes(receiptLine("Headlamp", 2, 35))`,
           },
           {
             name: "The total always shows two decimals",
-            expression: `receiptLine("Sticker", 3, 0.1) === "Sticker × 3: $0.30"`,
+            expression: `["Sticker × 3: $0.30", "Sticker x 3: $0.30"].includes(receiptLine("Sticker", 3, 0.1))`,
           },
           {
             name: "Search ignores case and surrounding spaces",
@@ -152,7 +508,7 @@ function maskCard(number) {
           },
           {
             name: "A card shows only its last four digits",
-            expression: `maskCard("4242424242424242") === "•••• 4242" && maskCard(" 4000 0566 5566 1881 ") === "•••• 1881"`,
+            expression: `["•••• 4242", "**** 4242"].includes(maskCard("4242424242424242")) && ["•••• 1881", "**** 1881"].includes(maskCard(" 4000 0566 5566 1881 "))`,
           },
         ],
       },
@@ -165,25 +521,41 @@ function maskCard(number) {
     blocks: [
       {
         kind: "callout",
-        body: "This checkpoint starts from an empty editor. Write down the invalid cases and boundary values before coding, and open the hint only after your first run.",
+        body: "This checkpoint starts from an empty editor: you write both functions yourself. Before you type any code, list the inputs that should give `null`, and open the hint only after your first run.",
       },
       {
         kind: "text",
-        body: "Real inputs arrive as strings. A robust calculation separates three jobs: normalise and validate the input, calculate with numbers, then format for a person. If conversion and formatting are mixed together, an empty field quietly becoming zero can look like a legitimate answer.",
+        body: "Everything here comes from the lessons so far, used together. Form fields arrive as text, so a checkout does three jobs, in this order: check the input and turn it into numbers, do the maths, then format the answer for a person. Keep them apart. Format too early and you're doing maths on text; convert without checking and an empty field quietly becomes 0, which looks like a real answer.",
+      },
+      {
+        kind: "text",
+        body: "A plan that works: trim both inputs and return `null` for an empty one. Convert with `Number`, then turn away anything unusable: a price that isn't finite or is negative, a quantity that isn't a whole number. Work out the total, take off the member discount, and round to the cent once, at the end. Only the label turns the number into text.",
       },
       {
         kind: "mcq",
         id: "q1",
         question: "Why must you check for an empty string before calling `Number(text)`?",
         options: [
-          "Number cannot read strings",
-          '`Number("")` is 0, so a missing value can masquerade as a valid zero',
-          "Empty strings throw an error",
-          "Number removes decimal places",
+          {
+            text: "Number cannot read strings",
+            whyNot:
+              '`Number` exists to read strings: `Number("12")` is 12. The trouble is one string it reads too generously.',
+          },
+          '`Number("")` is 0, so an empty field would look like a real 0',
+          {
+            text: "Empty strings throw an error",
+            whyNot:
+              "Nothing throws, and that's the problem: `Number` hands back an ordinary-looking number instead.",
+          },
+          {
+            text: "Number removes decimal places",
+            whyNot:
+              '`Number("3.5")` is 3.5, so decimals survive. An empty field is the input that goes wrong.',
+          },
         ],
         answer: 1,
         explanation:
-          "An explicit empty check preserves the difference between no answer and the numeric value zero.",
+          'Checking for an empty string first keeps "nothing entered" apart from a genuine 0.',
       },
       {
         kind: "fill",
@@ -192,7 +564,8 @@ function maskCard(number) {
         before: "if (!Number.",
         after: "(quantity)) return null;",
         answer: "isInteger",
-        explanation: "Number.isInteger distinguishes whole numbers from decimals and NaN.",
+        explanation:
+          "`Number.isInteger` is true only for whole numbers, so it turns away 2.5 and NaN alike.",
       },
       {
         kind: "challenge",
@@ -267,20 +640,39 @@ function checkoutLabel(priceText, quantityText, member = false) {
     blocks: [
       {
         kind: "callout",
-        body: "This checkpoint supplies no function skeleton. First draw the result object and label the type of every value inside it.",
+        body: "This checkpoint gives you no function to start from. Before writing any code, sketch the object you're going to return and note what type each part is.",
       },
       {
         kind: "text",
-        body: "A data transformation should have an explicit input and output shape. Here the input is an array of order objects. The output is one new object containing arrays, a number and a counts object. Unless the brief says otherwise, reading data should not sort, splice or rewrite the caller's records.",
+        body: "This one brings the data lessons together. The input is an array of orders; the output is one new object holding two arrays, a number and an object of counts. Writing that result down first, with a small example, tells you what to set up before the loop and what to add inside it.",
+      },
+      {
+        kind: "text",
+        body: "Two rules from earlier apply. Reading data shouldn't change it, so don't sort, splice or edit the orders you're given. And an empty array is a normal input: it should give empty arrays, 0 and an empty object, not an error.",
       },
       {
         kind: "mcq",
         id: "q1",
         question: "Which array method is most likely to accidentally change the caller's input?",
-        options: ["`filter`", "`map`", "`sort`", "`reduce`"],
+        options: [
+          {
+            text: "`filter`",
+            whyNot: "`filter` builds a new array and leaves the original as it was.",
+          },
+          {
+            text: "`map`",
+            whyNot: "`map` returns a new array too; the original keeps its items and their order.",
+          },
+          "`sort`",
+          {
+            text: "`reduce`",
+            whyNot:
+              "`reduce` only reads the array to build its result. It changes the input only if your own callback does.",
+          },
+        ],
         answer: 2,
         explanation:
-          "sort changes the array it is called on. Copy first with [...orders].sort(...) when order matters.",
+          "`sort` reorders the array it's called on. Copy first, `[...orders].sort(...)`, when you need a different order.",
       },
       {
         kind: "fill",
@@ -289,7 +681,8 @@ function checkoutLabel(priceText, quantityText, member = false) {
         before: "const next = { ...counts, paid: ",
         after: " };",
         answer: "(counts.paid ?? 0) + 1",
-        explanation: "Spread creates a new object and ?? supplies zero only when paid is missing.",
+        explanation:
+          "Spread makes a new object, and `?? 0` starts the count at 0 when there isn't one yet.",
       },
       {
         kind: "challenge",
@@ -368,7 +761,7 @@ function checkoutLabel(priceText, quantityText, member = false) {
       },
       {
         kind: "text",
-        body: 'Keep behavior out of attributes such as `onclick="..."`. Give the control an id or class, select it in app.js, and attach a listener there. That keeps HTML responsible for meaning and JavaScript responsible for behavior, avoids global function names, and works with strict Content Security Policy.',
+        body: 'Keep behavior out of attributes such as `onclick="..."`. Give the control an id or class, select it in app.js, and attach a listener there: a function the browser calls when someone uses the control, which the events lesson covers properly. That keeps HTML responsible for meaning and JavaScript responsible for behavior, avoids global function names, and works with strict Content Security Policy.',
       },
       {
         kind: "text",
@@ -384,9 +777,20 @@ function checkoutLabel(priceText, quantityText, member = false) {
         question: "The Network panel shows app.js returned 404. What should you fix first?",
         options: [
           "The script's src path, because none of that file ran",
-          "The first function in app.js",
-          "The button's CSS",
-          "Add more console.log calls inside the missing file",
+          {
+            text: "The first function in app.js",
+            whyNot:
+              "With a 404, none of app.js reached the browser, so none of its functions ran, right or wrong.",
+          },
+          {
+            text: "The button's CSS",
+            whyNot:
+              "Styles don't stop a script loading. The Network panel says the file itself never arrived.",
+          },
+          {
+            text: "Add more console.log calls inside the missing file",
+            whyNot: "Logs inside a file that never loads never run, so they'd tell you nothing.",
+          },
         ],
         answer: 0,
         explanation:
@@ -519,7 +923,11 @@ likes.count;     // undefined: the variable isn't a property, and no one else ca
       },
       {
         kind: "text",
-        body: "You've already relied on closures: an event handler that changes a `quantity` variable declared outside it is one. React's hooks, later, are closures too, and one that captured an old value is behind a common kind of React bug.",
+        body: "Closures are everywhere once you look for them. The counter above is one, and so is any function you hand over to be called later, such as a timer's callback or, in the events lesson, a click handler that updates a variable declared outside it.",
+      },
+      {
+        kind: "callout",
+        body: "**Later on:** React's hooks are closures too, and a hook that kept hold of an old value is behind one of React's most common bugs. You won't need that until the React course, but it's this lesson's idea.",
       },
       {
         kind: "text",
@@ -554,9 +962,21 @@ items;         // ReferenceError: items is private to cart.js`,
         question:
           "`const handlers = []; for (var i = 0; i < 3; i++) handlers.push(() => i);` What does `handlers.map((h) => h())` give?",
         options: [
-          "`[0, 1, 2]`",
-          "`[2, 2, 2]`",
-          "`[undefined, undefined, undefined]`",
+          {
+            text: "`[0, 1, 2]`",
+            whyNot:
+              "That's what `let` would give, with a fresh `i` for each pass. `var` makes a single `i` that all three functions share.",
+          },
+          {
+            text: "`[2, 2, 2]`",
+            whyNot:
+              "The loop stops when `i < 3` fails, and that check runs after the last `i++`, so the shared `i` doesn't stop at 2.",
+          },
+          {
+            text: "`[undefined, undefined, undefined]`",
+            whyNot:
+              "Each function returns `i`, and `i` still exists after the loop: `var` keeps it alive for the whole function.",
+          },
           "`[3, 3, 3]`",
         ],
         answer: 3,
@@ -569,10 +989,21 @@ items;         // ReferenceError: items is private to cart.js`,
         question:
           '`cart.js` is loaded with `type="module"` and declares `let items = [];` at the top. A separate, classic script on the same page runs `console.log(items)`. What happens?',
         options: [
-          "It logs `[]`",
-          "It logs `undefined`",
+          {
+            text: "It logs `[]`",
+            whyNot:
+              "That would need `items` to be shared with the page. A module's top-level variables stay inside the module.",
+          },
+          {
+            text: "It logs `undefined`",
+            whyNot:
+              "`undefined` means a name exists without a value. Outside the module, this name doesn't exist at all.",
+          },
           "`ReferenceError: items is not defined`",
-          "It logs whatever `window.items` holds, which the module set",
+          {
+            text: "It logs whatever `window.items` holds, which the module set",
+            whyNot: "Modules never create globals, so `window.items` is never set.",
+          },
         ],
         answer: 2,
         explanation:
@@ -676,25 +1107,41 @@ function once(fn) {
     blocks: [
       {
         kind: "callout",
-        body: "This checkpoint provides the page but no JavaScript skeleton. Plan the state and render function first; event handlers should only change state and ask render to update the page.",
+        body: "This checkpoint gives you the page but no JavaScript. Plan the state and the `render` function first; then each event handler only has to change the state and call `render`.",
       },
       {
         kind: "text",
-        body: "For an interface that changes, keep one source of truth in JavaScript. The DOM is an output of that state, not a second database. A submit handler validates and changes the array; a delegated click handler removes from it; and one idempotent render function rebuilds the list and status.",
+        body: "This brings the DOM lessons together. Keep the list in a JavaScript array, and treat the page as a picture of that array, never as the place the data lives. The submit handler checks the input and adds to the array. One click listener on the list removes from it. And one `render` function rebuilds the whole list and the count from the array, every time it runs.",
+      },
+      {
+        kind: "text",
+        body: "Build it in that order: `render` first, called once at startup so you can see it working, then adding, then removing.",
       },
       {
         kind: "mcq",
         id: "q1",
         question: "Why should render clear the list before rebuilding it?",
         options: [
-          "Clearing is faster than appending",
-          "Event listeners require an empty list",
-          "The browser cannot append twice",
-          "Calling render twice with unchanged state should produce the same page, not duplicate every row",
+          {
+            text: "Clearing is faster than appending",
+            whyNot:
+              "Speed isn't the reason, and for a short list there's hardly any difference. Think about what happens the second time `render` runs.",
+          },
+          {
+            text: "Event listeners require an empty list",
+            whyNot:
+              "Listeners don't care what's in the list, and the delegated one sits on the container anyway.",
+          },
+          {
+            text: "The browser cannot append twice",
+            whyNot:
+              "It can append as often as you like, which is exactly the problem if nothing is cleared first.",
+          },
+          "So that calling it twice gives the same page, instead of adding every row again",
         ],
         answer: 3,
         explanation:
-          "An idempotent render makes the page a predictable projection of current state.",
+          "If `render` always starts from an empty list, the page always matches the array, however many times it runs.",
       },
       {
         kind: "fill",
@@ -703,7 +1150,7 @@ function once(fn) {
         before: "nameElement.",
         after: " = itemName;",
         answer: "textContent",
-        explanation: "textContent displays characters without parsing them as HTML.",
+        explanation: "`textContent` shows the characters as text and never reads them as HTML.",
       },
       {
         kind: "challenge",
@@ -800,6 +1247,7 @@ render();`,
       "Read and send JSON with fetch, treat a 404 or 500 as the failure it is, and show loading, empty and error states on the page.",
     xp: 170,
     blocks: [
+      { kind: "heading", text: "JSON" },
       {
         kind: "text",
         body: "**JSON** is the text format almost every web API speaks. It looks like a JavaScript object, but it's stricter: keys and strings need double quotes, and there are no comments, no trailing commas, no functions and no `undefined`. `JSON.stringify(value)` turns a value into JSON text, and `JSON.parse(text)` turns the text back into a value. `JSON.parse` throws a `SyntaxError` on anything that isn't valid JSON, such as `\"{'name': 'Ada'}\"` with single quotes.",
@@ -817,6 +1265,7 @@ JSON.stringify(order);
 localStorage.setItem("cart", JSON.stringify(cart));
 const saved = JSON.parse(localStorage.getItem("cart") ?? "[]");`,
       },
+      { kind: "heading", text: "Reading with `fetch`, and checking `ok`" },
       {
         kind: "text",
         body: "`fetch(url)` makes a request and gives back a promise of a **response**. Reading the body is a second wait, because the headers arrive before the body does: `await response.json()` reads the body and parses it as JSON. A body can only be read once.",
@@ -845,10 +1294,51 @@ async function addReview(productId, stars) {
   return response.json();
 }`,
       },
+      { kind: "heading", text: "Four outcomes on the page" },
       {
         kind: "text",
         body: "**On the page, a request has more than two outcomes.** It starts *loading*, then it succeeds with data, succeeds with *nothing* (an empty list is an answer, not an error), or fails. Show each one: say `Loading…` and disable the button that started it, render the data or an honest empty message, and on failure say so in words a person understands. `try`/`catch`/`finally` fits exactly: `finally` re-enables the button whichever way it went.",
       },
+      {
+        kind: "code",
+        language: "javascript",
+        caption: "A Load button that shows every outcome",
+        code: `const button = document.querySelector("#load-reviews");
+const list = document.querySelector("#reviews");
+const status = document.querySelector("#review-status");
+
+async function loadReviews(productId) {
+  const response = await fetch(\`/api/reviews?product=\${productId}\`);
+  if (!response.ok) throw new Error(\`Reviews: \${response.status}\`);
+  return response.json();
+}
+
+button.addEventListener("click", async () => {
+  list.replaceChildren();                 // clear what the last request showed
+  status.textContent = "Loading…";        // 1. loading
+  button.disabled = true;
+  try {
+    const reviews = await loadReviews(7);
+    for (const review of reviews) {
+      const item = document.createElement("li");
+      item.textContent = review.text;
+      list.append(item);
+    }
+    if (reviews.length === 0) status.textContent = "No reviews yet";     // 3. empty
+    else if (reviews.length === 1) status.textContent = "1 review";      // 2. data
+    else status.textContent = \`\${reviews.length} reviews\`;
+  } catch {
+    status.textContent = "Could not load reviews";                       // 4. failed
+  } finally {
+    button.disabled = false;              // whichever way it went
+  }
+});`,
+      },
+      {
+        kind: "text",
+        body: "Two details in it are easy to miss. The old rows are cleared *before* loading, so a failure doesn't leave the last answer on screen looking current. And the empty case is decided only after a successful reply: an empty array means the server answered and there's nothing to show, which deserves its own message rather than the error one.",
+      },
+      { kind: "heading", text: "Replies that arrive out of order" },
       {
         kind: "text",
         body: "One more thing goes wrong on real networks: responses don't always arrive in the order you asked. If someone searches for *shell* and then *lamp*, and the *shell* reply is slower, it lands last and replaces the right results. The capstone asks you to handle that: remember which request is the latest, and ignore any older reply.",
@@ -863,10 +1353,20 @@ async function addReview(productId, stars) {
         question:
           '`await fetch("/api/orders/999")` and the server answers `404 Not Found`. What happens?',
         options: [
-          "The promise rejects, so the `catch` block runs",
-          "`fetch` returns `null`",
+          {
+            text: "The promise rejects, so the `catch` block runs",
+            whyNot:
+              "`fetch` rejects only when no response arrives at all. A 404 is a response from the server.",
+          },
+          {
+            text: "`fetch` returns `null`",
+            whyNot: "`fetch` always hands back a promise of a response. It never returns `null`.",
+          },
           "The promise resolves with a response whose `ok` is `false`, and your code has to check it",
-          "The browser retries until it gets a 200",
+          {
+            text: "The browser retries until it gets a 200",
+            whyNot: "Nothing retries on its own. One request goes out and one response comes back.",
+          },
         ],
         answer: 2,
         explanation:
@@ -879,9 +1379,21 @@ async function addReview(productId, stars) {
           'What does `JSON.stringify({ name: "Ada", nickname: undefined, joined: new Date("2026-01-05") })` produce?',
         options: [
           '`{"name":"Ada","joined":"2026-01-05T00:00:00.000Z"}`',
-          '`{"name":"Ada","nickname":undefined,"joined":"2026-01-05"}`',
-          '`{"name":"Ada","nickname":null,"joined":{}}`',
-          "It throws, because `undefined` can't be turned into JSON",
+          {
+            text: '`{"name":"Ada","nickname":undefined,"joined":"2026-01-05"}`',
+            whyNot:
+              "JSON has no `undefined`, so it can't appear in the output, and a date keeps its time of day as well.",
+          },
+          {
+            text: '`{"name":"Ada","nickname":null,"joined":{}}`',
+            whyNot:
+              "Neither is converted that way: a property holding `undefined` is dropped, and a date becomes text, not an empty object.",
+          },
+          {
+            text: "It throws, because `undefined` can't be turned into JSON",
+            whyNot:
+              "An `undefined` property isn't an error. `JSON.stringify` quietly leaves it out.",
+          },
         ],
         answer: 0,
         explanation:
@@ -896,6 +1408,33 @@ async function addReview(productId, stars) {
         answer: "json",
         explanation:
           "`response.json()` reads the body and parses it. It returns a promise, so it needs its own `await`.",
+      },
+      {
+        kind: "mcq",
+        id: "q3",
+        question:
+          "A Load button disables itself while its request runs. Where does `button.disabled = false` go so that it always comes back?",
+        options: [
+          {
+            text: "At the end of the `try` block, after the data is shown",
+            whyNot:
+              "If the request fails, the code jumps to `catch` before reaching that line, and the button stays disabled for good.",
+          },
+          {
+            text: "In the `catch` block",
+            whyNot:
+              "Then it only comes back after a failure. A successful load would leave the button disabled.",
+          },
+          "In a `finally` block",
+          {
+            text: "Straight after the `fetch` call, before `await response.json()`",
+            whyNot:
+              "The request isn't finished at that point: reading the body is a second wait, and it can still fail.",
+          },
+        ],
+        answer: 2,
+        explanation:
+          "`finally` runs after `try` whether it succeeded or `catch` handled a failure, so anything that must happen either way belongs there.",
       },
       {
         kind: "challenge",
@@ -1097,10 +1636,22 @@ async function search(query) {
         question:
           "A slow search for shell finishes after a newer search for lamp and replaces its results. What is this bug?",
         options: [
-          "Type coercion",
+          {
+            text: "Type coercion",
+            whyNot:
+              "Nothing here changes a value's type. The results are right; they just arrive in the wrong order.",
+          },
           "A stale-response race condition",
-          "Event bubbling",
-          "A syntax error",
+          {
+            text: "Event bubbling",
+            whyNot:
+              "Bubbling is about which elements hear an event. This bug is about which reply arrives last.",
+          },
+          {
+            text: "A syntax error",
+            whyNot:
+              "The code runs without complaint, which is exactly what makes this bug hard to spot.",
+          },
         ],
         answer: 1,
         explanation:

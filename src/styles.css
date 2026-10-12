@@ -231,6 +231,17 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  /* JetBrains Mono joins == and === into single glyphs, and >= into ≥. In a
+     course that teaches the difference, code must show the characters typed. */
+  code,
+  pre,
+  kbd,
+  samp,
+  textarea,
+  .font-mono {
+    font-variant-ligatures: none;
+  }
+
   h1,
   h2,
   h3,

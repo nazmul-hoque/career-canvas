@@ -21,101 +21,6 @@ import type { LessonBody } from "./lessons";
  * merge point plus the remaining backlog, and shrinks as courses are extracted.
  */
 const coreLessonBodies: Record<string, LessonBody> = {
-  "js-basics.values": {
-    summary:
-      "Store values with const and let, know their types, and avoid the coercion traps that cause most beginner bugs.",
-    xp: 100,
-    blocks: [
-      {
-        kind: "text",
-        body: "`const` names a value that won't be reassigned; `let` names one that will. Use `const` by default and `let` only when you need to reassign. (You'll see `var` in old code; its scoping rules are confusing, so don't write new code with it.)",
-      },
-      {
-        kind: "code",
-        language: "javascript",
-        code: `const name = "Ada";        // string
-let count = 3;             // number (integers and decimals are both "number")
-const inStock = true;      // boolean
-let coupon = null;         // "deliberately nothing"
-let note;                  // undefined: declared, never given a value
-
-typeof count               // "number"
-typeof null                // "object", a famous historical mistake
-Array.isArray([1, 2])      // true (typeof [] is also "object")`,
-      },
-      {
-        kind: "text",
-        body: '**JavaScript converts types silently, and that\'s where the bugs live.** `"5" + 1` is `"51"` (the `+` joins strings), but `"5" - 1` is `4`. `==` converts before comparing (`0 == ""` is `true`), so always compare with `===`, which doesn\'t. Form fields always give you strings, so convert them on purpose with `Number(text)`, and watch out: `Number("")` is `0`, not "nothing".',
-      },
-      {
-        kind: "text",
-        body: '**Truthy and falsy.** In an `if`, these count as false: `false`, `0`, `""`, `null`, `undefined` and `NaN`. Everything else is true, including `"0"`, `[]` and `{}`. So `if (quantity)` treats a genuine quantity of 0 as missing. And decimals are approximate: `0.1 + 0.2` is `0.30000000000000004`, so round money for display with `toFixed(2)`.',
-      },
-      {
-        kind: "mcq",
-        id: "q1",
-        question: 'A form gives you `const qty = "2"`. What\'s `qty + 1`?',
-        options: ["3", '"3"', "NaN", '"21"'],
-        answer: 3,
-        explanation:
-          "With a string on either side, `+` joins text. Convert first: `Number(qty) + 1` is 3.",
-      },
-      {
-        kind: "mcq",
-        id: "q2",
-        question: "Which of these values is truthy?",
-        options: ["`0`", '`""`', '`"0"`', "`null`"],
-        answer: 2,
-        explanation:
-          'Any non-empty string is truthy, including "0" and "false". Only the empty string is falsy.',
-      },
-      {
-        kind: "challenge",
-        id: "c1",
-        title: "Numbers from a form",
-        prompt:
-          'Write `toNumber(input)`: trim the text, return `null` if it\'s empty or isn\'t a number, and the number otherwise. Watch the traps: `Number("")` is `0`, and `"0"` is a real answer. Then write `formatPrice(amount)`, which returns text like `$12.00`.',
-        language: "javascript",
-        starter: `function toNumber(input) {
-  // your code here
-}
-
-function formatPrice(amount) {
-  // your code here
-}
-
-console.log(toNumber(" 3.5 "), formatPrice(0.1 + 0.2));`,
-        hint: 'Trim with `String(input).trim()` and return `null` straight away if the result is `""`. Then `Number(text)`, checking `Number.isNaN(...)`. For the price: `"$" + amount.toFixed(2)`.',
-        solution: `function toNumber(input) {
-  const text = String(input).trim();
-  if (text === "") return null;
-  const n = Number(text);
-  return Number.isNaN(n) ? null : n;
-}
-
-function formatPrice(amount) {
-  return "$" + amount.toFixed(2);
-}`,
-        tests: [
-          { name: "Reads a whole number", expression: `toNumber("12") === 12` },
-          { name: "Trims spaces and reads decimals", expression: `toNumber(" 3.5 ") === 3.5` },
-          {
-            name: "Empty input is null, not 0",
-            expression: `toNumber("") === null && toNumber("   ") === null`,
-          },
-          {
-            name: "Text that isn't a number is null",
-            expression: `toNumber("12 apples") === null`,
-          },
-          { name: '"0" is a real zero', expression: `toNumber("0") === 0` },
-          {
-            name: "Formats prices to two decimals",
-            expression: `formatPrice(12) === "$12.00" && formatPrice(0.1 + 0.2) === "$0.30"`,
-          },
-        ],
-      },
-    ],
-  },
   "js-basics.functions": {
     summary: "Functions package a job so you can run it whenever you need it.",
     xp: 120,
@@ -147,7 +52,24 @@ console.log(total(12, 3)); // 36`,
         id: "q1",
         question:
           "What does `total(4, 5)` evaluate to if the function body is `price * quantity` with no `return`?",
-        options: ["undefined", "20", "NaN", "It throws an error"],
+        options: [
+          "undefined",
+          {
+            text: "20",
+            whyNot:
+              "The multiplication does produce 20, but without `return` the function hands nothing back, so the call doesn't have that value.",
+          },
+          {
+            text: "NaN",
+            whyNot:
+              "NaN comes from maths that can't be done. 4 times 5 works fine; the result just never leaves the function.",
+          },
+          {
+            text: "It throws an error",
+            whyNot:
+              "Leaving out `return` isn't an error. The function runs to the end quietly, and the caller gets nothing back.",
+          },
+        ],
         answer: 0,
         explanation:
           "The multiplication happens, but nothing is handed back, so the call evaluates to undefined.",
@@ -165,7 +87,24 @@ console.log(total(12, 3)); // 36`,
         kind: "mcq",
         id: "q2",
         question: "`const add = (a, b) => { a + b; };` What does `add(2, 3)` return?",
-        options: ["5", "undefined", '"23"', "An error"],
+        options: [
+          {
+            text: "5",
+            whyNot:
+              "`a + b` is worked out, but inside braces it's just a statement. Without `return`, the result is thrown away.",
+          },
+          "undefined",
+          {
+            text: '"23"',
+            whyNot:
+              "That would need one of them to be a string. 2 and 3 are numbers, so `+` adds; the question is whether the result leaves the function.",
+          },
+          {
+            text: "An error",
+            whyNot:
+              "The code is valid: braces after `=>` start an ordinary function body. It just never returns anything.",
+          },
+        ],
         answer: 1,
         explanation:
           "The braces make it a block body, and a block needs an explicit `return`. Write `(a, b) => a + b` or `{ return a + b; }`.",
@@ -227,7 +166,23 @@ console.log(applyDiscount(200, 25));`,
         id: "q1",
         question:
           "A customer sets a quantity of 0 to remove an item. The code says `const qty = input || 1;`. What's `qty`?",
-        options: ["0", "undefined", "null", "1"],
+        options: [
+          {
+            text: "0",
+            whyNot:
+              "That's what `??` would keep. `||` falls through on any falsy value, and 0 is falsy.",
+          },
+          {
+            text: "undefined",
+            whyNot: "`||` always returns one of its two sides, and neither side here is missing.",
+          },
+          {
+            text: "null",
+            whyNot:
+              "Nothing here is null. `||` returns one of its two sides: the input or the default.",
+          },
+          "1",
+        ],
         answer: 3,
         explanation:
           "0 is falsy, so `||` swaps in the default, and the item stays in the cart. `input ?? 1` keeps the 0.",
@@ -237,10 +192,22 @@ console.log(applyDiscount(200, 25));`,
         id: "q2",
         question: "Why prefer guard clauses to one large nested `if`?",
         options: [
-          "They run faster",
+          {
+            text: "They run faster",
+            whyNot:
+              "Speed isn't the point: the same work gets done either way. The difference is how easy the code is to read.",
+          },
           "Each odd case is handled and finished at the top, so the main logic reads straight down without nesting",
-          "JavaScript limits how deep `if`s can nest",
-          "They avoid needing `else`",
+          {
+            text: "JavaScript limits how deep `if`s can nest",
+            whyNot:
+              "There's no such limit. Deep nesting is legal; it's just hard for people to follow.",
+          },
+          {
+            text: "They avoid needing `else`",
+            whyNot:
+              "Fewer `else`s is a side effect, not the reason. Think about what a reader meets first.",
+          },
         ],
         answer: 1,
         explanation:
@@ -299,8 +266,35 @@ function quantityOrDefault(qty) {
     blocks: [
       {
         kind: "text",
-        body: "An array is an ordered list: `const prices = [120, 35, 20];`. Positions start at 0, so `prices[0]` is 120, and `prices.length` is 3. Loop with `for (const price of prices)` when you just need each item, and `prices.forEach((price, i) => …)` when you also need the position.",
+        body: "An array is an ordered list: `const prices = [120, 35, 20];`. Positions start at 0, so `prices[0]` is 120, and `prices.length` is 3.",
       },
+      { kind: "heading", text: "Three ways to loop" },
+      {
+        kind: "text",
+        body: "Loop with `for (const price of prices)` when you just need each item, and `prices.forEach((price, i) => …)` when you also need the position. The classic `for` loop counts for you: `for (let i = 0; i < prices.length; i++)` starts `i` at 0, keeps going while `i` is less than the length, and adds 1 after each pass. Use it when the position itself matters, such as stepping two at a time or stopping early.",
+      },
+      {
+        kind: "code",
+        language: "javascript",
+        code: `const prices = [120, 35, 20];
+
+for (const price of prices) {                // each item
+  console.log(price);
+}
+
+prices.forEach((price, i) => {               // each item and its position
+  console.log(i, price);
+});
+
+for (let i = 0; i < prices.length; i++) {    // start; keep going while; step
+  console.log(i, prices[i]);
+}`,
+      },
+      {
+        kind: "text",
+        body: "Declare the counter with `let`, as above. Each pass of the loop then gets its own `i`, which starts to matter once functions remember variables; the scope lesson shows what goes wrong with `var`.",
+      },
+      { kind: "heading", text: "Changing an array, or copying it" },
       {
         kind: "code",
         language: "javascript",
@@ -313,8 +307,23 @@ const copy = [...cart];      // a shallow copy`,
       },
       {
         kind: "text",
-        body: "**Know which methods mutate.** `push`, `pop`, `splice`, `reverse` and `sort` change the array in place, and every part of your code holding that array sees the change. `slice`, `map`, `filter`, `concat` and spread (`[...a]`) return a new one. Copy before mutating when the array isn't yours to change, like a function's argument or data from React state.",
+        body: "**Know which methods mutate.** `push`, `pop`, `splice`, `reverse` and `sort` change the array in place, and every part of your code holding that array sees the change. `slice`, `map`, `filter`, `concat` and spread (`[...a]`) return a new one. Copy before mutating when the array isn't yours to change, like an array a function was given as its argument.",
       },
+      { kind: "heading", text: "Each value once, with `Set`" },
+      {
+        kind: "text",
+        body: "A `Set` is a collection that holds each value only once. Adding a value it already has does nothing, and it remembers the order values first arrived in. `has` asks whether a value is in it, and spreading a set into an array, `[...set]`, turns it back into a list.",
+      },
+      {
+        kind: "code",
+        language: "javascript",
+        code: `const seen = new Set(["tent", "stove", "tent"]);
+seen.size              // 2
+seen.has("stove")      // true
+seen.add("map");       // now tent, stove, map
+[...seen]              // ["tent", "stove", "map"]`,
+      },
+      { kind: "heading", text: "Sorting numbers" },
       {
         kind: "text",
         body: '**`sort()` sorts as text by default.** `[120, 9, 35].sort()` gives `[120, 35, 9]`, because "1" comes before "3" and "9" in the alphabet. Pass a comparison function for numbers: `sort((a, b) => a - b)`. Because `sort` also mutates, the usual safe version is `[...prices].sort((a, b) => a - b)`, or `prices.toSorted(…)` in modern browsers.',
@@ -323,7 +332,23 @@ const copy = [...cart];      // a shallow copy`,
         kind: "mcq",
         id: "q1",
         question: "What does `[10, 9, 1].sort()` return?",
-        options: ["[1, 9, 10]", "[10, 9, 1]", "[1, 10, 9]", "[9, 10, 1]"],
+        options: [
+          {
+            text: "[1, 9, 10]",
+            whyNot:
+              "That's numeric order, which `sort` only gives you with a comparison function like `(a, b) => a - b`. Without one, it compares the items as text.",
+          },
+          {
+            text: "[10, 9, 1]",
+            whyNot: "`sort` does reorder the array; this is just the original order back.",
+          },
+          "[1, 10, 9]",
+          {
+            text: "[9, 10, 1]",
+            whyNot:
+              'Compared as text, the first character decides, and "1" comes before "9", so neither item starting with 1 can end up last.',
+          },
+        ],
         answer: 2,
         explanation:
           'Without a comparison function, items are compared as strings: "1" < "10" < "9". Use `(a, b) => a - b` for numbers.',
@@ -335,9 +360,21 @@ const copy = [...cart];      // a shallow copy`,
           "A function does `items.sort(…)` on the array it was given, and returns it. What's the side effect?",
         options: [
           "The caller's array is reordered too, because `sort` changes the array in place and returns that same array",
-          "None, because sort returns a copy",
-          "The function returns undefined",
-          "It throws on the caller's array",
+          {
+            text: "None, because sort returns a copy",
+            whyNot:
+              "`sort` returns the same array it was called on, already reordered. `toSorted` is the one that copies.",
+          },
+          {
+            text: "The function returns undefined",
+            whyNot:
+              "`sort` returns the array, so the function hands it back as written. The surprise is somewhere else.",
+          },
+          {
+            text: "It throws on the caller's array",
+            whyNot:
+              "Sorting someone else's array is allowed, which is exactly why this bug is easy to miss.",
+          },
         ],
         answer: 0,
         explanation:
@@ -417,7 +454,7 @@ const { phone = "none" } = customer;             // with a default`,
       },
       {
         kind: "text",
-        body: "**Objects are passed by reference.** `const b = a` doesn't copy anything; both names point to the same object, so changing `b.qty` changes `a.qty` too. To update something without changing the original (which React state requires), build a new object with spread: `{ ...item, qty: 3 }`. Spread copies only one level deep, so update nested parts with spread too.",
+        body: "**Objects are passed by reference.** `const b = a` doesn't copy anything; both names point to the same object, so changing `b.qty` changes `a.qty` too. To update something without changing the original, build a new object with spread: `{ ...item, qty: 3 }`. Spread copies only one level deep, so update nested parts with spread too.",
       },
       {
         kind: "code",
@@ -434,7 +471,23 @@ const updated = {
         kind: "mcq",
         id: "q1",
         question: "`const copy = original; copy.qty = 5;` What's `original.qty` now?",
-        options: ["Its old value", "undefined", "5", "It throws"],
+        options: [
+          {
+            text: "Its old value",
+            whyNot:
+              "That would need `copy` to be a separate object. `const copy = original` gives the same object a second name.",
+          },
+          {
+            text: "undefined",
+            whyNot: "`qty` still exists, on the one object both names share. Nothing was removed.",
+          },
+          "5",
+          {
+            text: "It throws",
+            whyNot:
+              "Changing a property through either name is allowed, so there's nothing to throw about.",
+          },
+        ],
         answer: 2,
         explanation:
           "There's only one object, with two names. `{ ...original, qty: 5 }` makes a new one.",
@@ -445,10 +498,22 @@ const updated = {
         question:
           "`order.customer.address.city` throws \"Cannot read properties of undefined (reading 'city')\" for guest orders. What's the safe read?",
         options: [
-          '`order.customer.address.city || ""`',
+          {
+            text: '`order.customer.address.city || ""`',
+            whyNot:
+              "`||` only helps once a value has been read, and the crash happens during the read itself.",
+          },
           "`order?.customer?.address?.city`",
-          '`order.customer.address["city"]`',
-          "Wrap the whole page in try/catch",
+          {
+            text: '`order.customer.address["city"]`',
+            whyNot:
+              "Square brackets read the same property another way, so they fail in the same place.",
+          },
+          {
+            text: "Wrap the whole page in try/catch",
+            whyNot:
+              "That hides the crash rather than handling the missing address, and stops everything after it.",
+          },
         ],
         answer: 1,
         explanation:
@@ -561,7 +626,24 @@ const revenue2 = orders
         kind: "mcq",
         id: "q1",
         question: "`[].reduce((sum, x) => sum + x)` (no starting value). What happens?",
-        options: ["It returns 0", "It returns undefined", "It throws a TypeError", "It returns []"],
+        options: [
+          {
+            text: "It returns 0",
+            whyNot:
+              "0 would need a starting value to count from, and none was given. With no items and no start, there's nothing to return.",
+          },
+          {
+            text: "It returns undefined",
+            whyNot:
+              "`reduce` doesn't quietly fall back to a value. An empty array with no starting value is treated as a mistake in your code.",
+          },
+          "It throws a TypeError",
+          {
+            text: "It returns []",
+            whyNot:
+              "`reduce` returns whatever the callback builds, beginning from the starting value. It never hands back the array itself.",
+          },
+        ],
         answer: 2,
         explanation:
           '"Reduce of empty array with no initial value." Pass the starting value, `reduce(fn, 0)`, and an empty list gives 0.',
@@ -570,7 +652,23 @@ const revenue2 = orders
         kind: "mcq",
         id: "q2",
         question: "You need the first order over 100, not all of them. Which method?",
-        options: ["`find`", "`filter`", "`map`", "`some`"],
+        options: [
+          "`find`",
+          {
+            text: "`filter`",
+            whyNot:
+              "`filter` returns every match, as an array, and checks the whole list to do it.",
+          },
+          {
+            text: "`map`",
+            whyNot: "`map` transforms every item and keeps them all. It never picks one out.",
+          },
+          {
+            text: "`some`",
+            whyNot:
+              "`some` stops at the first match, but it only answers true or false, not which order it was.",
+          },
+        ],
         answer: 0,
         explanation:
           "`find` returns the first match (or `undefined`) and stops looking. `some` would only tell you whether one exists.",
@@ -680,9 +778,21 @@ function revenueByCategory(orders) {
         question:
           "\"TypeError: Cannot read properties of undefined (reading 'price')\". What is undefined?",
         options: [
-          "`price`",
-          "The function that was called",
-          "The whole file",
+          {
+            text: "`price`",
+            whyNot:
+              "`price` is the property being read. The message says the thing it was being read from was missing.",
+          },
+          {
+            text: "The function that was called",
+            whyNot:
+              'A missing function gives "... is not a function". This message is about reading a property.',
+          },
+          {
+            text: "The whole file",
+            whyNot:
+              "If the file hadn't loaded, none of it would run, and you'd see no error from inside it.",
+          },
           "The object you tried to read `.price` *from*",
         ],
         answer: 3,
@@ -694,10 +804,22 @@ function revenueByCategory(orders) {
         id: "q2",
         question: '"ReferenceError: totl is not defined". What\'s the most likely cause?',
         options: [
-          "A network failure",
+          {
+            text: "A network failure",
+            whyNot:
+              "A network failure shows up as a failed request, not as a missing name in your code.",
+          },
           "A typo: `totl` instead of `total`, or a variable used outside the scope where it was declared",
-          "`totl` is null",
-          "The browser is out of date",
+          {
+            text: "`totl` is null",
+            whyNot:
+              "A variable holding null still exists. \"is not defined\" means the name doesn't exist at all where it's used.",
+          },
+          {
+            text: "The browser is out of date",
+            whyNot:
+              "Every browser understands variables. The error is about one name in your own code.",
+          },
         ],
         answer: 1,
         explanation:
@@ -781,10 +903,22 @@ Actual total: 0`,
         id: "q1",
         question: "A `reduce` returns 0 for a non-empty array. What is the most likely cause?",
         options: [
-          "The array is frozen",
-          "reduce cannot be used on objects",
+          {
+            text: "The array is frozen",
+            whyNot:
+              "Freezing stops changes to an array, but `reduce` only reads it, so a frozen array reduces normally.",
+          },
+          {
+            text: "reduce cannot be used on objects",
+            whyNot:
+              "This is an array, and `reduce` works on arrays of objects too. The bug is inside the callback.",
+          },
           "The callback does not return the accumulator",
-          "The initial value must be omitted",
+          {
+            text: "The initial value must be omitted",
+            whyNot:
+              "Leaving it out makes things worse: an empty array then throws. The starting value is fine; look at what each call hands on.",
+          },
         ],
         answer: 2,
         explanation:
@@ -797,9 +931,20 @@ Actual total: 0`,
           "You add `console.log(sum)` as the first line inside the reduce callback. It prints `0`, then `undefined`, `undefined`. What does that prove?",
         options: [
           "The first call gets the starting value, but every call after that receives `undefined`, so the callback isn't returning anything",
-          "The prices are wrong",
-          "`console.log` broke the reduce",
-          "There are too many items",
+          {
+            text: "The prices are wrong",
+            whyNot:
+              "The log shows `sum`, not the prices. Bad prices would give wrong numbers, not a missing value from the second call on.",
+          },
+          {
+            text: "`console.log` broke the reduce",
+            whyNot: "Logging only reads a value. It can't change what the callback returns.",
+          },
+          {
+            text: "There are too many items",
+            whyNot:
+              "`reduce` handles any number of items, and the pattern starts on the second call whatever the length.",
+          },
         ],
         answer: 0,
         explanation:
@@ -869,7 +1014,7 @@ document.querySelector("#cart").append(li);`,
       },
       {
         kind: "text",
-        body: "A reliable pattern for lists: keep the data in an array, and write one `render` function that **clears the container and rebuilds it** from that array. `list.replaceChildren()` empties an element. Rendering from data every time is simpler than patching the page by hand, and it's the idea React is built on.",
+        body: "A reliable pattern for lists: keep the data in an array, and write one `render` function that **clears the container and rebuilds it** from that array. `list.replaceChildren()` empties an element. Rendering from data every time is simpler than patching the page by hand.",
       },
       {
         kind: "mcq",
@@ -877,9 +1022,20 @@ document.querySelector("#cart").append(li);`,
         question:
           "A review shows the customer's name with `el.innerHTML = review.name`. Why is that dangerous?",
         options: [
-          "It's slower than textContent",
-          "innerHTML strips spaces",
-          "It only works in Chrome",
+          {
+            text: "It's slower than textContent",
+            whyNot:
+              "It is a little slower, but that isn't the danger. Think about what happens when the name contains `<`.",
+          },
+          {
+            text: "innerHTML strips spaces",
+            whyNot: "It doesn't touch spaces. The risk is in how it treats tags inside the text.",
+          },
+          {
+            text: "It only works in Chrome",
+            whyNot:
+              "`innerHTML` works in every browser, which is part of why the risk reaches every visitor.",
+          },
           'A "name" containing HTML becomes real elements, and scripts in it can run on every visitor\'s page (XSS)',
         ],
         answer: 3,
@@ -891,10 +1047,22 @@ document.querySelector("#cart").append(li);`,
         id: "q2",
         question: "Calling `renderCart()` twice doubles every item on the page. What's missing?",
         options: [
-          "A `return` statement",
+          {
+            text: "A `return` statement",
+            whyNot:
+              "A missing return can't add rows. The function runs; the problem is what it starts from each time.",
+          },
           "Clearing the list before adding the items again",
-          "A second list",
-          "`defer` on the script tag",
+          {
+            text: "A second list",
+            whyNot:
+              "Another list would only double things somewhere else. The one list needs to start empty.",
+          },
+          {
+            text: "`defer` on the script tag",
+            whyNot:
+              "`defer` decides when the script first runs. Calling `renderCart()` twice still runs it twice.",
+          },
         ],
         answer: 1,
         explanation:
@@ -1005,9 +1173,21 @@ render();                               // and render once at the start`,
         question:
           'A newsletter form reloads the page on submit, wiping the "Thanks!" message your handler shows. What\'s missing?',
         options: [
-          "`return false` at the end of the file",
-          "A `click` listener on the button instead",
-          "`async` on the handler",
+          {
+            text: "`return false` at the end of the file",
+            whyNot:
+              "The end of a file runs once, at load. It has no say in what happens when the form is submitted later.",
+          },
+          {
+            text: "A `click` listener on the button instead",
+            whyNot:
+              "Clicking a submit button still submits the form, so the page reloads anyway, and pressing Enter in a field skips the click entirely.",
+          },
+          {
+            text: "`async` on the handler",
+            whyNot:
+              "`async` changes what the handler returns, not what the browser does with the form.",
+          },
           "`event.preventDefault()` in the submit handler",
         ],
         answer: 3,
@@ -1020,10 +1200,22 @@ render();                               // and render once at the start`,
         question:
           "Rows are added to a list after the page loads, and their Delete buttons don't respond. Why?",
         options: [
-          "The buttons are disabled",
-          "Click events don't work on new elements",
+          {
+            text: "The buttons are disabled",
+            whyNot:
+              "Nothing in the code disabled them. They look normal; there's simply nothing listening to them.",
+          },
+          {
+            text: "Click events don't work on new elements",
+            whyNot:
+              "New elements fire clicks like any other. What they lack is a listener of their own.",
+          },
           'Listeners were attached to the buttons that existed at load time. Put one listener on the list and use `event.target.closest("button")`',
-          'The list needs `role="list"`',
+          {
+            text: 'The list needs `role="list"`',
+            whyNot:
+              "`role` tells assistive technology what an element is. It has no effect on events.",
+          },
         ],
         answer: 2,
         explanation:
@@ -1109,18 +1301,30 @@ render();`,
       {
         kind: "code",
         language: "javascript",
-        code: `async function loadPrice(id) {
-  const response = await fetch("/api/prices/" + id);   // wait for the network
-  if (!response.ok) throw new Error("Price " + id + " not found");
-  const data = await response.json();                  // wait for the body
-  return data.price;
+        code: `// A promise that settles after ms milliseconds: a stand-in for a network request.
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function loadPrice(id) {
+  await wait(50);                           // the "request" takes 50ms
+  if (id === 999) throw new Error("Price " + id + " not found");
+  return { 7: 35 }[id];
 }
 
-try {
-  const price = await loadPrice(7);
-} catch (error) {
-  showMessage(error.message);          // a rejected promise lands here
-}`,
+async function showPrice(id) {
+  try {
+    const price = await loadPrice(id);      // pauses showPrice, not the page
+    console.log("Price:", price);
+  } catch (error) {
+    console.log(error.message);             // a rejected promise lands here
+  }
+}
+
+showPrice(7);     // 50ms later: Price: 35
+showPrice(999);   // 50ms later: Price 999 not found`,
+      },
+      {
+        kind: "text",
+        body: '`wait` stands in for a real request here; the next lesson makes real ones with `fetch`. `await` only works inside an `async` function, which is why `showPrice` exists. The one exception is the top level of a module, a file loaded with `type="module"` like the `app.js` from the browser lessons, where `await` can stand on its own.',
       },
       {
         kind: "text",
@@ -1136,9 +1340,21 @@ try {
         question: "`const price = loadPrice(7); console.log(price * 2);` prints `NaN`. Why?",
         options: [
           "`loadPrice` is async, so it returns a promise; without `await`, `price` is the promise, not the number",
-          "The price is missing",
-          "`console.log` can't print numbers",
-          "`fetch` isn't allowed",
+          {
+            text: "The price is missing",
+            whyNot:
+              "The price comes back fine once the request finishes. The problem is reading it before that happens.",
+          },
+          {
+            text: "`console.log` can't print numbers",
+            whyNot:
+              "`console.log` prints numbers happily. The value it was given just isn't a number.",
+          },
+          {
+            text: "`loadPrice` threw an error",
+            whyNot:
+              "An error would show up as a rejected promise, not as NaN. Nothing failed here; something wasn't waited for.",
+          },
         ],
         answer: 0,
         explanation:
@@ -1150,10 +1366,22 @@ try {
         question:
           "A product page needs the price and the stock level, from two separate requests of about 200ms each. What's the faster way to get both?",
         options: [
-          "`const p = await getPrice(); const s = await getStock();`, about 400ms",
+          {
+            text: "`const p = await getPrice(); const s = await getStock();`, about 400ms",
+            whyNot:
+              "That works, but the second request only starts after the first has finished, so the waits add up.",
+          },
           "`const [p, s] = await Promise.all([getPrice(), getStock()]);`, about 200ms",
-          "Put both in `setTimeout`",
-          "It makes no difference",
+          {
+            text: "Put both in `setTimeout`",
+            whyNot:
+              "`setTimeout` delays code. It doesn't run requests at the same time or give you their results.",
+          },
+          {
+            text: "It makes no difference",
+            whyNot:
+              "Waiting for one before starting the other doubles the time. Starting both first lets them overlap.",
+          },
         ],
         answer: 1,
         explanation:
