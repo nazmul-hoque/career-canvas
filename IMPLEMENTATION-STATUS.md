@@ -117,6 +117,16 @@ Two facts shape every item below:
 
 ## Done
 
+- [x] **JavaScript From Zero, second review** (2026-10-12). The fetch lesson's
+      challenge was still two API functions plus a full UI, so the lesson is
+      now two: `js-async.fetch` (write `loadOrders` and `saveNote`, plain
+      JavaScript, one test per behaviour) and `js-async.states` (the four
+      outcomes, the worked example, stale replies, the `finally` question and
+      a new one on empty answers; its challenge is only the page, with a
+      working `loadOrders` supplied). The course is 21 lessons. The async
+      challenge now says why its starter's top-level `await` works: the editor
+      runs code inside an `async` function (it is not a module).
+
 - [x] **JavaScript From Zero: order and pacing** (reader review, 2026-10-12).
       Challenges used tools no lesson taught, lessons leaned on later ones, and
       checkpoints read like another author. Lesson 1 is now two lessons
@@ -131,9 +141,18 @@ Two facts shape every item below:
       example and a `finally` question; `maskCard`/`receiptLine` accept `*` and
       `x`. Every wrong option has a `whyNot` (`javascript` joins
       `FEEDBACK_COURSES`). Code no longer renders ligatures (`==`/`===` were
-      drawn as single glyphs). Found, not fixed: `js-async.fetch` is 496px wide
-      on a 390px phone, before and after these changes; the code editor's
-      highlight spans are the widest elements.
+      drawn as single glyphs). Its fetch lesson was 496px wide on a 390px phone
+      (fixed the same day, below).
+
+- [x] **Lessons wider than a phone** (2026-10-12). A sweep of all 241 live
+      lessons at 390px found two. `js-async.fetch`: quiz options holding JSON
+      strings had nowhere to break, so the flex button couldn't shrink; inline
+      code now breaks with `overflow-wrap: anywhere` (`InlineText.tsx`), which
+      unlike `break-word` lowers the min-content width. `ts-quality.contracts`:
+      a callout's three Markdown links rendered as raw text with long URLs.
+      `InlineText` now reads `[label](https://…)` as a link opening in a new
+      tab; any other scheme stays text, so lesson copy can't produce a
+      `javascript:` link.
 
 - [x] **SQL for Analysis is hard to follow** (reader review, 2026-10-12). The
       SQL and the traps are right; the presentation isn't. Lessons quote facts

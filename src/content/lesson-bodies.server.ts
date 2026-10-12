@@ -1392,7 +1392,7 @@ showPrice(999);   // 50ms later: Price 999 not found`,
         id: "c1",
         title: "Load a product, fast and safely",
         prompt:
-          "`fetchPrice` and `fetchStock` stand in for real requests, each taking about 50ms. Write `productInfo(id)`, which returns `{ id, price, inStock }` with `inStock` true when the stock is above 0, fetching the price and stock **at the same time**. Then write `safePrice(id)`, which returns the price, or `null` if the request fails.",
+          "`fetchPrice` and `fetchStock` stand in for real requests, each taking about 50ms. Write `productInfo(id)`, which returns `{ id, price, inStock }` with `inStock` true when the stock is above 0, fetching the price and stock **at the same time**. Then write `safePrice(id)`, which returns the price, or `null` if the request fails. The editor runs your code inside an `async` function, so the starter's last line can use `await` on its own, the way the top level of a module can.",
         language: "javascript",
         starter: `const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 

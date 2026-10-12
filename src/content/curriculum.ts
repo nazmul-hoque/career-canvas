@@ -169,7 +169,8 @@ export const courses: Course[] = [
       ]),
       m("js-async", "Asynchronous code", "Promises, async/await and waiting well.", [
         ["async", "Promises and async/await", 20, "challenge"],
-        ["fetch", "Fetch and JSON", 22, "challenge"],
+        ["fetch", "Fetch and JSON", 18, "challenge"],
+        ["states", "Loading, empty and error states", 20, "challenge"],
       ]),
       m("js-project", "Independent project", "Combine state, the DOM and asynchronous work.", [
         ["catalog", "Capstone: product search", 45, "challenge"],

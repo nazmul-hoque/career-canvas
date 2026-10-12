@@ -1243,9 +1243,8 @@ render();`,
     ],
   },
   "js-async.fetch": {
-    summary:
-      "Read and send JSON with fetch, treat a 404 or 500 as the failure it is, and show loading, empty and error states on the page.",
-    xp: 170,
+    summary: "Read and send JSON with fetch, and treat a 404 or 500 as the failure it is.",
+    xp: 150,
     blocks: [
       { kind: "heading", text: "JSON" },
       {
@@ -1293,55 +1292,6 @@ async function addReview(productId, stars) {
   if (!response.ok) throw new Error(\`Review not saved: \${response.status}\`);
   return response.json();
 }`,
-      },
-      { kind: "heading", text: "Four outcomes on the page" },
-      {
-        kind: "text",
-        body: "**On the page, a request has more than two outcomes.** It starts *loading*, then it succeeds with data, succeeds with *nothing* (an empty list is an answer, not an error), or fails. Show each one: say `Loading…` and disable the button that started it, render the data or an honest empty message, and on failure say so in words a person understands. `try`/`catch`/`finally` fits exactly: `finally` re-enables the button whichever way it went.",
-      },
-      {
-        kind: "code",
-        language: "javascript",
-        caption: "A Load button that shows every outcome",
-        code: `const button = document.querySelector("#load-reviews");
-const list = document.querySelector("#reviews");
-const status = document.querySelector("#review-status");
-
-async function loadReviews(productId) {
-  const response = await fetch(\`/api/reviews?product=\${productId}\`);
-  if (!response.ok) throw new Error(\`Reviews: \${response.status}\`);
-  return response.json();
-}
-
-button.addEventListener("click", async () => {
-  list.replaceChildren();                 // clear what the last request showed
-  status.textContent = "Loading…";        // 1. loading
-  button.disabled = true;
-  try {
-    const reviews = await loadReviews(7);
-    for (const review of reviews) {
-      const item = document.createElement("li");
-      item.textContent = review.text;
-      list.append(item);
-    }
-    if (reviews.length === 0) status.textContent = "No reviews yet";     // 3. empty
-    else if (reviews.length === 1) status.textContent = "1 review";      // 2. data
-    else status.textContent = \`\${reviews.length} reviews\`;
-  } catch {
-    status.textContent = "Could not load reviews";                       // 4. failed
-  } finally {
-    button.disabled = false;              // whichever way it went
-  }
-});`,
-      },
-      {
-        kind: "text",
-        body: "Two details in it are easy to miss. The old rows are cleared *before* loading, so a failure doesn't leave the last answer on screen looking current. And the empty case is decided only after a successful reply: an empty array means the server answered and there's nothing to show, which deserves its own message rather than the error one.",
-      },
-      { kind: "heading", text: "Replies that arrive out of order" },
-      {
-        kind: "text",
-        body: "One more thing goes wrong on real networks: responses don't always arrive in the order you asked. If someone searches for *shell* and then *lamp*, and the *shell* reply is slower, it lands last and replaces the right results. The capstone asks you to handle that: remember which request is the latest, and ignore any older reply.",
       },
       {
         kind: "callout",
@@ -1410,44 +1360,12 @@ button.addEventListener("click", async () => {
           "`response.json()` reads the body and parses it. It returns a promise, so it needs its own `await`.",
       },
       {
-        kind: "mcq",
-        id: "q3",
-        question:
-          "A Load button disables itself while its request runs. Where does `button.disabled = false` go so that it always comes back?",
-        options: [
-          {
-            text: "At the end of the `try` block, after the data is shown",
-            whyNot:
-              "If the request fails, the code jumps to `catch` before reaching that line, and the button stays disabled for good.",
-          },
-          {
-            text: "In the `catch` block",
-            whyNot:
-              "Then it only comes back after a failure. A successful load would leave the button disabled.",
-          },
-          "In a `finally` block",
-          {
-            text: "Straight after the `fetch` call, before `await response.json()`",
-            whyNot:
-              "The request isn't finished at that point: reading the body is a second wait, and it can still fail.",
-          },
-        ],
-        answer: 2,
-        explanation:
-          "`finally` runs after `try` whether it succeeded or `catch` handled a failure, so anything that must happen either way belongs there.",
-      },
-      {
         kind: "challenge",
         id: "c1",
         title: "Order history from an API",
         prompt:
-          "The starter contains a stand-in for the network: `fetch` answers like a real server, with real response objects, so your code is exactly what you'd write in a browser. Write `loadOrders(customer)`, which fetches `/api/orders?customer=` followed by the customer, throws an `Error` when the response isn't OK, and otherwise returns the parsed JSON. Write `saveNote(orderId, note)`, which POSTs `{ orderId, note }` as JSON to `/api/notes` with a `Content-Type: application/json` header and returns the parsed reply. Then make **Load orders** work: trim the customer field, clear the list, show `Loading…` and disable the button. List each order as `#101: $168.00`, and show `3 orders`, `1 order` or `No orders yet`. On any failure show `Could not load orders`. Re-enable the button when the request finishes, whether it worked or not.",
-        language: "dom",
-        html: `<label for="customer">Customer</label>
-<input id="customer" value="ada">
-<button id="load" type="button">Load orders</button>
-<p id="status" role="status"></p>
-<ul id="orders"></ul>`,
+          "The starter contains a stand-in for the network: `fetch` answers like a real server, with real response objects, so your code is exactly what you'd write in a browser. Write `loadOrders(customer)`, which fetches `/api/orders?customer=` followed by the customer, throws an `Error` when the response isn't OK, and otherwise returns the parsed JSON. Then write `saveNote(orderId, note)`, which POSTs `{ orderId, note }` as JSON to `/api/notes` with a `Content-Type: application/json` header, and returns the parsed reply. The editor runs your code inside an `async` function, so the last line can `await` on its own. The next lesson puts `loadOrders` on a page.",
+        language: "javascript",
         starter: `// A stand-in for the network. Keep it: your code calls fetch() as usual,
 // and gets real Response objects back, as it would in a browser.
 const requests = [];
@@ -1484,9 +1402,9 @@ async function saveNote(orderId, note) {
   // your code here
 }
 
-// Make the Load orders button work here.
+console.log(await loadOrders("ada"));
 `,
-        hint: "In `loadOrders`: `` const response = await fetch(`/api/orders?customer=${customer}`) ``, then `if (!response.ok) throw new Error(…)`, then `return response.json()`. `saveNote` passes a second argument to `fetch` with `method`, `headers` and `body: JSON.stringify({ orderId, note })`. For the button, put the `await` inside `try`, the failure message in `catch`, and `button.disabled = false` in `finally`.",
+        hint: "In `loadOrders`: `` const response = await fetch(`/api/orders?customer=${customer}`) ``, then `if (!response.ok) throw new Error(\u2026)`, then `return response.json()`. `saveNote` passes a second argument to `fetch` with `method`, `headers` and `body: JSON.stringify({ orderId, note })`, and checks `ok` the same way.",
         solution: `// A stand-in for the network. Keep it: your code calls fetch() as usual,
 // and gets real Response objects back, as it would in a browser.
 const requests = [];
@@ -1528,6 +1446,240 @@ async function saveNote(orderId, note) {
     body: JSON.stringify({ orderId, note }),
   });
   if (!response.ok) throw new Error(\`Note not saved: \${response.status}\`);
+  return response.json();
+}
+`,
+        tests: [
+          {
+            name: "loadOrders asks for that customer's orders",
+            expression:
+              '(await loadOrders("ada"), requests.at(-1).url === "/api/orders?customer=ada")',
+          },
+          {
+            name: "loadOrders returns the parsed JSON",
+            expression:
+              '(await loadOrders("ada")).length === 3 && (await loadOrders("ada"))[0].id === 101',
+          },
+          {
+            name: "A 500 throws an Error instead of returning the error body",
+            expression: 'await loadOrders("broken").then(() => false, (e) => e instanceof Error)',
+          },
+          {
+            name: "So does a 404",
+            expression: 'await loadOrders("nobody").then(() => false, (e) => e instanceof Error)',
+          },
+          {
+            name: "saveNote POSTs to /api/notes",
+            expression:
+              '(await saveNote(101, "Gift wrap"), requests.at(-1).url === "/api/notes" && requests.at(-1).method === "POST")',
+          },
+          {
+            name: "The body is JSON, and labelled as JSON",
+            expression:
+              '(await saveNote(101, "Gift wrap"), new Headers(requests.at(-1).headers).get("content-type")?.startsWith("application/json") && JSON.parse(requests.at(-1).body).note === "Gift wrap" && JSON.parse(requests.at(-1).body).orderId === 101)',
+          },
+          {
+            name: "saveNote returns the parsed reply",
+            expression: '(await saveNote(101, "Gift wrap")).saved === true',
+          },
+        ],
+      },
+    ],
+  },
+  "js-async.states": {
+    summary:
+      "Show loading, empty and error states on the page, and keep the button honest while a request runs.",
+    xp: 150,
+    blocks: [
+      {
+        kind: "text",
+        body: "The last lesson's `loadOrders` either returns orders or throws. On a page, that turns into four things a person can see, and this lesson is about showing each of them clearly.",
+      },
+      { kind: "heading", text: "Four outcomes on the page" },
+      {
+        kind: "text",
+        body: "**On the page, a request has more than two outcomes.** It starts *loading*, then it succeeds with data, succeeds with *nothing* (an empty list is an answer, not an error), or fails. Show each one: say `Loading…` and disable the button that started it, render the data or an honest empty message, and on failure say so in words a person understands. `try`/`catch`/`finally` fits exactly: `finally` re-enables the button whichever way it went.",
+      },
+      {
+        kind: "code",
+        language: "javascript",
+        caption: "A Load button that shows every outcome",
+        code: `const button = document.querySelector("#load-reviews");
+const list = document.querySelector("#reviews");
+const status = document.querySelector("#review-status");
+
+async function loadReviews(productId) {
+  const response = await fetch(\`/api/reviews?product=\${productId}\`);
+  if (!response.ok) throw new Error(\`Reviews: \${response.status}\`);
+  return response.json();
+}
+
+button.addEventListener("click", async () => {
+  list.replaceChildren();                 // clear what the last request showed
+  status.textContent = "Loading…";        // 1. loading
+  button.disabled = true;
+  try {
+    const reviews = await loadReviews(7);
+    for (const review of reviews) {
+      const item = document.createElement("li");
+      item.textContent = review.text;
+      list.append(item);
+    }
+    if (reviews.length === 0) status.textContent = "No reviews yet";     // 3. empty
+    else if (reviews.length === 1) status.textContent = "1 review";      // 2. data
+    else status.textContent = \`\${reviews.length} reviews\`;
+  } catch {
+    status.textContent = "Could not load reviews";                       // 4. failed
+  } finally {
+    button.disabled = false;              // whichever way it went
+  }
+});`,
+      },
+      {
+        kind: "text",
+        body: "Two details in it are easy to miss. The old rows are cleared *before* loading, so a failure doesn't leave the last answer on screen looking current. And the empty case is decided only after a successful reply: an empty array means the server answered and there's nothing to show, which deserves its own message rather than the error one.",
+      },
+      { kind: "heading", text: "Replies that arrive out of order" },
+      {
+        kind: "text",
+        body: "One more thing goes wrong on real networks: responses don't always arrive in the order you asked. If someone searches for *shell* and then *lamp*, and the *shell* reply is slower, it lands last and replaces the right results. The capstone asks you to handle that: remember which request is the latest, and ignore any older reply.",
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          "A Load button disables itself while its request runs. Where does `button.disabled = false` go so that it always comes back?",
+        options: [
+          {
+            text: "At the end of the `try` block, after the data is shown",
+            whyNot:
+              "If the request fails, the code jumps to `catch` before reaching that line, and the button stays disabled for good.",
+          },
+          {
+            text: "In the `catch` block",
+            whyNot:
+              "Then it only comes back after a failure. A successful load would leave the button disabled.",
+          },
+          "In a `finally` block",
+          {
+            text: "Straight after the `fetch` call, before `await response.json()`",
+            whyNot:
+              "The request isn't finished at that point: reading the body is a second wait, and it can still fail.",
+          },
+        ],
+        answer: 2,
+        explanation:
+          "`finally` runs after `try` whether it succeeded or `catch` handled a failure, so anything that must happen either way belongs there.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          "A customer has never ordered, so the server answers `200 OK` with `[]`. What should the status line say?",
+        options: [
+          {
+            text: "Could not load orders",
+            whyNot:
+              "Nothing failed: the server answered, and its answer is that there are none. An error message would send the person looking for a problem that isn't there.",
+          },
+          {
+            text: "Nothing: leave the list and the status empty",
+            whyNot:
+              "A blank page looks the same as one that hasn't loaded yet, or broke without saying so. Say what the answer was.",
+          },
+          {
+            text: "Loading…",
+            whyNot:
+              "The request has finished. Leaving the loading message up would keep the person waiting for something that already arrived.",
+          },
+          "No orders yet",
+        ],
+        answer: 3,
+        explanation:
+          "An empty array is a real answer, so it gets its own honest message, different from both the loading and the error state.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Order history on the page",
+        prompt:
+          "The starter has the network stand-in and a working `loadOrders(customer)` from the last lesson, so this challenge is only the page. Make **Load orders** work: trim the customer field, clear the list, show `Loading\u2026` and disable the button. List each order as `#101: $168.00`, and show `3 orders`, `1 order` or `No orders yet`. On any failure show `Could not load orders`. Re-enable the button when the request finishes, whether it worked or not.",
+        language: "dom",
+        html: `<label for="customer">Customer</label>
+<input id="customer" value="ada">
+<button id="load" type="button">Load orders</button>
+<p id="status" role="status"></p>
+<ul id="orders"></ul>`,
+        starter: `// A stand-in for the network. Keep it: your code calls fetch() as usual,
+// and gets real Response objects back, as it would in a browser.
+const requests = [];
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function fetch(url, options = {}) {
+  requests.push({ url, ...options });
+  await wait(20);
+  const reply = (data, status = 200) =>
+    new Response(JSON.stringify(data), {
+      status,
+      headers: { "Content-Type": "application/json" },
+    });
+  if (url === "/api/notes" && options.method === "POST") return reply({ saved: true }, 201);
+  const customer = new URL(url, "https://shop.example").searchParams.get("customer");
+  if (customer === "ada") {
+    return reply([
+      { id: 101, total: 168 },
+      { id: 104, total: 42.5 },
+      { id: 109, total: 9.99 },
+    ]);
+  }
+  if (customer === "solo") return reply([{ id: 120, total: 5 }]);
+  if (customer === "new") return reply([]);
+  if (customer === "broken") return reply({ error: "Database unavailable" }, 500);
+  return reply({ error: "No such customer" }, 404);
+}
+
+// From the last lesson, working: use it as it is.
+async function loadOrders(customer) {
+  const response = await fetch(\`/api/orders?customer=\${encodeURIComponent(customer)}\`);
+  if (!response.ok) throw new Error(\`Orders for \${customer}: \${response.status}\`);
+  return response.json();
+}
+
+// Make the Load orders button work here.
+`,
+        hint: "Follow the Load reviews example: clear the list, set the status and disable the button before the `await`. Put `await loadOrders(input.value.trim())` inside `try`, the failure message in `catch`, and `button.disabled = false` in `finally`. Format each total with `.toFixed(2)`.",
+        solution: `// A stand-in for the network. Keep it: your code calls fetch() as usual,
+// and gets real Response objects back, as it would in a browser.
+const requests = [];
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function fetch(url, options = {}) {
+  requests.push({ url, ...options });
+  await wait(20);
+  const reply = (data, status = 200) =>
+    new Response(JSON.stringify(data), {
+      status,
+      headers: { "Content-Type": "application/json" },
+    });
+  if (url === "/api/notes" && options.method === "POST") return reply({ saved: true }, 201);
+  const customer = new URL(url, "https://shop.example").searchParams.get("customer");
+  if (customer === "ada") {
+    return reply([
+      { id: 101, total: 168 },
+      { id: 104, total: 42.5 },
+      { id: 109, total: 9.99 },
+    ]);
+  }
+  if (customer === "solo") return reply([{ id: 120, total: 5 }]);
+  if (customer === "new") return reply([]);
+  if (customer === "broken") return reply({ error: "Database unavailable" }, 500);
+  return reply({ error: "No such customer" }, 404);
+}
+
+// From the last lesson, working: use it as it is.
+async function loadOrders(customer) {
+  const response = await fetch(\`/api/orders?customer=\${encodeURIComponent(customer)}\`);
+  if (!response.ok) throw new Error(\`Orders for \${customer}: \${response.status}\`);
   return response.json();
 }
 
@@ -1585,16 +1737,6 @@ button.addEventListener("click", async () => {
             name: "A 500 shows as a failure, not as orders",
             expression:
               '(fill($("#customer"), "broken"), click($("#load")), await wait(80), text("#status") === "Could not load orders" && $$("#orders li").length === 0 && $("#load").disabled === false)',
-          },
-          {
-            name: "loadOrders returns the parsed JSON, and throws when the response isn't OK",
-            expression:
-              '(await loadOrders("ada")).length === 3 && (await loadOrders("broken").then(() => false, (e) => e instanceof Error)) && (await loadOrders("nobody").then(() => false, (e) => e instanceof Error))',
-          },
-          {
-            name: "saveNote sends JSON, labelled as JSON",
-            expression:
-              '(await saveNote(101, "Gift wrap")).saved === true && requests.at(-1).url === "/api/notes" && requests.at(-1).method === "POST" && new Headers(requests.at(-1).headers).get("content-type").startsWith("application/json") && JSON.parse(requests.at(-1).body).note === "Gift wrap" && JSON.parse(requests.at(-1).body).orderId === 101',
           },
         ],
       },
