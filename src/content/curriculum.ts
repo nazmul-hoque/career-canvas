@@ -386,7 +386,8 @@ export const courses: Course[] = [
         ["windows", "Window functions", 15, "challenge"],
       ]),
       m("sql-time", "Over time", "Bucket dates, fill the gaps, compare periods fairly.", [
-        ["dates", "Dates, calendars and missing days", 15, "challenge"],
+        ["dates", "Dates, weeks and months", 15, "challenge"],
+        ["calendars", "Calendars and missing days", 12, "challenge"],
         ["lag", "LAG and period-over-period change", 16, "challenge"],
       ]),
       m("sql-quality", "Checking the data", "Duplicates, orphans and totals that don't add up.", [

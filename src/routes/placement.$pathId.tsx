@@ -81,6 +81,7 @@ function Placement() {
       module,
       correct: grade?.correct === true,
       explanation: grade?.explanation,
+      whyNot: grade?.whyNot,
     };
   });
   const score = graded.filter((g) => g.correct).length;
@@ -147,7 +148,7 @@ function Placement() {
       <div className="card-surface mt-7 space-y-5 p-6 sm:p-8">
         {graded.map((q, i) => {
           const value = answers[q.key];
-          const { correct, explanation } = q;
+          const { correct, explanation, whyNot } = q;
           return (
             <div key={q.key} className="rounded-[14px] border border-border p-5">
               <div className="flex items-center justify-between gap-3">
@@ -225,7 +226,14 @@ function Placement() {
                   {explanation ? (
                     <InlineText text={explanation} />
                   ) : (
-                    `Covered in "${q.lessonTitle}".`
+                    <>
+                      {whyNot ? (
+                        <span className="text-foreground">
+                          <InlineText text={whyNot} />{" "}
+                        </span>
+                      ) : null}
+                      {`Covered in "${q.lessonTitle}".`}
+                    </>
                   )}
                 </p>
               ) : null}

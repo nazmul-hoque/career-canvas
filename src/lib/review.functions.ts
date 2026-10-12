@@ -4,7 +4,7 @@ import { z } from "zod";
 import { findLesson } from "@/content/curriculum";
 import { isLessonLive } from "@/content/lessons";
 import { levelFromXp } from "@/content/gamification";
-import { gradableBlocks, gradeReview } from "@/lib/lesson-grading";
+import { gradableBlocks, gradeReview, whyNotFor } from "@/lib/lesson-grading";
 import { nextReview } from "@/lib/review-schedule";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
@@ -41,7 +41,15 @@ export interface SubmitReviewResult {
    * The right answer and why, per question — sent only now, after grading. The
    * review page never holds the answer key while the learner is still answering.
    */
-  feedback: Record<string, { answer: string | number; explanation: string }>;
+  feedback: Record<
+    string,
+    {
+      answer: string | number;
+      explanation: string;
+      /** Why the option picked is wrong, when it is and its author said. */
+      whyNot: string | null;
+    }
+  >;
 }
 
 /** A review is worth a fifth of the lesson, rounded to something tidy. */
@@ -195,6 +203,7 @@ export const submitReviewFn = createServerFn({ method: "POST" })
           {
             answer: block.answer,
             explanation: block.explanation,
+            whyNot: whyNotFor(block, answers[block.id]),
           },
         ]),
       ),

@@ -7,7 +7,7 @@
  *
  * Pure: no database, no request context.
  */
-import { isQuestion, type LessonBlock, type LessonBody } from "@/content/lessons";
+import { isQuestion, optionWhyNot, type LessonBlock, type LessonBody } from "@/content/lessons";
 import { runGitChallenge } from "@/lib/git-sandbox";
 
 export type Answers = Record<string, string | number>;
@@ -40,6 +40,36 @@ export function isBlockCorrect(block: GradableBlock, answers: Answers): boolean 
   const typed = normaliseFill(String(given ?? ""));
   if (!typed) return false;
   return [block.answer, ...(block.accept ?? [])].some((ok) => normaliseFill(ok) === typed);
+}
+
+/**
+ * Why the option a learner picked is wrong, if its author said. Null for a
+ * right pick, an option with no note, or a fill: the note is about the mistake
+ * in that one option, so it can be shown while the learner can still try again.
+ */
+export function whyNotFor(block: GradableBlock, given: string | number | undefined): string | null {
+  if (block.kind !== "mcq" || typeof given !== "number" || given === block.answer) return null;
+  return optionWhyNot(block.options[given]);
+}
+
+export interface AnswerVerdict {
+  correct: boolean;
+  /** Only when correct: on a wrong answer it would give the right one away. */
+  explanation: string | null;
+  /** Only when wrong, and only for the option picked. */
+  whyNot: string | null;
+}
+
+export function answerVerdict(
+  block: GradableBlock,
+  given: string | number | undefined,
+): AnswerVerdict {
+  const correct = given !== undefined && isBlockCorrect(block, { [block.id]: given });
+  return {
+    correct,
+    explanation: correct ? block.explanation : null,
+    whyNot: correct ? null : whyNotFor(block, given),
+  };
 }
 
 export interface GradeResult {

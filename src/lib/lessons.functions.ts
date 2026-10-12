@@ -9,7 +9,7 @@ import {
   type PublicGradableBlock,
   type PublicLessonBody,
 } from "@/content/lessons";
-import { gradableBlocks, isBlockCorrect, type GradableBlock } from "@/lib/lesson-grading";
+import { answerVerdict, gradableBlocks, type AnswerVerdict } from "@/lib/lesson-grading";
 
 /**
  * Lesson content, served without its answer key.
@@ -18,7 +18,8 @@ import { gradableBlocks, isBlockCorrect, type GradableBlock } from "@/lib/lesson
  * bundle can't import. Everything the browser shows of a lesson comes through
  * here with answers, explanations and reference solutions stripped, and an
  * answer is only ever judged here. An explanation is returned once the learner
- * has it right: on a wrong answer it would give the right one away.
+ * has it right: on a wrong answer it would give the right one away. A wrong
+ * answer gets only its own option's note, on why that option fails.
  */
 
 const lessonRef = z.object({
@@ -39,17 +40,7 @@ const checkAnswerSchema = lessonRef.extend({
   answer: z.union([z.string(), z.number()]),
 });
 
-export interface CheckAnswerResult {
-  correct: boolean;
-  /** Only when correct. */
-  explanation: string | null;
-}
-
-/** Right or wrong, with the explanation only when right: a wrong answer's would give it away. */
-function verdict(block: GradableBlock, given: string | number | undefined): CheckAnswerResult {
-  const correct = given !== undefined && isBlockCorrect(block, { [block.id]: given });
-  return { correct, explanation: correct ? block.explanation : null };
-}
+export type CheckAnswerResult = AnswerVerdict;
 
 export const checkAnswerFn = createServerFn({ method: "POST" })
   .validator((input: unknown) => checkAnswerSchema.parse(input))
@@ -58,7 +49,7 @@ export const checkAnswerFn = createServerFn({ method: "POST" })
     const body = getLessonBody(data.courseId, data.lessonId);
     const block = body ? gradableBlocks(body).find((b) => b.id === data.blockId) : undefined;
     if (!block) throw new Error("That question doesn't exist.");
-    return verdict(block, data.answer);
+    return answerVerdict(block, data.answer);
   });
 
 const checkAnswersSchema = lessonRef.extend({
@@ -75,7 +66,7 @@ export const checkAnswersFn = createServerFn({ method: "POST" })
     return Object.fromEntries(
       gradableBlocks(body)
         .filter((block) => block.id in data.answers)
-        .map((block) => [block.id, verdict(block, data.answers[block.id])]),
+        .map((block) => [block.id, answerVerdict(block, data.answers[block.id])]),
     );
   });
 
@@ -140,7 +131,7 @@ export const gradePlacementFn = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<PlacementGrades> => {
     const grades: PlacementGrades = {};
     for (const { block, key } of await placementBlocks(data.pathId)) {
-      grades[key] = verdict(block, data.answers[key]);
+      grades[key] = answerVerdict(block, data.answers[key]);
     }
     return grades;
   });

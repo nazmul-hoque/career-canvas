@@ -27,7 +27,10 @@ import {
   liveLessons,
   nextLiveLesson,
   pathLiveLessons,
+  optionText,
+  optionWhyNot,
   toPublicBody,
+  type LessonBlock,
 } from "../src/content/lessons";
 import { allPathCompletions, certificateId, pathCompletion } from "../src/lib/certificates";
 import { isReviewable } from "../src/lib/lesson-grading";
@@ -535,6 +538,12 @@ describe("answer key", () => {
         if (block.kind === "mcq" || block.kind === "fill") {
           expect(json).not.toContain(JSON.stringify(block.explanation));
         }
+        if (block.kind === "mcq") {
+          for (const option of block.options) {
+            const note = optionWhyNot(option);
+            if (note) expect(json).not.toContain(JSON.stringify(note));
+          }
+        }
         if (block.kind === "challenge") expect(json).not.toContain(JSON.stringify(block.solution));
       }
       for (const block of toPublicBody(body).blocks) {
@@ -584,6 +593,154 @@ describe("sql challenges", () => {
         expect(() => db.query(b.starter).all()).not.toThrow();
       }
       db.close();
+    });
+  }
+});
+
+/**
+ * A lesson table is there so the reader can check a claim, so it has to be
+ * right. One with a `source` is re-run here and must match cell for cell:
+ * prose numbers drift when a dataset changes, and this is the one place a
+ * quoted figure can't.
+ */
+type TableBlock = Extract<LessonBlock, { kind: "table" }>;
+
+/** Why a table disagrees with its query, or null when it doesn't. */
+function tableMismatch(table: TableBlock): string | null {
+  if (!table.source) return null;
+  const db = new Database(":memory:");
+  try {
+    db.exec(sqlDataset(table.source.dataset).sql);
+    const stmt = db.query(table.source.query);
+    const rows = stmt.values();
+    if (JSON.stringify(stmt.columnNames) !== JSON.stringify(table.columns)) {
+      return `columns are ${JSON.stringify(table.columns)}, the query gives ${JSON.stringify(stmt.columnNames)}`;
+    }
+    if (JSON.stringify(rows) !== JSON.stringify(table.rows)) {
+      return `rows differ; the query gives ${JSON.stringify(rows)}`;
+    }
+    return null;
+  } finally {
+    db.close();
+  }
+}
+
+/** Past this a table stops being something to check a claim against and becomes a dump. */
+const MAX_TABLE_ROWS = 30;
+
+/**
+ * A wrong-option note is shown while the learner can still pick again, so it
+ * may teach the mistake but must not hand over the answer. Checked loosely —
+ * no note quotes the right option — because a note that explains the rule
+ * well enough to work the answer out is the point.
+ */
+function namesTheAnswer(note: string, right: string): boolean {
+  const answer = right.trim();
+  if (answer.length > 12) return note.includes(answer);
+  // A short answer ("0", "27") counts only as a token of its own: "0.036" and
+  // "100.0" don't name "0".
+  const escaped = answer.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(?<![\\w.,])${escaped}(?!\\w|[.,]\\d)`).test(note);
+}
+
+/** Courses where every wrong option must say why it's wrong. */
+const NOTED_COURSES = ["sql-analysis"];
+
+describe("wrong-option notes", () => {
+  const mcqs = Object.entries(bodies).flatMap(([id, body]) =>
+    body.blocks.flatMap((b) => (b.kind === "mcq" ? [{ where: `${id} ${b.id}`, id, b }] : [])),
+  );
+
+  test("the leak check tells a quoted answer from a mention", () => {
+    expect(namesTheAnswer("It returns 0 here.", "0")).toBe(true);
+    expect(namesTheAnswer("The ratio is 0.036, and 100.0 * fixes it.", "0")).toBe(false);
+    expect(namesTheAnswer("It gives 27 rows", "27")).toBe(true);
+    expect(namesTheAnswer("Run it in 2027", "27")).toBe(false);
+    expect(
+      namesTheAnswer(
+        "so: Total the items per order in a CTE",
+        "Total the items per order in a CTE",
+      ),
+    ).toBe(true);
+  });
+
+  test("sit only on wrong options, and never quote the right one", () => {
+    for (const { where, b } of mcqs) {
+      const right = b.options[b.answer];
+      expect(optionWhyNot(right), `${where}: the right option has a note`).toBeNull();
+      for (const option of b.options) {
+        const note = optionWhyNot(option);
+        if (!note) continue;
+        expect(note.length, where).toBeGreaterThan(40);
+        expect(namesTheAnswer(note, optionText(right!)), `${where}: "${note}"`).toBe(false);
+      }
+    }
+  });
+
+  for (const courseId of NOTED_COURSES) {
+    test(`${courseId}: every wrong option says why`, () => {
+      const lessonIds = new Set(
+        courseLessons(courses.find((c) => c.id === courseId)!).map((l) => l.id),
+      );
+      const ours = mcqs.filter(({ id }) => lessonIds.has(id));
+      expect(ours.length).toBeGreaterThan(0);
+      const missing = ours.flatMap(({ where, b }) =>
+        b.options.flatMap((option, i) =>
+          i !== b.answer && !optionWhyNot(option) ? [`${where} option ${i}`] : [],
+        ),
+      );
+      expect(missing).toEqual([]);
+    });
+  }
+});
+
+describe("lesson tables", () => {
+  const tables = Object.entries(bodies).flatMap(([id, body]) =>
+    body.blocks.flatMap((b, i) => (b.kind === "table" ? [{ where: `${id} block ${i}`, b }] : [])),
+  );
+
+  test("the check catches a table that has drifted from its query", () => {
+    const right: TableBlock = {
+      kind: "table",
+      columns: ["id", "shipping"],
+      rows: [
+        [101, 5],
+        [108, 5],
+      ],
+      source: { query: "SELECT id, shipping FROM orders WHERE id IN (101, 108) ORDER BY id" },
+    };
+    expect(tableMismatch(right)).toBeNull();
+    expect(tableMismatch({ ...right, rows: [[101, 5]] })).toContain("rows differ");
+    expect(tableMismatch({ ...right, columns: ["order_id", "shipping"] })).toContain("columns");
+    expect(() =>
+      tableMismatch({ ...right, source: { query: "SELECT nope FROM orders" } }),
+    ).toThrow();
+  });
+
+  test("every row has a cell for each column", () => {
+    for (const { where, b } of tables) {
+      expect(b.columns.length, where).toBeGreaterThan(0);
+      expect(b.rows.length, where).toBeGreaterThan(0);
+      expect(b.rows.length, where).toBeLessThanOrEqual(MAX_TABLE_ROWS);
+      for (const row of b.rows) expect(row.length, where).toBe(b.columns.length);
+    }
+  });
+
+  test("a folded table names what it holds", () => {
+    // "See the data" is the fallback label, but two of those in one lesson
+    // give the reader no way to tell which to open.
+    for (const body of Object.values(bodies)) {
+      const folded = body.blocks.filter((b) => b.kind === "table" && b.collapsed);
+      if (folded.length > 1) {
+        for (const b of folded) expect(b.kind === "table" && b.caption).toBeTruthy();
+      }
+    }
+  });
+
+  for (const { where, b } of tables) {
+    if (!b.source) continue;
+    test(`${where} matches its query`, () => {
+      expect(tableMismatch(b)).toBeNull();
     });
   }
 });

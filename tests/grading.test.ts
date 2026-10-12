@@ -2,12 +2,14 @@ import { describe, expect, test } from "bun:test";
 
 import type { LessonBody } from "../src/content/lessons";
 import {
+  answerVerdict,
   gradableBlocks,
   gradeLesson,
   gradeReview,
   isBlockCorrect,
   isReviewable,
   normaliseFill,
+  whyNotFor,
 } from "../src/lib/lesson-grading";
 
 /**
@@ -120,6 +122,50 @@ describe("gradeReview", () => {
 
   test("a wrong answer fails the review", () => {
     expect(gradeReview(body([mcq]), { q1: 2 }).ok).toBe(false);
+  });
+});
+
+/**
+ * A wrong pick may be told why that option fails, never what the right one is:
+ * the learner is still answering. These pin which note goes back, and when none
+ * does.
+ */
+describe("answerVerdict", () => {
+  const noted = {
+    ...mcq,
+    explanation: "b, because b.",
+    options: [{ text: "a", whyNot: "a fails because a." }, "b", "c"],
+  };
+
+  test("a wrong pick gets its own option's note and no explanation", () => {
+    expect(answerVerdict(noted, 0)).toEqual({
+      correct: false,
+      explanation: null,
+      whyNot: "a fails because a.",
+    });
+  });
+
+  test("a wrong pick whose option has no note gets nothing", () => {
+    expect(answerVerdict(noted, 2)).toEqual({ correct: false, explanation: null, whyNot: null });
+  });
+
+  test("a right pick gets the explanation and no note", () => {
+    expect(answerVerdict(noted, 1)).toEqual({
+      correct: true,
+      explanation: "b, because b.",
+      whyNot: null,
+    });
+  });
+
+  test("a note is only ever read for the option picked", () => {
+    expect(whyNotFor(noted, undefined)).toBeNull();
+    expect(whyNotFor(noted, "0")).toBeNull();
+    expect(whyNotFor(noted, 7)).toBeNull();
+    expect(whyNotFor(fill, "n")).toBeNull();
+  });
+
+  test("a noted option is graded by position like any other", () => {
+    expect(isBlockCorrect({ ...noted, answer: 0 }, { q1: 0 })).toBe(true);
   });
 });
 

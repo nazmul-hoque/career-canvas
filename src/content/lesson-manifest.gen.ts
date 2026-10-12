@@ -212,6 +212,7 @@ export const lessonManifest: Record<string, LessonManifestEntry> = {
   "sql-project.capstone": { challenge: true, questions: 2 },
   "sql-quality.checks": { challenge: true, questions: 3 },
   "sql-summary.groupby": { challenge: true, questions: 3 },
+  "sql-time.calendars": { challenge: true, questions: 3 },
   "sql-time.dates": { challenge: true, questions: 3 },
   "sql-time.lag": { challenge: true, questions: 3 },
   "ts-apps.generics": { challenge: true, questions: 2 },

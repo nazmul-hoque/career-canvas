@@ -13,11 +13,39 @@ export type LessonBlock =
   | { kind: "text"; body: string }
   | { kind: "callout"; body: string }
   | { kind: "code"; language: string; code: string; caption?: string }
+  /** Breaks a lesson that covers several ideas into sections a reader can find again. */
+  | { kind: "heading"; text: string }
+  | {
+      kind: "table";
+      columns: string[];
+      /** A cell is shown as written; NULL is shown as NULL, since that's what the query gave. */
+      rows: (string | number | null)[][];
+      caption?: string | undefined;
+      /**
+       * Folded behind its caption until opened: the data a lesson's prose leans
+       * on, there to check a claim against rather than to read first.
+       */
+      collapsed?: true | undefined;
+      /**
+       * SQL lessons: the query that produces `rows` on `dataset` (default shop).
+       * tests/lessons.test.ts re-runs it, so a number in the table can't drift
+       * from the data it claims to come from. Shown under the table unless
+       * `hideQuery`.
+       */
+      source?:
+        | {
+            query: string;
+            dataset?: SqlDataset | undefined;
+            /** Checked but not shown: for a table whose query is a challenge's solution. */
+            hideQuery?: true | undefined;
+          }
+        | undefined;
+    }
   | {
       kind: "mcq";
       id: string;
       question: string;
-      options: string[];
+      options: McqOption[];
       answer: number;
       explanation: string;
     }
@@ -55,6 +83,21 @@ export type LessonBlock =
       tests: { name: string; expression: string }[];
     };
 
+/**
+ * An answer to choose, optionally with why it's wrong. The note is shown to a
+ * learner who picks it while they can still pick again, so it explains the
+ * mistake in this option and never names or quotes the right one. Kept on the
+ * option rather than keyed by position so reordering options can't attach a
+ * note to the wrong answer.
+ */
+export type McqOption = string | { text: string; whyNot: string };
+
+export const optionText = (option: McqOption): string =>
+  typeof option === "string" ? option : option.text;
+
+export const optionWhyNot = (option: McqOption | undefined): string | null =>
+  option !== undefined && typeof option !== "string" ? option.whyNot : null;
+
 export interface LessonBody {
   summary: string;
   xp: number;
@@ -69,15 +112,31 @@ export interface LessonBody {
 }
 
 /**
- * What the browser is allowed to see of a lesson: every answer, explanation and
- * reference solution removed. Challenge `tests` stay because the runner executes
- * them in the browser — they say what the code must do, not how.
+ * What the browser is allowed to see of a lesson: every answer, explanation,
+ * wrong-option note and reference solution removed. Challenge `tests` stay
+ * because the runner executes them in the browser — they say what the code
+ * must do, not how.
  */
 export type PublicLessonBlock =
-  | Extract<LessonBlock, { kind: "text" | "callout" | "code" }>
-  | Omit<Extract<LessonBlock, { kind: "mcq" }>, "answer" | "explanation">
+  | Extract<LessonBlock, { kind: ReadingKind }>
+  | (Omit<Extract<LessonBlock, { kind: "mcq" }>, "answer" | "explanation" | "options"> & {
+      options: string[];
+    })
   | Omit<Extract<LessonBlock, { kind: "fill" }>, "answer" | "accept" | "explanation">
   | Omit<Extract<LessonBlock, { kind: "challenge" }>, "solution">;
+
+/** The blocks that teach rather than ask: identical in the full and public body. */
+type ReadingKind = "text" | "callout" | "code" | "heading" | "table";
+export type ReadingBlock = Extract<LessonBlock, { kind: ReadingKind }>;
+
+export const isReadingBlock = <B extends { kind: string }>(
+  block: B,
+): block is Extract<B, { kind: ReadingKind }> =>
+  block.kind === "text" ||
+  block.kind === "callout" ||
+  block.kind === "code" ||
+  block.kind === "heading" ||
+  block.kind === "table";
 
 /** A public question — what the learner answers, without what counts as right. */
 export type PublicGradableBlock = Extract<PublicLessonBlock, { kind: "mcq" | "fill" }>;
@@ -92,8 +151,8 @@ export interface PublicLessonBody {
 export function toPublicBlock(block: LessonBlock): PublicLessonBlock {
   switch (block.kind) {
     case "mcq": {
-      const { answer: _answer, explanation: _explanation, ...rest } = block;
-      return rest;
+      const { answer: _answer, explanation: _explanation, options, ...rest } = block;
+      return { ...rest, options: options.map(optionText) };
     }
     case "fill": {
       const { answer: _answer, accept: _accept, explanation: _explanation, ...rest } = block;

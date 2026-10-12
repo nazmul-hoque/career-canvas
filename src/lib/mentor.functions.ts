@@ -101,6 +101,13 @@ function lessonTextFor(body: LessonBody | null): string {
     .map((block) => {
       if (block.kind === "text" || block.kind === "callout") return block.body;
       if (block.kind === "code") return `Example (${block.language}):\n${block.code}`;
+      if (block.kind === "heading") return `## ${block.text}`;
+      if (block.kind === "table") {
+        const lines = [block.columns, ...block.rows].map((row) =>
+          row.map((cell) => (cell === null ? "NULL" : String(cell))).join(" | "),
+        );
+        return [block.caption ? `Table: ${block.caption}` : "Table:", ...lines].join("\n");
+      }
       if (block.kind === "challenge") return `Challenge: ${block.title}\n${block.prompt}`;
       return "";
     })

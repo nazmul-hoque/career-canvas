@@ -27,6 +27,7 @@ import { MentorPanel } from "@/components/learn/MentorPanel";
 import { InlineText } from "@/components/learn/InlineText";
 import { CodeChallenge } from "@/components/learn/CodeChallenge";
 import { GitSandbox } from "@/components/learn/GitSandbox";
+import { LessonTable } from "@/components/learn/LessonTable";
 import {
   courseById,
   courseLessons,
@@ -38,8 +39,10 @@ import {
 import {
   isQuestion,
   isLessonLive,
+  isReadingBlock,
   nextLiveLesson,
   type PublicLessonBlock,
+  type ReadingBlock,
   type PublicLessonBody,
 } from "@/content/lessons";
 import { checkAnswerFn, checkAnswersFn, type CheckAnswerResult } from "@/lib/lessons.functions";
@@ -111,11 +114,17 @@ export const Route = createFileRoute("/learn/$courseId/$lessonId")({
 });
 
 /** The parts of a lesson that teach rather than ask — also what the server renders. */
-function TeachingBlock({
-  block,
-}: {
-  block: Extract<PublicLessonBlock, { kind: "text" | "callout" | "code" }>;
-}) {
+function TeachingBlock({ block }: { block: ReadingBlock }) {
+  if (block.kind === "heading") {
+    return (
+      <h2 className="pt-2 font-display text-xl font-bold tracking-tight">
+        <InlineText text={block.text} />
+      </h2>
+    );
+  }
+
+  if (block.kind === "table") return <LessonTable block={block} />;
+
   if (block.kind === "text") {
     return (
       <p className="text-[15px] leading-7 text-foreground">
@@ -158,10 +167,7 @@ function LessonReading({
 }) {
   // Everything the lesson teaches, none of what it asks: questions and challenges
   // need the workspace, and are what a crawler shouldn't index as the content.
-  const reading = body.blocks.filter(
-    (b): b is Extract<PublicLessonBlock, { kind: "text" | "callout" | "code" }> =>
-      b.kind === "text" || b.kind === "callout" || b.kind === "code",
-  );
+  const reading = body.blocks.filter(isReadingBlock);
   return (
     <AppShell>
       <article aria-busy="true" className="mx-auto max-w-3xl space-y-6">
@@ -695,7 +701,7 @@ function Block({
   onSolved,
   onResult,
 }: BlockProps) {
-  if (block.kind === "text" || block.kind === "callout" || block.kind === "code") {
+  if (isReadingBlock(block)) {
     return <TeachingBlock block={block} />;
   }
 
@@ -734,12 +740,18 @@ function Block({
         </div>
         {result ? (
           <p className={cn("mt-3 text-sm", correct ? "text-brand" : "text-destructive")}>
-            {correct ? "Correct. " : "Not quite. Have another look and pick again."}
+            {correct ? "Correct. " : "Not quite. "}
             {result.explanation ? (
               <span className="text-foreground">
                 <InlineText text={result.explanation} />
               </span>
             ) : null}
+            {result.whyNot ? (
+              <span className="text-foreground">
+                <InlineText text={result.whyNot} />{" "}
+              </span>
+            ) : null}
+            {correct ? null : "Have another look and pick again."}
           </p>
         ) : (
           <Button

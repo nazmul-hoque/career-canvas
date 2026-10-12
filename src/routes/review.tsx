@@ -403,6 +403,13 @@ function Question({
         </div>
         {feedback ? (
           <p className="mt-3 text-sm text-chalk">
+            {/* Why their pick fails comes first: it's the mistake they just made,
+                and the explanation that follows is written for the right answer. */}
+            {wrong && feedback.whyNot ? (
+              <span className="text-foreground">
+                <InlineText text={feedback.whyNot} />{" "}
+              </span>
+            ) : null}
             <InlineText text={feedback.explanation} />
           </p>
         ) : null}

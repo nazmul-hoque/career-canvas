@@ -781,6 +781,35 @@ ORDER BY revenue DESC;`,
       },
       { kind: "code", language: "text", caption: "The four tables", code: SHOP_SCHEMA },
       {
+        kind: "table",
+        caption: "The 11 paid orders",
+        collapsed: true,
+        columns: ["order_id", "customer", "shipping", "item_lines"],
+        rows: [
+          [101, "Maja Berg", 5, 2],
+          [102, "Liam Walsh", 0, 1],
+          [104, "Sofia Rossi", 0, 3],
+          [105, "Noah Keller", 5, 1],
+          [106, "Aisha Khan", 0, 2],
+          [108, "Maja Berg", 5, 2],
+          [109, "Lucas Silva", 0, 2],
+          [110, "Sofia Rossi", 5, 1],
+          [112, "Emma Novak", 0, 2],
+          [113, "Noah Keller", 5, 1],
+          [114, "Maja Berg", 0, 3],
+        ],
+        source: {
+          query: `SELECT o.id AS order_id, c.name AS customer, o.shipping, COUNT(*) AS item_lines
+FROM orders AS o
+JOIN customers AS c ON c.id = o.customer_id
+JOIN order_items AS i ON i.order_id = o.id
+WHERE o.status = 'paid'
+GROUP BY o.id, c.name, o.shipping
+ORDER BY o.id;`,
+        },
+      },
+      { kind: "heading", text: "Name each step with `WITH`" },
+      {
         kind: "text",
         body: "Real questions take several steps. A **CTE** (common table expression) gives each step a name with `WITH`, so the query reads top to bottom like a recipe, and you can run each step on its own to check it.",
       },
@@ -796,9 +825,37 @@ SELECT customer_id, COUNT(*) AS paid_orders
 FROM paid
 GROUP BY customer_id;`,
       },
+      { kind: "heading", text: "Grain: what one row means" },
       {
         kind: "text",
-        body: "Now for the trap SQL Foundations warned about in its joins lesson. Shipping is charged once per **order**, but items are stored per **line**. Join the two and each order's shipping is repeated on every one of its lines.",
+        body: "The **grain** of a table, or of a query's result, is what one row stands for. In `orders` it's one order. In `order_items` it's one line of an order: one product, in some quantity. Join the two and the result takes the finer grain: one row per item line, with the order's columns copied onto each of its lines.",
+      },
+      {
+        kind: "text",
+        body: "That's the trap SQL Foundations warned about in its joins lesson. Shipping is charged once per order, but after the join it sits on every line of that order. Orders 101 and 108 have two lines each:",
+      },
+      {
+        kind: "table",
+        caption: "Orders 101 and 108, joined to their lines",
+        columns: ["order_id", "product", "quantity", "shipping"],
+        rows: [
+          [101, "Trail Runner Shoes", 1, 5],
+          [101, "Wool Socks (3-pack)", 2, 5],
+          [108, "Headlamp", 1, 5],
+          [108, "Water Bottle", 1, 5],
+        ],
+        source: {
+          query: `SELECT o.id AS order_id, p.name AS product, i.quantity, o.shipping
+FROM orders AS o
+JOIN order_items AS i ON i.order_id = o.id
+JOIN products AS p ON p.id = i.product_id
+WHERE o.id IN (101, 108)
+ORDER BY o.id, p.name;`,
+        },
+      },
+      {
+        kind: "text",
+        body: "Each order paid 5.0 once, but each fee now appears twice. Sum that column and you've charged those two orders 20.0 instead of 10.0.",
       },
       {
         kind: "code",
@@ -814,8 +871,9 @@ WHERE o.status = 'paid';
       },
       {
         kind: "text",
-        body: "The paid orders actually charged 25.0 in shipping. The query says 35.0 because orders 101 and 108 each have two lines, so each of their 5.0 fees was counted twice. Nothing errors and nothing looks odd; the number is simply wrong. This is the most common way analysis goes quietly wrong.",
+        body: "The paid orders actually charged 25.0 in shipping. The extra 10.0 is the second copy of the fees on orders 101 and 108. Nothing errors and nothing looks odd; the number is simply wrong. This is the most common way analysis goes quietly wrong.",
       },
+      { kind: "heading", text: "Fix the grain before you join" },
       {
         kind: "text",
         body: "The fix is to **bring both sides to the same grain before joining**. Total the items per order in a CTE, so there's exactly one row per order, and join that instead.",
@@ -845,10 +903,22 @@ WHERE o.status = 'paid';
         id: "q1",
         question: "Which change fixes the 35.0 shipping total?",
         options: [
-          "`SUM(DISTINCT o.shipping)`",
+          {
+            text: "`SUM(DISTINCT o.shipping)`",
+            whyNot:
+              "`DISTINCT` works on values, not orders. The paid orders' fees are only ever 0 or 5.0, so it adds each of those once and returns 5.0: wrong the other way.",
+          },
           "Total the items per order in a CTE first, then join one row per order",
-          "Use LEFT JOIN instead of JOIN",
-          "Divide the result by `COUNT(*)`",
+          {
+            text: "Use LEFT JOIN instead of JOIN",
+            whyNot:
+              "A LEFT JOIN only adds orders that have no item lines, and every order here has some. Orders 101 and 108 still match two lines each, so the total stays 35.0.",
+          },
+          {
+            text: "Divide the result by `COUNT(*)`",
+            whyNot:
+              "That turns the total into an average per joined row (1.75 here), not the shipping collected. The repeated fees are still inside it.",
+          },
         ],
         answer: 1,
         explanation:
@@ -859,7 +929,24 @@ WHERE o.status = 'paid';
         id: "q2",
         question:
           'A dashboard counts "orders per customer" with `COUNT(*)` after joining `orders` to `order_items`. Maja has 3 paid orders with 7 item lines between them. What does the dashboard show for her?',
-        options: ["3", "10", "1", "7"],
+        options: [
+          {
+            text: "3",
+            whyNot:
+              "3 is how many orders she has, but `COUNT(*)` runs after the join, and by then each of her orders has become one row per item line.",
+          },
+          {
+            text: "10",
+            whyNot:
+              "Nothing here adds orders and lines together. `COUNT(*)` counts one thing: the rows left after the join.",
+          },
+          {
+            text: "1",
+            whyNot:
+              "`GROUP BY` puts all her rows in one group, but `COUNT(*)` counts every row in that group, not the group itself.",
+          },
+          "7",
+        ],
         answer: 3,
         explanation:
           "`COUNT(*)` counts rows, and after that join each row is an item line. Count before the join, or use `COUNT(DISTINCT o.id)`.",
@@ -869,7 +956,7 @@ WHERE o.status = 'paid';
         id: "c1",
         title: "What each customer really spent",
         prompt:
-          "For each customer with paid orders, return `name`, `orders` (how many paid orders) and `total_spent` (items **plus** shipping, with each order's shipping counted once), highest `total_spent` first. The starter query runs, but its numbers are wrong: find out why and fix it.",
+          "For each customer with paid orders, return `name`, `orders` (how many paid orders) and `total_spent` (items **plus** shipping, with each order's shipping counted once), highest `total_spent` first. The starter query runs, but its numbers are wrong: find out why and fix it. Each test below checks one thing, so you can see which problems are left as you fix them.",
         language: "sql",
         starter: `SELECT c.name,
        COUNT(*) AS orders,
@@ -930,6 +1017,30 @@ ORDER BY total_spent DESC;`,
         body: "`GROUP BY month, status` answers the question, but as a long list: one row per month per status. People read reports the other way round, with one row per month and a column for each status. Turning rows into columns like that is called a **pivot**, and in SQL you build it with a `CASE` inside an aggregate. The `CASE` decides which rows each column counts.",
       },
       {
+        kind: "table",
+        caption: "The 15 orders",
+        collapsed: true,
+        columns: ["id", "order_date", "status"],
+        rows: [
+          [101, "2026-01-04", "paid"],
+          [102, "2026-01-09", "paid"],
+          [103, "2026-01-15", "refunded"],
+          [104, "2026-01-22", "paid"],
+          [105, "2026-02-02", "paid"],
+          [106, "2026-02-06", "paid"],
+          [107, "2026-02-11", "pending"],
+          [108, "2026-02-19", "paid"],
+          [109, "2026-02-25", "paid"],
+          [110, "2026-03-03", "paid"],
+          [111, "2026-03-08", "refunded"],
+          [112, "2026-03-12", "paid"],
+          [113, "2026-03-18", "paid"],
+          [114, "2026-03-24", "paid"],
+          [115, "2026-03-29", "pending"],
+        ],
+        source: { query: "SELECT id, order_date, status FROM orders ORDER BY id;" },
+      },
+      {
         kind: "code",
         language: "sql",
         caption: "Paid revenue per category, a column per month",
@@ -988,7 +1099,24 @@ FROM orders;
         id: "q1",
         question:
           "The shop has 15 orders, 11 of them paid. What does `COUNT(CASE WHEN status = 'paid' THEN 1 ELSE 0 END)` return?",
-        options: ["15", "11", "4", "1"],
+        options: [
+          "15",
+          {
+            text: "11",
+            whyNot:
+              "That's what you'd get without the `ELSE 0`. With it, every other order gets a 0 instead of NULL, and `COUNT` counts any value that isn't NULL.",
+          },
+          {
+            text: "4",
+            whyNot:
+              "4 is the orders that aren't paid. `COUNT` doesn't look at what a value is, only at whether it's NULL.",
+          },
+          {
+            text: "1",
+            whyNot:
+              "`COUNT` counts values; it doesn't add them up or count the distinct ones. Even `COUNT(DISTINCT ...)` would give 2 here: the 1 and the 0.",
+          },
+        ],
         answer: 0,
         explanation:
           "The `ELSE 0` gives every other order a 0, and `COUNT` counts anything that isn't NULL. Drop the `ELSE` and it returns 11.",
@@ -999,10 +1127,22 @@ FROM orders;
         question:
           "`AVG(CASE WHEN status = 'paid' THEN items END)` gives 148.0. Why does adding `ELSE 0` change it to 108.53?",
         options: [
-          "`AVG` rounds differently when it sees a 0",
+          {
+            text: "`AVG` rounds differently when it sees a 0",
+            whyNot:
+              "`AVG` has no special rule for zeros: it adds up the values it's given and divides by how many there are. Look at how many values each version gives it.",
+          },
           "The 4 orders that aren't paid now count as zeros in the average",
-          "`ELSE 0` turns the whole column into integers",
-          "It doesn't; the two queries return the same number",
+          {
+            text: "`ELSE 0` turns the whole column into integers",
+            whyNot:
+              "In SQLite, `AVG` always returns a decimal, and the paid amounts haven't changed. The difference is in which rows reach the average, not in their type.",
+          },
+          {
+            text: "It doesn't; the two queries return the same number",
+            whyNot:
+              "Run both and you get 148.0 and 108.53. Without an `ELSE`, the `CASE` gives NULL for the other orders; with `ELSE 0` it gives 0, and `AVG` doesn't treat those alike.",
+          },
         ],
         answer: 1,
         explanation:
@@ -1076,6 +1216,36 @@ ORDER BY month;`,
         body: "`GROUP BY` gives one row per group. Sometimes you need every row **and** a figure about its group beside it: each order numbered within its customer's orders, each month with the running total so far, each customer's latest order. That's a **window function**: an aggregate followed by `OVER (...)`, which doesn't collapse the rows.",
       },
       {
+        kind: "table",
+        caption: "Every order, by customer",
+        collapsed: true,
+        columns: ["customer", "order_id", "order_date", "status"],
+        rows: [
+          ["Aisha Khan", 106, "2026-02-06", "paid"],
+          ["Aisha Khan", 111, "2026-03-08", "refunded"],
+          ["Emma Novak", 112, "2026-03-12", "paid"],
+          ["Liam Walsh", 102, "2026-01-09", "paid"],
+          ["Liam Walsh", 107, "2026-02-11", "pending"],
+          ["Lucas Silva", 109, "2026-02-25", "paid"],
+          ["Lucas Silva", 115, "2026-03-29", "pending"],
+          ["Maja Berg", 101, "2026-01-04", "paid"],
+          ["Maja Berg", 103, "2026-01-15", "refunded"],
+          ["Maja Berg", 108, "2026-02-19", "paid"],
+          ["Maja Berg", 114, "2026-03-24", "paid"],
+          ["Noah Keller", 105, "2026-02-02", "paid"],
+          ["Noah Keller", 113, "2026-03-18", "paid"],
+          ["Sofia Rossi", 104, "2026-01-22", "paid"],
+          ["Sofia Rossi", 110, "2026-03-03", "paid"],
+        ],
+        source: {
+          query: `SELECT c.name AS customer, o.id AS order_id, o.order_date, o.status
+FROM orders AS o
+JOIN customers AS c ON c.id = o.customer_id
+ORDER BY c.name, o.order_date;`,
+        },
+      },
+      { kind: "heading", text: "Numbering within groups" },
+      {
         kind: "code",
         language: "sql",
         code: `SELECT id, customer_id, order_date,
@@ -1090,6 +1260,7 @@ WHERE status = 'paid';`,
         kind: "text",
         body: "`PARTITION BY` splits the rows into groups (here, one per customer), and the numbering starts again in each group. The `ORDER BY` inside `OVER` sets the order within a group. Leave out `PARTITION BY` and the whole result is one window.",
       },
+      { kind: "heading", text: "Running totals" },
       {
         kind: "text",
         body: "A running total is `SUM(...) OVER (ORDER BY ...)`: for each row, the sum of everything up to and including it.",
@@ -1114,10 +1285,46 @@ FROM monthly;
 -- 2026-02  472.0    1015.0
 -- 2026-03  613.0    1628.0`,
       },
+      { kind: "heading", text: "Ties: three ways to number them" },
       {
         kind: "text",
-        body: "When values tie, `ROW_NUMBER` still counts 1, 2, 3 and breaks the tie arbitrarily. `RANK` gives tied rows the same number and then skips (1, 2, 2, 4). `DENSE_RANK` doesn't skip (1, 2, 2, 3).",
+        body: "When values tie, the three numbering functions part ways. `ROW_NUMBER` gives every row its own number, so it has to break the tie somehow: here by name, because without a second sort key the database picks any order. `RANK` gives tied rows the same number, then skips as many places as rows shared it. `DENSE_RANK` gives the same number and doesn't skip. Units sold of each product, in paid orders:",
       },
+      {
+        kind: "table",
+        caption: "Units sold, numbered three ways",
+        columns: ["product", "units", "row_number", "rank", "dense_rank"],
+        rows: [
+          ["Wool Socks (3-pack)", 7, 1, 1, 1],
+          ["Trail Runner Shoes", 4, 2, 2, 2],
+          ["Water Bottle", 4, 3, 2, 2],
+          ["Headlamp", 3, 4, 4, 3],
+          ["Merino Base Layer", 3, 5, 4, 3],
+          ["Rain Shell Jacket", 3, 6, 4, 3],
+          ["Trekking Poles", 1, 7, 7, 4],
+        ],
+        source: {
+          query: `WITH units AS (
+  SELECT p.name AS product, SUM(i.quantity) AS units
+  FROM order_items AS i
+  JOIN orders AS o ON o.id = i.order_id
+  JOIN products AS p ON p.id = i.product_id
+  WHERE o.status = 'paid'
+  GROUP BY p.id
+)
+SELECT product, units,
+       ROW_NUMBER() OVER (ORDER BY units DESC, product) AS row_number,
+       RANK() OVER (ORDER BY units DESC) AS rank,
+       DENSE_RANK() OVER (ORDER BY units DESC) AS dense_rank
+FROM units
+ORDER BY units DESC, product;`,
+        },
+      },
+      {
+        kind: "text",
+        body: "Use `RANK` for a league table, where a tie for second means nobody is third. Use `DENSE_RANK` when you want the top three *values*, however many rows share them. Use `ROW_NUMBER` when you need exactly one row per position, such as each customer's latest order.",
+      },
+      { kind: "heading", text: "Filtering on a window" },
       {
         kind: "text",
         body: "Window functions are calculated after `WHERE`, so you can't filter on one there. Compute it in a CTE and filter in the outer query. That's the standard way to get *the latest X per Y*.",
@@ -1127,7 +1334,24 @@ FROM monthly;
         id: "q1",
         question:
           "Paid orders per customer: Maja 3, Sofia 2, Noah 2, and four customers with 1. With `RANK() OVER (ORDER BY paid_orders DESC)`, what rank do the customers with 1 order get?",
-        options: ["2", "3", "4", "5"],
+        options: [
+          {
+            text: "2",
+            whyNot:
+              "2 is the rank Sofia and Noah share. The customers with 1 order come after them.",
+          },
+          {
+            text: "3",
+            whyNot:
+              "3 is what `DENSE_RANK` gives, because it never leaves gaps. `RANK` leaves a gap after a tie.",
+          },
+          "4",
+          {
+            text: "5",
+            whyNot:
+              "5 would mean four customers rank above them. Count the customers with more than one paid order.",
+          },
+        ],
         answer: 2,
         explanation:
           "Maja is 1, Sofia and Noah tie at 2, and RANK then skips to 4. DENSE_RANK would say 3, and ROW_NUMBER would give each of the four a different number, 4 to 7.",
@@ -1138,9 +1362,21 @@ FROM monthly;
         question: "Why does `SELECT ... FROM orders WHERE ROW_NUMBER() OVER (...) = 1` fail?",
         options: [
           "Window functions are calculated after WHERE. Compute it in a CTE and filter in the outer query",
-          "ROW_NUMBER needs a PARTITION BY",
-          "SQLite doesn't support window functions",
-          "It should be HAVING instead of WHERE",
+          {
+            text: "ROW_NUMBER needs a PARTITION BY",
+            whyNot:
+              "`PARTITION BY` is optional: without it, the whole result is one window. Adding one wouldn't stop this query failing.",
+          },
+          {
+            text: "SQLite doesn't support window functions",
+            whyNot:
+              "SQLite has had window functions since version 3.25, and this course runs them. The problem is where in the query this one sits.",
+          },
+          {
+            text: "It should be HAVING instead of WHERE",
+            whyNot:
+              "`HAVING` filters groups after `GROUP BY`, and window functions are calculated after that as well, so SQLite rejects one in `HAVING` too.",
+          },
         ],
         answer: 0,
         explanation:
@@ -1213,8 +1449,8 @@ ORDER BY name;`,
     ],
   },
   "sql-time.dates": {
-    summary: "Bucket days into weeks and months, and stop missing days from skewing the answer.",
-    xp: 180,
+    summary: "Bucket days into weeks and months, and know which average you're reporting.",
+    xp: 170,
     blocks: [
       {
         kind: "text",
@@ -1222,9 +1458,51 @@ ORDER BY name;`,
       },
       { kind: "code", language: "text", caption: "The two tables", code: STORES_SCHEMA },
       {
+        kind: "table",
+        caption: "The three stores",
+        collapsed: true,
+        columns: ["id", "name", "channel", "city", "opened_on"],
+        rows: [
+          [1, "Website", "web", null, "2022-03-01"],
+          [2, "Leeds", "store", "Leeds", "2019-09-14"],
+          [3, "Harrogate", "store", "Harrogate", "2025-04-12"],
+        ],
+        source: { query: "SELECT * FROM stores;", dataset: "stores" },
+      },
+      {
+        kind: "table",
+        caption: "Leeds, 2–14 June 2025 (Sunday the 8th has no row)",
+        collapsed: true,
+        columns: ["day", "orders", "revenue"],
+        rows: [
+          ["2025-06-02", 14, 1120],
+          ["2025-06-03", 18, 1350],
+          ["2025-06-04", 13, 949],
+          ["2025-06-05", 13, 962],
+          ["2025-06-06", 17, 1326],
+          ["2025-06-07", 21, 1365],
+          ["2025-06-09", 18, 1206],
+          ["2025-06-10", 14, 1176],
+          ["2025-06-11", 15, 1230],
+          ["2025-06-12", 13, 1079],
+          ["2025-06-13", 17, 1139],
+          ["2025-06-14", 27, 1998],
+        ],
+        source: {
+          query: `SELECT day, orders, revenue
+FROM daily_sales
+WHERE store_id = 2
+  AND day >= '2025-06-02' AND day < '2025-06-15'
+ORDER BY day;`,
+          dataset: "stores",
+        },
+      },
+      { kind: "heading", text: "Dates are text" },
+      {
         kind: "text",
         body: "SQLite has no date type. Dates are text in the form `YYYY-MM-DD`, and that form was chosen on purpose: because the year comes first and every part is zero-padded, sorting and comparing the text gives the same answer as comparing the dates. `'2025-06-09' < '2025-06-10'` is true. Stored as `'9/6/2025'`, neither sorting nor `<` would work.",
       },
+      { kind: "heading", text: "Buckets with `strftime`" },
       {
         kind: "text",
         body: "`strftime` pulls parts out of a date, which is how you bucket days. `strftime('%Y-%m', day)` gives the month, `'%Y'` the year, and `'%w'` the weekday as a number from 0 (Sunday) to 6 (Saturday).",
@@ -1245,13 +1523,19 @@ GROUP BY month;
 -- 2025-02  22447.0
 -- 2025-03  28682.0`,
       },
+      { kind: "heading", text: "Half-open ranges" },
       {
         kind: "text",
         body: "Notice the range: `>=` the first day and `<` the day after the last. That's called a half-open range, and it's worth the habit. `BETWEEN '2025-06-01' AND '2025-06-30'` works on plain dates, but if the column holds timestamps, `'2025-06-30 14:05'` sorts after `'2025-06-30'` and everything after midnight on the last day silently drops out.",
       },
+      { kind: "heading", text: "Date arithmetic and weeks" },
       {
         kind: "text",
-        body: "`date()` does arithmetic with modifiers. `date(day, '+1 day')` is tomorrow and `date(day, 'start of month')` the 1st. Weeks need two steps: `date(day, '-6 days', 'weekday 1')` goes back six days, then forward to the next Monday (staying put if it's already one), which lands on the Monday that starts the day's week. For the number of days between two dates, subtract their `julianday()` values: `julianday('2025-12-31') - julianday('2025-04-12')` is 263.0.",
+        body: "`date()` does arithmetic with modifiers. `date(day, '+1 day')` is tomorrow and `date(day, 'start of month')` the 1st. Weeks need two steps: `date(day, '-6 days', 'weekday 1')` goes back six days, then forward to the next Monday (staying put if it's already one), which lands on the Monday that starts the day's week.",
+      },
+      {
+        kind: "text",
+        body: "For the number of days between two dates, subtract their `julianday()` values. `julianday('2025-07-01') - julianday('2025-06-01')` is 30.0: the length of June.",
       },
       {
         kind: "code",
@@ -1269,14 +1553,224 @@ GROUP BY week_start;
 -- 2025-06-02  6     7072.0
 -- 2025-06-09  6     7828.0`,
       },
+      { kind: "heading", text: "Two averages, both true" },
       {
         kind: "text",
-        body: "Each week has 7 days but only 6 rows, because Leeds is closed on Sundays and a closed day has **no row at all**. That matters the moment you average. `AVG(revenue)` over Leeds's 2025 rows is 1,009.68, which is its average *trading* day. Its average *calendar* day is 313,002 over 365 days, or 857.54. Both are real numbers; the mistake is reporting one when you meant the other. The website was also down from 10 to 12 June 2025, so June has 27 website rows, not 30.",
+        body: "Each week has 7 days but only 6 rows, because Leeds is closed on Sundays and a closed day has **no row at all**. So `AVG(revenue)` divides by the days Leeds traded, not the days that passed. Over 2025, that's the difference between these two:",
+      },
+      {
+        kind: "table",
+        caption: "Leeds in 2025, averaged two ways",
+        columns: ["average", "days", "per_day"],
+        rows: [
+          ["per trading day", 310, 1009.68],
+          ["per calendar day", 365, 857.54],
+        ],
+        source: {
+          query: `SELECT 'per trading day' AS average, COUNT(*) AS days,
+       ROUND(AVG(revenue), 2) AS per_day
+FROM daily_sales
+WHERE store_id = 2 AND day >= '2025-01-01' AND day < '2026-01-01'
+UNION ALL
+SELECT 'per calendar day', 365, ROUND(SUM(revenue) / 365, 2)
+FROM daily_sales
+WHERE store_id = 2 AND day >= '2025-01-01' AND day < '2026-01-01';`,
+          dataset: "stores",
+        },
       },
       {
         kind: "text",
-        body: "A missing row and a row that says 0 are different things. On 8 January 2025, Leeds opened through the snow and sold nothing, so that day has a row with 0 orders. `COUNT(*)` counts it; it doesn't count a Sunday.",
+        body: "Per trading day says how good a typical open day is. Per calendar day says what the store earns over time, closed days included. Neither is wrong; the mistake is reporting one when the reader thinks it's the other, so put which one it is in the column's name.",
       },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          "Leeds took 7,072 in the week starting Monday 2 June 2025, and was closed on the Sunday. What does `AVG(revenue)` over that week's rows return?",
+        options: [
+          {
+            text: "1,010.29: 7,072 over the 7 days of the week",
+            whyNot:
+              "That's the average per calendar day. `AVG` never sees Sunday: it divides by the rows it's given, and a closed day has no row.",
+          },
+          {
+            text: "NULL, because Sunday has no row",
+            whyNot:
+              "`AVG` returns NULL only when it has no values at all. A missing row isn't a NULL value; it simply isn't there, and `AVG` works with the rows that are.",
+          },
+          {
+            text: "An error, until Sunday is filled in",
+            whyNot:
+              "SQL has no idea Leeds should have a Sunday row. As far as the query knows, nothing is missing, so it runs.",
+          },
+          "1,178.67: 7,072 over the 6 rows that exist",
+        ],
+        answer: 3,
+        explanation:
+          "`AVG` divides by the rows it sees, and Sunday isn't one of them. For an average per calendar day, divide the total by 7, or join a calendar and count the closed day as 0, as the next lesson does.",
+      },
+      {
+        kind: "mcq",
+        id: "q2",
+        question:
+          "`created_at` holds timestamps like `'2025-06-30 14:05:00'`. Which filter keeps every row from June 2025?",
+        options: [
+          {
+            text: "`created_at BETWEEN '2025-06-01' AND '2025-06-30'`",
+            whyNot:
+              "`'2025-06-30 14:05:00'` sorts after `'2025-06-30'`, so everything after midnight on the 30th falls outside the range, and nothing tells you it did.",
+          },
+          {
+            text: "`strftime('%m', created_at) = '06'`",
+            whyNot:
+              "That keeps June of every year in the table, not only 2025. It also has to run `strftime` on every row, so an index on `created_at` can't help.",
+          },
+          "`created_at >= '2025-06-01' AND created_at < '2025-07-01'`",
+          {
+            text: "`created_at LIKE '2025-6%'`",
+            whyNot:
+              "Months are zero-padded, so June is written `06`. `'2025-6%'` matches nothing at all.",
+          },
+        ],
+        answer: 2,
+        explanation:
+          "A half-open range, `>=` the first day and `<` the day after the last, catches every time on every day of the month, whether the column holds dates or timestamps.",
+      },
+      {
+        kind: "fill",
+        id: "f1",
+        prompt: "Bucket each day into its month, like `2025-06`.",
+        before: "SELECT ",
+        after: "('%Y-%m', day) AS month",
+        answer: "strftime",
+        explanation:
+          "`strftime` formats parts of a date. `'%Y-%m'` is the year and the zero-padded month, so the months also sort in order as text.",
+      },
+      {
+        kind: "challenge",
+        id: "c1",
+        title: "Two averages for every month",
+        prompt:
+          "For Leeds (`store_id = 2`) in 2025, return one row per month: `month` (like `2025-06`), `trading_days`, `revenue`, `per_trading_day` (the average per day Leeds traded) and `per_calendar_day` (the revenue over every day of the month, closed days included), both rounded to 2 decimal places, in month order. The starter runs, but its months have no year and its two averages are the same number.",
+        language: "sql",
+        dataset: "stores",
+        starter: `SELECT strftime('%m', day) AS month,
+       COUNT(*) AS trading_days,
+       SUM(revenue) AS revenue,
+       ROUND(AVG(revenue), 2) AS per_trading_day,
+       ROUND(AVG(revenue), 2) AS per_calendar_day
+FROM daily_sales
+WHERE store_id = 2
+  AND day >= '2025-01-01' AND day < '2026-01-01'
+GROUP BY month
+ORDER BY month;`,
+        hint: "Use `'%Y-%m'` for the month. A month's length is the gap between its first day and the next month's: `julianday(date(MIN(day), 'start of month', '+1 month')) - julianday(date(MIN(day), 'start of month'))`. Divide the revenue by that.",
+        solution: `SELECT strftime('%Y-%m', day) AS month,
+       COUNT(*) AS trading_days,
+       SUM(revenue) AS revenue,
+       ROUND(AVG(revenue), 2) AS per_trading_day,
+       ROUND(SUM(revenue) / (julianday(date(MIN(day), 'start of month', '+1 month'))
+                             - julianday(date(MIN(day), 'start of month'))), 2) AS per_calendar_day
+FROM daily_sales
+WHERE store_id = 2
+  AND day >= '2025-01-01' AND day < '2026-01-01'
+GROUP BY month
+ORDER BY month;`,
+        tests: [
+          {
+            name: "Returns month, trading_days, revenue, per_trading_day and per_calendar_day",
+            expression:
+              'columns == ["month", "trading_days", "revenue", "per_trading_day", "per_calendar_day"]',
+          },
+          {
+            name: "The 12 months of 2025, labelled like 2025-06, in order",
+            expression: '[r[0] for r in rows] == [f"2025-{m:02d}" for m in range(1, 13)]',
+          },
+          {
+            name: "June: 25 trading days at 1,227.08 each",
+            expression: "any(r[1] == 25 and abs(r[3] - 1227.08) < 0.01 for r in rows)",
+          },
+          {
+            name: "June's per_calendar_day divides by its 30 days: 1,022.57",
+            expression:
+              "any(abs(r[3] - 1227.08) < 0.01 and abs(r[4] - 1022.57) < 0.01 for r in rows)",
+          },
+          {
+            name: "February's divides by 28: 649.21",
+            expression:
+              "any(abs(r[3] - 757.42) < 0.01 and abs(r[4] - 649.21) < 0.01 for r in rows)",
+          },
+          {
+            name: "Every month earns less per calendar day than per trading day",
+            expression: "all(r[4] < r[3] for r in rows)",
+          },
+        ],
+      },
+    ],
+  },
+  "sql-time.calendars": {
+    summary: "Report every day, including the ones that have no row.",
+    xp: 160,
+    blocks: [
+      {
+        kind: "text",
+        body: "The last lesson ended on a fact that matters more than it looks: a day with no sales often has **no row at all**. This lesson is about reporting those days anyway. It uses the same stores database.",
+      },
+      { kind: "heading", text: "A missing row isn't a zero" },
+      {
+        kind: "text",
+        body: "The website was down from 10 to 12 June 2025. Those days have no rows, so June has 27 website rows, not 30:",
+      },
+      {
+        kind: "table",
+        caption: "The website, 8–14 June 2025",
+        columns: ["day", "orders", "revenue"],
+        rows: [
+          ["2025-06-08", 22, 1386],
+          ["2025-06-09", 23, 1265],
+          ["2025-06-13", 23, 1242],
+          ["2025-06-14", 28, 1736],
+        ],
+        source: {
+          query: `SELECT day, orders, revenue
+FROM daily_sales
+WHERE store_id = 1
+  AND day >= '2025-06-08' AND day < '2025-06-15'
+ORDER BY day;`,
+          dataset: "stores",
+        },
+      },
+      {
+        kind: "text",
+        body: "A row that says 0 is something else. On 8 January 2025, Leeds opened through the snow and sold nothing, so that day has a row with 0 orders. Sunday the 5th, when it was closed, has no row:",
+      },
+      {
+        kind: "table",
+        caption: "Leeds, 4–11 January 2025",
+        columns: ["day", "orders", "revenue"],
+        rows: [
+          ["2025-01-04", 13, 1040],
+          ["2025-01-06", 10, 750],
+          ["2025-01-07", 10, 660],
+          ["2025-01-08", 0, 0],
+          ["2025-01-09", 6, 468],
+          ["2025-01-10", 7, 553],
+          ["2025-01-11", 12, 984],
+        ],
+        source: {
+          query: `SELECT day, orders, revenue
+FROM daily_sales
+WHERE store_id = 2
+  AND day >= '2025-01-04' AND day < '2025-01-12'
+ORDER BY day;`,
+          dataset: "stores",
+        },
+      },
+      {
+        kind: "text",
+        body: "`COUNT(*)` counts the snow day, because it's a row, and skips the Sunday, because it isn't. An average over these rows treats the snow day as a bad day and the Sunday as if it never happened.",
+      },
+      { kind: "heading", text: "Make the days yourself" },
       {
         kind: "text",
         body: "To report every day, including those with no row, make the days yourself. A recursive CTE produces a calendar, one row per day, and a `LEFT JOIN` hangs the sales on it. Days that found no sales get NULL, which `COALESCE` turns into 0.",
@@ -1304,6 +1798,7 @@ ORDER BY c.day;
 -- 2025-06-13  1242.0
 -- 2025-06-14  1736.0`,
       },
+      { kind: "heading", text: "Filter in `ON`, not `WHERE`" },
       {
         kind: "callout",
         body: "Put the store filter in the `ON`, not in `WHERE`. On a day with no sales, every column from `daily_sales` is NULL, including `store_id`, so `WHERE s.store_id = 1` throws out exactly the days the calendar was there to keep. The query still runs, and the gaps quietly disappear again.",
@@ -1312,31 +1807,55 @@ ORDER BY c.day;
         kind: "mcq",
         id: "q1",
         question:
-          "Leeds took 7,072 in the week starting Monday 2 June 2025, and was closed on the Sunday. What does `AVG(revenue)` over that week's rows return?",
+          "You LEFT JOIN a calendar of the 30 days of June 2025 to `daily_sales` and add `WHERE s.store_id = 1`. How many rows come back?",
         options: [
-          "1,010.29: 7,072 over the 7 days of the week",
-          "NULL, because Sunday has no row",
-          "An error, until Sunday is filled in",
-          "1,178.67: 7,072 over the 6 rows that exist",
+          {
+            text: "30, one for each day in the calendar",
+            whyNot:
+              "That's what the `LEFT JOIN` returns, but `WHERE` runs after it. On a day with no website row, `s.store_id` is NULL, and `NULL = 1` isn't true.",
+          },
+          {
+            text: "82, one for each store's sales",
+            whyNot:
+              "82 is every store's June rows, which is what you'd get with no store filter at all. `WHERE s.store_id = 1` keeps one store's.",
+          },
+          "27: the WHERE removes the three outage days, whose store_id is NULL",
+          {
+            text: "90, three stores times 30 days",
+            whyNot:
+              "The join only adds a row where a store actually traded, and Leeds closes on Sundays. The `WHERE` keeps just one store anyway.",
+          },
         ],
-        answer: 3,
+        answer: 2,
         explanation:
-          "`AVG` divides by the rows it sees, and Sunday isn't one of them. For an average per calendar day, divide the total by 7, or join a calendar and count the closed day as 0.",
+          "The calendar gives 30 days, but `WHERE` runs after the join, and the outage days have NULL in every `daily_sales` column. Moving `s.store_id = 1` into the `ON` keeps all 30. Without any store filter you'd get 82: 27 website rows, 25 for Leeds and 30 for Harrogate.",
       },
       {
         kind: "mcq",
         id: "q2",
         question:
-          "You LEFT JOIN a calendar of the 30 days of June 2025 to `daily_sales` and add `WHERE s.store_id = 1`. How many rows come back?",
+          "You join a calendar of June 2025 to the website's sales, with the store in the `ON`, and select `COALESCE(s.revenue, 0) AS revenue`. What does `AVG(revenue)` over the result average?",
         options: [
-          "30, one for each day in the calendar",
-          "82, one for each store's sales",
-          "27: the WHERE removes the three outage days, whose store_id is NULL",
-          "90, three stores times 30 days",
+          {
+            text: "Only the 27 days the website traded",
+            whyNot:
+              "That was true before the calendar. Now the outage days have rows too, each with revenue 0, and `AVG` counts every row it's given.",
+          },
+          {
+            text: "Nothing: three NULLs make the whole average NULL",
+            whyNot:
+              "`COALESCE` has already turned those NULLs into 0. And `AVG` would only skip a NULL; it never makes the whole result NULL while other values remain.",
+          },
+          "All 30 days of June, with the outage days counted as 0",
+          {
+            text: "The same as before: zeros don't change an average",
+            whyNot:
+              "Zeros don't change a sum, but they do change an average: three more rows means the same total is divided by more days.",
+          },
         ],
         answer: 2,
         explanation:
-          "The calendar gives 30 days, but `WHERE` runs after the join, and the outage days have NULL in every `daily_sales` column. Moving `s.store_id = 1` into the `ON` keeps all 30. Without any store filter you'd get 82: 27 website rows, 25 for Leeds and 30 for Harrogate.",
+          "The calendar gives every day a row and `COALESCE` gives the gaps 0, so `AVG` becomes a per-calendar-day figure. That's often what you want, and it's never what `daily_sales` alone would give you.",
       },
       {
         kind: "fill",
@@ -1400,6 +1919,48 @@ ORDER BY c.day;`,
         body: '"Up 12% on last month" needs two numbers on the same row: this month and last. `LAG(x) OVER (ORDER BY ...)` fetches `x` from the previous row, without a self-join. `LEAD` fetches the next one. `LAG(x, 12)` reaches back 12 rows, and a third argument, as in `LAG(x, 1, 0)`, is what to use when there\'s no row that far back.',
       },
       {
+        kind: "table",
+        caption: "Revenue per store, month by month",
+        collapsed: true,
+        columns: ["month", "website", "leeds", "harrogate"],
+        rows: [
+          ["2024-01", 19901, 15019, null],
+          ["2024-02", 20590, 15877, null],
+          ["2024-03", 27064, 19917, null],
+          ["2024-04", 29744, 23192, null],
+          ["2024-05", 32772, 24841, null],
+          ["2024-06", 35801, 27106, null],
+          ["2024-07", 37272, 30058, null],
+          ["2024-08", 34604, 26490, null],
+          ["2024-09", 27782, 19916, null],
+          ["2024-10", 25352, 19857, null],
+          ["2024-11", 31499, 24481, null],
+          ["2024-12", 36849, 26532, null],
+          ["2025-01", 22709, 16480, null],
+          ["2025-02", 22447, 18178, null],
+          ["2025-03", 28682, 22662, null],
+          ["2025-04", 31687, 24607, 13821],
+          ["2025-05", 38244, 29378, 23710],
+          ["2025-06", 37381, 30677, 24189],
+          ["2025-07", 44417, 35415, 27917],
+          ["2025-08", 40933, 30603, 26075],
+          ["2025-09", 30399, 24525, 19584],
+          ["2025-10", 30807, 24937, 20314],
+          ["2025-11", 38196, 26907, 22521],
+          ["2025-12", 40930, 28633, 23622],
+        ],
+        source: {
+          query: `SELECT strftime('%Y-%m', day) AS month,
+       SUM(CASE WHEN store_id = 1 THEN revenue END) AS website,
+       SUM(CASE WHEN store_id = 2 THEN revenue END) AS leeds,
+       SUM(CASE WHEN store_id = 3 THEN revenue END) AS harrogate
+FROM daily_sales
+GROUP BY month
+ORDER BY month;`,
+          dataset: "stores",
+        },
+      },
+      {
         kind: "code",
         language: "sql",
         caption: "The chain's revenue, month on month",
@@ -1426,25 +1987,97 @@ LIMIT 4;
 -- 2024-03  46981.0  10514.0  28.8
 -- 2024-04  52936.0  5955.0   12.7`,
       },
+      { kind: "heading", text: "The first row has nothing before it" },
       {
         kind: "text",
-        body: "January 2024 has nothing before it, so its change is NULL, and NULL is the honest answer. Don't `COALESCE` it to 0: a 0 claims the month was flat, when in fact nobody knows. If the previous value can be 0, write `NULLIF(prev, 0)` in the denominator. SQLite returns NULL when you divide by zero, but PostgreSQL and most other databases stop with an error.",
+        body: "January 2024 has nothing before it, so its change is NULL, and NULL is the honest answer. Don't `COALESCE` it to 0: a 0 claims the month was flat, when in fact nobody knows.",
+      },
+      { kind: "heading", text: "Two arithmetic traps" },
+      {
+        kind: "text",
+        body: "**Integer division.** Write `100.0 *`, not `100 *`, when the columns are whole numbers. `orders` is an INTEGER, and dividing one integer by another gives an integer, so every month-on-month change under 100%, up or down, comes out as 0.",
       },
       {
         kind: "text",
-        body: "Write `100.0 *`, not `100 *`, when the columns are whole numbers. `orders` is an INTEGER, and dividing one integer by another gives an integer, so every month-on-month change under 100%, up or down, comes out as 0.",
+        body: "**Dividing by zero.** If the previous value can be 0, write `NULLIF(prev, 0)` in the denominator, which turns a 0 into NULL. SQLite already returns NULL when you divide by zero, but PostgreSQL and most other databases stop with an error.",
       },
-      {
-        kind: "text",
-        body: "`PARTITION BY store_id` compares each store only with itself. Watch the first row of a new store, though. Harrogate opened on 12 April 2025, so its April has only 19 trading days, and its May is up 71.6% on April for no reason except that May is a whole month.",
-      },
+      { kind: "heading", text: "The previous row isn't always the previous period" },
       {
         kind: "text",
         body: "`LAG` means *the previous row*, not *the previous period*. On Leeds's daily rows, Monday's previous row is Saturday, because Sunday has no row. Monthly totals here have every month, so `LAG(revenue, 12)` is the same month last year. Where a period might be missing, build a calendar first, as in the last lesson, and then `LAG` over that.",
       },
       {
         kind: "text",
-        body: "Then there's the question of whether the comparison is fair. The chain took 921,587 in 2025, against 632,516 in 2024: up 45.7%. But 201,753 of 2025's revenue came from Harrogate, which didn't exist in 2024. Compare only the stores that traded in both years, the website and Leeds, and growth is 13.8%. That's called **like-for-like** growth, and it's the one that tells you whether the business is doing better, rather than just bigger.",
+        body: "`PARTITION BY store_id` compares each store only with itself. Watch the first row of a new store, though. Harrogate opened on 12 April 2025, part-way through the month:",
+      },
+      {
+        kind: "table",
+        caption: "Harrogate's first two months",
+        columns: ["month", "trading_days", "revenue", "change_pct"],
+        rows: [
+          ["2025-04", 19, 13821, null],
+          ["2025-05", 31, 23710, 71.6],
+        ],
+        source: {
+          query: `WITH monthly AS (
+  SELECT strftime('%Y-%m', day) AS month,
+         COUNT(*) AS trading_days,
+         SUM(revenue) AS revenue
+  FROM daily_sales
+  WHERE store_id = 3
+  GROUP BY month
+)
+SELECT month, trading_days, revenue,
+       ROUND(100.0 * (revenue - LAG(revenue) OVER (ORDER BY month))
+             / LAG(revenue) OVER (ORDER BY month), 1) AS change_pct
+FROM monthly
+ORDER BY month
+LIMIT 2;`,
+          dataset: "stores",
+        },
+      },
+      {
+        kind: "text",
+        body: "May is up 71.6% for no reason except that it's a whole month. A partial first period makes the second look like a boom, so compare from the first full one.",
+      },
+      { kind: "heading", text: "Like for like: better, or just bigger?" },
+      {
+        kind: "text",
+        body: "Then there's the question of whether the comparison is fair at all. Harrogate didn't exist in 2024, so everything it took in 2025 looks like growth:",
+      },
+      {
+        kind: "table",
+        caption: "2025 against 2024",
+        columns: ["stores", "revenue_2024", "revenue_2025", "growth_pct"],
+        rows: [
+          ["Harrogate", null, 201753, null],
+          ["Website and Leeds", 632516, 719834, 13.8],
+          ["All stores", 632516, 921587, 45.7],
+        ],
+        source: {
+          query: `WITH yearly AS (
+  SELECT CASE WHEN s.opened_on <= '2024-01-01'
+              THEN 'Website and Leeds' ELSE 'Harrogate' END AS stores,
+         SUM(CASE WHEN d.day < '2025-01-01' THEN d.revenue END) AS y2024,
+         SUM(CASE WHEN d.day >= '2025-01-01' THEN d.revenue END) AS y2025
+  FROM daily_sales AS d
+  JOIN stores AS s ON s.id = d.store_id
+  GROUP BY 1
+)
+SELECT stores, y2024 AS revenue_2024, y2025 AS revenue_2025,
+       ROUND(100.0 * (y2025 - y2024) / y2024, 1) AS growth_pct
+FROM yearly
+UNION ALL
+SELECT 'All stores', SUM(y2024), SUM(y2025),
+       ROUND(100.0 * (SUM(y2025) - SUM(y2024)) / SUM(y2024), 1)
+FROM yearly
+ORDER BY revenue_2025;`,
+          dataset: "stores",
+        },
+      },
+      {
+        kind: "text",
+        body: "Both growth figures are true. The 13.8% for the stores that traded in both years is called **like-for-like** growth, and it's the one that tells you whether the business is doing better, rather than just bigger.",
       },
       {
         kind: "callout",
@@ -1455,7 +2088,24 @@ LIMIT 4;
         id: "q1",
         question:
           "`orders` is an INTEGER column. February 2024 had 541 orders and January had 522. In SQLite, what does `(orders - prev) / prev` return for February?",
-        options: ["3.6", "0", "0.036", "NULL"],
+        options: [
+          {
+            text: "3.6",
+            whyNot:
+              "3.6 is the percentage, and nothing in this expression multiplies by 100. Before that, look at the types: both columns are INTEGER.",
+          },
+          "0",
+          {
+            text: "0.036",
+            whyNot:
+              "That's the true ratio, but SQLite gives a decimal only when one side of the division is a decimal. Both sides here are INTEGER.",
+          },
+          {
+            text: "NULL",
+            whyNot:
+              "SQLite gives NULL for a division only when one side is NULL or you divide by zero. Neither happens here: `prev` is 522.",
+          },
+        ],
         answer: 1,
         explanation:
           "19 / 522 is integer division, so the result is 0, and so is every change under 100%. `100.0 * (orders - prev) / prev` makes it a decimal: 3.6.",
@@ -1467,9 +2117,21 @@ LIMIT 4;
           "The first month in a report has no month before it. What should its `change` show?",
         options: [
           "NULL. There's nothing to compare it with, and 0 would claim a flat month",
-          "0, because nothing changed",
-          "The month's own revenue, since it's all new",
-          "Nothing: drop the first month from the report",
+          {
+            text: "0, because nothing changed",
+            whyNot:
+              "Nobody measured a change, which isn't the same as no change. A 0 tells the reader the month was flat, and nobody knows that.",
+          },
+          {
+            text: "The month's own revenue, since it's all new",
+            whyNot:
+              "That treats the month before as zero revenue, a claim about a month nobody measured. Every report would start with an enormous jump.",
+          },
+          {
+            text: "Nothing: drop the first month from the report",
+            whyNot:
+              "Dropping the row hides that month's revenue too, and the reader can't tell anything is missing.",
+          },
         ],
         answer: 0,
         explanation:
@@ -1481,10 +2143,22 @@ LIMIT 4;
         question:
           "The chain's revenue rose from 632,516 in 2024 to 921,587 in 2025, and 201,753 of 2025's came from the new Harrogate store. Which headline is accurate?",
         options: [
-          "Revenue grew 45.7%",
-          "Revenue grew 13.8%, because Harrogate's sales don't count",
+          {
+            text: "Revenue grew 45.7%",
+            whyNot:
+              "True, but on its own it reads as though the existing business is booming. Much of the rise is a store that didn't exist in 2024.",
+          },
+          {
+            text: "Revenue grew 13.8%, because Harrogate's sales don't count",
+            whyNot:
+              "Harrogate's sales are real revenue and do count. 13.8% describes only the stores that traded in both years, so calling it the chain's growth understates what the chain took.",
+          },
           "Revenue grew 45.7% overall; the stores that traded in both years grew 13.8%",
-          "Growth can't be measured, because Harrogate has no 2024",
+          {
+            text: "Growth can't be measured, because Harrogate has no 2024",
+            whyNot:
+              "Both years have a revenue total, so growth can be measured. A new store changes what the growth means, not whether there is any.",
+          },
         ],
         answer: 2,
         explanation:
@@ -1575,12 +2249,39 @@ ORDER BY month;`,
         code: SQL_DATASETS.payments.schema,
       },
       {
-        kind: "text",
-        body: "A data check is a query that should return nothing. If it returns rows, those rows are the problem. There are five kinds worth running on any new table, and then one more that ties it to the rest of the data.",
+        kind: "table",
+        caption: "The payments export",
+        collapsed: true,
+        columns: ["id", "order_id", "created_at", "amount", "status"],
+        rows: [
+          [1, 101, "2026-01-04 10:12:00", 173, "succeeded"],
+          [2, 102, "2026-01-09 18:40:00", 180, "succeeded"],
+          [3, 103, "2026-01-15 09:05:00", 70, "succeeded"],
+          [4, 103, "2026-01-19 11:30:00", -70, "refunded"],
+          [5, 104, "2026-01-22 20:14:00", 195, "Succeeded"],
+          [6, 105, "2026-02-02 08:55:00", 95, "succeeded"],
+          [7, 106, "2026-02-06 13:20:00", 154, "succeeded"],
+          [8, 106, "2026-02-06 13:20:00", 154, "succeeded"],
+          [9, 107, "2026-02-11 16:02:00", 185, "failed"],
+          [10, 108, "19/02/2026 12:47", 60, "succeeded"],
+          [11, 109, "2026-02-25 07:31:00", 173, "succeeded"],
+          [12, 110, "2026-03-03 19:45:00", 77, "succeeded "],
+          [13, 111, "2026-03-08 10:10:00", 95, "succeeded"],
+          [14, 111, "2026-03-10 15:00:00", -95, "refunded"],
+          [15, 112, "2026-03-12 21:05:00", 180, "succeeded"],
+          [16, 113, "2026-03-18 12:00:00", null, "succeeded"],
+          [17, 999, "2026-03-20 14:22:00", 49, "succeeded"],
+        ],
+        source: { query: "SELECT * FROM payments ORDER BY id;", dataset: "payments" },
       },
       {
         kind: "text",
-        body: "**1. Allowed values.** Group by any column that should hold a short list of values, and read the list.",
+        body: "A data check is a query that should return nothing. If it returns rows, those rows are the problem. There are five kinds worth running on any new table, and then one more that ties it to the rest of the data.",
+      },
+      { kind: "heading", text: "1. Allowed values" },
+      {
+        kind: "text",
+        body: "Group by any column that should hold a short list of values, and read the list.",
       },
       {
         kind: "code",
@@ -1600,9 +2301,10 @@ GROUP BY status;
         kind: "text",
         body: "Two rows both seem to say `succeeded`. The second one is `'succeeded '`, with a trailing space you can't see in the output. With the capital-S version, that's 14 successful payments spelled three ways, and `WHERE status = 'succeeded'` finds 12 of them. `LOWER(TRIM(status))` brings them back together.",
       },
+      { kind: "heading", text: "2. Duplicates" },
       {
         kind: "text",
-        body: "**2. Duplicates.** Decide what should be unique, then look for groups with more than one row. Here each payment has its own `id`, so group by everything else.",
+        body: "Decide what should be unique, then look for groups with more than one row. Here each payment has its own `id`, so group by everything else.",
       },
       {
         kind: "code",
@@ -1619,9 +2321,10 @@ HAVING COUNT(*) > 1;
         kind: "text",
         body: "Payments 7 and 8 are the same charge, recorded twice when the provider's notification arrived twice. Sum the export and order 106 has paid 308.0 for a 154.0 order.",
       },
+      { kind: "heading", text: "3. Orphans" },
       {
         kind: "text",
-        body: "**3. Orphans.** A row that points at something that doesn't exist. The anti-join from SQL Foundations' joins lesson finds them: `LEFT JOIN` the table it should match, and keep the rows that found nothing.",
+        body: "A row that points at something that doesn't exist. The anti-join from SQL Foundations' joins lesson finds them: `LEFT JOIN` the table it should match, and keep the rows that found nothing.",
       },
       {
         kind: "code",
@@ -1634,13 +2337,15 @@ WHERE o.id IS NULL;
 -- id  order_id
 -- 17  999`,
       },
+      { kind: "heading", text: "4. Missing values" },
       {
         kind: "text",
-        body: "**4. Missing values.** `COUNT(*)` counts rows and `COUNT(amount)` counts amounts, so the difference is how many are NULL. Here it's 17 against 16. That matters because `SUM` skips NULLs without a word: payment 16's missing amount just vanishes from the total.",
+        body: "`COUNT(*)` counts rows and `COUNT(amount)` counts amounts, so the difference is how many are NULL. Here it's 17 against 16. That matters because `SUM` skips NULLs without a word: payment 16's missing amount just vanishes from the total.",
       },
+      { kind: "heading", text: "5. Formats" },
       {
         kind: "text",
-        body: "**5. Formats.** A date that isn't `YYYY-MM-DD` sorts and filters as the wrong date. `GLOB` matches a pattern of characters, so this finds any row that doesn't start with one:",
+        body: "A date that isn't `YYYY-MM-DD` sorts and filters as the wrong date. `GLOB` matches a pattern of characters, so this finds any row that doesn't start with one:",
       },
       {
         kind: "code",
@@ -1656,13 +2361,64 @@ WHERE created_at NOT GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]*';
         kind: "text",
         body: "As text, `'19/02/2026'` sorts before `'2'`, so a filter for February finds 5 payments instead of 6. Don't fix a row like this by guessing, though. `19/02` can only mean the 19th of February, but `04/03` could be April or March. Ask where the export came from.",
       },
+      { kind: "heading", text: "6. Reconciliation" },
       {
         kind: "text",
-        body: "**6. Reconciliation.** Compare the new data with something you already trust. The succeeded charges total 1,655. The paid orders total 1,653: 1,628 in items plus 25 in shipping. That's so close that it looks like rounding.",
+        body: "Compare the new data with something you already trust. The succeeded charges total 1,655. The paid orders total 1,653: 1,628 in items plus 25 in shipping. That's so close that it looks like rounding.",
       },
       {
         kind: "text",
-        body: "It isn't. The 1,655 includes the duplicate (+154), the orphan (+49) and the charges on the two orders later refunded (+165). It's missing order 114, which has no payment (−324), and order 113's amount (−25). And order 112 was charged 17 less than its total. Those errors happen to cancel out to 2. A total that matches proves very little. Reconcile row by row, at the grain where things should match, which here is one row per order.",
+        body: "It isn't. Compare them one order at a time instead. `expected` is what each order should have brought in: its total if it's paid, nothing if it isn't. Seven orders disagree:",
+      },
+      {
+        kind: "table",
+        caption: "Every order whose payments don't match",
+        columns: ["order_id", "status", "expected", "collected", "difference"],
+        rows: [
+          [103, "refunded", 0, 70, 70],
+          [106, "paid", 154, 308, 154],
+          [111, "refunded", 0, 95, 95],
+          [112, "paid", 197, 180, -17],
+          [113, "paid", 25, 0, -25],
+          [114, "paid", 324, 0, -324],
+          [999, "no such order", 0, 49, 49],
+        ],
+        source: {
+          // Kept back: it's most of the answer to this lesson's challenge.
+          hideQuery: true,
+          dataset: "payments",
+          query: `WITH totals AS (
+  SELECT o.id AS order_id, o.status,
+         o.shipping + SUM(i.quantity * i.unit_price) AS order_total
+  FROM orders AS o
+  JOIN order_items AS i ON i.order_id = o.id
+  GROUP BY o.id
+), charged AS (
+  SELECT order_id, SUM(amount) AS collected
+  FROM payments
+  WHERE LOWER(TRIM(status)) = 'succeeded'
+  GROUP BY order_id
+), compared AS (
+  SELECT t.order_id, t.status,
+         CASE WHEN t.status = 'paid' THEN t.order_total ELSE 0 END AS expected,
+         COALESCE(c.collected, 0) AS collected
+  FROM totals AS t
+  LEFT JOIN charged AS c ON c.order_id = t.order_id
+  UNION ALL
+  SELECT c.order_id, 'no such order', 0, c.collected
+  FROM charged AS c
+  LEFT JOIN orders AS o ON o.id = c.order_id
+  WHERE o.id IS NULL
+)
+SELECT order_id, status, expected, collected, collected - expected AS difference
+FROM compared
+WHERE collected <> expected
+ORDER BY order_id;`,
+        },
+      },
+      {
+        kind: "text",
+        body: "106 is the duplicate. 103 and 111 were charged and later refunded, so they aren't revenue. 112 was charged 17 too little, 113's amount is missing, 114 was never charged, and 999 is the orphan. The differences add up to the 2. A total that matches proves very little: reconcile row by row, at the grain where things should match, which here is one row per order.",
       },
       {
         kind: "callout",
@@ -1673,9 +2429,21 @@ WHERE created_at NOT GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]*';
         id: "q1",
         question: "Why does `WHERE status = 'succeeded'` find 12 of the 14 successful payments?",
         options: [
-          "Two of them are duplicates",
-          "SQLite ignores rows with a NULL amount",
-          "Two of them belong to orders that don't exist",
+          {
+            text: "Two of them are duplicates",
+            whyNot:
+              "A duplicate has the same status as the original, so it passes the filter too. Duplicates push a count up, not down.",
+          },
+          {
+            text: "SQLite ignores rows with a NULL amount",
+            whyNot:
+              "`WHERE status = ...` doesn't look at `amount` at all. A NULL amount drops out of `SUM`, not out of a filter on another column.",
+          },
+          {
+            text: "Two of them belong to orders that don't exist",
+            whyNot:
+              "This query never touches `orders`, so it can't know an order is missing. The orphan payment passes the filter like any other row.",
+          },
           "Two are spelled differently: 'Succeeded' and 'succeeded ' with a trailing space",
         ],
         answer: 3,
@@ -1689,9 +2457,21 @@ WHERE created_at NOT GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]*';
           "Payments total 1,655 and paid orders total 1,653. What does that tell you about the payments?",
         options: [
           "Very little: several errors can cancel out, so reconcile order by order",
-          "They're correct, apart from 2 lost to rounding",
-          "Exactly one payment is wrong, by 2",
-          "The shop was overpaid by 2",
+          {
+            text: "They're correct, apart from 2 lost to rounding",
+            whyNot:
+              "Every amount in the export is a whole number, so there's nothing to round. A small gap between two totals can hide large errors in both directions.",
+          },
+          {
+            text: "Exactly one payment is wrong, by 2",
+            whyNot:
+              "A total only shows the net difference. One error of 2, or several bigger ones that nearly cancel, give the same total.",
+          },
+          {
+            text: "The shop was overpaid by 2",
+            whyNot:
+              "That holds only if every other payment were right. The total can't tell you which orders were overpaid, underpaid or missed.",
+          },
         ],
         answer: 0,
         explanation:
@@ -1703,9 +2483,21 @@ WHERE created_at NOT GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]*';
         question:
           "`SELECT COUNT(*), COUNT(amount) FROM payments` returns 17 and 16. What does that mean?",
         options: [
-          "One payment is a duplicate",
-          "One payment has an amount of 0",
-          "One payment's order doesn't exist",
+          {
+            text: "One payment is a duplicate",
+            whyNot:
+              "A duplicate has an amount, so `COUNT(amount)` counts it as well. Both counts would go up together.",
+          },
+          {
+            text: "One payment has an amount of 0",
+            whyNot:
+              "0 is a value, and `COUNT(amount)` counts it just like 154. The two counts would still match.",
+          },
+          {
+            text: "One payment's order doesn't exist",
+            whyNot:
+              "Neither count looks at `orders`. The orphan payment still has an amount, so both counts include it.",
+          },
           "One payment has a NULL amount, which SUM will silently leave out",
         ],
         answer: 3,
@@ -1717,7 +2509,7 @@ WHERE created_at NOT GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]*';
         id: "c1",
         title: "Which paid orders don't reconcile?",
         prompt:
-          "For every **paid** order, compare its total (items plus shipping) with what its successful payments add up to. Return the orders where the two differ, as `order_id`, `order_total` and `collected`, in order of `order_id`. Show `collected` as 0 when nothing was collected. The starter runs, but it's wrong in several ways at once.",
+          "For every **paid** order, compare its total (items plus shipping) with what its successful payments add up to. Return the orders where the two differ, as `order_id`, `order_total` and `collected`, in order of `order_id`. Show `collected` as 0 when nothing was collected. The starter runs, but it has several separate problems. Each test below checks one thing, so fix one at a time and watch which tests are still failing.",
         language: "sql",
         dataset: "payments",
         starter: `SELECT o.id AS order_id,
@@ -1796,19 +2588,16 @@ ORDER BY t.order_id;`,
         body: "The chain's director has seen the website's revenue level off and asks: *is the website taking over from the stores, or losing ground to them?* The answer is a table for 2025 with one row per month, plus a sentence on what it shows. Before you trust your table, reconcile it: the website and stores together should add up to the chain's 2025 revenue of 921,587.",
       },
       {
-        kind: "mcq",
-        id: "q1",
-        question:
-          "Your table shows the website's share falling 10.7 points in April 2025, and staying between 40% and 44% for the rest of the year. What's the accurate sentence for the director?",
-        options: [
-          "The website is losing customers to the stores",
-          "The website's share fell because Harrogate opened on 12 April. Against Leeds alone, the store it competed with in both years, it's holding steady",
-          "The website had a bad April",
-          "A 10.7-point fall must be a data error, so leave April out",
+        kind: "table",
+        caption: "The three stores",
+        collapsed: true,
+        columns: ["id", "name", "channel", "city", "opened_on"],
+        rows: [
+          [1, "Website", "web", null, "2022-03-01"],
+          [2, "Leeds", "store", "Leeds", "2019-09-14"],
+          [3, "Harrogate", "store", "Harrogate", "2025-04-12"],
         ],
-        answer: 1,
-        explanation:
-          "A share is a fraction, and a new store adds to the bottom of it: the website took more in April than in March, and its share still fell. Compared like for like with Leeds alone, the idea from the LAG lesson, it had 56.8% of the two in 2024 and 56.5% in 2025.",
+        source: { query: "SELECT * FROM stores;", dataset: "stores" },
       },
       {
         kind: "fill",
@@ -1887,6 +2676,38 @@ ORDER BY month;`,
             expression: "[r[0] for r in rows] == sorted(r[0] for r in rows)",
           },
         ],
+      },
+      { kind: "heading", text: "Now say what it means" },
+      {
+        kind: "text",
+        body: "A table isn't an answer until someone can act on it. With your query passing, write the sentence for the director.",
+      },
+      {
+        kind: "mcq",
+        id: "q1",
+        question:
+          "Your table shows the website's share falling 10.7 points in April 2025, and staying between 40% and 44% for the rest of the year. What's the accurate sentence for the director?",
+        options: [
+          {
+            text: "The website is losing customers to the stores",
+            whyNot:
+              "Revenue isn't customers, and the website took more in April than in March. A share can fall while the website grows, if the total grows faster.",
+          },
+          "The website's share fell because Harrogate opened on 12 April. Against Leeds alone, the store it competed with in both years, it's holding steady",
+          {
+            text: "The website had a bad April",
+            whyNot:
+              "The website's own revenue rose in April. Its share fell because something else was added to the total that month.",
+          },
+          {
+            text: "A 10.7-point fall must be a data error, so leave April out",
+            whyNot:
+              "Something real changed in April 2025, and the data shows it. Leaving out a month you can't yet explain hides the most important row in the table.",
+          },
+        ],
+        answer: 1,
+        explanation:
+          "A share is a fraction, and a new store adds to the bottom of it: the website took more in April than in March, and its share still fell. Compared like for like with Leeds alone, the idea from the LAG lesson, it had 56.8% of the two in 2024 and 56.5% in 2025.",
       },
     ],
   },
