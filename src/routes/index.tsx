@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { careerPaths, courses, pathWeeks } from "@/content/curriculum";
 import { liveLessonCount, pathLiveLessonCount } from "@/content/lessons";
 import { projects } from "@/content/projects";
+import { LessonSlider, type LessonSlide } from "@/components/common/LessonSlider";
 
 export const Route = createFileRoute("/")({
   head: () =>
@@ -28,6 +29,36 @@ export const Route = createFileRoute("/")({
     }),
   component: Landing,
 });
+
+const heroSlides: LessonSlide[] = [
+  {
+    // /learn/javascript/js-basics.values after a wrong first try.
+    language: "JavaScript",
+    name: "javascript",
+    width: 1028,
+    height: 1273,
+    alt: "The lesson editor with roundToCent returning amount.toFixed(2), and all six tests failing underneath, starting with Rounds to the nearest cent and Returns a number, not text.",
+    caption: "The first JavaScript lesson after a wrong first try. Click it to see the whole page.",
+  },
+  {
+    // /learn/python/py-basics.functions, starter run on Pyodide.
+    language: "Python",
+    name: "python",
+    width: 1028,
+    height: 1232,
+    alt: "The Python editor with line_total and receipt_line still set to pass, printing None, and all four tests failing, starting with Calculates a line total.",
+    caption: "A Python lesson run for real in the browser, before any code is written.",
+  },
+  {
+    // /learn/react/react-core.checkpoint, starter run.
+    language: "React",
+    name: "react",
+    width: 1028,
+    height: 1273,
+    alt: "The React editor with a PRODUCTS list and an App that renders InventoryApp, which isn't written yet, so the tests fail with InventoryApp is not defined.",
+    caption: "A React checkpoint, tested by what a user would see on the page.",
+  },
+];
 
 function Landing() {
   // Count what a visitor can actually sit down and do today, not the roadmap we
@@ -64,45 +95,15 @@ function Landing() {
             No card needed. The first module of every path is free.
           </p>
         </div>
-        {/* Real captures of /learn/javascript/js-basics.values after a wrong first try:
-            editor-* is the editor and its failing tests at a readable size, and lesson-*
-            the whole workspace it links to. Both show only the starter and a failing
-            attempt, never the solution. Retake all four together if that lesson or the
-            workspace changes. Below lg the lesson excerpt further down does the same job,
-            so the image is skipped. */}
-        <figure className="hidden min-w-0 justify-self-center lg:block lg:w-full lg:max-w-[500px]">
-          <a
-            href="/landing/lesson-light.jpg"
-            target="_blank"
-            rel="noreferrer"
-            className="block overflow-hidden rounded-xl border border-border shadow-lift dark:hidden"
-          >
-            <img
-              src="/landing/editor-light.jpg"
-              width={1028}
-              height={1273}
-              alt="The lesson editor with roundToCent returning amount.toFixed(2), and all six tests failing underneath, starting with Rounds to the nearest cent and Returns a number, not text."
-              className="block h-auto w-full"
-            />
-          </a>
-          <a
-            href="/landing/lesson-dark.jpg"
-            target="_blank"
-            rel="noreferrer"
-            className="hidden overflow-hidden rounded-xl border border-border shadow-lift dark:block"
-          >
-            <img
-              src="/landing/editor-dark.jpg"
-              width={1028}
-              height={1273}
-              alt="The lesson editor with roundToCent returning amount.toFixed(2), and all six tests failing underneath, starting with Rounds to the nearest cent and Returns a number, not text."
-              className="block h-auto w-full"
-            />
-          </a>
-          <figcaption className="mt-2 text-xs text-chalk">
-            The first JavaScript lesson after a wrong first try. Click it to see the whole page.
-          </figcaption>
-        </figure>
+        {/* Real captures, each taken after running the lesson's own starter code: editor-*
+            is the editor and its failing tests at a readable size, and lesson-* the whole
+            workspace it links to. They show only a starter or a failing attempt, never a
+            solution. Retake a lesson's four together if that lesson or the workspace
+            changes. Below lg the lesson excerpt further down does the same job, so the
+            slider is skipped. */}
+        <div className="hidden min-w-0 justify-self-center lg:block lg:w-full lg:max-w-[580px]">
+          <LessonSlider slides={heroSlides} />
+        </div>
       </section>
 
       {/* Quoted from js-basics.values, the first JavaScript lesson. Keep it in step with
