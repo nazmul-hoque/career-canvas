@@ -48,7 +48,23 @@ print(message.upper())  # HELLO, ADA!`,
         kind: "mcq",
         id: "q1",
         question: "What is stored in `answer` after `answer = area(3, 4)`?",
-        options: ["The text '3 * 4'", "12", "None", "The function itself"],
+        options: [
+          {
+            text: "The text '3 * 4'",
+            whyNot: "return hands back the value of width * height, not the code that computes it.",
+          },
+          "12",
+          {
+            text: "None",
+            whyNot:
+              "A function gives back nothing only when it has no return. area ends with return, so a value comes back.",
+          },
+          {
+            text: "The function itself",
+            whyNot:
+              "area(3, 4) calls the function: the parentheses run it. Writing area without them would refer to the function itself.",
+          },
+        ],
         answer: 1,
         explanation: "The arguments become width and height, and return hands their product back.",
       },
@@ -118,7 +134,23 @@ def receipt_line(item, price, quantity):
         kind: "mcq",
         id: "q1",
         question: "Which ages should you test to check both sides of the senior boundary at 65?",
-        options: ["0 and 100", "65 and 66", "Only 65", "64 and 65"],
+        options: [
+          {
+            text: "0 and 100",
+            whyNot:
+              "These are far from the boundary. A mistake like > instead of >= at 65 would pass both of them.",
+          },
+          {
+            text: "65 and 66",
+            whyNot: "Both of these are senior ages. You need one value from each side of the line.",
+          },
+          {
+            text: "Only 65",
+            whyNot:
+              "That checks one side only. A bug that made everyone a senior would still pass it.",
+          },
+          "64 and 65",
+        ],
         answer: 3,
         explanation: "64 is the final non-senior value and 65 is the first senior value.",
       },
@@ -228,7 +260,22 @@ print(matches)  # [0, 2]`,
         kind: "mcq",
         id: "q1",
         question: "Which numbers does `range(1, 5)` produce?",
-        options: ["1, 2, 3, 4", "1, 2, 3, 4, 5", "0, 1, 2, 3, 4", "Only 1 and 5"],
+        options: [
+          "1, 2, 3, 4",
+          {
+            text: "1, 2, 3, 4, 5",
+            whyNot: "A range stops before its end value, so 5 isn't included.",
+          },
+          {
+            text: "0, 1, 2, 3, 4",
+            whyNot: "With two arguments the range starts at the first one, not at 0.",
+          },
+          {
+            text: "Only 1 and 5",
+            whyNot:
+              "range produces every whole number from the start up to the end, not just the two values you passed.",
+          },
+        ],
         answer: 0,
         explanation: "A range includes its start and stops before its end.",
       },
@@ -316,10 +363,22 @@ def positions(items, target):
         id: "q1",
         question: "What should a summariser do with the input list?",
         options: [
-          "Remove each order after counting it",
-          "Sort it in place so processing is easier",
+          {
+            text: "Remove each order after counting it",
+            whyNot:
+              "Removing orders changes the caller's list, so it comes back shorter after they only asked for a summary.",
+          },
+          {
+            text: "Sort it in place so processing is easier",
+            whyNot:
+              "Sorting in place reorders the caller's own list. They asked for a summary, not a change to their records.",
+          },
           "Read it and build a separate result, leaving the input unchanged",
-          "Convert every dictionary to text",
+          {
+            text: "Convert every dictionary to text",
+            whyNot:
+              "Turning the records into text changes the caller's data and makes it harder to use. A summary should leave its input alone.",
+          },
         ],
         answer: 2,
         explanation:
@@ -433,10 +492,22 @@ print(sales_path)`,
         id: "q1",
         question: "`python3: command not found` appears before any traceback. What failed?",
         options: [
-          "The Python code has a syntax error",
+          {
+            text: "The Python code has a syntax error",
+            whyNot:
+              "A syntax error comes with a Python traceback. Here Python never started at all.",
+          },
           "The shell could not find a command named python3",
-          "report.py is empty",
-          "The CSV has a bad row",
+          {
+            text: "report.py is empty",
+            whyNot:
+              "An empty file would run and do nothing. This message means the program itself couldn't be found.",
+          },
+          {
+            text: "The CSV has a bad row",
+            whyNot:
+              "A bad row would be reported by Python while your script runs. This error comes from the shell, before Python starts.",
+          },
         ],
         answer: 1,
         explanation:
@@ -515,9 +586,21 @@ def report_path(input_path):
           "Why build a price with `Decimal` from its CSV text rather than converting the text to float first?",
         options: [
           "Converting through float can preserve a binary rounding error in the Decimal",
-          "Decimal can only read strings",
-          "float cannot read decimal text",
-          "CSV files reject floats",
+          {
+            text: "Decimal can only read strings",
+            whyNot:
+              "Decimal accepts ints and floats too. The reason to start from text is what a float may already have lost.",
+          },
+          {
+            text: "float cannot read decimal text",
+            whyNot:
+              "float reads decimal text fine. The issue is that it stores the nearest binary value, not the exact amount written.",
+          },
+          {
+            text: "CSV files reject floats",
+            whyNot:
+              "A CSV is just text; it knows nothing about floats. The choice is about how you convert that text.",
+          },
         ],
         answer: 0,
         explanation:

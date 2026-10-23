@@ -652,6 +652,12 @@ function namesTheAnswer(note: string, right: string): boolean {
  */
 const FEEDBACK_COURSES = ["sql-analysis", "javascript", "chatgpt-operator", "claude-operator"];
 
+/**
+ * Halfway there: every wrong option says why, but Python and SQL tests don't
+ * show their values yet. Move a course up to FEEDBACK_COURSES when they do.
+ */
+const WRONG_OPTION_NOTES_ONLY = ["python"];
+
 const courseLessonIds = (courseId: string) =>
   new Set(courseLessons(courses.find((c) => c.id === courseId)!).map((l) => l.id));
 
@@ -686,7 +692,7 @@ describe("wrong-option notes", () => {
     }
   });
 
-  for (const courseId of FEEDBACK_COURSES) {
+  for (const courseId of [...FEEDBACK_COURSES, ...WRONG_OPTION_NOTES_ONLY]) {
     test(`${courseId}: every wrong option says why`, () => {
       const lessonIds = courseLessonIds(courseId);
       const ours = mcqs.filter(({ id }) => lessonIds.has(id));

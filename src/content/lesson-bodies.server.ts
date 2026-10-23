@@ -4109,10 +4109,22 @@ print(name, "lives in", city)   # print adds a space between items`,
         id: "q1",
         question: 'What do `print("7 * 6")` and `print(7 * 6)` show?',
         options: [
-          "42 and 42",
+          {
+            text: "42 and 42",
+            whyNot:
+              "Quotes make text. The first print shows those characters exactly as typed; it doesn't work anything out.",
+          },
           "7 * 6 and 42",
-          "7 * 6 and 7 * 6",
-          "An error, because you can't multiply in print",
+          {
+            text: "7 * 6 and 7 * 6",
+            whyNot:
+              "Without quotes, Python works the expression out before printing, so the second line isn't shown as written.",
+          },
+          {
+            text: "An error, because you can't multiply in print",
+            whyNot:
+              "You can put any expression inside print(). Python evaluates it first, then prints the result.",
+          },
         ],
         answer: 1,
         explanation:
@@ -4130,7 +4142,24 @@ print(points)`,
         kind: "mcq",
         id: "q2",
         question: "What does this print?",
-        options: ["15", "10", "points + 5", "An error, because points can't equal points + 5"],
+        options: [
+          "15",
+          {
+            text: "10",
+            whyNot:
+              "The second line changes what points refers to before print runs. Python works out the right-hand side and stores the result.",
+          },
+          {
+            text: "points + 5",
+            whyNot:
+              "There are no quotes, so this isn't text. Python evaluates the right-hand side and stores the number it gets.",
+          },
+          {
+            text: "An error, because points can't equal points + 5",
+            whyNot:
+              "= isn't a claim that both sides are equal. It works out the right side first, then points the name at the result.",
+          },
+        ],
         answer: 0,
         explanation:
           "The right-hand side is worked out first (10 + 5), and then the name `points` is pointed at the result. `=` stores a value; it doesn't state that two things are equal.",
@@ -4203,7 +4232,24 @@ print(f"{qty} x {item} costs \${qty * price:.2f}")
         kind: "mcq",
         id: "q1",
         question: 'A form gives you `qty = "2"` and `extra = "3"`. What is `qty + extra`?',
-        options: ["5", '"5"', "An error", '"23"'],
+        options: [
+          {
+            text: "5",
+            whyNot:
+              "That would need numbers. Both values came from a form as strings, and + on two strings joins them.",
+          },
+          {
+            text: '"5"',
+            whyNot:
+              "+ on strings doesn't add the digits up. It joins the two pieces of text end to end.",
+          },
+          {
+            text: "An error",
+            whyNot:
+              "Adding two strings is allowed: + joins them. The error comes when you mix a string with a number.",
+          },
+          '"23"',
+        ],
         answer: 3,
         explanation:
           "Both are strings, so `+` joins them. Use `int(qty) + int(extra)` to get 5, and convert as soon as the data comes in.",
@@ -4213,7 +4259,23 @@ print(f"{qty} x {item} costs \${qty * price:.2f}")
         id: "q2",
         question:
           "Which expression gives the number of whole boxes of 6 you can fill with 20 items?",
-        options: ["20 / 6", "20 % 6", "20 // 6", "round(20 / 6)"],
+        options: [
+          {
+            text: "20 / 6",
+            whyNot: "/ always gives a float, here 3.333…, and you can't fill a third of a box.",
+          },
+          {
+            text: "20 % 6",
+            whyNot:
+              "% gives the remainder: the items left over after filling boxes, not how many boxes were filled.",
+          },
+          "20 // 6",
+          {
+            text: "round(20 / 6)",
+            whyNot:
+              "round happens to give the right count here, but it rounds to the nearest whole number. With 23 items it gives 4, and only 3 boxes can be filled.",
+          },
+        ],
         answer: 2,
         explanation:
           "`//` divides and rounds down: 3 full boxes. `%` gives what's left over (2), and `round` would give 3 here but rounds up past .5.",
@@ -4300,10 +4362,22 @@ print(grade)  # B`,
         id: "q1",
         question: "Why must the `>= 90` branch come before `>= 80`?",
         options: [
-          "Python sorts conditions automatically",
+          {
+            text: "Python sorts conditions automatically",
+            whyNot:
+              "Python never reorders conditions. It checks them top to bottom and runs the first one that matches.",
+          },
           "A score of 95 also satisfies >= 80, so the looser branch would win first",
-          "elif cannot follow a stricter condition",
-          "It does not matter",
+          {
+            text: "elif cannot follow a stricter condition",
+            whyNot:
+              "elif can follow any condition. Python accepts this order happily; it just gives the wrong grade.",
+          },
+          {
+            text: "It does not matter",
+            whyNot:
+              "It matters: only the first matching branch runs, so a high score would stop at the looser check.",
+          },
         ],
         answer: 1,
         explanation: "Only the first matching branch runs, so looser conditions must come last.",
@@ -4324,9 +4398,21 @@ else:
         id: "q2",
         question: "What does this print?",
         options: [
-          "Hi",
-          "Hi followed by three spaces",
-          "An error, because a string isn't a condition",
+          {
+            text: "Hi",
+            whyNot:
+              ".strip() removes all the spaces, leaving an empty string. An empty string counts as false, so the if branch doesn't run.",
+          },
+          {
+            text: "Hi followed by three spaces",
+            whyNot:
+              ".strip() removes the spaces before the check, and what's left is empty, which counts as false.",
+          },
+          {
+            text: "An error, because a string isn't a condition",
+            whyNot:
+              "Any value can be a condition. A string counts as true when it has characters and false when it's empty.",
+          },
           "Please enter your name",
         ],
         answer: 3,
@@ -4404,9 +4490,21 @@ print(packed)`,
         question: "What does this print?",
         options: [
           "['tent', 'stove', 'water']",
-          "['tent', 'stove']",
-          "['water']",
-          "An error, because packed wasn't changed",
+          {
+            text: "['tent', 'stove']",
+            whyNot:
+              "checklist = packed doesn't copy the list. Both names point at the same list, so the append shows up through packed too.",
+          },
+          {
+            text: "['water']",
+            whyNot:
+              "append adds to the end; it doesn't replace what's already there. And both names share one list.",
+          },
+          {
+            text: "An error, because packed wasn't changed",
+            whyNot:
+              "Printing it is fine. packed was changed, because checklist is the same list under another name.",
+          },
         ],
         answer: 0,
         explanation:
@@ -4518,10 +4616,22 @@ print(stock["headlamp"])`,
         id: "q1",
         question: "What happens?",
         options: [
-          "It prints 0",
-          "It prints None",
+          {
+            text: "It prints 0",
+            whyNot:
+              "Square brackets don't supply a default. Only .get() lets you choose a value for a missing key.",
+          },
+          {
+            text: "It prints None",
+            whyNot:
+              "Square brackets don't fall back to anything. .get() without a default would, but this line doesn't use .get().",
+          },
           "A `KeyError: 'headlamp'` stops the program",
-          "It adds headlamp with value 0",
+          {
+            text: "It adds headlamp with value 0",
+            whyNot:
+              "Reading with square brackets never adds a key. Only assigning to stock[...] does that.",
+          },
         ],
         answer: 2,
         explanation:
@@ -4534,9 +4644,21 @@ print(stock["headlamp"])`,
           "Which line correctly counts `word` in a `counts` dictionary, whether or not it's been seen before?",
         options: [
           "`counts[word] = counts.get(word, 0) + 1`",
-          "`counts[word] += 1`",
-          "`counts.append(word)`",
-          "`counts[word] = 1`",
+          {
+            text: "`counts[word] += 1`",
+            whyNot:
+              "This works for words already counted, but the first time a word appears there's no key to add to, so it raises an error.",
+          },
+          {
+            text: "`counts.append(word)`",
+            whyNot:
+              "Dictionaries have no append; that's a list method. This line raises an AttributeError.",
+          },
+          {
+            text: "`counts[word] = 1`",
+            whyNot:
+              "This sets the count back to 1 every time, so a word seen five times still shows 1.",
+          },
         ],
         answer: 0,
         explanation:
@@ -4635,7 +4757,24 @@ for n in numbers:
         kind: "mcq",
         id: "q1",
         question: "What is `[n for n in range(10) if n % 3 == 0]`?",
-        options: ["[3, 6, 9]", "[0, 3, 6, 9]", "[0, 3, 6, 9, 10]", "[1, 4, 7]"],
+        options: [
+          {
+            text: "[3, 6, 9]",
+            whyNot:
+              "range(10) starts at 0, and 0 divided by 3 leaves no remainder, so it belongs in the result.",
+          },
+          "[0, 3, 6, 9]",
+          {
+            text: "[0, 3, 6, 9, 10]",
+            whyNot:
+              "range(10) stops before 10, and 10 % 3 is 1 anyway, so it wouldn't pass the condition.",
+          },
+          {
+            text: "[1, 4, 7]",
+            whyNot:
+              "These numbers leave a remainder of 1. The condition keeps numbers where n % 3 is 0.",
+          },
+        ],
         answer: 1,
         explanation:
           "`range(10)` starts at 0, and 0 % 3 is 0, so 0 is kept. The range stops before 10.",
@@ -4645,9 +4784,21 @@ for n in numbers:
         id: "q2",
         question: "Why is `[print(order) for order in orders]` poor style?",
         options: [
-          "It's slower than a loop",
-          "Comprehensions can't call functions",
-          "It prints in reverse order",
+          {
+            text: "It's slower than a loop",
+            whyNot:
+              "Speed isn't the issue. The problem is what the code tells a reader it's doing.",
+          },
+          {
+            text: "Comprehensions can't call functions",
+            whyNot:
+              "Comprehensions can call any function. This one runs fine; it's just the wrong tool for the job.",
+          },
+          {
+            text: "It prints in reverse order",
+            whyNot:
+              "It prints in the normal order. The trouble is the list it builds and then throws away.",
+          },
           "It builds a list of `None`s nobody wants, just to print. Printing is an action, so write a `for` loop",
         ],
         answer: 3,
@@ -4743,7 +4894,24 @@ print(message)`,
         kind: "mcq",
         id: "q1",
         question: "What does the last line print?",
-        options: ["Hello, Ada", "message", "None", "Nothing at all"],
+        options: [
+          {
+            text: "Hello, Ada",
+            whyNot:
+              "That line is printed by greet itself, but the function hands nothing back, so message doesn't hold it.",
+          },
+          {
+            text: "message",
+            whyNot:
+              "print(message) shows what the variable holds, not its name. You'd need quotes to print the word itself.",
+          },
+          "None",
+          {
+            text: "Nothing at all",
+            whyNot:
+              "print always shows something, even for a variable that holds no real value. The question is what greet gave back.",
+          },
+        ],
         answer: 2,
         explanation:
           '`greet` prints its greeting, but it returns nothing, so `message` is `None`. Change the function to `return "Hello, " + name` and do the printing outside it.',
@@ -4753,7 +4921,24 @@ print(message)`,
         id: "q2",
         question:
           '`def add(item, basket=[]): basket.append(item); return basket`. You call `add("tent")` and then `add("stove")`. What does the second call return?',
-        options: ["['stove']", "['tent', 'stove']", "['stove', 'tent']", "An error"],
+        options: [
+          {
+            text: "['stove']",
+            whyNot:
+              "That would need a fresh list on every call. The default list is made once, when the function is defined, and reused.",
+          },
+          "['tent', 'stove']",
+          {
+            text: "['stove', 'tent']",
+            whyNot:
+              "append adds to the end, so the order follows the order of the calls. And both calls share one list.",
+          },
+          {
+            text: "An error",
+            whyNot:
+              "Python allows a list as a default, which is what makes this bug so quiet. Both calls run without complaint.",
+          },
+        ],
         answer: 1,
         explanation:
           "Both calls share the single default list that was created with the function. Write `basket=None` and `if basket is None: basket = []`.",
@@ -4860,10 +5045,22 @@ ValueError: invalid literal for int() with base 10: 'two'`,
         id: "q1",
         question: "In the traceback above, where do you look first, and what's wrong?",
         options: [
-          "Line 12: `order_total` doesn't exist",
-          "The top line: the traceback started",
+          {
+            text: "Line 12: `order_total` doesn't exist",
+            whyNot:
+              "Line 12 is where the call started, and order_total clearly exists: the traceback shows it running. Read the bottom lines.",
+          },
+          {
+            text: "The top line: the traceback started",
+            whyNot:
+              "The top line only announces that a traceback follows. What went wrong is at the bottom.",
+          },
           "The last lines: in `order_total` on line 5, a quantity was the text 'two', which `int` can't convert",
-          "Line 5 is fine; the bug must be in `int`",
+          {
+            text: "Line 5 is fine; the bug must be in `int`",
+            whyNot:
+              "int is working correctly: 'two' isn't a number written in digits. The problem is the data reaching line 5.",
+          },
         ],
         answer: 2,
         explanation:
@@ -4875,9 +5072,21 @@ ValueError: invalid literal for int() with base 10: 'two'`,
         question: "What's wrong with wrapping a whole script in `try: … except Exception: pass`?",
         options: [
           "It hides every error, bugs included, so the script carries on with bad results and no way to see why",
-          "Nothing, because the script never crashes",
-          "It makes the script slower",
-          "`Exception` doesn't catch `ValueError`",
+          {
+            text: "Nothing, because the script never crashes",
+            whyNot:
+              "Not crashing isn't the same as working. The script carries on with bad results and gives no sign why.",
+          },
+          {
+            text: "It makes the script slower",
+            whyNot:
+              "Speed isn't the issue. The cost is information: every error, real bugs included, disappears.",
+          },
+          {
+            text: "`Exception` doesn't catch `ValueError`",
+            whyNot:
+              "Exception does catch ValueError, and nearly everything else. That's exactly the problem.",
+          },
         ],
         answer: 0,
         explanation:
@@ -4996,9 +5205,20 @@ with open("summary.csv", "w", encoding="utf-8", newline="") as f:
         id: "q1",
         question: "Why open files with `with open(...) as f:` rather than `f = open(...)`?",
         options: [
-          "It reads the file faster",
-          "It's required for CSV files",
-          "It creates the file if it's missing",
+          {
+            text: "It reads the file faster",
+            whyNot:
+              "with doesn't change how fast a file is read. It changes what happens when the block ends.",
+          },
+          {
+            text: "It's required for CSV files",
+            whyNot: "Any file can be opened either way. with isn't specific to CSV files.",
+          },
+          {
+            text: "It creates the file if it's missing",
+            whyNot:
+              'Whether a missing file gets created depends on the mode, like "w", not on with.',
+          },
           "The file is closed automatically when the block ends, even if an error happens inside it",
         ],
         answer: 3,
@@ -5011,10 +5231,22 @@ with open("summary.csv", "w", encoding="utf-8", newline="") as f:
         question:
           "A weekly sales file sometimes has `n/a` in the amount column. What should the script do?",
         options: [
-          "Crash, so someone fixes the file",
-          "Count `n/a` as 0 without mentioning it",
+          {
+            text: "Crash, so someone fixes the file",
+            whyNot:
+              "One bad value would stop the whole weekly report, though the rest of the data is still useful.",
+          },
+          {
+            text: "Count `n/a` as 0 without mentioning it",
+            whyNot:
+              "A total that silently counts unknown amounts as zero looks right and isn't, and nobody learns rows were affected.",
+          },
           "Skip those rows, count them, and report how many were skipped",
-          "Delete those rows from the source file",
+          {
+            text: "Delete those rows from the source file",
+            whyNot:
+              "A report script shouldn't change its source data. Deleting rows destroys the evidence that they needed fixing.",
+          },
         ],
         answer: 2,
         explanation:
