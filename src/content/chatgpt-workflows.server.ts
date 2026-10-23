@@ -47,10 +47,22 @@ export const chatgptWorkflowsLessons: AuthoredLesson[] = [
           question:
             "Your template produces good briefs for the community hall and odd ones everywhere else. What's the likely cause?",
           options: [
-            "The instructions are too general to handle a second venue",
+            {
+              text: "The instructions are too general to handle a second venue",
+              whyNot:
+                "Too general would fail everywhere, including the hall. Working well in one place and oddly elsewhere points to something too specific.",
+            },
             "Something variable, like a venue detail or assumption, got written into the stable instructions",
-            "The input notes for other venues are lower quality",
-            "The template needs a second example to learn from",
+            {
+              text: "The input notes for other venues are lower quality",
+              whyNot:
+                "Blaming the inputs skips the pattern: the one venue that works is the one the template was built on. Look at what came along from that first run.",
+            },
+            {
+              text: "The template needs a second example to learn from",
+              whyNot:
+                "A template doesn't learn from examples between runs. The fix is to find what the first run left behind in the instructions.",
+            },
           ],
           answer: 1,
           explanation:
@@ -61,10 +73,22 @@ export const chatgptWorkflowsLessons: AuthoredLesson[] = [
           id: "q2",
           question: "Why specify behaviour for a missing field rather than leaving it unstated?",
           options: [
-            "Unstated fields cause an error that stops the run",
+            {
+              text: "Unstated fields cause an error that stops the run",
+              whyNot:
+                "Nothing stops. That's the problem: the run carries on and produces a complete-looking brief whether or not the field was supplied.",
+            },
             "Because the default when nothing is stated is to invent a plausible value",
-            "Because the field will be silently omitted from the output",
-            "To make the template easier for someone else to read",
+            {
+              text: "Because the field will be silently omitted from the output",
+              whyNot:
+                "Silent omission would at least leave a visible gap. What tends to happen is worse, because you asked for a complete brief.",
+            },
+            {
+              text: "To make the template easier for someone else to read",
+              whyNot:
+                "Readability is a side benefit. The real reason is what happens at run time when a field is absent and no rule says what to do.",
+            },
           ],
           answer: 1,
           explanation:
@@ -130,9 +154,21 @@ CHECKS
           id: "q1",
           question: "What does the checks section add that detailed instructions don't?",
           options: [
-            "A shorter, more readable template",
-            "A way for ChatGPT to correct its own errors automatically",
-            "Compatibility with accounts that lack saved instructions",
+            {
+              text: "A shorter, more readable template",
+              whyNot:
+                "Checks make a template longer, not shorter. They earn their place by what they let you test.",
+            },
+            {
+              text: "A way for ChatGPT to correct its own errors automatically",
+              whyNot:
+                "Checks don't make anything correct itself. They're conditions you can run yourself, whether or not the template does.",
+            },
+            {
+              text: "Compatibility with accounts that lack saved instructions",
+              whyNot:
+                "Where the template is saved is a separate question. Checks are about knowing when the work is genuinely finished.",
+            },
             "Stated conditions for completion, instead of 'done' meaning the output looks finished",
           ],
           answer: 3,
@@ -144,10 +180,22 @@ CHECKS
           id: "q2",
           question: "Why is deliberately removing a required input the most informative test?",
           options: [
-            "It exercises the error-handling path, which is rarely used",
+            {
+              text: "It exercises the error-handling path, which is rarely used",
+              whyNot:
+                "Rarity isn't what makes it informative. It's that this path is where a stated policy either changes the outcome or turns out to be just a sentence.",
+            },
             "It shows whether your stated missing-input policy actually changes the behaviour",
-            "It's faster than running a full scenario",
-            "It reveals which inputs the template genuinely needs",
+            {
+              text: "It's faster than running a full scenario",
+              whyNot:
+                "It isn't about speed. A full run with complete data can't tell you whether your missing-input rule does anything.",
+            },
+            {
+              text: "It reveals which inputs the template genuinely needs",
+              whyNot:
+                "You already decided which inputs are required when you wrote the contract. The test checks whether that decision is honoured.",
+            },
           ],
           answer: 1,
           explanation:
@@ -196,10 +244,22 @@ CHECKS
           question:
             'Your prompt says "only read data, never modify anything", and the connected tool is authorised to write. How protected are you?',
           options: [
-            "Fully, because the instruction governs what the tool does",
-            "Mostly: the instruction holds unless the tool malfunctions",
+            {
+              text: "Fully, because the instruction governs what the tool does",
+              whyNot:
+                "An instruction describes what you'd like; it doesn't enforce anything. With write access granted, the write is still possible.",
+            },
+            {
+              text: "Mostly: the instruction holds unless the tool malfunctions",
+              whyNot:
+                "The risk isn't a malfunction. A working tool following persuasive text from a page can write, because it's allowed to.",
+            },
             "Not really: the granted scope is the boundary, and the instruction is a preference that text from outside can argue with",
-            "It depends whether the tool supports read-only mode",
+            {
+              text: "It depends whether the tool supports read-only mode",
+              whyNot:
+                "Whether the tool has a read-only mode only matters if you use it when granting access. As granted here, it can write.",
+            },
           ],
           answer: 2,
           explanation:
@@ -211,9 +271,21 @@ CHECKS
           question: "Why review a draft in a different conversation from the one that produced it?",
           options: [
             "The reasoning behind the choices is still in view, so the choices look justified",
-            "The original conversation has used too much context",
-            "A new conversation uses a fresher version of the model",
-            "It prevents the draft from being edited during review",
+            {
+              text: "The original conversation has used too much context",
+              whyNot:
+                "Running out of space isn't the issue, even in a short conversation. The problem is what the reviewer can already see when it judges.",
+            },
+            {
+              text: "A new conversation uses a fresher version of the model",
+              whyNot:
+                "A new conversation doesn't get a different model. What changes is what's in view while it judges the draft.",
+            },
+            {
+              text: "It prevents the draft from being edited during review",
+              whyNot:
+                "Editing during review isn't the risk. A reviewer that saw the reasoning behind each choice will find the choices reasonable.",
+            },
           ],
           answer: 0,
           explanation:
@@ -224,9 +296,21 @@ CHECKS
           id: "q3",
           question: "Which belongs on the 'requires my approval' side of the boundary?",
           options: [
-            "Extracting timings from notes",
-            "Drafting a volunteer brief",
-            "Listing open questions for follow-up",
+            {
+              text: "Extracting timings from notes",
+              whyNot:
+                "Extracting produces something you read and can throw away. Nothing leaves your hands, so it can sit on the prepare-on-its-own side.",
+            },
+            {
+              text: "Drafting a volunteer brief",
+              whyNot:
+                "A draft is exactly what the workflow may prepare alone: you read it before anyone else does.",
+            },
+            {
+              text: "Listing open questions for follow-up",
+              whyNot:
+                "Listing questions produces something for you to read. It reaches nobody else and can be discarded, so it doesn't need your sign-off.",
+            },
             "Emailing the brief to the volunteers",
           ],
           answer: 3,

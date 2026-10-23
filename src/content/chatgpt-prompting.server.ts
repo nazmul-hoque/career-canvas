@@ -64,9 +64,21 @@ Specific:
           question:
             'You ask for an explanation "for a nine-year-old" and get the same explanation with simpler words. What\'s missing?',
           options: [
-            "A shorter overall length",
-            "A friendlier, more encouraging tone",
-            "Examples drawn from children's interests",
+            {
+              text: "A shorter overall length",
+              whyNot:
+                "Length isn't what aiming at a reader changes. A shorter version of the same explanation is still written for nobody in particular.",
+            },
+            {
+              text: "A friendlier, more encouraging tone",
+              whyNot:
+                "Tone is surface. The same adult explanation said more warmly still assumes things a nine-year-old doesn't know.",
+            },
+            {
+              text: "Examples drawn from children's interests",
+              whyNot:
+                "Kid-friendly examples are decoration on the same explanation. The question is whether the content was rebuilt around what this reader already knows.",
+            },
             "A change in which facts need unpacking and which can be assumed",
           ],
           answer: 3,
@@ -79,10 +91,22 @@ Specific:
           question:
             "Why ask for five errands as a table rather than a paragraph, when you'll read both?",
           options: [
-            "Tables are faster for ChatGPT to produce",
-            "A paragraph can't hold five items clearly",
+            {
+              text: "Tables are faster for ChatGPT to produce",
+              whyNot:
+                "Speed isn't the point, since you'll read both anyway. The reason is about what you can see when you check the answer.",
+            },
+            {
+              text: "A paragraph can't hold five items clearly",
+              whyNot:
+                "A paragraph can hold five items perfectly well. The trouble is that it holds a missing one just as smoothly.",
+            },
             "A table forces one value per cell, so a missing duration is visible instead of smoothed over",
-            "Tables can be pasted into a spreadsheet later",
+            {
+              text: "Tables can be pasted into a spreadsheet later",
+              whyNot:
+                "A handy side effect, but you'd want the grid even if it never left the chat. Think about what it shows you that prose hides.",
+            },
           ],
           answer: 2,
           explanation:
@@ -132,9 +156,21 @@ Specific:
             "You give a style sample about Tuesday's meeting and ask for a reminder about Friday's deadline. The result mentions a meeting. What happened?",
           options: [
             "The example's content was copied along with its style, because nothing said which was which",
-            "The style sample was too short to establish a pattern",
-            "The request should have used a longer sample",
-            "ChatGPT cannot separate tone from subject matter",
+            {
+              text: "The style sample was too short to establish a pattern",
+              whyNot:
+                "The tone came through fine, so the sample did its job as a pattern. Something else travelled with it that you didn't ask for.",
+            },
+            {
+              text: "The request should have used a longer sample",
+              whyNot:
+                "A longer sample about the same meeting gives the model even more meeting to copy. The fix is about marking what's pattern and what's content.",
+            },
+            {
+              text: "ChatGPT cannot separate tone from subject matter",
+              whyNot:
+                "It can, once told which is which: saying the facts are new, or using an unrelated sample, works. This is a gap in the request, not a hard limit.",
+            },
           ],
           answer: 0,
           explanation:
@@ -145,9 +181,21 @@ Specific:
           id: "q2",
           question: "Which revision request will actually improve the answer you have?",
           options: [
-            '"Make this better and more professional"',
-            '"Try again, I don\'t like it"',
-            '"Rewrite this with more detail throughout"',
+            {
+              text: '"Make this better and more professional"',
+              whyNot:
+                '"Better" names no defect, so you get a different draft rather than a fixed one, and the parts that already worked may not survive.',
+            },
+            {
+              text: '"Try again, I don\'t like it"',
+              whyNot:
+                "This says you're unhappy but not why. The next attempt is a fresh roll of the dice, with nothing specific to compare it against.",
+            },
+            {
+              text: '"Rewrite this with more detail throughout"',
+              whyNot:
+                "This changes everything at once, including the parts that were already right, and names no particular problem to fix.",
+            },
             "\"Step two uses 'hazard window' without explaining it, and 20 minutes is unrealistic for a beginner. Fix those two and leave the rest\"",
           ],
           answer: 3,
@@ -200,9 +248,21 @@ rather than supplying a likely value.`,
           question: "Why is an invented detail more dangerous than an obviously wrong one?",
           options: [
             "It appears in the same confident prose as a correct one, so reading carefully won't catch it",
-            "It's harder to correct once it has been written down",
-            "It tends to appear in longer answers where it's easy to miss",
-            "It usually concerns dates, which people rarely check",
+            {
+              text: "It's harder to correct once it has been written down",
+              whyNot:
+                "Correcting it is easy once you know it's wrong. The danger is in noticing it at all.",
+            },
+            {
+              text: "It tends to appear in longer answers where it's easy to miss",
+              whyNot:
+                "A fabricated date in a two-line answer is just as hard to catch. Length isn't what hides it.",
+            },
+            {
+              text: "It usually concerns dates, which people rarely check",
+              whyNot:
+                "Invented details aren't limited to dates, and dates are often checked. The problem is that nothing in the writing tells you which value needs checking.",
+            },
           ],
           answer: 0,
           explanation:
@@ -214,9 +274,21 @@ rather than supplying a likely value.`,
           question:
             'What makes "list anything not stated" work better than "don\'t make things up"?',
           options: [
-            "It's shorter and therefore easier to follow",
-            "It applies to dates specifically rather than all content",
-            "It forces a structured output format",
+            {
+              text: "It's shorter and therefore easier to follow",
+              whyNot:
+                "Both instructions are short. The difference is in what the model can do instead of guessing, not in how many words it reads.",
+            },
+            {
+              text: "It applies to dates specifically rather than all content",
+              whyNot:
+                "Neither instruction is only about dates. What matters is what each one gives the model to do when a detail is missing.",
+            },
+            {
+              text: "It forces a structured output format",
+              whyNot:
+                "Structure alone doesn't stop invention: a tidy format can be filled with a made-up value. What helps is a place where missing details belong.",
+            },
             "It gives the absence somewhere to go, so reporting a gap is a complete answer rather than a failure",
           ],
           answer: 3,

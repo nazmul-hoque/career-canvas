@@ -117,6 +117,14 @@ Two facts shape every item below:
 
 ## Done
 
+- [x] **Wrong-answer notes for both Operator courses** (2026-10-22). Every
+      wrong option in ChatGPT Operator (114) and Claude Operator (267) now says
+      why it fails, without naming the right one, and both courses are in
+      `FEEDBACK_COURSES`, so a new question there fails the suite until its
+      wrong options have notes. Still without notes: the other 14 courses
+      (HTML/CSS, React, TypeScript, Python, SQL, Git, Node, Data Analytics,
+      Excel, Figma, UX, GenAI, ML, Product).
+
 - [x] **Report a problem from inside a lesson** (2026-10-22). Signed-in
       learners get a "Report a problem" link beside Complete. The report
       captures their code, last run (engine, each test and why it failed),

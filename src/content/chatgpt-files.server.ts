@@ -59,10 +59,22 @@ boxes,3,5`,
           question:
             'The supplies data has no currency column. The total comes back as "$29.00". What\'s wrong?',
           options: [
-            "Nothing, because dollars are a reasonable default",
-            "The formatting should match the input's precision",
+            {
+              text: "Nothing, because dollars are a reasonable default",
+              whyNot:
+                "Dollars may well be a sensible guess, and that's the trouble: it's still a guess, printed exactly like the number it's attached to.",
+            },
+            {
+              text: "The formatting should match the input's precision",
+              whyNot:
+                "Precision isn't the issue; the arithmetic and the decimals are harmless. Look at what the output claims that the CSV never said.",
+            },
             "A currency was supplied that the data never stated, so an assumption is presented as a fact",
-            "The total should have been rounded differently",
+            {
+              text: "The total should have been rounded differently",
+              whyNot:
+                "The figure itself is right. The problem is a detail added to it, not how it was rounded.",
+            },
           ],
           answer: 2,
           explanation:
@@ -73,10 +85,22 @@ boxes,3,5`,
           id: "q2",
           question: "Why check a total you already asked for?",
           options: [
-            "Because arithmetic is where these tools most often fail",
-            "To confirm the file was read completely",
+            {
+              text: "Because arithmetic is where these tools most often fail",
+              whyNot:
+                "The reason isn't that arithmetic is a known weak spot. Any figure you're handed, right or wrong, looks the same until you have one of your own to set beside it.",
+            },
+            {
+              text: "To confirm the file was read completely",
+              whyNot:
+                "A total can be computed from a complete file and still be wrong. The check isn't about the file; it's about how you'd ever notice a wrong figure.",
+            },
             "Because an independent answer is the only way to notice a plausible but wrong result",
-            "Because totals are usually the most important number",
+            {
+              text: "Because totals are usually the most important number",
+              whyNot:
+                "Importance isn't the reason. Any number you didn't work out yourself is one you can't tell from a plausible mistake.",
+            },
           ],
           answer: 2,
           explanation:
@@ -87,9 +111,21 @@ boxes,3,5`,
           id: "q3",
           question: "A row is missing its quantity. What's the correct handling?",
           options: [
-            "Treat it as zero so the total can still be produced",
-            "Drop the row and note the count in a footnote",
-            "Estimate it from the other rows' average",
+            {
+              text: "Treat it as zero so the total can still be produced",
+              whyNot:
+                "A missing quantity isn't zero. Treating it as zero produces a confident total that quietly understates the real one.",
+            },
+            {
+              text: "Drop the row and note the count in a footnote",
+              whyNot:
+                "Dropping the row is one possible fix, but it's a decision about your data, and a footnote doesn't make it the tool's decision to take.",
+            },
+            {
+              text: "Estimate it from the other rows' average",
+              whyNot:
+                "An average is an invented value with a reasonable-sounding method. It changes the total, and nobody who knows the missing row chose it.",
+            },
             "Report the missing value and let you decide how to handle it",
           ],
           answer: 3,
@@ -135,9 +171,21 @@ boxes,3,5`,
             "Which statement is supported by a three-row table of item, quantity and unit price?",
           options: [
             '"Boxes are the largest single cost at $15 of the $29 total"',
-            '"Storage is where most of the budget goes because demand is rising"',
-            '"Chairs are good value compared to the alternatives"',
-            '"Costs are concentrated in bulky items"',
+            {
+              text: '"Storage is where most of the budget goes because demand is rising"',
+              whyNot:
+                "Rising demand needs figures over time, and three rows of supplies have no time in them at all.",
+            },
+            {
+              text: '"Chairs are good value compared to the alternatives"',
+              whyNot:
+                '"Good value" needs a comparison the table doesn\'t contain. There are no alternatives in these three rows to compare against.',
+            },
+            {
+              text: '"Costs are concentrated in bulky items"',
+              whyNot:
+                '"Bulky" is a property of the items that appears nowhere in the columns. The claim describes things the data says nothing about.',
+            },
           ],
           answer: 0,
           explanation:
@@ -148,10 +196,22 @@ boxes,3,5`,
           id: "q2",
           question: "Why insist on a zero baseline for this chart?",
           options: [
-            "Charts are conventionally drawn from zero",
+            {
+              text: "Charts are conventionally drawn from zero",
+              whyNot:
+                "Convention isn't the reason. A cropped axis changes what the bars appear to say, whether or not anyone intended it.",
+            },
             "Because a truncated axis exaggerates small differences, usually by accident rather than intent",
-            "Because the totals won't add up otherwise",
-            "Because labelled units require it",
+            {
+              text: "Because the totals won't add up otherwise",
+              whyNot:
+                "The totals are the same whatever the axis does. What changes is how big the differences between bars look.",
+            },
+            {
+              text: "Because labelled units require it",
+              whyNot:
+                "Units and the baseline are separate choices: a chart can label its units clearly and still crop its axis.",
+            },
           ],
           answer: 1,
           explanation:
@@ -196,10 +256,22 @@ boxes,3,5`,
           question:
             "You ask for a clearer timings section and get a new version. What's the right way to check it?",
           options: [
-            "Read the new version carefully from start to finish",
-            "Check the timings section is clearer and move on",
+            {
+              text: "Read the new version carefully from start to finish",
+              whyNot:
+                "Reading the new version tells you whether it's good, not whether it's the same. An unrequested change reads perfectly naturally.",
+            },
+            {
+              text: "Check the timings section is clearer and move on",
+              whyNot:
+                "The section you asked about is the one place you'll look anyway. The risk is somewhere you didn't ask to change.",
+            },
             "Compare the two versions and look for anything that changed outside the timings section",
-            "Ask ChatGPT to confirm nothing else was altered",
+            {
+              text: "Ask ChatGPT to confirm nothing else was altered",
+              whyNot:
+                'This asks the same process that made the change to report on it. A confident "nothing else changed" proves nothing.',
+            },
           ],
           answer: 2,
           explanation:
@@ -211,10 +283,22 @@ boxes,3,5`,
           question:
             "Why check five input notes against the brief rather than reading the brief for completeness?",
           options: [
-            "Reading the brief takes longer",
-            "Input notes may contain errors of their own",
+            {
+              text: "Reading the brief takes longer",
+              whyNot:
+                "Time isn't the reason. Reading the brief can't find an omission at all, however slowly you go.",
+            },
+            {
+              text: "Input notes may contain errors of their own",
+              whyNot:
+                "The notes' own mistakes are a separate problem. This check is about whether all five made it into the brief.",
+            },
             "A brief that reads as complete gives no signal that an input was dropped",
-            "The brief may reorder the notes",
+            {
+              text: "The brief may reorder the notes",
+              whyNot:
+                "Reordering is harmless and visible. The danger is a note that left no trace, and that can only be found from the inputs' side.",
+            },
           ],
           answer: 2,
           explanation:

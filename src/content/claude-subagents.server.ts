@@ -45,9 +45,21 @@ export const claudeSubagentsLessons: AuthoredLesson[] = [
           id: "q1",
           question: "Which of these is the best candidate for delegation to a subagent?",
           options: [
-            '"Finish the refactor we\'ve been discussing all afternoon"',
-            '"Decide whether we should migrate off Postgres"',
-            '"Fix the bug I described earlier, the way we agreed"',
+            {
+              text: '"Finish the refactor we\'ve been discussing all afternoon"',
+              whyNot:
+                '"The refactor we\'ve been discussing" points at a conversation the worker never saw. It would have to guess what you meant.',
+            },
+            {
+              text: '"Decide whether we should migrate off Postgres"',
+              whyNot:
+                "This is a judgement call that depends on your context and priorities. A worker would come back confident without knowing either.",
+            },
+            {
+              text: '"Fix the bug I described earlier, the way we agreed"',
+              whyNot:
+                '"The way we agreed" lives in your history, not in the task. The worker can\'t see what was agreed.',
+            },
             '"Find every place this repository reads the SESSION_SECRET env var and report the file and line"',
           ],
           answer: 3,
@@ -60,10 +72,22 @@ export const claudeSubagentsLessons: AuthoredLesson[] = [
           question:
             "Three steps: find the slow query, propose an index, measure the improvement. What's safe to parallelise?",
           options: [
-            "All three, because they're all about the same query",
+            {
+              text: "All three, because they're all about the same query",
+              whyNot:
+                "Being about the same query is exactly why they can't run together: each one needs what the step before it produced.",
+            },
             "None of them: each step needs the previous step's result",
-            "Steps one and two, since both involve analysis",
-            "Steps two and three, leaving step one to run first",
+            {
+              text: "Steps one and two, since both involve analysis",
+              whyNot:
+                "You can't propose an index for a query nobody has identified yet. The second step depends on the first.",
+            },
+            {
+              text: "Steps two and three, leaving step one to run first",
+              whyNot:
+                "You can't measure an improvement before it's been made. The last step needs the index from the one before it.",
+            },
           ],
           answer: 1,
           explanation:
@@ -133,10 +157,22 @@ and best practices.`,
           id: "q1",
           question: "Which description will route work correctly?",
           options: [
-            '"A helpful agent for code-related tasks"',
-            '"Expert code reviewer with deep knowledge of software engineering"',
+            {
+              text: '"A helpful agent for code-related tasks"',
+              whyNot:
+                '"Code-related tasks" matches almost anything, so this agent would be handed work it shouldn\'t do.',
+            },
+            {
+              text: '"Expert code reviewer with deep knowledge of software engineering"',
+              whyNot:
+                "This describes expertise, not when to use it or what it won't do. Routing needs a trigger and a boundary.",
+            },
             '"Reviews a written diff for correctness and security. Use after code is written. Does not write or fix code; hand fixes back to the caller."',
-            '"Reviews code thoroughly and carefully"',
+            {
+              text: '"Reviews code thoroughly and carefully"',
+              whyNot:
+                '"Thoroughly and carefully" says how, not when. Nothing tells the caller what to hand over or what to keep away.',
+            },
           ],
           answer: 2,
           explanation:
@@ -149,9 +185,21 @@ and best practices.`,
             "You leave the `tools` field out of an agent definition. What have you configured?",
           options: [
             "An agent with the full tool set, including write and shell access",
-            "An agent with no tools, which can only reason about what it's told",
-            "An agent that asks permission before each tool use",
-            "An agent with read-only tools by default",
+            {
+              text: "An agent with no tools, which can only reason about what it's told",
+              whyNot:
+                "Leaving the field out doesn't remove tools. It does the opposite of what most people assume.",
+            },
+            {
+              text: "An agent that asks permission before each tool use",
+              whyNot:
+                "Omitting the field doesn't add a permission step. It changes which tools the agent gets.",
+            },
+            {
+              text: "An agent with read-only tools by default",
+              whyNot:
+                'There\'s no read-only default. Leaving the field out is how a "researcher" ends up able to edit files.',
+            },
           ],
           answer: 0,
           explanation:
@@ -205,10 +253,22 @@ CONCLUSION rather than offering your best guess.`,
           question:
             "Why does a result contract include a slot for what the worker could not confirm?",
           options: [
-            "To make reports longer and more thorough",
+            {
+              text: "To make reports longer and more thorough",
+              whyNot:
+                "Length isn't the aim. The slot changes what a worker can honestly hand back when it couldn't finish.",
+            },
             "Because a format that only has room for conclusions pressures a worker into producing one",
-            "Because uncertainty is required for audit purposes",
-            "To let the worker ask follow-up questions",
+            {
+              text: "Because uncertainty is required for audit purposes",
+              whyNot:
+                "Audit isn't the reason. Think about what a worker does when the format only has room for a conclusion.",
+            },
+            {
+              text: "To let the worker ask follow-up questions",
+              whyNot:
+                "The slot isn't for questions; the worker reports and stops. It's there so an unfinished check can be said plainly.",
+            },
           ],
           answer: 1,
           explanation:
@@ -220,10 +280,22 @@ CONCLUSION rather than offering your best guess.`,
           question:
             "A researcher returns five findings, each with file:line evidence. How much should you verify?",
           options: [
-            "None, because the citations are the verification",
-            "All five, or the delegation saved you nothing",
+            {
+              text: "None, because the citations are the verification",
+              whyNot:
+                "A citation is a lead, not a proof. Until you open it, you don't know that it says what the finding claims.",
+            },
+            {
+              text: "All five, or the delegation saved you nothing",
+              whyNot:
+                "Checking everything throws away the time you delegated to save. Be selective about which check matters.",
+            },
             "At least the one your decision actually rests on",
-            "A random one, to estimate the overall error rate",
+            {
+              text: "A random one, to estimate the overall error rate",
+              whyNot:
+                "Findings aren't equally important, and one random check says little about the rest. Pick by what your decision depends on.",
+            },
           ],
           answer: 2,
           explanation:
@@ -263,9 +335,21 @@ CONCLUSION rather than offering your best guess.`,
           question:
             "Why give a test specialist the ability to run tests but not to edit source files?",
           options: [
-            "Running tests is slower than editing, so the balance is unfair",
-            "Because test runners don't require write access",
-            "To keep the agent's context smaller",
+            {
+              text: "Running tests is slower than editing, so the balance is unfair",
+              whyNot:
+                "Speed has nothing to do with it. The concern is what an agent does when it's asked to get tests passing.",
+            },
+            {
+              text: "Because test runners don't require write access",
+              whyNot:
+                "Whether the runner needs write access isn't the point. The reason is what an agent able to edit would be tempted to change.",
+            },
+            {
+              text: "To keep the agent's context smaller",
+              whyNot:
+                "Context size isn't the point. Removing the edit tool changes which outcomes the agent can produce.",
+            },
             "So it reports genuine failures instead of making tests pass by changing what they test",
           ],
           answer: 3,
@@ -320,9 +404,21 @@ claude --worktree try-axios
           question:
             "Two agents are told to improve error handling in overlapping modules. What happens?",
           options: [
-            "They coordinate automatically, since they share the repository",
-            "The second agent waits for the first to finish",
-            "Claude Code refuses to run agents with overlapping scopes",
+            {
+              text: "They coordinate automatically, since they share the repository",
+              whyNot:
+                "Sharing a repository isn't coordination. Each agent works in its own context and doesn't know what the other did.",
+            },
+            {
+              text: "The second agent waits for the first to finish",
+              whyNot:
+                "Nothing makes the second one wait. They run at the same time, on the same files.",
+            },
+            {
+              text: "Claude Code refuses to run agents with overlapping scopes",
+              whyNot:
+                "Nothing stops them. Overlap is allowed, and that's exactly why it's your job to avoid it.",
+            },
             "Their edits interleave unpredictably and the last writer wins on shared files",
           ],
           answer: 3,
@@ -334,9 +430,21 @@ claude --worktree try-axios
           id: "q2",
           question: "What does a git worktree give two parallel experiments?",
           options: [
-            "A shared branch both can commit to",
-            "Automatic merging of both results",
-            "A faster clone of the repository",
+            {
+              text: "A shared branch both can commit to",
+              whyNot:
+                "A worktree is the opposite of sharing: each one has its own checkout and branch.",
+            },
+            {
+              text: "Automatic merging of both results",
+              whyNot:
+                "Nothing merges by itself. Combining results is still a decision you make afterwards.",
+            },
+            {
+              text: "A faster clone of the repository",
+              whyNot:
+                "It isn't a clone at all; it shares the same repository. Its value is isolation, not speed.",
+            },
             "A separate checkout each, so neither touches the other or your main working tree",
           ],
           answer: 3,
@@ -382,9 +490,21 @@ claude --worktree try-axios
             "Two subagents independently recommend the same library. What have you learned?",
           options: [
             "Less than it appears: they may share a training bias, a source, or your framing",
-            "That it's the right choice, since independent agreement is strong evidence",
-            "That the question was too easy to be worth delegating",
-            "Nothing at all, since agents always agree",
+            {
+              text: "That it's the right choice, since independent agreement is strong evidence",
+              whyNot:
+                "Separate runs aren't independent evidence. They can share the same bias, the same source, or the way you framed the question.",
+            },
+            {
+              text: "That the question was too easy to be worth delegating",
+              whyNot:
+                "Agreement doesn't tell you the question was easy. It tells you less than it seems to.",
+            },
+            {
+              text: "Nothing at all, since agents always agree",
+              whyNot:
+                "Agents don't always agree, and agreement isn't worthless. It just isn't as strong as it looks.",
+            },
           ],
           answer: 0,
           explanation:
@@ -396,9 +516,21 @@ claude --worktree try-axios
           question:
             "Three reports conflict on whether a migration is safe. What does a good synthesis do?",
           options: [
-            "Report the majority view for a clean recommendation",
-            "Average the confidence levels into an overall risk score",
-            "Ask a fourth agent to break the tie",
+            {
+              text: "Report the majority view for a clean recommendation",
+              whyNot:
+                "A majority vote throws away the disagreement, which is the most useful thing the three reports found.",
+            },
+            {
+              text: "Average the confidence levels into an overall risk score",
+              whyNot:
+                "Averaging produces a confident number nobody can trace, and hides why the reports disagreed.",
+            },
+            {
+              text: "Ask a fourth agent to break the tie",
+              whyNot:
+                "A fourth opinion adds noise, not evidence. The conflict itself needs explaining.",
+            },
             "State the agreement, state the conflict and its cause, then give a decision with its uncertainty",
           ],
           answer: 3,
@@ -455,10 +587,22 @@ and the single next place you'd look.`,
           id: "q1",
           question: "What makes a blocked report useful rather than just a failure?",
           options: [
-            "It apologises and suggests trying again",
-            "It escalates automatically to a more capable model",
+            {
+              text: "It apologises and suggests trying again",
+              whyNot:
+                "An apology and a retry leave you exactly where you started. A useful report hands over what the run already learned.",
+            },
+            {
+              text: "It escalates automatically to a more capable model",
+              whyNot:
+                "Escalating hides what was tried. Before anything else, you want to know what ground was already covered.",
+            },
             "It lists what was checked, what was found instead, and where to look next",
-            "It returns partial results in the normal format",
+            {
+              text: "It returns partial results in the normal format",
+              whyNot:
+                "Partial results in the normal format look like a finished answer. A blocked run should say plainly that it's blocked.",
+            },
           ],
           answer: 2,
           explanation:
@@ -469,10 +613,22 @@ and the single next place you'd look.`,
           id: "q2",
           question: "Why not let the reviewing agent apply the fixes it recommends?",
           options: [
-            "Review agents usually lack write tools anyway",
-            "Because applying changes requires a different model",
+            {
+              text: "Review agents usually lack write tools anyway",
+              whyNot:
+                "Some do have write tools. The reason to keep fixes away from them holds either way.",
+            },
+            {
+              text: "Because applying changes requires a different model",
+              whyNot:
+                "Any model could apply them. The issue is who reviews the change once the reviewer has made it.",
+            },
             "Because a reviewer that merges its own suggestions is a second author, and nothing was reviewed",
-            "Because it would use too much of the run's budget",
+            {
+              text: "Because it would use too much of the run's budget",
+              whyNot:
+                "Budget isn't the reason. It's about whether the change was ever reviewed by anyone.",
+            },
           ],
           answer: 2,
           explanation:

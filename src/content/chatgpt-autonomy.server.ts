@@ -50,9 +50,21 @@ export const chatgptAutonomyLessons: AuthoredLesson[] = [
           question: "Why state exclusions in the objective when you've already said what you want?",
           options: [
             "Because a broad objective invites helpful additions: reformatting, extra items, contacting people",
-            "To keep the output shorter",
-            "Because exclusions are required before scheduling a task",
-            "To make the success checks easier to write",
+            {
+              text: "To keep the output shorter",
+              whyNot:
+                "Length isn't the aim. A short update can still reorganise your format or add an item nobody asked for.",
+            },
+            {
+              text: "Because exclusions are required before scheduling a task",
+              whyNot:
+                "No tool demands exclusions before scheduling. They're there because of what an unsupervised run does with a broad goal.",
+            },
+            {
+              text: "To make the success checks easier to write",
+              whyNot:
+                "Exclusions and success checks do different jobs. Exclusions fence off what the run shouldn't do along the way.",
+            },
           ],
           answer: 0,
           explanation:
@@ -64,10 +76,22 @@ export const chatgptAutonomyLessons: AuthoredLesson[] = [
           question:
             "Two runs both produce a finished-looking update. One stopped at its two-attempt limit. Why does the distinction matter?",
           options: [
-            "The limited run used more effort and cost more",
-            "Runs that hit a limit are always incomplete",
+            {
+              text: "The limited run used more effort and cost more",
+              whyNot:
+                "Cost isn't the distinction. Two outputs can look equally finished while only one of them actually met its checks.",
+            },
+            {
+              text: "Runs that hit a limit are always incomplete",
+              whyNot:
+                "Not always: a run can hit its limit with a perfectly good draft. The point is that the output alone can't tell you which happened.",
+            },
             "One met its checks and the other ran out of attempts. The outputs look alike but mean different things",
-            "It determines whether the run can be scheduled later",
+            {
+              text: "It determines whether the run can be scheduled later",
+              whyNot:
+                "Scheduling doesn't depend on it. What matters is that the same-looking output can mean finished or gave up.",
+            },
           ],
           answer: 2,
           explanation:
@@ -117,9 +141,21 @@ export const chatgptAutonomyLessons: AuthoredLesson[] = [
             'The run ends with "I\'ve produced the weekly update covering all three notes." What is that?',
           options: [
             "A claim about the result, which is not the same as the result",
-            "Confirmation that all three notes were used",
-            "A summary that can be checked against the output",
-            "Evidence the run stayed within its budget",
+            {
+              text: "Confirmation that all three notes were used",
+              whyNot:
+                "It says all three were used, but saying isn't confirming. The same process that wrote the update wrote this sentence about it.",
+            },
+            {
+              text: "A summary that can be checked against the output",
+              whyNot:
+                "It reads like a summary, but it adds nothing independent to check. The check has to run from the three notes, not from this sentence.",
+            },
+            {
+              text: "Evidence the run stayed within its budget",
+              whyNot:
+                "Nothing in the sentence speaks to effort or the budget. Even if it did, it would be the run's own account of itself.",
+            },
           ],
           answer: 0,
           explanation:
@@ -131,10 +167,22 @@ export const chatgptAutonomyLessons: AuthoredLesson[] = [
           question:
             "Your inputs contain two different event dates. The workflow picks the later one and produces a clean update. What's wrong?",
           options: [
-            "Nothing, because the later date is usually the correction",
+            {
+              text: "Nothing, because the later date is usually the correction",
+              whyNot:
+                "Usually isn't always. The week the later date is the typo, the update goes out wrong and nothing flags it.",
+            },
             "It resolved an ambiguity that was yours to resolve, and will do so again unseen every week",
-            "It should have used the earlier date as the original",
-            "It should have included both dates in the output",
+            {
+              text: "It should have used the earlier date as the original",
+              whyNot:
+                "Swapping which date it picks doesn't fix anything. Picking at all, silently, is the problem.",
+            },
+            {
+              text: "It should have included both dates in the output",
+              whyNot:
+                "Printing both dates in a finished update leaves readers to guess. The run should stop and ask before producing anything final.",
+            },
           ],
           answer: 1,
           explanation:
@@ -181,10 +229,22 @@ export const chatgptAutonomyLessons: AuthoredLesson[] = [
           id: "q1",
           question: "Which is the useful blocked report?",
           options: [
-            '"I wasn\'t able to complete the weekly update."',
+            {
+              text: '"I wasn\'t able to complete the weekly update."',
+              whyNot:
+                "This says something failed but not what. You can't resume from it without investigating the run yourself.",
+            },
             '"Note 2 of 3, the volunteer rota, wasn\'t provided. Notes 1 and 3 were processed; supply note 2 to continue."',
-            '"An error occurred while reading the input files."',
-            '"I\'ve produced the update using the notes that were available."',
+            {
+              text: '"An error occurred while reading the input files."',
+              whyNot:
+                "A generic error tells you nothing about which input is missing or what was already done, so you start over.",
+            },
+            {
+              text: '"I\'ve produced the update using the notes that were available."',
+              whyNot:
+                "This is the dangerous one. It quietly redefines the job as whatever inputs happened to be there and presents the result as done.",
+            },
           ],
           answer: 1,
           explanation:
@@ -196,10 +256,22 @@ export const chatgptAutonomyLessons: AuthoredLesson[] = [
           question:
             "Why does a schedule specification need a timezone and a pause rule before it needs anything else?",
           options: [
-            "Because most scheduling tools require both fields",
+            {
+              text: "Because most scheduling tools require both fields",
+              whyNot:
+                "What a tool requires isn't the reason. A schedule needs these two because of what goes wrong without them.",
+            },
             "Because a run that fires before its inputs exist produces a confident update about nothing, and you need a way to stop it",
-            "Because they're the hardest settings to change afterwards",
-            "Because they determine where the output is delivered",
+            {
+              text: "Because they're the hardest settings to change afterwards",
+              whyNot:
+                "Both are easy to change later. They come first because of what a run does when it fires at the wrong moment.",
+            },
+            {
+              text: "Because they determine where the output is delivered",
+              whyNot:
+                "Where the output goes is a separate field. Timezone and pause rule are about when the run fires and how it's stopped.",
+            },
           ],
           answer: 1,
           explanation:

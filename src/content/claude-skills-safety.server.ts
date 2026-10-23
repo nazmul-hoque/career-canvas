@@ -53,9 +53,21 @@ export const claudeSkillsSafetyLessons: AuthoredLesson[] = [
             '"Our API error responses always use RFC 7807 problem+json, and here\'s the seven-step checklist for adding a new error type." Where does this belong?',
           options: [
             "The convention in CLAUDE.md; the seven-step checklist as a skill",
-            "All of it in CLAUDE.md, since it's a project convention",
-            "All of it as a skill, since it contains a procedure",
-            "In the prompt each time, since error types are added rarely",
+            {
+              text: "All of it in CLAUDE.md, since it's a project convention",
+              whyNot:
+                "The one-line convention belongs in project memory, but a seven-step checklist there costs context in every session to help in a few.",
+            },
+            {
+              text: "All of it as a skill, since it contains a procedure",
+              whyNot:
+                "The checklist suits a skill, but the one-line convention is relevant all the time and cheap to carry. Hiding it in a skill means it's missing when it matters.",
+            },
+            {
+              text: "In the prompt each time, since error types are added rarely",
+              whyNot:
+                "Rare isn't the same as unimportant. Retyping a seven-step procedure each time is how steps get dropped.",
+            },
           ],
           answer: 0,
           explanation:
@@ -66,10 +78,22 @@ export const claudeSkillsSafetyLessons: AuthoredLesson[] = [
           id: "q2",
           question: "Why does a skill description need to say when *not* to use it?",
           options: [
-            "To document the skill for other developers",
-            "Because Claude Code requires an exclusion field",
+            {
+              text: "To document the skill for other developers",
+              whyNot:
+                "It isn't documentation. The description is read to decide something every time you send a message.",
+            },
+            {
+              text: "Because Claude Code requires an exclusion field",
+              whyNot:
+                "No field forces it. It matters because of how the description is used to pick skills.",
+            },
             "Because the description decides whether the skill loads, so a broad one fires on adjacent requests",
-            "To keep the skill file under the size limit",
+            {
+              text: "To keep the skill file under the size limit",
+              whyNot:
+                "Size has nothing to do with it. The exclusion changes when the skill switches on.",
+            },
           ],
           answer: 2,
           explanation:
@@ -134,10 +158,21 @@ If the diff is empty, say there are no uncommitted changes.`,
           question:
             "Your skill doesn't fire when you ask 'can you look over what I've changed?' What's the first thing to fix?",
           options: [
-            "Move the skill from the personal directory to the project one",
-            "Make the skill's instructions more detailed",
+            {
+              text: "Move the skill from the personal directory to the project one",
+              whyNot:
+                "Where the skill lives doesn't decide whether your wording matches it. Look at what's compared against your request.",
+            },
+            {
+              text: "Make the skill's instructions more detailed",
+              whyNot: "The body only matters after the skill loads. Here it isn't loading at all.",
+            },
             "Add the phrasings a person would actually use to the description",
-            "Invoke it by name instead",
+            {
+              text: "Invoke it by name instead",
+              whyNot:
+                "Calling it by name works around the problem but doesn't fix it. Next time you phrase it naturally, it still won't fire.",
+            },
           ],
           answer: 2,
           explanation:
@@ -148,9 +183,21 @@ If the diff is empty, say there are no uncommitted changes.`,
           id: "q2",
           question: "What does a `` !`command` `` line in a SKILL.md do?",
           options: [
-            "Tells Claude it may run that command if it decides to",
-            "Documents an example command for the user to copy",
-            "Registers the command in the skill's allowed tools",
+            {
+              text: "Tells Claude it may run that command if it decides to",
+              whyNot:
+                "It isn't a permission or a suggestion. Something happens to the line before Claude ever sees it.",
+            },
+            {
+              text: "Documents an example command for the user to copy",
+              whyNot:
+                "It isn't an example for people to copy. The line does something on its own when the skill is used.",
+            },
+            {
+              text: "Registers the command in the skill's allowed tools",
+              whyNot:
+                "Allowed tools are set elsewhere. This line's effect happens to the skill's text itself.",
+            },
             "Runs the command and replaces the line with its output before Claude reads the skill",
           ],
           answer: 3,
@@ -199,10 +246,22 @@ If the diff is empty, say there are no uncommitted changes.`,
           question:
             "Your skill's one example summarises a Python file. It now writes Python-flavoured summaries of TypeScript files. What happened?",
           options: [
-            "The description is too narrow and should mention more languages",
-            "The skill needs a second example in another language",
+            {
+              text: "The description is too narrow and should mention more languages",
+              whyNot:
+                "Triggering isn't the problem: the skill fired on TypeScript just fine. What came out was shaped wrong.",
+            },
+            {
+              text: "The skill needs a second example in another language",
+              whyNot:
+                "A second example helps only once you've said which features are essential; otherwise it can add new accidents to copy.",
+            },
             "The example overfitted: its incidental features were read as requirements",
-            "The template was copied instead of the structure",
+            {
+              text: "The template was copied instead of the structure",
+              whyNot:
+                "No template is involved here. The single example taught more than you meant it to.",
+            },
           ],
           answer: 2,
           explanation:
@@ -213,10 +272,22 @@ If the diff is empty, say there are no uncommitted changes.`,
           id: "q2",
           question: "When is a helper script the right choice over instructions?",
           options: [
-            "Whenever the skill needs to read a file",
+            {
+              text: "Whenever the skill needs to read a file",
+              whyNot:
+                "Claude can read files without a script. A script is for something else about the work.",
+            },
             "When the operation is deterministic and should behave identically every time",
-            "When the skill is used by more than one person",
-            "When the instructions exceed a page",
+            {
+              text: "When the skill is used by more than one person",
+              whyNot:
+                "How many people use it doesn't decide it. What matters is the kind of work the step does.",
+            },
+            {
+              text: "When the instructions exceed a page",
+              whyNot:
+                "Length isn't the test. A long procedure full of judgement still belongs in instructions.",
+            },
           ],
           answer: 1,
           explanation:
@@ -263,10 +334,22 @@ If the diff is empty, say there are no uncommitted changes.`,
           id: "q1",
           question: "Why is over-triggering usually the worse skill failure in practice?",
           options: [
-            "It uses more of the context window",
+            {
+              text: "It uses more of the context window",
+              whyNot:
+                "Context cost is minor. The real harm is in what a mis-fired skill does to the answer.",
+            },
             "A skill that fires on an unrelated request silently injects a procedure and steers the answer",
-            "It makes the skill harder to invoke explicitly",
-            "It causes Claude Code to load the skill on every session",
+            {
+              text: "It makes the skill harder to invoke explicitly",
+              whyNot:
+                "Explicit invocation still works. The issue is a skill that loads when nobody asked for it.",
+            },
+            {
+              text: "It causes Claude Code to load the skill on every session",
+              whyNot:
+                "A skill doesn't load every session; it loads when its description matches. The harm is when it matches the wrong request.",
+            },
           ],
           answer: 1,
           explanation:
@@ -278,9 +361,21 @@ If the diff is empty, say there are no uncommitted changes.`,
           question:
             "A skill reports 'All checks passed' but never ran anything. What's the defect?",
           options: [
-            "The description is too broad",
-            "The skill needs a helper script",
-            "The completion message should be more detailed",
+            {
+              text: "The description is too broad",
+              whyNot:
+                "Triggering isn't the issue; the skill ran. The problem is in what it said about its own work.",
+            },
+            {
+              text: "The skill needs a helper script",
+              whyNot:
+                "A script might help, but that's not the defect. The skill claimed something it never checked.",
+            },
+            {
+              text: "The completion message should be more detailed",
+              whyNot:
+                "More detail in an unverified claim is still unverified. The problem isn't how it's worded.",
+            },
             "Success was asserted rather than verified, and you'll stop checking its reports",
           ],
           answer: 3,
@@ -341,9 +436,20 @@ rule is never reached.`,
           question:
             "Your settings contain `deny: Bash(git push *)` and `allow: Bash(git push origin docs)`. You run `git push origin docs`. What happens?",
           options: [
-            "It's allowed, because the more specific rule wins",
-            "You're prompted, because the rules conflict",
-            "It's allowed, because allow rules are evaluated last and override",
+            {
+              text: "It's allowed, because the more specific rule wins",
+              whyNot: "Specificity doesn't decide this. The order rules are checked in does.",
+            },
+            {
+              text: "You're prompted, because the rules conflict",
+              whyNot:
+                "There's no tie-break prompt here. One kind of rule is checked before the other, and it matches.",
+            },
+            {
+              text: "It's allowed, because allow rules are evaluated last and override",
+              whyNot:
+                "Allow rules don't override anything. To make an exception, you'd have to narrow the other rule.",
+            },
             "It's denied, because deny is evaluated first and matches",
           ],
           answer: 3,
@@ -356,9 +462,20 @@ rule is never reached.`,
           question: "Which has the highest precedence?",
           options: [
             "Managed settings deployed by an organisation",
-            "A command-line flag, since it's the most immediate instruction",
-            "Project-local settings, since they're closest to the work",
-            "Whichever file was modified most recently",
+            {
+              text: "A command-line flag, since it's the most immediate instruction",
+              whyNot:
+                "If a flag could beat an organisation's policy, the policy would only be a suggestion. Something sits above the command line.",
+            },
+            {
+              text: "Project-local settings, since they're closest to the work",
+              whyNot:
+                "Being closest to the work doesn't put it on top. An organisation's settings have to win over a single project.",
+            },
+            {
+              text: "Whichever file was modified most recently",
+              whyNot: "Modification time plays no part. Settings are layered in a fixed order.",
+            },
           ],
           answer: 0,
           explanation:
@@ -370,10 +487,20 @@ rule is never reached.`,
           question:
             "Your user settings allow a tool. The project's settings deny it. Which applies?",
           options: [
-            "The user setting, since it's your machine",
+            {
+              text: "The user setting, since it's your machine",
+              whyNot:
+                "It being your machine doesn't override the rule. Deny rules are checked before allow rules wherever they come from.",
+            },
             "The project setting denies it: deny rules from any scope are evaluated before allow rules",
-            "Whichever scope is higher in the precedence list, so project-local wins",
-            "Neither. Conflicting scopes produce a prompt",
+            {
+              text: "Whichever scope is higher in the precedence list, so project-local wins",
+              whyNot: "Scope order isn't what decides this. Deny comes first across every scope.",
+            },
+            {
+              text: "Neither. Conflicting scopes produce a prompt",
+              whyNot: "No prompt here. Deny wins regardless of which file it's in.",
+            },
           ],
           answer: 1,
           explanation:
@@ -447,9 +574,21 @@ rule is never reached.`,
           id: "q1",
           question: "What's wrong with allowing `Bash(git *)` to stop the constant prompting?",
           options: [
-            "Nothing, because git commands are inherently safe",
-            "Wildcards aren't supported in Bash rules",
-            "It only works if you also allow the Read tool",
+            {
+              text: "Nothing, because git commands are inherently safe",
+              whyNot:
+                "Some git commands push, discard work, or delete untracked files. Not every git command is safe.",
+            },
+            {
+              text: "Wildcards aren't supported in Bash rules",
+              whyNot:
+                "Wildcards are supported, and that's the problem: this one covers far more than you meant.",
+            },
+            {
+              text: "It only works if you also allow the Read tool",
+              whyNot:
+                "The Read tool is unrelated. The issue is everything else the wildcard lets through.",
+            },
             "It allows `git push`, `git reset --hard` and `git clean -fd` along with `git status`",
           ],
           answer: 3,
@@ -463,9 +602,21 @@ rule is never reached.`,
             "You add a deny rule with a path pattern that isn't valid as a gitignore pattern. What happens?",
           options: [
             "It still guards that exact path, because deny and ask rules fail towards safety",
-            "The rule is ignored, so the path is unprotected",
-            "Claude Code refuses to start until it's fixed",
-            "It silently becomes an allow rule",
+            {
+              text: "The rule is ignored, so the path is unprotected",
+              whyNot:
+                "It isn't ignored. A broken deny pattern leans towards protecting, not exposing.",
+            },
+            {
+              text: "Claude Code refuses to start until it's fixed",
+              whyNot:
+                "Claude Code doesn't refuse to start. The rule still does something sensible.",
+            },
+            {
+              text: "It silently becomes an allow rule",
+              whyNot:
+                "A deny never turns into an allow. Malformed rules lean towards safety, not access.",
+            },
           ],
           answer: 0,
           explanation:
@@ -510,9 +661,21 @@ rule is never reached.`,
             "A colleague says skipping permissions is fine because they 'read everything Claude does anyway'. What's the flaw?",
           options: [
             "Reading happens after the action; the prompt is the only point where it can still be stopped",
-            "They probably don't read as carefully as they think",
-            "It's fine if they're working in a git repository",
-            "Skipping permissions also disables the session log",
+            {
+              text: "They probably don't read as carefully as they think",
+              whyNot:
+                "Even perfect reading wouldn't help. The trouble is when the reading happens, not how carefully.",
+            },
+            {
+              text: "It's fine if they're working in a git repository",
+              whyNot:
+                "Git helps you undo file edits, but not a push, a send or a deletion outside the repo.",
+            },
+            {
+              text: "Skipping permissions also disables the session log",
+              whyNot:
+                "The log isn't the issue. What's lost is the chance to stop an action before it happens.",
+            },
           ],
           answer: 0,
           explanation:
@@ -524,10 +687,22 @@ rule is never reached.`,
           question:
             "You're prompted constantly for `npm test` and `git status` and it's breaking your flow. Best fix?",
           options: [
-            "Skip permissions for the session and stay alert",
-            "Allow `Bash(*)` and rely on reviewing the transcript",
+            {
+              text: "Skip permissions for the session and stay alert",
+              whyNot:
+                "Staying alert can't stop an action that runs without asking. This removes the protection to fix an annoyance.",
+            },
+            {
+              text: "Allow `Bash(*)` and rely on reviewing the transcript",
+              whyNot:
+                "Reviewing the transcript happens after the fact. This allows every command, including destructive ones.",
+            },
             "Add narrow allow rules for those two specific commands",
-            "Work in a sandbox with all prompts disabled",
+            {
+              text: "Work in a sandbox with all prompts disabled",
+              whyNot:
+                "Turning prompts off entirely removes every protection to get rid of two annoying ones.",
+            },
           ],
           answer: 2,
           explanation:
@@ -592,10 +767,21 @@ rule is never reached.`,
           question:
             "You want to allow Bash broadly but never let a few specific commands run. Which mechanism does that?",
           options: [
-            "A narrower allow list that happens to exclude them",
+            {
+              text: "A narrower allow list that happens to exclude them",
+              whyNot:
+                "Leaving commands off an allow list only means they prompt. They can still run if someone approves.",
+            },
             "A PreToolUse hook that exits with code 2 for those commands",
-            "An ask rule for each one",
-            "A PostToolUse hook that reverts them",
+            {
+              text: "An ask rule for each one",
+              whyNot:
+                "An ask rule prompts, it doesn't forbid. A tired approval still lets the command through.",
+            },
+            {
+              text: "A PostToolUse hook that reverts them",
+              whyNot: "A PostToolUse hook runs after the command. By then the damage is done.",
+            },
           ],
           answer: 1,
           explanation:
@@ -608,9 +794,20 @@ rule is never reached.`,
             "A PreToolUse hook returns 'allow' for a call that a deny rule matches. What happens?",
           options: [
             "The call is denied: hook decisions don't bypass deny rules",
-            "The call proceeds, because the hook is closer to the action",
-            "The user is prompted to break the tie",
-            "The hook's decision applies but is logged as an override",
+            {
+              text: "The call proceeds, because the hook is closer to the action",
+              whyNot:
+                "Being closer to the action doesn't give a hook the final say. Hooks can tighten, not loosen.",
+            },
+            {
+              text: "The user is prompted to break the tie",
+              whyNot: "There's no tie-break prompt. Deny rules are still evaluated after the hook.",
+            },
+            {
+              text: "The hook's decision applies but is logged as an override",
+              whyNot:
+                "The hook's allow doesn't apply. Deny rules still run regardless of what a hook returned.",
+            },
           ],
           answer: 0,
           explanation:
@@ -659,10 +856,22 @@ rule is never reached.`,
           question:
             "A workflow has tight allow lists, denied secret paths and a sandbox, but no logging. What's missing?",
           options: [
-            "Nothing: prevention is the strongest control",
+            {
+              text: "Nothing: prevention is the strongest control",
+              whyNot:
+                "Prevention is strong, but every control can fail. Without logs you'd never know one had.",
+            },
             "Detection. There's no way to know whether a control failed or was bypassed",
-            "Recovery, which logging would provide",
-            "Nothing, as long as the allow lists are reviewed regularly",
+            {
+              text: "Recovery, which logging would provide",
+              whyNot:
+                "Logs don't recover anything by themselves. They tell you something happened, which is a different job.",
+            },
+            {
+              text: "Nothing, as long as the allow lists are reviewed regularly",
+              whyNot:
+                "Reviewing allow lists keeps prevention tidy, but still leaves you blind to anything that slips past.",
+            },
           ],
           answer: 1,
           explanation:
@@ -673,9 +882,21 @@ rule is never reached.`,
           id: "q2",
           question: "What makes an approval gate real rather than decorative?",
           options: [
-            "That it appears before every action the workflow takes",
-            "That it requires a second person to approve",
-            "That it logs who approved and when",
+            {
+              text: "That it appears before every action the workflow takes",
+              whyNot:
+                "A gate on every action turns approval into a reflex. Constant prompts get approved without being read.",
+            },
+            {
+              text: "That it requires a second person to approve",
+              whyNot:
+                "Two people approving blind is still blind. What matters is what the approver can see.",
+            },
+            {
+              text: "That it logs who approved and when",
+              whyNot:
+                "Logging records the approval, but not whether it was informed. A rubber stamp logs perfectly.",
+            },
             "That the approver sees the exact target, change and evidence, so the decision is informed",
           ],
           answer: 3,

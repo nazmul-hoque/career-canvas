@@ -61,10 +61,22 @@ claude doctor          # diagnoses a broken or partial setup`,
           question:
             "You keep your side projects in ~/projects and your notes in ~/Documents. You start Claude with `cd ~ && claude`. What have you done?",
           options: [
-            "Nothing unusual, because Claude only reads files you mention",
-            "Started a session with no working directory until you name one",
+            {
+              text: "Nothing unusual, because Claude only reads files you mention",
+              whyNot:
+                "Claude can look around on its own, not only at files you mention. Everything under the folder you launched from is in reach.",
+            },
+            {
+              text: "Started a session with no working directory until you name one",
+              whyNot:
+                "There's always a working directory: wherever you ran the command. Claude doesn't wait for you to name one.",
+            },
             "Given the session your whole home folder as its working directory, notes and all",
-            "Limited Claude to ~/projects, since that's where the code is",
+            {
+              text: "Limited Claude to ~/projects, since that's where the code is",
+              whyNot:
+                "Claude doesn't pick a scope by guessing where the code is. The boundary is set by the folder you started in.",
+            },
           ],
           answer: 2,
           explanation:
@@ -75,9 +87,21 @@ claude doctor          # diagnoses a broken or partial setup`,
           id: "q2",
           question: "What is `claude doctor` for?",
           options: [
-            "Asking Claude to diagnose a bug in your code",
-            "Checking your code for security problems",
-            "Repairing a corrupted git repository",
+            {
+              text: "Asking Claude to diagnose a bug in your code",
+              whyNot:
+                "It doesn't look at your code at all. It's a check on something else entirely.",
+            },
+            {
+              text: "Checking your code for security problems",
+              whyNot:
+                "It doesn't scan your project for anything. Its subject is the tool, not your code.",
+            },
+            {
+              text: "Repairing a corrupted git repository",
+              whyNot:
+                "It has nothing to do with git. Think about what you'd check when Claude Code itself behaves strangely.",
+            },
             "Diagnosing your Claude Code installation and setup",
           ],
           answer: 3,
@@ -141,10 +165,22 @@ confident about and what you're guessing.`,
           question:
             "Claude tells you the project's tests run with `npm test`, but the package.json has no test script. What's the useful conclusion?",
           options: [
-            "Claude is unreliable and shouldn't be used on this project",
-            "The project is misconfigured and needs a test script",
+            {
+              text: "Claude is unreliable and shouldn't be used on this project",
+              whyNot:
+                "One wrong claim doesn't make the tool useless here. It tells you how much to check the rest, which is useful information.",
+            },
+            {
+              text: "The project is misconfigured and needs a test script",
+              whyNot:
+                "The project may be fine without a test script. The interesting part is why a confident answer named one that isn't there.",
+            },
             "A plausible default got filled in for a gap, so verify the other claims in that map too",
-            "The answer was a hallucination, so the session should be restarted",
+            {
+              text: "The answer was a hallucination, so the session should be restarted",
+              whyNot:
+                "Restarting doesn't change how the gap got filled, and you'd lose the session's work. The useful move is to check the rest of what it told you.",
+            },
           ],
           answer: 2,
           explanation:
@@ -155,10 +191,22 @@ confident about and what you're guessing.`,
           id: "q2",
           question: "Why ask for a diagnosis before a fix?",
           options: [
-            "Diagnoses are faster to produce than fixes",
-            "It avoids using up the session's context",
+            {
+              text: "Diagnoses are faster to produce than fixes",
+              whyNot:
+                "Speed isn't the reason. It's about how easily you can tell whether you were given something right.",
+            },
+            {
+              text: "It avoids using up the session's context",
+              whyNot:
+                "Context use isn't the point; a diagnosis can be long. Think about what's quicker to judge as right or wrong.",
+            },
             "A diagnosis is a claim you can check; a fix is a change you have to evaluate",
-            "Claude writes better code when it explains the problem first",
+            {
+              text: "Claude writes better code when it explains the problem first",
+              whyNot:
+                "The order may help the code, but that's not the reason here. The gain is for you, as the person who has to judge the result.",
+            },
           ],
           answer: 2,
           explanation:
@@ -202,10 +250,22 @@ confident about and what you're guessing.`,
           question:
             "You've spent an hour on a failing test. Now you want help naming some CSS variables. What's the better move?",
           options: [
-            "Stay in the session, because more context always helps Claude understand your project",
+            {
+              text: "Stay in the session, because more context always helps Claude understand your project",
+              whyNot:
+                "Unrelated context doesn't help; it biases. An hour of test debugging will colour how a naming question gets answered.",
+            },
             "Start a fresh session, so an hour of test debugging doesn't colour an unrelated question",
-            "Compact the session first, then ask",
-            "Ask in the same session but tell Claude to ignore everything above",
+            {
+              text: "Compact the session first, then ask",
+              whyNot:
+                "Compacting keeps a summary of the debugging, so the irrelevant work is still in view, just shorter.",
+            },
+            {
+              text: "Ask in the same session but tell Claude to ignore everything above",
+              whyNot:
+                "Telling Claude to ignore earlier messages doesn't take them out of view. They're still there to influence the answer.",
+            },
           ],
           answer: 1,
           explanation:
@@ -216,10 +276,22 @@ confident about and what you're guessing.`,
           id: "q2",
           question: "After compacting a long session, why restate the goal?",
           options: [
-            "Compaction clears the working directory",
-            "It's required before Claude will continue",
+            {
+              text: "Compaction clears the working directory",
+              whyNot:
+                "Compaction doesn't touch your files or where the session is running. It changes what the session remembers.",
+            },
+            {
+              text: "It's required before Claude will continue",
+              whyNot:
+                "Nothing blocks you from carrying on without it. Restating is a check you choose to do, not a step the tool demands.",
+            },
             "Compaction replaces the transcript with a summary, so detail can be lost",
-            "It resets the model to its default behaviour",
+            {
+              text: "It resets the model to its default behaviour",
+              whyNot:
+                "The model's behaviour isn't reset. What changes is the conversation it's working from.",
+            },
           ],
           answer: 2,
           explanation:
@@ -280,9 +352,21 @@ confident about and what you're guessing.`,
           question:
             "The plan named two files. The diff touches five, and the extra three are 'related cleanups'. What should you do?",
           options: [
-            "Accept it. Cleanups are an improvement and the tests pass",
-            "Accept the change but ask for the cleanups to be a separate commit",
-            "Accept it if the three extra files are small",
+            {
+              text: "Accept it. Cleanups are an improvement and the tests pass",
+              whyNot:
+                "Passing tests only say nothing you test for broke. Three files nobody reviewed went in outside the scope you approved.",
+            },
+            {
+              text: "Accept the change but ask for the cleanups to be a separate commit",
+              whyNot:
+                "Moving the cleanups into their own commit still accepts work nobody reviewed. The size of the diff is the warning sign.",
+            },
+            {
+              text: "Accept it if the three extra files are small",
+              whyNot:
+                "Small changes can still break things, and these three weren't in the plan you approved. Size doesn't make them reviewed.",
+            },
             "Reject or revert it: the change exceeded what you approved, and passing tests don't tell you what else moved",
           ],
           answer: 3,
@@ -295,9 +379,21 @@ confident about and what you're guessing.`,
           question: "Which of these is a plan you can actually evaluate?",
           options: [
             '"Edit src/auth/session.ts to return null on expiry, update its two callers in src/api/, then run npm test -- session. Unsure whether the mobile client relies on the throw."',
-            '"Refactor the session module and improve error handling"',
-            '"Fix the bug properly this time, with tests"',
-            '"Make the changes we discussed and verify them"',
+            {
+              text: '"Refactor the session module and improve error handling"',
+              whyNot:
+                "This names an intention, not files or a check. You can only approve it on faith, not disagree with any specific part.",
+            },
+            {
+              text: '"Fix the bug properly this time, with tests"',
+              whyNot:
+                "\"Properly\" isn't something you can check against. There's nothing specific here to agree or disagree with.",
+            },
+            {
+              text: '"Make the changes we discussed and verify them"',
+              whyNot:
+                "This points back at a conversation instead of saying what will change. There's nothing in it you could evaluate before it runs.",
+            },
           ],
           answer: 0,
           explanation:
@@ -358,9 +454,21 @@ claude -p "List this project's entry points" --output-format json`,
           question: "Why inspect the JSON fields your own installed version returns?",
           options: [
             "The shape can differ between versions, so a script built on a remembered field can break",
-            "JSON output is experimental and may be wrong",
-            "The fields are different for every prompt",
-            "JSON output is slower and should be used sparingly",
+            {
+              text: "JSON output is experimental and may be wrong",
+              whyNot:
+                "The output isn't the problem. The risk is building on a field name that a different version doesn't have.",
+            },
+            {
+              text: "The fields are different for every prompt",
+              whyNot:
+                "The structure doesn't change from prompt to prompt. It's the version of the tool that can change it.",
+            },
+            {
+              text: "JSON output is slower and should be used sparingly",
+              whyNot:
+                "Speed isn't the concern. A script built on a field you remember can break when the installed version differs.",
+            },
           ],
           answer: 0,
           explanation:
@@ -408,9 +516,19 @@ claude --model sonnet    # start on a specific model`,
           question:
             "You spent the morning on a migration and the afternoon on a CSS bug. Next day you run `claude --continue` and ask it to keep going. What happens?",
           options: [
-            "Claude asks which of the two sessions you meant",
-            "Both sessions are merged so nothing is lost",
-            "You resume the migration, because it was the larger task",
+            {
+              text: "Claude asks which of the two sessions you meant",
+              whyNot: "It won't ask. That's exactly why this catches people out.",
+            },
+            {
+              text: "Both sessions are merged so nothing is lost",
+              whyNot:
+                "Sessions aren't merged. One of them is picked, by a rule that has nothing to do with which task was bigger.",
+            },
+            {
+              text: "You resume the migration, because it was the larger task",
+              whyNot: "Size has nothing to do with it. The flag picks by time, not importance.",
+            },
             "You resume the CSS session, because it was the most recent, which may not be what you wanted",
           ],
           answer: 3,
@@ -478,9 +596,21 @@ claude -p "audit the config" --max-turns 5`,
             "Why is `--allowedTools Read,Grep` a stronger guarantee than asking Claude not to edit anything?",
           options: [
             "The edit tools aren't available to the run at all, so it can't edit even if it misreads the instruction",
-            "It's faster, because fewer tools are loaded",
-            "It makes Claude more careful about the files it reads",
-            "It produces a log of every tool that was considered",
+            {
+              text: "It's faster, because fewer tools are loaded",
+              whyNot:
+                "Speed isn't the point. The guarantee is about what the run is able to do, not how quickly it starts.",
+            },
+            {
+              text: "It makes Claude more careful about the files it reads",
+              whyNot:
+                "It doesn't change how Claude reads files. It changes which tools exist for the run at all.",
+            },
+            {
+              text: "It produces a log of every tool that was considered",
+              whyNot:
+                "An allow list isn't a log. Its value is in what the run can't do, not in what gets recorded.",
+            },
           ],
           answer: 0,
           explanation:
@@ -492,10 +622,22 @@ claude -p "audit the config" --max-turns 5`,
           question:
             "A task needs to read one file from a sibling project. Which is the right scope?",
           options: [
-            "`--add-dir ..` so both projects are covered",
+            {
+              text: "`--add-dir ..` so both projects are covered",
+              whyNot:
+                "This hands over every sibling project at once, when the task needs one folder.",
+            },
             "`--add-dir ../that-project`, naming just the folder needed",
-            "Start Claude in the shared parent directory instead",
-            "Copy the file into the current project first",
+            {
+              text: "Start Claude in the shared parent directory instead",
+              whyNot:
+                "Starting in the parent puts every project under it in scope, far more than one file needs.",
+            },
+            {
+              text: "Copy the file into the current project first",
+              whyNot:
+                "Copying works, but leaves a duplicate that will quietly go stale and disagree with the original later.",
+            },
           ],
           answer: 1,
           explanation:
@@ -555,10 +697,22 @@ claude -p "audit the config" --max-turns 5`,
           id: "q1",
           question: "Which line earns its place in a CLAUDE.md?",
           options: [
-            '"Always write clean, maintainable, well-tested code"',
+            {
+              text: '"Always write clean, maintainable, well-tested code"',
+              whyNot:
+                "Everyone agrees with this already, so it changes no decision, and it costs context in every session to say it.",
+            },
             '"Package manager is pnpm. `npm install` creates a second lockfile and breaks CI"',
-            '"This project uses modern JavaScript and follows best practices"',
-            '"Be careful when editing files in the src directory"',
+            {
+              text: '"This project uses modern JavaScript and follows best practices"',
+              whyNot:
+                "Too vague to act on. A good line names something specific that would otherwise go wrong.",
+            },
+            {
+              text: '"Be careful when editing files in the src directory"',
+              whyNot:
+                "Careful how? This doesn't say what mistake to avoid, so it can't prevent one.",
+            },
           ],
           answer: 1,
           explanation:
@@ -570,10 +724,22 @@ claude -p "audit the config" --max-turns 5`,
           question:
             "You're happy for Claude to run tests and write commit messages. Why keep `git push` out of that?",
           options: [
-            "Pushing requires credentials Claude shouldn't have",
+            {
+              text: "Pushing requires credentials Claude shouldn't have",
+              whyNot:
+                "Credentials aren't the line being drawn. The question is what can be undone after the fact.",
+            },
             "Pushed commits are visible to others and far harder to walk back than local ones",
-            "Push operations are slow and waste session time",
-            "Commit messages are drafts, but pushes are final for git",
+            {
+              text: "Push operations are slow and waste session time",
+              whyNot:
+                "Speed isn't the reason. A push is kept back because of what it does to other people's work.",
+            },
+            {
+              text: "Commit messages are drafts, but pushes are final for git",
+              whyNot:
+                "Git treats commits and pushes alike in that sense; both can be changed. The difference is who else is affected once it's shared.",
+            },
           ],
           answer: 1,
           explanation:

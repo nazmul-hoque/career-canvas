@@ -650,7 +650,7 @@ function namesTheAnswer(note: string, right: string): boolean {
  * it's wrong, and every Python or SQL challenge test shows what the learner's
  * code gave (`show` runs only in the Python driver).
  */
-const FEEDBACK_COURSES = ["sql-analysis", "javascript"];
+const FEEDBACK_COURSES = ["sql-analysis", "javascript", "chatgpt-operator", "claude-operator"];
 
 const courseLessonIds = (courseId: string) =>
   new Set(courseLessons(courses.find((c) => c.id === courseId)!).map((l) => l.id));

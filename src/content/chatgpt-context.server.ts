@@ -49,9 +49,21 @@ export const chatgptContextLessons: AuthoredLesson[] = [
           question: "Why ask ChatGPT to restate a brief before you start working from it?",
           options: [
             "A misreading shows up now, in one paragraph, instead of three drafts later",
-            "It confirms the whole brief was received without truncation",
-            "It warms up the conversation with the relevant context",
-            "It produces a shorter version you can reuse",
+            {
+              text: "It confirms the whole brief was received without truncation",
+              whyNot:
+                "A brief can arrive whole and still be misread. The restatement tests understanding, not delivery: a maybe handed back as a decision is the thing to look for.",
+            },
+            {
+              text: "It warms up the conversation with the relevant context",
+              whyNot:
+                "Pasting the brief already puts it in the conversation. The restatement earns its place by what reading it back tells you, not by priming anything.",
+            },
+            {
+              text: "It produces a shorter version you can reuse",
+              whyNot:
+                "A shorter copy isn't the goal; you already have the brief. What you're reading the restatement for is where it differs from what you meant.",
+            },
           ],
           answer: 0,
           explanation:
@@ -62,10 +74,22 @@ export const chatgptContextLessons: AuthoredLesson[] = [
           id: "q2",
           question: "What do you lose by pasting two sets of notes without titles or dates?",
           options: [
-            "Nothing, provided both sets are accurate",
+            {
+              text: "Nothing, provided both sets are accurate",
+              whyNot:
+                "Accuracy isn't the issue. When a claim in the summary looks wrong, the question is which note it came from, and unlabelled notes can't answer that.",
+            },
             "The ability to trace a suspicious claim back to which note it came from",
-            "The chance to use them in a future conversation",
-            "Accuracy, because unlabelled text is processed less carefully",
+            {
+              text: "The chance to use them in a future conversation",
+              whyNot:
+                "Labels don't decide whether notes can be reused. They decide whether a claim in the summary can be traced back when you doubt it.",
+            },
+            {
+              text: "Accuracy, because unlabelled text is processed less carefully",
+              whyNot:
+                "Unlabelled text isn't read less carefully. It's blended, so you lose track of where each claim came from.",
+            },
           ],
           answer: 1,
           explanation:
@@ -109,9 +133,21 @@ export const chatgptContextLessons: AuthoredLesson[] = [
           question:
             'Two of your notes give different start times. Why isn\'t "use the newer one" the right default behaviour?',
           options: [
-            "Newer notes are often less carefully written",
-            "Dates in pasted notes are unreliable",
-            "It would require reading both notes fully",
+            {
+              text: "Newer notes are often less carefully written",
+              whyNot:
+                "Newer notes aren't sloppier as a rule. The point isn't which note is better written; it's who gets to decide when they disagree.",
+            },
+            {
+              text: "Dates in pasted notes are unreliable",
+              whyNot:
+                "The dates may be perfectly accurate and the rule still fail: a later note can be the mistaken one. The problem is resolving it without telling you.",
+            },
+            {
+              text: "It would require reading both notes fully",
+              whyNot:
+                "Reading both notes is cheap. The cost of the rule is hidden: you never learn there was a disagreement to settle.",
+            },
             "It resolves the conflict without telling you one existed, and you may know something the dates don't",
           ],
           answer: 3,
@@ -123,10 +159,22 @@ export const chatgptContextLessons: AuthoredLesson[] = [
           id: "q2",
           question: "What's the test for whether a fact belongs in your brief?",
           options: [
-            "Whether it's true and relevant to the project",
-            "Whether it fits within a single page",
+            {
+              text: "Whether it's true and relevant to the project",
+              whyNot:
+                "Almost everything about a project is true and relevant, which is how briefs bloat. The test needs to be harder than that.",
+            },
+            {
+              text: "Whether it fits within a single page",
+              whyNot:
+                "A page limit forces cutting but says nothing about what to cut. A fact can fit easily and still be noise.",
+            },
             "Whether you can say what the answer would lose without it",
-            "Whether it was mentioned in the original source material",
+            {
+              text: "Whether it was mentioned in the original source material",
+              whyNot:
+                "Where a fact came from doesn't decide whether it earns its place. Plenty of source material is background that changes nothing.",
+            },
           ],
           answer: 2,
           explanation:
@@ -171,9 +219,21 @@ export const chatgptContextLessons: AuthoredLesson[] = [
             "You ask a question your supplied policy doesn't address and get confident general advice. Why is that a problem?",
           options: [
             "It reads as coming from your document, so a general claim becomes an apparent fact about your venue",
-            "The advice is likely to be inaccurate",
-            "It makes the answer longer than necessary",
-            "It means the document wasn't read properly",
+            {
+              text: "The advice is likely to be inaccurate",
+              whyNot:
+                "The general advice may be perfectly sound. The trouble is where it seems to come from, not whether it's right.",
+            },
+            {
+              text: "It makes the answer longer than necessary",
+              whyNot:
+                "Length is a minor cost. The real one is that you can no longer tell which parts of the answer your document actually says.",
+            },
+            {
+              text: "It means the document wasn't read properly",
+              whyNot:
+                "The document may have been read perfectly. It simply doesn't cover the question, and the answer filled the gap without saying so.",
+            },
           ],
           answer: 0,
           explanation:
@@ -184,10 +244,22 @@ export const chatgptContextLessons: AuthoredLesson[] = [
           id: "q2",
           question: "What's the specific failure a decision log audit catches?",
           options: [
-            "Decisions recorded without a date",
-            "Duplicate entries from long conversations",
+            {
+              text: "Decisions recorded without a date",
+              whyNot:
+                "A missing date is easy to spot by reading the log. The audit is after a failure that looks perfectly normal on the page.",
+            },
+            {
+              text: "Duplicate entries from long conversations",
+              whyNot:
+                "Duplicates are harmless and easy to see. The audit targets rows that look valid but record something nobody agreed to.",
+            },
             "Suggestions that were quietly promoted into approved decisions",
-            "Decisions that contradict the working brief",
+            {
+              text: "Decisions that contradict the working brief",
+              whyNot:
+                "A contradiction with the brief would stand out. The audit asks a different question of each row: was this decided, or only discussed?",
+            },
           ],
           answer: 2,
           explanation:

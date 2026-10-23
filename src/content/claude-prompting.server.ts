@@ -69,9 +69,21 @@ Strong:
             'You ask: "How should we handle errors in our API?" The answer is reasonable but generic. Which addition would change it most?',
           options: [
             "Adding that it's a public API used by third parties who can't be asked to redeploy",
-            'Adding "please be thorough and detailed"',
-            'Adding "You are a senior backend engineer"',
-            "Asking the same question again in a new conversation",
+            {
+              text: 'Adding "please be thorough and detailed"',
+              whyNot:
+                "Asking for thoroughness gets you more of the same generic advice. It doesn't tell Claude anything about your situation it was guessing at.",
+            },
+            {
+              text: 'Adding "You are a senior backend engineer"',
+              whyNot:
+                "A role raises the confidence of the writing, but Claude still doesn't know who uses the API or what they can change. The guesses stay the same.",
+            },
+            {
+              text: "Asking the same question again in a new conversation",
+              whyNot:
+                "A fresh conversation rolls the dice again with the same missing context. The answer was generic because of what the question left out.",
+            },
           ],
           answer: 0,
           explanation:
@@ -83,9 +95,21 @@ Strong:
           question: "Which of these sets of constraints will actually shape the answer?",
           options: [
             '"Under 200 words, no code, assume I already know what a foreign key is"',
-            '"Be concise, but comprehensive, and cover everything important"',
-            '"Write professionally and make it high quality"',
-            '"Be as detailed as possible while keeping it brief"',
+            {
+              text: '"Be concise, but comprehensive, and cover everything important"',
+              whyNot:
+                "Concise and comprehensive pull in opposite directions, so Claude has to pick the balance for you. Nothing here rules anything out.",
+            },
+            {
+              text: '"Write professionally and make it high quality"',
+              whyNot:
+                '"Professional" and "high quality" name a bar without saying what would meet it. Each clause should remove something specific.',
+            },
+            {
+              text: '"Be as detailed as possible while keeping it brief"',
+              whyNot:
+                "This asks for two opposite things at once. A constraint only shapes the answer when it can't be satisfied both ways.",
+            },
           ],
           answer: 0,
           explanation:
@@ -144,10 +168,22 @@ uploaded CSV has no header row.`,
           question:
             "You want bug reports in your team's format. What does one real example give you that a written description usually doesn't?",
           options: [
-            "It makes the answer shorter",
-            "It stops Claude from asking clarifying questions",
+            {
+              text: "It makes the answer shorter",
+              whyNot:
+                "An example says nothing about length; a long report format makes long answers. Its value is in what it conveys about the format.",
+            },
+            {
+              text: "It stops Claude from asking clarifying questions",
+              whyNot:
+                "Clarifying questions can still come, and are sometimes useful. Think about what a real report shows that a description leaves out.",
+            },
             "It carries the details you'd never think to write down: ordering, tone, how much detail each section gets",
-            "It guarantees the format is followed exactly every time",
+            {
+              text: "It guarantees the format is followed exactly every time",
+              whyNot:
+                "An example is a strong signal, not a guarantee. You still read the result, because a format can drift even with a good sample.",
+            },
           ],
           answer: 2,
           explanation:
@@ -158,9 +194,21 @@ uploaded CSV has no header row.`,
           id: "q2",
           question: "Which role is actually doing work in the prompt?",
           options: [
-            '"You are a world-class expert in software engineering"',
-            '"You are a highly intelligent and capable assistant"',
-            '"You are a professional with years of experience"',
+            {
+              text: '"You are a world-class expert in software engineering"',
+              whyNot:
+                '"World-class" raises the confidence of the writing without changing what the answer looks for. There\'s nothing at stake in this role.',
+            },
+            {
+              text: '"You are a highly intelligent and capable assistant"',
+              whyNot:
+                "Telling Claude it's capable doesn't change what it pays attention to. A role does work when it brings something to protect.",
+            },
+            {
+              text: '"You are a professional with years of experience"',
+              whyNot:
+                "Years of experience is a credential, not a concern. It doesn't change what the answer would flag or worry about.",
+            },
             '"You are the engineer who will be on call for this at 3am"',
           ],
           answer: 3,
@@ -221,9 +269,21 @@ Asking:
           question:
             "An answer is plausible but not quite right, and you can't say why. What's the most useful next move?",
           options: [
-            "Ask the same question again and hope for a better roll",
-            'Add "be more accurate" to the prompt',
-            "Rewrite the prompt from scratch with more detail everywhere",
+            {
+              text: "Ask the same question again and hope for a better roll",
+              whyNot:
+                "Rerolling changes the wording but not the missing context, so you're likely to get the same gap phrased differently.",
+            },
+            {
+              text: 'Add "be more accurate" to the prompt',
+              whyNot:
+                "\"Be more accurate\" doesn't tell Claude what it got wrong. It can't fix a gap in the brief that nobody has named.",
+            },
+            {
+              text: "Rewrite the prompt from scratch with more detail everywhere",
+              whyNot:
+                "Adding detail everywhere is expensive guesswork. You could find out exactly which detail was missing first.",
+            },
             "Ask what it assumed about your situation in order to answer",
           ],
           answer: 3,
@@ -237,9 +297,21 @@ Asking:
             "You change a prompt's role *and* its output format at once, and the answer improves. What have you learned?",
           options: [
             "That something helped, but not which change was responsible",
-            "That the role change worked",
-            "That the format change worked",
-            "That both changes helped",
+            {
+              text: "That the role change worked",
+              whyNot:
+                "You changed two things, so you can't credit either one. The role change might even have hurt while the format change made up for it.",
+            },
+            {
+              text: "That the format change worked",
+              whyNot:
+                "Two changes, one result: the format may have helped, or may have done nothing while the role did the work. You can't tell which.",
+            },
+            {
+              text: "That both changes helped",
+              whyNot:
+                "Both may have helped, or one may have hurt while the other more than made up for it. One result can't separate two changes.",
+            },
           ],
           answer: 0,
           explanation:
@@ -301,9 +373,21 @@ Ask for:
           id: "q1",
           question: 'Why does "summarise this thread" so often lose the thing you needed?',
           options: [
-            "Summaries are always too short to be useful",
-            "Claude can't read long threads accurately",
-            "Threads contain too much irrelevant conversation",
+            {
+              text: "Summaries are always too short to be useful",
+              whyNot:
+                "A summary can be any length you ask for. Length isn't what drops the decision; how the summary weighs each line is.",
+            },
+            {
+              text: "Claude can't read long threads accurately",
+              whyNot:
+                "Reading the thread isn't the problem. The request never said which parts matter more than others.",
+            },
+            {
+              text: "Threads contain too much irrelevant conversation",
+              whyNot:
+                "Irrelevant chatter is exactly what a summary is meant to cut. The trouble is that nothing marks the decisions as more important than the chatter.",
+            },
             "A summary weights everything evenly, so a decision reads like any other line",
           ],
           answer: 3,
@@ -316,10 +400,22 @@ Ask for:
           question:
             "You're extracting contact details from messy notes. Some records have no phone number. What should the prompt say?",
           options: [
-            "Nothing, because Claude will leave it blank if it isn't there",
+            {
+              text: "Nothing, because Claude will leave it blank if it isn't there",
+              whyNot:
+                "Left unsaid, the pressure is toward a complete-looking record, which can mean a plausible invented number rather than a blank.",
+            },
             '"If a field isn\'t stated in the source, write null rather than inferring it"',
-            '"Be accurate and don\'t make anything up"',
-            '"Only extract records that have every field"',
+            {
+              text: '"Be accurate and don\'t make anything up"',
+              whyNot:
+                "A general plea for accuracy doesn't say what to do when a field is missing, so it doesn't define the behaviour you want.",
+            },
+            {
+              text: '"Only extract records that have every field"',
+              whyNot:
+                "This quietly throws away real records you wanted, just because one field is empty. A gap should come back as a gap.",
+            },
           ],
           answer: 1,
           explanation:
@@ -330,9 +426,21 @@ Ask for:
           id: "q3",
           question: "You want a genuine critique of your plan. Which prompt gets you one?",
           options: [
-            '"What do you think of this plan?"',
-            '"Give me feedback on this plan"',
-            '"Is this plan good?"',
+            {
+              text: '"What do you think of this plan?"',
+              whyNot:
+                "An open invitation tends to return agreeable commentary. Nothing in it asks Claude to work against the plan.",
+            },
+            {
+              text: '"Give me feedback on this plan"',
+              whyNot:
+                '"Feedback" is usually answered with balanced, encouraging notes that confirm what you already decided.',
+            },
+            {
+              text: '"Is this plan good?"',
+              whyNot:
+                "A yes/no question invites a yes with caveats. A real critique has to be asked for as an argument that can be built and checked.",
+            },
             '"What\'s the strongest argument that this plan fails, and what would have to be true for it to hold?"',
           ],
           answer: 3,
@@ -399,10 +507,22 @@ The shape of the problem survives; the identity doesn't.`,
           question:
             "Claude gives you a migration plan with eight factual claims. You have time to check two. Which two?",
           options: [
-            "The two that appear earliest, since later steps depend on them",
+            {
+              text: "The two that appear earliest, since later steps depend on them",
+              whyNot:
+                "Position in the plan doesn't measure risk. A claim near the end can be the one everything hinges on.",
+            },
             "The two the plan would fail on if they were wrong",
-            "The two you personally find most surprising",
-            "Any two, because checking a sample tells you the overall reliability",
+            {
+              text: "The two you personally find most surprising",
+              whyNot:
+                "Surprise reflects what you already know, not what it would cost to be wrong. An unsurprising error can still sink the plan.",
+            },
+            {
+              text: "Any two, because checking a sample tells you the overall reliability",
+              whyNot:
+                "An answer isn't uniformly reliable, so two random checks say little about the other six. Spend the checks where an error would hurt.",
+            },
           ],
           answer: 1,
           explanation:
@@ -414,9 +534,21 @@ The shape of the problem survives; the identity doesn't.`,
           question:
             "You need help with a bug in code that contains a live API key and a customer's email. What do you do?",
           options: [
-            "Paste it as-is, because the conversation is private to your account",
-            "Delete the key and the email entirely, leaving gaps",
-            "Describe the code in words instead of pasting any of it",
+            {
+              text: "Paste it as-is, because the conversation is private to your account",
+              whyNot:
+                "Private to your account isn't the same as never leaving your machine. A live key shouldn't go anywhere it doesn't need to.",
+            },
+            {
+              text: "Delete the key and the email entirely, leaving gaps",
+              whyNot:
+                "Leaving gaps often changes the very behaviour you're asking about, so the bug may disappear from the snippet.",
+            },
+            {
+              text: "Describe the code in words instead of pasting any of it",
+              whyNot:
+                "A prose description throws away the exact detail that usually holds the bug. Claude needs the code, just not the real secrets.",
+            },
             "Replace the key and email with realistic fake values, keeping them consistent through the snippet",
           ],
           answer: 3,
