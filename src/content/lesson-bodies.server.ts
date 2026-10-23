@@ -4185,10 +4185,12 @@ print("Hello, " + name + " from " + city + "!")`,
             name: "name and city are filled in",
             expression:
               'isinstance(name, str) and isinstance(city, str) and name.strip() != "" and city.strip() != ""',
+            show: '{"name": name, "city": city}',
           },
           {
             name: "Prints the greeting built from them",
             expression: '__stdout__.strip() == "Hello, " + name + " from " + city + "!"',
+            show: '__stdout__.strip() or "no output"',
           },
         ],
       },
@@ -4306,18 +4308,22 @@ def receipt_line(item, qty, unit_price):
           {
             name: "Reads a price with $ and commas",
             expression: 'parse_price("$1,299.50") == 1299.5',
+            show: 'parse_price("$1,299.50")',
           },
           {
             name: "Ignores surrounding spaces and returns a float",
             expression: 'parse_price(" 20 ") == 20.0 and isinstance(parse_price("20"), float)',
+            show: '{" 20 ": parse_price(" 20 "), "20": parse_price("20")}',
           },
           {
             name: "Builds the receipt line",
             expression: 'receipt_line("Wool Socks", 3, 24) == "3 x Wool Socks @ $24.00 = $72.00"',
+            show: 'receipt_line("Wool Socks", 3, 24)',
           },
           {
             name: "Rounds to two decimal places",
             expression: 'receipt_line("Headlamp", 1, 34.999) == "1 x Headlamp @ $35.00 = $35.00"',
+            show: 'receipt_line("Headlamp", 1, 34.999)',
           },
         ],
       },
@@ -4439,11 +4445,19 @@ print(grade(87))`,
         return "B"
     return "C"`,
         tests: [
-          { name: "95 scores an A", expression: 'grade(95) == "A"' },
-          { name: "90 is the boundary for an A", expression: 'grade(90) == "A"' },
-          { name: "87 scores a B", expression: 'grade(87) == "B"' },
-          { name: "80 is the boundary for a B", expression: 'grade(80) == "B"' },
-          { name: "Anything under 80 scores a C", expression: 'grade(41) == "C"' },
+          { name: "95 scores an A", expression: 'grade(95) == "A"', show: "grade(95)" },
+          {
+            name: "90 is the boundary for an A",
+            expression: 'grade(90) == "A"',
+            show: "grade(90)",
+          },
+          { name: "87 scores a B", expression: 'grade(87) == "B"', show: "grade(87)" },
+          { name: "80 is the boundary for a B", expression: 'grade(80) == "B"', show: "grade(80)" },
+          {
+            name: "Anything under 80 scores a C",
+            expression: 'grade(41) == "C"',
+            show: "grade(41)",
+          },
         ],
       },
     ],
@@ -4549,21 +4563,29 @@ def ends(items):
             name: "Removes one item and appends the new one",
             expression:
               'update_packing_list(["tent", "stove"], "water", "stove") == ["tent", "water"]',
+            show: 'update_packing_list(["tent", "stove"], "water", "stove")',
           },
           {
             name: "Leaves the caller's list unchanged",
             expression:
               '(lambda original: (update_packing_list(original, "water", "stove"), original == ["tent", "stove"])[1])(["tent", "stove"])',
+            show: 'str((lambda original: (update_packing_list(original, "water", "stove"), original)[1])(["tent", "stove"])) + " as the caller\'s list afterwards"',
           },
           {
             name: "A missing removal item is harmless",
             expression: 'update_packing_list(["tent"], "water", "map") == ["tent", "water"]',
+            show: 'update_packing_list(["tent"], "water", "map")',
           },
           {
             name: "Returns the first and last values",
             expression: 'ends(["tent", "stove", "water"]) == ("tent", "water")',
+            show: 'ends(["tent", "stove", "water"])',
           },
-          { name: "Handles an empty list", expression: "ends([]) == (None, None)" },
+          {
+            name: "Handles an empty list",
+            expression: "ends([]) == (None, None)",
+            show: "ends([])",
+          },
         ],
       },
     ],
@@ -4700,15 +4722,22 @@ def top_word(counts):
             name: "Counts words, ignoring case and punctuation",
             expression:
               'count_words("The tent, the stove. THE end!") == {"the": 3, "tent": 1, "stove": 1, "end": 1}',
+            show: 'count_words("The tent, the stove. THE end!")',
           },
-          { name: "Empty text gives an empty dictionary", expression: 'count_words("") == {}' },
+          {
+            name: "Empty text gives an empty dictionary",
+            expression: 'count_words("") == {}',
+            show: 'count_words("")',
+          },
           {
             name: "Finds the most common word",
             expression: 'top_word({"a": 2, "b": 3, "c": 1}) == "b"',
+            show: 'top_word({"a": 2, "b": 3, "c": 1})',
           },
           {
             name: "A tie goes to the first word alphabetically",
             expression: 'top_word({"pear": 2, "apple": 2}) == "apple"',
+            show: 'top_word({"pear": 2, "apple": 2})',
           },
         ],
       },
@@ -4830,17 +4859,24 @@ def total_by_id(orders):
             name: "Keeps only the paid orders",
             expression:
               'paid_totals([{"id": 1, "total": 10, "status": "paid"}, {"id": 2, "total": 99, "status": "pending"}]) == [10]',
+            show: 'paid_totals([{"id": 1, "total": 10, "status": "paid"}, {"id": 2, "total": 99, "status": "pending"}])',
           },
           {
             name: "Keeps the original order",
             expression:
               'paid_totals([{"id": 1, "total": 5, "status": "paid"}, {"id": 2, "total": 7, "status": "paid"}]) == [5, 7]',
+            show: 'paid_totals([{"id": 1, "total": 5, "status": "paid"}, {"id": 2, "total": 7, "status": "paid"}])',
           },
-          { name: "An empty list gives an empty list", expression: "paid_totals([]) == []" },
+          {
+            name: "An empty list gives an empty list",
+            expression: "paid_totals([]) == []",
+            show: "paid_totals([])",
+          },
           {
             name: "Maps paid order ids to totals",
             expression:
               'total_by_id([{"id": 1, "total": 10, "status": "paid"}, {"id": 2, "total": 99, "status": "refunded"}, {"id": 3, "total": 4, "status": "paid"}]) == {1: 10, 3: 4}',
+            show: 'total_by_id([{"id": 1, "total": 10, "status": "paid"}, {"id": 2, "total": 99, "status": "refunded"}, {"id": 3, "total": 4, "status": "paid"}])',
           },
         ],
       },
@@ -4975,25 +5011,37 @@ def add_item(item, basket=None):
     basket.append(item)
     return basket`,
         tests: [
-          { name: "Domestic orders under 50 cost 5", expression: "shipping_cost(40) == 5" },
-          { name: "Domestic orders ship free from 50", expression: "shipping_cost(50) == 0" },
+          {
+            name: "Domestic orders under 50 cost 5",
+            expression: "shipping_cost(40) == 5",
+            show: "shipping_cost(40)",
+          },
+          {
+            name: "Domestic orders ship free from 50",
+            expression: "shipping_cost(50) == 0",
+            show: "shipping_cost(50)",
+          },
           {
             name: "Other countries: 15, free from 150",
             expression:
               'shipping_cost(100, country="DE") == 15 and shipping_cost(150, country="DE") == 0',
+            show: '{100: shipping_cost(100, country="DE"), 150: shipping_cost(150, country="DE")}',
           },
           {
             name: "Express adds 10",
             expression:
               'shipping_cost(200, country="DE", express=True) == 10 and shipping_cost(20, express=True) == 15',
+            show: '{"DE, 200, express": shipping_cost(200, country="DE", express=True), "NO, 20, express": shipping_cost(20, express=True)}',
           },
           {
             name: "add_item calls don't share a basket",
             expression: 'add_item("tent") == ["tent"] and add_item("stove") == ["stove"]',
+            show: '[add_item("tent"), add_item("stove")]',
           },
           {
             name: "add_item adds to a basket you pass in",
             expression: 'add_item("map", ["tent"]) == ["tent", "map"]',
+            show: 'add_item("map", ["tent"])',
           },
         ],
       },
@@ -5144,20 +5192,27 @@ def error_of(fn):
         return (type(exc).__name__, str(exc))
     return None`,
         tests: [
-          { name: "Reads a quantity, ignoring spaces", expression: 'parse_quantity(" 3 ") == 3' },
+          {
+            name: "Reads a quantity, ignoring spaces",
+            expression: 'parse_quantity(" 3 ") == 3',
+            show: '(error_of(lambda: parse_quantity(" 3 ")) or parse_quantity(" 3 "))',
+          },
           {
             name: "Rejects text that isn't a whole number",
             expression:
               'error_of(lambda: parse_quantity("three")) == ("ValueError", "Quantity must be a whole number") and error_of(lambda: parse_quantity("2.5")) == ("ValueError", "Quantity must be a whole number")',
+            show: '{t: error_of(lambda: parse_quantity(t)) or parse_quantity(t) for t in ["three", "2.5"]}',
           },
           {
             name: "Rejects zero and negatives",
             expression:
               'error_of(lambda: parse_quantity("0")) == ("ValueError", "Quantity must be at least 1") and error_of(lambda: parse_quantity("-4")) == ("ValueError", "Quantity must be at least 1")',
+            show: '{t: error_of(lambda: parse_quantity(t)) or parse_quantity(t) for t in ["0", "-4"]}',
           },
           {
             name: "safe_total adds the good lines and reports the bad ones",
             expression: 'safe_total(["2", "x", "3", "-1"]) == (5, ["x", "-1"])',
+            show: '(error_of(lambda: safe_total(["2", "x", "3", "-1"])) or safe_total(["2", "x", "3", "-1"]))',
           },
         ],
       },
@@ -5352,31 +5407,37 @@ def summarise(in_path, out_path):
           {
             name: "Returns how many rows were used and skipped",
             expression: 'summarise("sales.csv", "summary.csv") == (6, 1)',
+            show: '(captured_error(lambda: summarise("sales.csv", "summary.csv")) or summarise("sales.csv", "summary.csv"))',
           },
           {
             name: "Writes the header",
             expression:
               'summarise("sales.csv", "summary.csv") and open("summary.csv", encoding="utf-8").read().splitlines()[0] == "category,total"',
+            show: '(open("summary.csv", encoding="utf-8").read().splitlines()[:1] if __import__("os").path.exists("summary.csv") else "no summary.csv written")',
           },
           {
             name: "Totals per category, highest first, two decimals",
             expression:
               'summarise("sales.csv", "summary.csv") and open("summary.csv", encoding="utf-8").read().splitlines()[1:] == ["Apparel,269.00", "Footwear,120.00", "Gear,55.00"]',
+            show: '(open("summary.csv", encoding="utf-8").read().splitlines()[1:] if __import__("os").path.exists("summary.csv") else "no summary.csv written")',
           },
           {
             name: "Works on a different file",
             expression:
               '(open("other.csv", "w", encoding="utf-8", newline="").write("date,category,amount\\n2026-04-01,Gear,10\\n2026-04-02,Gear,oops\\n") > 0) and summarise("other.csv", "other-out.csv") == (1, 1) and open("other-out.csv", encoding="utf-8").read().splitlines() == ["category,total", "Gear,10.00"]',
+            show: '{"returned": (captured_error(lambda: summarise("other.csv", "other-out.csv")) or summarise("other.csv", "other-out.csv")), "file": (open("other-out.csv", encoding="utf-8").read().splitlines() if __import__("os").path.exists("other-out.csv") else "no other-out.csv written")}',
           },
           {
             name: "Rejects a file with missing columns",
             expression:
               '(open("bad-sales.csv", "w", encoding="utf-8", newline="").write("date,amount\\n2026-04-01,10\\n") > 0) and captured_error(lambda: summarise("bad-sales.csv", "bad-out.csv")) == ("ValueError", "CSV must contain date, category, amount")',
+            show: 'captured_error(lambda: summarise("bad-sales.csv", "bad-out.csv")) or "no error raised"',
           },
           {
             name: "Skips blank categories and negative or non-finite amounts",
             expression:
               '(open("messy.csv", "w", encoding="utf-8", newline="").write("date,category,amount\\n2026-04-01,,10\\n2026-04-02,Gear,-2\\n2026-04-03,Gear,NaN\\n2026-04-04,Gear,0.10\\n2026-04-05,Gear,0.20\\n") > 0) and summarise("messy.csv", "messy-out.csv") == (2, 3) and open("messy-out.csv", encoding="utf-8").read().splitlines()[1] == "Gear,0.30"',
+            show: '{"returned": (captured_error(lambda: summarise("messy.csv", "messy-out.csv")) or summarise("messy.csv", "messy-out.csv")), "rows": (open("messy-out.csv", encoding="utf-8").read().splitlines()[1:] if __import__("os").path.exists("messy-out.csv") else "no messy-out.csv written")}',
           },
         ],
       },

@@ -121,9 +121,10 @@ Two facts shape every item below:
       wrong option in ChatGPT Operator (114) and Claude Operator (267) now says
       why it fails, without naming the right one, and both courses are in
       `FEEDBACK_COURSES`, so a new question there fails the suite until its
-      wrong options have notes. Python followed the same day (69 notes); it
-      sits in `WRONG_OPTION_NOTES_ONLY` until its 67 challenge tests get a
-      `show`, which `FEEDBACK_COURSES` also requires. Still without notes: 13
+      wrong options have notes. Python followed the same day: 69 notes, and a
+      `show` on all 67 challenge tests, so a failing test says what the
+      learner's code gave ("['tent', 'water'] as the caller's list
+      afterwards"). It meets the full `FEEDBACK_COURSES` standard. Still without notes: 13
       courses (HTML/CSS, React, TypeScript, SQL, Git, Node, Data Analytics,
       Excel, Figma, UX, GenAI, ML, Product).
 

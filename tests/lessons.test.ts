@@ -650,13 +650,19 @@ function namesTheAnswer(note: string, right: string): boolean {
  * it's wrong, and every Python or SQL challenge test shows what the learner's
  * code gave (`show` runs only in the Python driver).
  */
-const FEEDBACK_COURSES = ["sql-analysis", "javascript", "chatgpt-operator", "claude-operator"];
+const FEEDBACK_COURSES = [
+  "sql-analysis",
+  "javascript",
+  "chatgpt-operator",
+  "claude-operator",
+  "python",
+];
 
 /**
  * Halfway there: every wrong option says why, but Python and SQL tests don't
  * show their values yet. Move a course up to FEEDBACK_COURSES when they do.
  */
-const WRONG_OPTION_NOTES_ONLY = ["python"];
+const WRONG_OPTION_NOTES_ONLY: string[] = [];
 
 const courseLessonIds = (courseId: string) =>
   new Set(courseLessons(courses.find((c) => c.id === courseId)!).map((l) => l.id));

@@ -101,16 +101,26 @@ def receipt_line(item, price, quantity):
     amount = line_total(price, quantity)
     return f"{quantity} x {item} = \${amount:.2f}"`,
         tests: [
-          { name: "Calculates a line total", expression: "line_total(2.5, 3) == 7.5" },
-          { name: "Works with a zero quantity", expression: "line_total(10, 0) == 0" },
+          {
+            name: "Calculates a line total",
+            expression: "line_total(2.5, 3) == 7.5",
+            show: "line_total(2.5, 3)",
+          },
+          {
+            name: "Works with a zero quantity",
+            expression: "line_total(10, 0) == 0",
+            show: "line_total(10, 0)",
+          },
           {
             name: "Builds and formats the receipt line",
             expression: 'receipt_line("Notebook", 2.5, 3) == "3 x Notebook = $7.50"',
+            show: 'receipt_line("Notebook", 2.5, 3)',
           },
           {
             name: "Uses line_total instead of duplicating the calculation",
             expression:
               '(lambda original: (globals().__setitem__("line_total", lambda price, quantity: 99), receipt_line("Test", 1, 1), globals().__setitem__("line_total", original))[1])(line_total) == "1 x Test = $99.00"',
+            show: 'str((lambda original: (globals().__setitem__("line_total", lambda price, quantity: 99), receipt_line("Test", 1, 1), globals().__setitem__("line_total", original))[1])(line_total)) + " when line_total is swapped for one that always returns 99"',
           },
         ],
       },
@@ -193,24 +203,29 @@ def fare_label(name, age, member=False):
             name: "Handles every age band",
             expression:
               "museum_fare(12) == 8 and museum_fare(13) == 20 and museum_fare(64) == 20 and museum_fare(65) == 12",
+            show: '(({12: museum_fare(12), 13: museum_fare(13), 64: museum_fare(64), 65: museum_fare(65)}) if "museum_fare" in globals() else "nothing yet: museum_fare isn\'t defined")',
           },
           {
             name: "Applies membership after choosing the age fare",
             expression:
               "museum_fare(10, True) == 6 and museum_fare(30, True) == 15 and museum_fare(70, True) == 9",
+            show: '(({10: museum_fare(10, True), 30: museum_fare(30, True), 70: museum_fare(70, True)}) if "museum_fare" in globals() else "nothing yet: museum_fare isn\'t defined")',
           },
           {
             name: "Uses the default for non-members",
             expression: "museum_fare(30) == 20",
+            show: '((museum_fare(30)) if "museum_fare" in globals() else "nothing yet: museum_fare isn\'t defined")',
           },
           {
             name: "Builds an exact, two-decimal label",
             expression: 'fare_label("Ada", 10, True) == "Ada: $6.00"',
+            show: '((fare_label("Ada", 10, True)) if "fare_label" in globals() else "nothing yet: fare_label isn\'t defined")',
           },
           {
             name: "The label uses museum_fare",
             expression:
               '(lambda original: (globals().__setitem__("museum_fare", lambda age, member=False: 7), fare_label("Test", 1), globals().__setitem__("museum_fare", original))[1])(museum_fare) == "Test: $7.00"',
+            show: '((str((lambda original: (globals().__setitem__("museum_fare", lambda age, member=False: 7), fare_label("Test", 1), globals().__setitem__("museum_fare", original))[1])(museum_fare)) + " when museum_fare is swapped for one that always returns 7") if "fare_label" in globals() and "museum_fare" in globals() else "nothing yet: fare_label or museum_fare isn\'t defined")',
           },
         ],
       },
@@ -326,19 +341,30 @@ def positions(items, target):
             found.append(index)
     return found`,
         tests: [
-          { name: "Builds running totals", expression: "running_totals([3, 1, 4]) == [3, 4, 8]" },
-          { name: "Handles an empty list", expression: "running_totals([]) == []" },
+          {
+            name: "Builds running totals",
+            expression: "running_totals([3, 1, 4]) == [3, 4, 8]",
+            show: "running_totals([3, 1, 4])",
+          },
+          {
+            name: "Handles an empty list",
+            expression: "running_totals([]) == []",
+            show: "running_totals([])",
+          },
           {
             name: "Counts values strictly above the threshold",
             expression: "count_above([5, 12, 9, 20, 10], 10) == 2",
+            show: "count_above([5, 12, 9, 20, 10], 10)",
           },
           {
             name: "Finds every matching position",
             expression: 'positions(["a", "b", "a", "c"], "a") == [0, 2]',
+            show: 'positions(["a", "b", "a", "c"], "a")',
           },
           {
             name: "Returns an empty list when nothing matches",
             expression: 'positions(["a"], "z") == []',
+            show: 'positions(["a"], "z")',
           },
         ],
       },
@@ -423,21 +449,25 @@ def positions(items, target):
             name: "Builds all three parts of the summary",
             expression:
               'summarise_orders([{"id": 1, "total": 30, "status": "paid"}, {"id": 2, "total": 99, "status": "pending"}, {"id": 3, "total": 12, "status": "paid"}]) == {"paid_ids": [1, 3], "revenue": 42, "status_counts": {"paid": 2, "pending": 1}}',
+            show: '((summarise_orders([{"id": 1, "total": 30, "status": "paid"}, {"id": 2, "total": 99, "status": "pending"}, {"id": 3, "total": 12, "status": "paid"}])) if "summarise_orders" in globals() else "nothing yet: summarise_orders isn\'t defined")',
           },
           {
             name: "Handles an empty input",
             expression:
               'summarise_orders([]) == {"paid_ids": [], "revenue": 0, "status_counts": {}}',
+            show: '((summarise_orders([])) if "summarise_orders" in globals() else "nothing yet: summarise_orders isn\'t defined")',
           },
           {
             name: "Does not count refunded totals as revenue",
             expression:
               'summarise_orders([{"id": 7, "total": 50, "status": "refunded"}])["revenue"] == 0',
+            show: '(((lambda r: r.get("revenue", r) if isinstance(r, dict) else r)(summarise_orders([{"id": 7, "total": 50, "status": "refunded"}]))) if "summarise_orders" in globals() else "nothing yet: summarise_orders isn\'t defined")',
           },
           {
             name: "Leaves the input unchanged",
             expression:
               '(lambda orders, before: (summarise_orders(orders), orders == before)[1])([{"id": 1, "total": 5, "status": "paid"}], [{"id": 1, "total": 5, "status": "paid"}])',
+            show: '((str((lambda orders: (summarise_orders(orders), orders)[1])([{"id": 1, "total": 5, "status": "paid"}])) + " as the input afterwards") if "summarise_orders" in globals() else "nothing yet: summarise_orders isn\'t defined")',
           },
         ],
       },
@@ -543,19 +573,23 @@ def report_path(input_path):
           {
             name: "Keeps the input folder",
             expression: 'str(report_path("data/april.csv")) == "data/april-summary.csv"',
+            show: 'str(report_path("data/april.csv"))',
           },
           {
             name: "Handles more than one dot",
             expression:
               'str(report_path("reports/april.sales.csv")) == "reports/april.sales-summary.csv"',
+            show: 'str(report_path("reports/april.sales.csv"))',
           },
           {
             name: "Adds a CSV suffix when the input has none",
             expression: 'str(report_path("sales")) == "sales-summary.csv"',
+            show: 'str(report_path("sales"))',
           },
           {
             name: "Returns a Path rather than plain text",
             expression: 'isinstance(report_path("sales.csv"), Path)',
+            show: 'type(report_path("sales.csv")).__name__',
           },
         ],
       },
@@ -703,25 +737,30 @@ def build_reorder_report(in_path, out_path, reorder_below=5):
           {
             name: "Reports valid, skipped and reorder row counts",
             expression: 'build_reorder_report("inventory.csv", "reorder.csv") == (3, 2, 2)',
+            show: '(((captured_error(lambda: build_reorder_report("inventory.csv", "reorder.csv")) or build_reorder_report("inventory.csv", "reorder.csv"))) if "build_reorder_report" in globals() else "nothing yet: build_reorder_report isn\'t defined")',
           },
           {
             name: "Writes ordered rows with exact formatted money",
             expression:
               'build_reorder_report("inventory.csv", "reorder.csv") and open("reorder.csv", encoding="utf-8").read().splitlines() == ["sku,name,quantity,unit_price,stock_value", "B2,Headlamp,2,35.00,70.00", "C3,Stove,4,74.50,298.00"]',
+            show: '(((open("reorder.csv", encoding="utf-8").read().splitlines() if __import__("os").path.exists("reorder.csv") else "no reorder.csv written")) if "build_reorder_report" in globals() else "nothing yet: build_reorder_report isn\'t defined")',
           },
           {
             name: "Honours a different reorder threshold",
             expression: 'build_reorder_report("inventory.csv", "reorder.csv", 3) == (3, 2, 1)',
+            show: '(((captured_error(lambda: build_reorder_report("inventory.csv", "reorder.csv", 3)) or build_reorder_report("inventory.csv", "reorder.csv", 3))) if "build_reorder_report" in globals() else "nothing yet: build_reorder_report isn\'t defined")',
           },
           {
             name: "Rejects a file with missing columns",
             expression:
               '(open("bad-header.csv", "w", encoding="utf-8", newline="").write("sku,name,quantity\\nA1,Tent,2\\n") > 0) and captured_error(lambda: build_reorder_report("bad-header.csv", "out.csv")) == ("ValueError", "CSV must contain sku, name, quantity, unit_price")',
+            show: '((captured_error(lambda: build_reorder_report("bad-header.csv", "out.csv")) or "no error raised") if "build_reorder_report" in globals() else "nothing yet: build_reorder_report isn\'t defined")',
           },
           {
             name: "Works on a different valid file without relying on the fixture",
             expression:
               '(open("other-inventory.csv", "w", encoding="utf-8", newline="").write("sku,name,quantity,unit_price\\nZ9,Cable,0,1.25\\n") > 0) and build_reorder_report("other-inventory.csv", "other-reorder.csv") == (1, 0, 1) and open("other-reorder.csv", encoding="utf-8").read().splitlines()[1] == "Z9,Cable,0,1.25,0.00"',
+            show: '(({"returned": (captured_error(lambda: build_reorder_report("other-inventory.csv", "other-reorder.csv")) or build_reorder_report("other-inventory.csv", "other-reorder.csv")), "rows": (open("other-reorder.csv", encoding="utf-8").read().splitlines()[1:] if __import__("os").path.exists("other-reorder.csv") else "no other-reorder.csv written")}) if "build_reorder_report" in globals() else "nothing yet: build_reorder_report isn\'t defined")',
           },
         ],
       },
