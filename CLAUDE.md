@@ -311,7 +311,10 @@ every function in `src/lib/admin.functions.ts` re-checks it server-side and
 records changes in `admin_actions` (service-role only). Email search goes
 through the `admin_user_directory` SQL function, since PostgREST can't reach
 `auth.users`. Course content is deliberately read-only there — see
-"The answer key never reaches the browser".
+"The answer key never reaches the browser". Learners' "Report a problem"
+reports (`src/lib/lesson-reports.functions.ts`, table `lesson_reports`) land in
+its Lesson reports tab with their code and last run attached; the table is
+SELECT-own to the client and written only by that server function.
 
 **Account deletion.** Learners delete themselves from `/profile` through
 `deleteAccountFn` (`src/lib/account.functions.ts`); deleting the auth user

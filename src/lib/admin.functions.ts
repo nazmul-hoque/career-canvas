@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
+import { findLesson } from "@/content/curriculum";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { PlanId } from "@/lib/entitlements";
 
@@ -480,6 +481,120 @@ export const adminUnpublishProjectFn = createServerFn({ method: "POST" })
       id: data.submissionId,
     });
     return { unpublished: true };
+  });
+
+// ——— Lesson reports ———
+
+export type AdminLessonReport = {
+  id: string;
+  courseId: string;
+  lessonId: string;
+  lessonTitle: string;
+  courseTitle: string;
+  kind: string;
+  message: string;
+  code: string | null;
+  run: {
+    engine: string;
+    passed: boolean;
+    error: string | null;
+    tests: { name: string; passed: boolean; detail: string | null }[];
+  } | null;
+  answers: Record<string, number | string>;
+  verdicts: Record<string, boolean>;
+  solved: boolean;
+  userAgent: string;
+  viewport: string;
+  status: string;
+  createdAt: string;
+  reporter: string;
+  reporterId: string;
+  /** Open reports on the same lesson, this one included: one lesson, many learners. */
+  openOnLesson: number;
+};
+
+export const adminLessonReportsFn = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) =>
+    z.object({ status: z.enum(["open", "resolved", "dismissed"]) }).parse(input),
+  )
+  .handler(async ({ data, context }): Promise<AdminLessonReport[]> => {
+    const db = await adminClient(context.userId);
+    const [reports, open] = await Promise.all([
+      db
+        .from("lesson_reports")
+        .select(
+          "id, reporter_id, course_id, lesson_id, kind, message, code, context, status, created_at",
+        )
+        .eq("status", data.status)
+        .order("created_at", { ascending: false })
+        .limit(100),
+      db.from("lesson_reports").select("course_id, lesson_id").eq("status", "open"),
+    ]);
+    if (reports.error) throw new Error(reports.error.message);
+
+    const openByLesson = new Map<string, number>();
+    for (const r of open.data ?? []) {
+      const key = `${r.course_id}/${r.lesson_id}`;
+      openByLesson.set(key, (openByLesson.get(key) ?? 0) + 1);
+    }
+    const rows = reports.data ?? [];
+    const names = await byIds(db, [...new Set(rows.map((r) => r.reporter_id))]);
+
+    return rows.map((r) => {
+      const ctx = (r.context ?? {}) as Partial<
+        Pick<
+          AdminLessonReport,
+          "run" | "answers" | "verdicts" | "solved" | "userAgent" | "viewport"
+        >
+      >;
+      const found = findLesson(r.course_id, r.lesson_id);
+      return {
+        id: r.id,
+        courseId: r.course_id,
+        lessonId: r.lesson_id,
+        lessonTitle: found?.lesson.title ?? r.lesson_id,
+        courseTitle: found?.course.title ?? r.course_id,
+        kind: r.kind,
+        message: r.message,
+        code: r.code,
+        run: ctx.run ?? null,
+        answers: ctx.answers ?? {},
+        verdicts: ctx.verdicts ?? {},
+        solved: ctx.solved ?? false,
+        userAgent: ctx.userAgent ?? "",
+        viewport: ctx.viewport ?? "",
+        status: r.status,
+        createdAt: r.created_at,
+        reporter: names.get(r.reporter_id) ?? "Deleted learner",
+        reporterId: r.reporter_id,
+        openOnLesson: openByLesson.get(`${r.course_id}/${r.lesson_id}`) ?? 0,
+      };
+    });
+  });
+
+export const adminSetLessonReportStatusFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) =>
+    z
+      .object({ reportId: z.string().uuid(), status: z.enum(["open", "resolved", "dismissed"]) })
+      .parse(input),
+  )
+  .handler(async ({ data, context }): Promise<{ status: string }> => {
+    const db = await adminClient(context.userId);
+    const { error } = await db
+      .from("lesson_reports")
+      .update({ status: data.status })
+      .eq("id", data.reportId);
+    if (error) throw new Error(error.message);
+    await logAction(
+      db,
+      context.userId,
+      "set_lesson_report_status",
+      { type: "lesson_report", id: data.reportId },
+      { status: data.status },
+    );
+    return { status: data.status };
   });
 
 // ——— Metrics & content ———

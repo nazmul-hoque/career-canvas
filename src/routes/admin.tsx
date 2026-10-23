@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { NotFoundPage } from "@/components/common/NotFoundPage";
 import { AppShell } from "@/components/layout/AppShell";
 import { AdminContent } from "@/components/admin/AdminContent";
+import { AdminLessonReports } from "@/components/admin/AdminLessonReports";
 import { AdminLog } from "@/components/admin/AdminLog";
 import { AdminMetrics } from "@/components/admin/AdminMetrics";
 import { AdminModeration } from "@/components/admin/AdminModeration";
@@ -55,6 +56,7 @@ function Admin() {
           <TabsList>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="moderation">Moderation</TabsTrigger>
+            <TabsTrigger value="lesson-reports">Lesson reports</TabsTrigger>
             <TabsTrigger value="metrics">Metrics</TabsTrigger>
             <TabsTrigger value="content">Content</TabsTrigger>
             <TabsTrigger value="log">Log</TabsTrigger>
@@ -65,6 +67,9 @@ function Admin() {
         </TabsContent>
         <TabsContent value="moderation">
           <AdminModeration />
+        </TabsContent>
+        <TabsContent value="lesson-reports">
+          <AdminLessonReports />
         </TabsContent>
         <TabsContent value="metrics">
           <AdminMetrics />

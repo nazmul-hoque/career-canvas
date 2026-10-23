@@ -117,6 +117,17 @@ Two facts shape every item below:
 
 ## Done
 
+- [x] **Report a problem from inside a lesson** (2026-10-22). Signed-in
+      learners get a "Report a problem" link beside Complete. The report
+      captures their code, last run (engine, each test and why it failed),
+      their own answers and verdicts, browser and viewport, so a grader bug can
+      be replayed. Written by `reportLessonProblemFn` (service role, 10 per
+      learner per day) into `lesson_reports` (migration `20261022120000`,
+      applied; SELECT-own to the client). `/admin` → Lesson reports lists them
+      with a count of open reports per lesson; status changes go to
+      `admin_actions`. Verified end to end with a throwaway user in headless
+      Chrome.
+
 - [x] **Learner bug reports** (2026-10-22, from a signed-in walk through all
       courses). `react-hooks.reducer`'s three UI tests checked hidden text
       (`"Owner: Me"`, `"Status: resolved"`) that the prompt never asked for, so

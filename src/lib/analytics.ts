@@ -28,6 +28,7 @@ export type EventName =
   | "challenge_run"
   | "mentor_opened"
   | "mentor_message_sent"
+  | "lesson_problem_reported"
   | "project_submitted"
   | "checkout_started"
   | "checkout_completed"

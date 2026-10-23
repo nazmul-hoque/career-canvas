@@ -7,9 +7,11 @@ import {
   adminCourseUsageFn,
   adminDeletePostFn,
   adminDeleteUserFn,
+  adminLessonReportsFn,
   adminListUsersFn,
   adminMetricsFn,
   adminModerationFn,
+  adminSetLessonReportStatusFn,
   adminSetPlanFn,
   adminSetReportStatusFn,
   adminSetSuspendedFn,
@@ -70,6 +72,15 @@ export function useAdminModeration(reportStatus: "open" | "resolved" | "dismisse
     queryKey: ["admin", "moderation", user?.id, reportStatus],
     enabled: Boolean(user),
     queryFn: () => adminModerationFn({ data: { reportStatus } }),
+  });
+}
+
+export function useAdminLessonReports(status: "open" | "resolved" | "dismissed") {
+  const { user } = useSession();
+  return useQuery({
+    queryKey: ["admin", "lesson-reports", user?.id, status],
+    enabled: Boolean(user),
+    queryFn: () => adminLessonReportsFn({ data: { status } }),
   });
 }
 
@@ -154,3 +165,10 @@ export const useAdminUnpublishProject = () =>
     success: "Project removed from the public portfolio.",
     failure: "Could not unpublish it.",
   });
+
+export const useAdminSetLessonReportStatus = () =>
+  useAdminMutation(
+    (args: { reportId: string; status: "open" | "resolved" | "dismissed" }) =>
+      adminSetLessonReportStatusFn({ data: args }),
+    { success: "Report updated.", failure: "Could not update the report." },
+  );

@@ -28,6 +28,7 @@ import { InlineText } from "@/components/learn/InlineText";
 import { CodeChallenge } from "@/components/learn/CodeChallenge";
 import { GitSandbox } from "@/components/learn/GitSandbox";
 import { LessonTable } from "@/components/learn/LessonTable";
+import { ReportProblem } from "@/components/learn/ReportProblem";
 import {
   courseById,
   courseLessons,
@@ -662,7 +663,24 @@ function LessonWorkspace({
             </div>
 
             <div className="card-surface flex flex-wrap items-center justify-between gap-3 p-5">
-              <p className="text-sm text-chalk">{status}</p>
+              <div className="flex flex-col items-start gap-1">
+                <p className="text-sm text-chalk">{status}</p>
+                {user ? (
+                  <ReportProblem
+                    courseId={course.id}
+                    lessonId={lesson.id}
+                    snapshot={() => ({
+                      code: challenge ? code : null,
+                      lastRun,
+                      answers,
+                      verdicts: Object.fromEntries(
+                        Object.entries(results).map(([id, r]) => [id, r.correct]),
+                      ),
+                      solved,
+                    })}
+                  />
+                ) : null}
+              </div>
               <Button
                 onClick={finish}
                 disabled={(!isDone && !canFinish) || complete.isPending || checking !== null}
