@@ -117,6 +117,22 @@ Two facts shape every item below:
 
 ## Done
 
+- [x] **Learner bug reports** (2026-10-22, from a signed-in walk through all
+      courses). `react-hooks.reducer`'s three UI tests checked hidden text
+      (`"Owner: Me"`, `"Status: resolved"`) that the prompt never asked for, so
+      a correct table layout failed them; they now check behaviour (Unassigned
+      clears, Resolve becomes Reopen, only the clicked ticket changes), and the
+      reducer test also requires an untouched ticket to keep its identity. Mentor
+      provider failures (the raw `gemini returned 503: {…}` body) are logged
+      server-side and reach the learner as "busy" or "couldn't answer" through
+      `toLearnerError` in `mentor-providers.server.ts`; failed questions were
+      never metered, and the message now says so. The lesson route has a pending
+      state, so the previous lesson no longer stays on screen, answerable, under
+      the new URL while the next body loads, and sidebar links preload on hover.
+      Not reproduced: the report that `da-clean.clean`'s "raw data is left
+      unchanged" test fails correct code. Five solutions, the reporter's
+      included, pass 5/5 on Pyodide 0.28 (pandas 2.3.0) through the real driver.
+
 - [x] **JavaScript From Zero, second review** (2026-10-12). The fetch lesson's
       challenge was still two API functions plus a full UI, so the lesson is
       now two: `js-async.fetch` (write `loadOrders` and `saveNote`, plain

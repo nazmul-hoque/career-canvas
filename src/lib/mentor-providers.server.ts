@@ -29,6 +29,23 @@ export interface MentorProvider {
 
 const MAX_REPLY_TOKENS = 1024;
 
+/**
+ * An error whose message was written for the learner. Anything else a provider
+ * throws (HTTP failures, missing keys) is ours to log, not theirs to read: a
+ * raw 503 body names the vendor and means nothing to someone mid-lesson.
+ */
+export class LearnerFacingError extends Error {}
+
+/** A non-2xx from a provider, with the status kept so the caller can say "busy". */
+export class ProviderHttpError extends Error {
+  constructor(
+    readonly status: number,
+    detail: string,
+  ) {
+    super(detail);
+  }
+}
+
 function anthropicProvider(): MentorProvider {
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) throw new Error("MENTOR_PROVIDER=anthropic but ANTHROPIC_API_KEY is not set.");
@@ -53,7 +70,9 @@ function anthropicProvider(): MentorProvider {
       });
 
       if (response.stop_reason === "refusal") {
-        throw new Error("The model declined to answer that one. Try rephrasing your question.");
+        throw new LearnerFacingError(
+          "The model declined to answer that one. Try rephrasing your question.",
+        );
       }
 
       return response.content
@@ -62,6 +81,31 @@ function anthropicProvider(): MentorProvider {
         .trim();
     },
   };
+}
+
+/** Busy statuses: rate limited, overloaded, or the provider's "high demand" 503. */
+const BUSY_STATUSES = new Set([429, 503, 529]);
+
+/**
+ * What the learner reads when a reply fails. The real cause goes to the server
+ * log. Nothing was metered — usage rows are only written after a reply — so
+ * the message can say so.
+ */
+export function toLearnerError(error: unknown, provider: string | undefined): Error {
+  if (error instanceof LearnerFacingError) return error;
+  console.error(`[mentor] ${provider ?? "provider setup"} failed:`, error);
+  // The Anthropic SDK's API errors carry `status` too.
+  const status =
+    error instanceof ProviderHttpError
+      ? error.status
+      : typeof (error as { status?: unknown } | null)?.status === "number"
+        ? (error as { status: number }).status
+        : null;
+  return new Error(
+    status !== null && BUSY_STATUSES.has(status)
+      ? "The mentor is busy right now. Try again in a minute; this question didn't use up any of your messages."
+      : "The mentor couldn't answer just now. Try again shortly; this question didn't use up any of your messages.",
+  );
 }
 
 type OpenAiFlavour = "openai" | "deepseek" | "gemini";
@@ -121,7 +165,10 @@ function openAiCompatibleProvider(flavour: OpenAiFlavour): MentorProvider {
       });
 
       if (!response.ok) {
-        throw new Error(`${flavour} returned ${response.status}: ${await response.text()}`);
+        throw new ProviderHttpError(
+          response.status,
+          `${flavour} returned ${response.status}: ${await response.text()}`,
+        );
       }
 
       const payload = (await response.json()) as {

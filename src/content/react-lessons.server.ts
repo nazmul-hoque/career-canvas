@@ -297,9 +297,12 @@ export default function App() {
         tests: [
           {
             name: "Reducer assigns without changing the input",
-            expression: `const state = [{ id: 1, title: "Help", status: "open", owner: null }];
+            expression: `const state = [
+  { id: 1, title: "Help", status: "open", owner: null },
+  { id: 2, title: "Other", status: "open", owner: null },
+];
 const next = ticketReducer(state, { type: "assign", id: 1, owner: "Sam" });
-return state[0].owner === null && next !== state && next[0].owner === "Sam";`,
+return state[0].owner === null && next !== state && next[0].owner === "Sam" && next[1] === state[1];`,
           },
           {
             name: "Reducer resolves and reopens",
@@ -314,12 +317,13 @@ return resolved[0].status === "resolved" && reopened[0].status === "open";`,
 return ticketReducer(state, { type: "misspelled" }) === state;`,
           },
           {
-            name: "Assign button updates the matching ticket",
+            name: "Assign to me gives the ticket an owner",
             expression: `await render(<SupportQueue initialTickets={[
   { id: 1, title: "First", status: "open", owner: null },
 ]} />);
+const before = text().includes("Unassigned");
 await click(getByRole("button", { name: "Assign to me" }));
-return text().includes("Owner: Me");`,
+return before && !text().includes("Unassigned");`,
           },
           {
             name: "Resolve changes both status and available action",
@@ -327,7 +331,9 @@ return text().includes("Owner: Me");`,
   { id: 1, title: "First", status: "open", owner: null },
 ]} />);
 await click(getByRole("button", { name: "Resolve" }));
-return text().includes("Status: resolved") && getByRole("button", { name: "Reopen" }) !== null;`,
+return /resolved/i.test(text()) &&
+  getAllByRole("button", { name: "Reopen" }).length === 1 &&
+  getAllByRole("button", { name: "Resolve" }).length === 0;`,
           },
           {
             name: "Updates do not affect a different ticket",
@@ -336,7 +342,10 @@ return text().includes("Status: resolved") && getByRole("button", { name: "Reope
   { id: 2, title: "Second", status: "open", owner: null },
 ]} />);
 await click(getAllByRole("button", { name: "Resolve" })[0]);
-return text().includes("First Status: resolved") && text().includes("Second Status: open");`,
+await click(getAllByRole("button", { name: "Assign to me" })[0]);
+return getAllByRole("button", { name: "Resolve" }).length === 1 &&
+  getAllByRole("button", { name: "Reopen" }).length === 1 &&
+  getAllByText(/Unassigned/).length === 1;`,
           },
         ],
       },

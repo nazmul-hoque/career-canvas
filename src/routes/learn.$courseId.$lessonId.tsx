@@ -52,6 +52,7 @@ import { useSession } from "@/hooks/useAuth";
 import type { RunResult } from "@/lib/code-runner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { track } from "@/lib/analytics";
 import { isLessonUnlocked } from "@/lib/entitlements";
 import { useEntitlements } from "@/hooks/useEntitlements";
@@ -105,6 +106,11 @@ export const Route = createFileRoute("/learn/$courseId/$lessonId")({
     });
   },
   notFoundComponent: LessonMissing,
+  // Without this the router keeps the previous lesson on screen, answerable,
+  // under the new URL until the next body arrives.
+  pendingMs: 100,
+  pendingMinMs: 200,
+  pendingComponent: LessonPending,
   errorComponent: ({ reset }) => (
     <AppShell>
       <QueryError title="The lesson could not be loaded" retry={reset} />
@@ -189,6 +195,28 @@ function LessonReading({
           </p>
         </div>
       </article>
+    </AppShell>
+  );
+}
+
+function LessonPending() {
+  return (
+    <AppShell>
+      <div aria-busy="true" className="mx-auto max-w-3xl space-y-6">
+        <div className="card-surface space-y-3 p-6 sm:p-8">
+          <Skeleton className="h-3 w-40" />
+          <Skeleton className="h-9 w-3/4" />
+          <Skeleton className="h-4 w-full" />
+        </div>
+        <div className="card-surface space-y-3 p-6 sm:p-8">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-11/12" />
+          <Skeleton className="h-4 w-4/5" />
+          <p role="status" className="pt-2 text-sm text-chalk">
+            Loading lesson…
+          </p>
+        </div>
+      </div>
     </AppShell>
   );
 }
@@ -897,6 +925,7 @@ function LessonOutline({
                     <Link
                       to="/learn/$courseId/$lessonId"
                       params={{ courseId: course.id, lessonId: l.id }}
+                      preload="intent"
                       aria-current={active ? "step" : undefined}
                       onClick={onNavigate}
                       className={cn(

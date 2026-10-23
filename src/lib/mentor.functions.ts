@@ -176,8 +176,13 @@ export const mentorReplyFn = createServerFn({ method: "POST" })
 
     const userContent = situation ? `${data.question}\n\n${situation}` : data.question;
 
-    const { getMentorProvider } = await import("@/lib/mentor-providers.server");
-    const provider = getMentorProvider();
+    const { getMentorProvider, toLearnerError } = await import("@/lib/mentor-providers.server");
+    let provider: ReturnType<typeof getMentorProvider>;
+    try {
+      provider = getMentorProvider();
+    } catch (error) {
+      throw toLearnerError(error, undefined);
+    }
 
     let reply: string;
     if (provider) {
@@ -213,10 +218,14 @@ export const mentorReplyFn = createServerFn({ method: "POST" })
         language: data.language,
         learnerHistory,
       });
-      reply = await provider.complete({
-        system,
-        messages: [...history, { role: "user", content: userContent }],
-      });
+      try {
+        reply = await provider.complete({
+          system,
+          messages: [...history, { role: "user", content: userContent }],
+        });
+      } catch (error) {
+        throw toLearnerError(error, provider.name);
+      }
     } else {
       // No model configured — the scripted mentor keeps the feature usable.
       const ctx: MentorContext = {
