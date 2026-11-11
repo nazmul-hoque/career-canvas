@@ -11,7 +11,7 @@
  * Needs Chrome or Chromium. Set CHROME_PATH if it isn't in the usual place.
  * Fonts load from Google Fonts, so it needs the network too.
  */
-import { mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { ogCards, ogFingerprint, type OgCard } from "../src/lib/og-cards";
@@ -35,6 +35,12 @@ function findChrome(): string {
 const escape = (text: string) =>
   text.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 
+// The brand mark is public/favicon.svg itself, inlined because the card is
+// rendered from a temp file with no server behind it.
+const MARK = Buffer.from(readFileSync(new URL("../public/favicon.svg", import.meta.url))).toString(
+  "base64",
+);
+
 // Colours are the Ascent tokens from src/styles.css, written out because this
 // page is rendered on its own, outside the app's stylesheet.
 function cardHtml(card: OgCard): string {
@@ -48,7 +54,7 @@ body{background:oklch(0.168 0.011 265);color:#fff;font-family:Manrope,sans-serif
 .glow{position:absolute;right:-180px;top:-220px;width:720px;height:720px;border-radius:50%;background:radial-gradient(circle,oklch(0.705 0.136 165.5 / .32),transparent 65%)}
 .wrap{position:absolute;inset:64px 80px;display:flex;flex-direction:column}
 .mark{display:flex;align-items:center;gap:14px}
-.sq{width:48px;height:48px;border-radius:14px;background:oklch(0.705 0.136 165.5);display:grid;place-items:center;font:700 24px "Space Grotesk"}
+.sq{width:48px;height:48px;display:block}
 .name{font:700 28px "Space Grotesk";letter-spacing:-.02em}
 .eyebrow{margin-top:auto;font:700 22px Manrope;letter-spacing:.08em;text-transform:uppercase;color:oklch(0.705 0.136 165.5)}
 h1{font:700 ${titleSize}px/1.04 "Space Grotesk";letter-spacing:-.035em;margin:14px 0 0;max-width:1000px}
@@ -57,7 +63,7 @@ p{margin:20px 0 0;font:500 26px/1.35 Manrope;color:rgba(255,255,255,.66);max-wid
 .tag{font:600 19px Manrope;padding:8px 16px;border-radius:999px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.85)}
 </style></head><body><div class="lines"></div><div class="glow"></div>
 <div class="wrap">
-<div class="mark"><div class="sq">A</div><div class="name">Ascent</div></div>
+<div class="mark"><img class="sq" src="data:image/svg+xml;base64,${MARK}" alt=""><div class="name">Ascent</div></div>
 <div class="eyebrow">${escape(card.eyebrow)}</div>
 <h1>${escape(card.title)}</h1>
 <p>${escape(card.subtitle)}</p>

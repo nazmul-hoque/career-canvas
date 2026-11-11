@@ -55,9 +55,10 @@ const mobileNav = [
 export function Wordmark({ tone = "ink" }: { tone?: "ink" | "light" }) {
   return (
     <Link to="/" className="flex items-center gap-2">
-      <span className="relative grid size-8 place-items-center rounded-[10px] bg-brand text-brand-foreground">
-        <span className="font-display text-sm font-bold">A</span>
-      </span>
+      {/* The favicon is the brand mark, so the header, tab, app icons and Google's
+          consent screen all show one logo; Google's brand check compares them. */}
+      <img src="/favicon.svg" alt="" width={32} height={32} className="size-8" />
+
       <span
         className={cn(
           "font-display text-[17px] font-bold tracking-tight",
