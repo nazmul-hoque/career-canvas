@@ -44,8 +44,12 @@ export function captureConsole(logs: string[]) {
     args
       .map((a) => {
         if (typeof a === "string") return a;
+        // Only objects go through JSON: it prints NaN and Infinity as null, and
+        // undefined or a function as nothing at all, which left a blank line in
+        // the very lessons that teach you to log `undefined` and spot NaN.
+        if (typeof a !== "object" || a === null) return String(a);
         try {
-          return JSON.stringify(a);
+          return JSON.stringify(a) ?? String(a);
         } catch {
           return String(a);
         }

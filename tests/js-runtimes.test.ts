@@ -27,6 +27,14 @@ console.log("hi");`;
     expect(run.tests[2]?.detail).toContain("ReferenceError");
   });
 
+  test("logs undefined, NaN and functions as themselves, not blank or null", async () => {
+    const run = await runJavaScript(
+      `console.log(undefined); console.log(NaN, 1 / 0); console.log({ a: 1 }, [2]);`,
+      [],
+    );
+    expect(run.logs).toEqual(["undefined", "NaN Infinity", '{"a":1} [2]']);
+  });
+
   test("a syntax error fails everything with a message", async () => {
     const run = await runJavaScript("function (", [{ name: "x", expression: "true" }]);
     expect(run.error).toContain("SyntaxError");
