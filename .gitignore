@@ -33,3 +33,4 @@ dist-ssr
 
 # Supabase CLI link state (machine-local, includes the pooler URL)
 supabase/.temp/
+shorts/

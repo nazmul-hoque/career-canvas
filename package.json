@@ -17,6 +17,8 @@
     "lessons:verify": "bun scripts/verify-challenges.ts",
     "git:verify": "bun scripts/verify-git-sandbox.ts",
     "og:images": "bun scripts/build-og-images.ts",
+    "shorts:record": "bun scripts/record-shorts.ts",
+    "shorts:motion": "bun scripts/render-motion-shorts.ts",
     "format": "prettier --write ."
   },
   "overrides": {
